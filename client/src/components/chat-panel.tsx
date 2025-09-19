@@ -7,19 +7,24 @@ import { Badge } from "@/components/ui/badge"
 import { MicControl } from "./mic-control"
 import { useTranslation } from "react-i18next"
 import { cn } from "@/lib/utils"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { apiRequest } from "@/lib/queryClient"
+import { useToast } from "@/hooks/use-toast"
 
 interface ChatMessage {
   id: string
   role: "user" | "assistant"
   content: string
-  sources?: string[]
-  confidence?: {
-    belief: number
-    disbelief: number
-    uncertainty: number
-  }
-  riskScore?: number
   timestamp: Date
+  contextIds?: string[]
+}
+
+interface TacticalAnalysis {
+  summary: string
+  keyFindings: string[]
+  riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
+  recommendations: string[]
+  confidence: number
 }
 
 interface ChatPanelProps {
@@ -30,11 +35,13 @@ interface ChatPanelProps {
 
 export function ChatPanel({ onQuerySubmit, mediaContextIds, className }: ChatPanelProps) {
   const { t } = useTranslation()
+  const { toast } = useToast()
+  const queryClient = useQueryClient()
   const [input, setInput] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const [currentAnalysis, setCurrentAnalysis] = useState<TacticalAnalysis | null>(null)
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -44,10 +51,79 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, className }: ChatPan
     scrollToBottom()
   }, [messages])
 
+  // Load chat history
+  const { data: chatHistory } = useQuery({
+    queryKey: ['/api/chat/history'],
+    enabled: true,
+    onSuccess: (data) => {
+      if (data?.messages && Array.isArray(data.messages)) {
+        const formattedMessages = data.messages.reverse().map((msg: any) => ({
+          ...msg,
+          timestamp: new Date(msg.timestamp)
+        }))
+        setMessages(formattedMessages)
+      }
+    }
+  })
+
+  // Chat mutation
+  const chatMutation = useMutation({
+    mutationFn: async ({ query, contextIds }: { query: string, contextIds?: string[] }) => {
+      const response = await apiRequest('POST', '/api/chat', {
+        query,
+        contextIds: contextIds || []
+      })
+      return response.json()
+    },
+    onSuccess: (data) => {
+      if (data?.success && data?.analysis) {
+        // Parse assistant response from the analysis
+        let content = data.analysis.summary
+        
+        if (data.analysis.keyFindings?.length > 0) {
+          content += `\n\nKey findings:\n${data.analysis.keyFindings.map((finding: string) => `• ${finding}`).join('\n')}`
+        }
+        
+        if (data.analysis.recommendations?.length > 0) {
+          content += `\n\nRecommendations:\n${data.analysis.recommendations.map((rec: string, i: number) => `${i + 1}. ${rec}`).join('\n')}`
+        }
+        
+        content += `\n\nRisk Level: ${data.analysis.riskLevel}\nConfidence: ${Math.round(data.analysis.confidence * 100)}%`
+
+        const assistantMessage: ChatMessage = {
+          id: data.message?.id || Date.now().toString(),
+          role: "assistant",
+          content,
+          timestamp: new Date()
+        }
+        setMessages(prev => [...prev, assistantMessage])
+        setCurrentAnalysis(data.analysis)
+      }
+      queryClient.invalidateQueries({ queryKey: ['/api/chat/history'] })
+    },
+    onError: (error: Error) => {
+      console.error('Chat API error:', error)
+      toast({
+        variant: "destructive",
+        title: "Chat Error",
+        description: error.message || "Failed to process your query. Please try again."
+      })
+      
+      // Add error message to chat
+      const errorMessage: ChatMessage = {
+        id: Date.now().toString(),
+        role: "assistant",
+        content: "I encountered an error processing your request. Please try again or check your connection.",
+        timestamp: new Date()
+      }
+      setMessages(prev => [...prev, errorMessage])
+    }
+  })
+
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault()
     
-    if (!input.trim() || isLoading) return
+    if (!input.trim() || chatMutation.isPending) return
     
     const query = input.trim()
     const userMessage: ChatMessage = {
@@ -59,47 +135,19 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, className }: ChatPan
     
     setMessages(prev => [...prev, userMessage])
     setInput("")
-    setIsLoading(true)
+    setCurrentAnalysis(null)
     
     console.log('Chat query submitted:', query)
+    console.log('Query submitted:', query, 'with context:', mediaContextIds || [])
     
-    try {
-      // Mock response for prototype
-      setTimeout(() => {
-        const mockResponse: ChatMessage = {
-          id: (Date.now() + 1).toString(),
-          role: "assistant", 
-          content: `Based on the intelligence assessment for your area of interest, I've analyzed data from multiple sources. The current risk assessment indicates moderate security concerns with elevated infrastructure vulnerabilities.
-
-Key findings:
-• Political stability remains uncertain due to recent policy changes
-• Military presence has increased by 15% in the last 48 hours  
-• Economic indicators show supply chain disruptions affecting 3 major routes
-• Social tensions are elevated following yesterday's demonstration
-• Communication networks are operating at 85% capacity
-• Infrastructure security has been compromised at 2 checkpoints
-
-Recommended actions: Avoid main arterial routes between 1400-1800 hours. Use alternate communication channels for sensitive operations.`,
-          sources: ["Fraym", "Seerist", "News", "Weather"],
-          confidence: {
-            belief: 0.78,
-            disbelief: 0.12,
-            uncertainty: 0.10
-          },
-          riskScore: 67,
-          timestamp: new Date()
-        }
-        
-        setMessages(prev => [...prev, mockResponse])
-        setIsLoading(false)
-      }, 2000)
-      
-      onQuerySubmit?.(query, mediaContextIds)
-      
-    } catch (error) {
-      console.error('Error submitting query:', error)
-      setIsLoading(false)
-    }
+    // Call the onQuerySubmit callback for parent components
+    onQuerySubmit?.(query, mediaContextIds)
+    
+    // Submit to backend API
+    chatMutation.mutate({ 
+      query, 
+      contextIds: mediaContextIds 
+    })
   }
 
   const handleTranscription = (text: string) => {
@@ -114,22 +162,7 @@ Recommended actions: Avoid main arterial routes between 1400-1800 hours. Use alt
     }
   }
 
-  const renderConfidenceBar = (confidence: NonNullable<ChatMessage['confidence']>) => (
-    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-      <span>{t('confidence.label')}:</span>
-      <div className="flex gap-1">
-        <div className="flex items-center gap-1">
-          <div className="w-8 h-2 bg-secondary rounded">
-            <div 
-              className="h-full bg-green-500 rounded" 
-              style={{ width: `${confidence.belief * 100}%` }}
-            />
-          </div>
-          <span>{Math.round(confidence.belief * 100)}%</span>
-        </div>
-      </div>
-    </div>
-  )
+  const isAssistantTyping = chatMutation.isPending
 
   return (
     <div className={cn("flex flex-col h-full", className)}>
@@ -156,21 +189,16 @@ Recommended actions: Avoid main arterial routes between 1400-1800 hours. Use alt
               <div className="space-y-3">
                 <p className="text-sm whitespace-pre-wrap">{message.content}</p>
                 
-                {message.sources && (
-                  <div className="flex flex-wrap gap-1">
-                    {message.sources.map((source, index) => (
-                      <Badge key={index} variant="secondary" className="text-xs">
-                        {t(`sources.${source.toLowerCase()}`)}
-                      </Badge>
-                    ))}
-                  </div>
-                )}
-                
-                {message.confidence && renderConfidenceBar(message.confidence)}
-                
-                {message.riskScore !== undefined && (
-                  <div className="text-xs text-muted-foreground">
-                    {t('risk.score')}: <span className="font-mono">{message.riskScore}/100</span>
+                {message.role === "assistant" && currentAnalysis && (
+                  <div className="mt-3">
+                    <Badge 
+                      variant={currentAnalysis.riskLevel === 'CRITICAL' ? 'destructive' :
+                              currentAnalysis.riskLevel === 'HIGH' ? 'destructive' :
+                              currentAnalysis.riskLevel === 'MEDIUM' ? 'secondary' : 'default'}
+                      data-testid={`badge-risk-${currentAnalysis.riskLevel.toLowerCase()}`}
+                    >
+                      {currentAnalysis.riskLevel} Risk
+                    </Badge>
                   </div>
                 )}
               </div>
@@ -178,7 +206,7 @@ Recommended actions: Avoid main arterial routes between 1400-1800 hours. Use alt
           </div>
         ))}
         
-        {isLoading && (
+        {isAssistantTyping && (
           <div className="flex justify-start">
             <Card className="bg-muted p-4">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -191,52 +219,49 @@ Recommended actions: Avoid main arterial routes between 1400-1800 hours. Use alt
         
         <div ref={messagesEndRef} />
       </div>
-      
-      <div className="p-4 border-t bg-background/50 backdrop-blur">
-        <form onSubmit={handleSubmit} className="space-y-2">
-          <div className="flex gap-2">
-            <div className="flex-1 relative">
-              <Textarea
-                ref={textareaRef}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder={t('chat.placeholder')}
-                className="resize-none min-h-[44px] pr-12"
-                rows={2}
-                disabled={isLoading}
-                data-testid="textarea-chat-input"
-              />
-              <div className="absolute right-2 top-2">
-                <MicControl onTranscription={handleTranscription} />
-              </div>
-            </div>
-            <Button 
-              type="submit" 
-              size="icon"
-              disabled={!input.trim() || isLoading}
-              className="self-end"
-              data-testid="button-send-chat"
-            >
-              <Send className="h-4 w-4" />
-            </Button>
+
+      <div className="border-t bg-background p-4">
+        <form onSubmit={handleSubmit} className="flex gap-2">
+          <div className="flex-1 flex gap-2">
+            <Textarea
+              ref={textareaRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder={t('chat.placeholder') || "Ask about intelligence, threats, or request analysis..."}
+              className="min-h-[40px] max-h-[120px] resize-none"
+              disabled={isAssistantTyping}
+              data-testid="textarea-chat-input"
+            />
+            <MicControl 
+              onTranscription={handleTranscription}
+              disabled={isAssistantTyping}
+            />
           </div>
-          
-          {mediaContextIds && mediaContextIds.length > 0 && (
-            <div className="flex flex-wrap gap-1">
-              <span className="text-xs text-muted-foreground">Context:</span>
-              {mediaContextIds.map((id) => (
-                <Badge key={id} variant="outline" className="text-xs">
-                  Media-{id.slice(0, 6)}
-                </Badge>
-              ))}
-            </div>
-          )}
-          
-          <p className="text-xs text-muted-foreground">
-            Press Ctrl+Enter to send
-          </p>
+          <Button 
+            type="submit" 
+            size="icon"
+            disabled={!input.trim() || isAssistantTyping}
+            data-testid="button-chat-send"
+          >
+            {isAssistantTyping ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
+          </Button>
         </form>
+        
+        {mediaContextIds && mediaContextIds.length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-2">
+            <span className="text-xs text-muted-foreground">Context:</span>
+            {mediaContextIds.map((id) => (
+              <Badge key={id} variant="outline" className="text-xs">
+                {id}
+              </Badge>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )
