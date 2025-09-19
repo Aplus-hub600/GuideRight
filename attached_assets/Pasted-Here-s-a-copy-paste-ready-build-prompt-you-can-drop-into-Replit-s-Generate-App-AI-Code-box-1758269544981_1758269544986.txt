@@ -1,0 +1,329 @@
+Here’s a copy-paste-ready **build prompt** you can drop into Replit’s “Generate App” / “AI Code” box to spin up an initial working prototype.
+
+---
+
+# 🚀 Build me this app: GuideRight — A Multimodal LLM-Powered Tactical Assistant (MVP)
+
+## TL;DR
+
+Create a **full-stack TypeScript** app that runs in Replit with:
+
+* **Frontend:** React + Vite + Tailwind + shadcn/ui + Leaflet map + i18next.
+* **Backend:** Node + Express + Zod + simple in-memory store.
+* **Multimodal:** chat (text), mic input (speech-to-text), TTS playback, image/video file drop (stub analysis).
+* **Analytics core:** PMESII tagging, risk scoring, and a **Dempster–Shafer (DS) confidence combiner** across data sources.
+* **Mock data providers:** Fraym, Seerist, Sprinklr, News, Social, Weather, Infra.
+* **LLM adapter:** single interface with a no-key “mock model” + optional OpenAI (env-gated).
+* **Everything runs locally with mock data**; external APIs are optional via `.env`.
+
+---
+
+## 0) Project Name
+
+`guideright-mvp`
+
+---
+
+## 1) Top-Level Goals / User Story
+
+As a **USSOCOM analyst** or **deployed operator**, I can:
+
+1. Type or speak a question about any **AOI (area of interest)** (place or lat/lng).
+2. See a **map** of the AOI, plus **fused intel panels** (Population, Culture/Religion, Economy, Infrastructure/Comms, History of Unrest, Current Triggers).
+3. Get a **chat response** that references sources and includes a **confidence score** derived via **Dempster–Shafer** from the underlying data layers.
+4. Upload an **image or short video** (mock-analyzed) to enrich situational context.
+5. See **risk heat** and a suggested **movement plan** (simple route + rationale).
+6. Switch **language** (UI + answers) for **multilingual ops**.
+
+---
+
+## 2) Tech Stack & Setup
+
+* **Frontend:** React 18 + Vite + TypeScript, TailwindCSS, shadcn/ui, React-Leaflet (Leaflet), i18next for i18n, Web Speech API (stt/tts) with graceful fallback.
+* **Backend:** Node 20 + Express, TypeScript, Zod for validation, `langchain` optional, lightweight DS module implemented from scratch.
+* **Map:** Leaflet + OpenStreetMap tiles (no key). Keep Mapbox optional behind `MAPBOX_TOKEN`.
+* **Build/Run:** Single workspace with `frontend/` and `server/` folders and root `dev` script to run both (use `concurrently`).
+* **Environment:** `.env` for optional keys.
+
+  * `OPENAI_API_KEY` (optional)
+  * `MAPBOX_TOKEN` (optional)
+  * `TRANSLATE_BASE_URL` (optional, e.g., LibreTranslate)
+
+---
+
+## 3) Folder Structure
+
+```
+guideright-mvp/
+  package.json
+  README.md
+  .env.example
+  server/
+    src/
+      index.ts
+      routes/
+        query.ts
+        ingest.ts
+        risk.ts
+        confidence.ts
+        mock.ts
+      services/
+        llm.ts
+        pmesii.ts
+        risk.ts
+        ds.ts
+        geocode.ts
+        translate.ts
+        media.ts
+        fuse.ts
+      data/
+        mock/
+          aoi_kandahar_city.json
+          aoi_aleppo_urban.json
+          aoi_lagos_island.json
+          providers/
+            fraym.json
+            seerist.json
+            sprinklr.json
+            news.json
+            social.json
+            weather.json
+            infra.json
+      types/
+        domain.ts
+    tsconfig.json
+  frontend/
+    index.html
+    tsconfig.json
+    vite.config.ts
+    src/
+      main.tsx
+      App.tsx
+      i18n.ts
+      components/
+        Chat.tsx
+        MicControl.tsx
+        MapPanel.tsx
+        InfoPanels.tsx
+        SourceChips.tsx
+        RiskCard.tsx
+        MovementPlan.tsx
+        FileDrop.tsx
+      pages/
+        Dashboard.tsx
+      lib/
+        api.ts
+        schemas.ts
+        pmesiiColors.ts
+      styles/
+        globals.css
+```
+
+---
+
+## 4) Core Domain & Types (server/types/domain.ts)
+
+Create Zod/TS interfaces for:
+
+* `AOI` `{ name?: string; lat: number; lng: number; radiusKm?: number }`
+* `PMESIICategory` union: `"Political"|"Military"|"Economic"|"Social"|"Information"|"Infrastructure"`
+* `IntelItem` `{ id:string; source:"Fraym"|"Seerist"|"Sprinklr"|"News"|"Social"|"Weather"|"Infra"; pmesii:PMESIICategory[]; text:string; time?:string; quality: number /*0..1*/ }`
+* `FusedSnapshot` `{ aoi: AOI; items: IntelItem[] }`
+* `DSBelief` `{ belief: number; disbelief: number; uncertainty: number }`
+* `Answer` `{ text:string; language:string; citations:string[]; pmesiiCoverage:Record<PMESIICategory,number>; riskScore:number; confidence:DSBelief }`
+* `MovementPlan` `{ route: Array<{lat:number;lng:number} >; rationale: string }`
+
+---
+
+## 5) Backend Endpoints (Express)
+
+1. `POST /api/ingest/aoi`
+
+   * Body: `{ aoi: AOI }`
+   * Loads mock provider data for nearest AOI file (simple nearest-neighbor on lat/lng). Returns `FusedSnapshot`.
+2. `POST /api/query`
+
+   * Body: `{ aoi: AOI, question: string, language?: string, mediaContextIds?: string[] }`
+   * Pipeline: (a) get fused snapshot → (b) PMESII tag & summarize → (c) call LLM adapter (mock/OpenAI) to craft answer → (d) compute DS confidence from provider items’ `quality` and per-source weights → (e) return `Answer`.
+3. `POST /api/risk`
+
+   * Body: `{ aoi: AOI }`
+   * Returns `{ riskScore:number, factors: Array<{pmesii:PMESIICategory; score:number; note:string}> }`.
+4. `POST /api/confidence`
+
+   * Body: `{ items: IntelItem[] }`
+   * Returns `{ confidence: DSBelief }` combining evidence via DS rule.
+5. `POST /api/media/analyze`
+
+   * Accepts image/video upload (use `multer`). Returns mock intel items extracted (tagged + quality).
+6. `GET /api/mock/aoi`
+
+   * Returns a list of available mock AOIs and their centroids.
+
+**Validation:** Use Zod on each route.
+
+---
+
+## 6) Services (server/src/services)
+
+* **`ds.ts`**: Implement basic Dempster–Shafer combine:
+
+  * Define per-source belief masses `m_source = { belief: q, disbelief: 1-q-u, uncertainty: u }` with configurable `u`.
+  * Combine two masses with Dempster’s rule; iterate over all items.
+  * Output final `{ belief, disbelief, uncertainty }`.
+* **`pmesii.ts`**: Simple keyword/regex & embedding-stub tagging to map intel to PMESII categories; return coverage histogram.
+* **`risk.ts`**: Weighted sum over risk factors:
+
+  * Latent “fuel” (demographics, poverty/unemployment proxies),
+  * “Triggers” (recent protests, inflammatory events from news/social),
+  * Weather/infra disruptions.
+  * Normalize to 0–100.
+* **`fuse.ts`**: Fuse providers → remove dupes, score quality, sort by recency.
+* **`llm.ts`**:
+
+  * If `OPENAI_API_KEY` present, use `gpt-4o-mini` (or similar) with system prompt that requires: (a) cite sources, (b) list PMESII coverage, (c) keep answers concise for ops, (d) return JSON fields if asked.
+  * Else use **mock LLM** that templates an answer from fused intel.
+* **`translate.ts`**:
+
+  * If `TRANSLATE_BASE_URL` present (e.g., LibreTranslate), call it; else fallback to identity (English).
+* **`geocode.ts`**:
+
+  * If `MAPBOX_TOKEN` present, allow forward geocode; otherwise accept only lat/lng inputs.
+* **`media.ts`**:
+
+  * Stub “vision” extraction: return a couple of `IntelItem`s with `source:"Social"` and reasonable `pmesii` tags.
+
+---
+
+## 7) Frontend UX (React)
+
+* **Dashboard Layout:** left column chat + mic; right column map + intel panels.
+* **Chat.tsx:**
+
+  * Text area + **Push-to-talk** (MicControl) using **Web Speech API** (fallback to text if unavailable).
+  * On send: POST `/api/query`. Render answer + **SourceChips** + DS confidence (belief/disbelief/uncertainty bars).
+* **MapPanel.tsx:** React-Leaflet map centered on AOI. Show simple **risk heat** tint (just AOI circle colored by risk 0–100). Button: “Compute Movement Plan” → calls `/api/risk` and draws a simple **polyline route** with rationale tooltip.
+* **InfoPanels.tsx:** Tabs for **Population/Culture/Religion/Economy/Infra/Unrest/Current Triggers** (render counts + short bullets from fused intel).
+* **FileDrop.tsx:** Drag-drop image/video → POST `/api/media/analyze` → show extracted intel chips and add to next query context.
+* **i18n:** i18next with at least `en`, `es`, `fr`, `ar` resource files (minimal strings). Language switcher in navbar.
+* **Accessibility:** Buttons labeled, keyboard shortcuts: `Ctrl+Enter` to send.
+
+---
+
+## 8) PMESII & Risk Model (initial rules)
+
+* **PMESII tagging heuristics:**
+
+  * Political: “election”, “governor”, “corruption”, “policy”, “curfew”.
+  * Military: “checkpoint”, “militia”, “IED”, “patrol”, “airstrike”.
+  * Economic: “market”, “unemployment”, “inflation”, “supply chain”.
+  * Social: “protest”, “ethnic”, “religion”, “festival”, “norms”.
+  * Information: “internet blackout”, “SMS outage”, “rumor”, “misinfo”, “radio”.
+  * Infrastructure: “bridge”, “power grid”, “cell tower”, “hospital”, “road”.
+* **Risk score (0–100):**
+  `risk = clamp( 40*fuel + 45*triggers + 15*disruption )` with each factor in 0..1.
+  Fuel from econ + social stresses; Triggers from recent news/social items; Disruption from weather/infra items. Include a small decay by item age.
+
+---
+
+## 9) Confidence via Dempster–Shafer (MVP)
+
+* **Per-source priors** (editable in `server/src/services/ds.ts`):
+
+  * Fraym: q=0.80, u=0.10
+  * Seerist: q=0.75, u=0.12
+  * Sprinklr: q=0.60, u=0.20
+  * News: q=0.70, u=0.15
+  * Social: q=0.50, u=0.30
+  * Weather: q=0.85, u=0.10
+  * Infra: q=0.78, u=0.12
+* Combine masses of items **relevant to the answer** and return `{belief, disbelief, uncertainty}`; surface as **Confidence**.
+
+---
+
+## 10) Multilingual
+
+* UI in `en`, `es`, `fr`, `ar`.
+* Query param `language` flows to `translate.ts` to translate prompts/responses when enabled. If no translator, keep English but preserve charset & RTL support.
+
+---
+
+## 11) Movement Plan (stub)
+
+* For now, compute a 3-point route: start → safe waypoint (lowest local risk) → destination (AOI center).
+* Rationale uses infra + unrest notes, e.g., “Avoid radio-reported protest near X; favor hospital corridor Y; cell coverage stronger along Z.”
+
+---
+
+## 12) Security & Privacy (MVP)
+
+* No PII storage; mock data only.
+* CORS locked to frontend origin.
+* All external calls env-gated.
+* Log requests (no body content) with `pino`.
+* Add `robots.txt: Disallow: /`.
+
+---
+
+## 13) Scripts & Commands
+
+**Root `package.json`:**
+
+* `dev`: runs both frontend and server via `concurrently`.
+* `build`: builds both.
+* `start`: production start.
+
+**Server**:
+
+* `ts-node-dev src/index.ts`
+
+**Frontend**:
+
+* `vite` dev; `vite build` prod.
+
+---
+
+## 14) .env.example
+
+```
+OPENAI_API_KEY=
+MAPBOX_TOKEN=
+TRANSLATE_BASE_URL=
+PORT=8080
+```
+
+---
+
+## 15) Acceptance Criteria (what to deliver in this first pass)
+
+1. App boots on Replit; opening the webview shows **Dashboard** with map, chat, panels.
+2. Enter an AOI (lat/lng) or pick from **/api/mock/aoi** list; map centers and loads **fused intel** from mock providers.
+3. Ask a question; receive an **answer** with: text, **citations**, PMESII coverage, **risk score**, and **confidence (DS)**.
+4. **Mic** button captures speech (if supported) → transcribes to text and sends.
+5. **File drop** accepts an image or short video → returns 1–2 mock intel items that affect next answer.
+6. **Language switcher** changes UI strings; if translator enabled, answer returns in that language.
+7. **Movement plan** draws a route polyline with a one-paragraph rationale.
+8. No external keys required to test core flow.
+
+---
+
+## 16) Nice-to-Have (if time permits)
+
+* Save/load recent AOIs in localStorage.
+* Minimal unit tests for `ds.ts`, `risk.ts`, and `pmesii.ts`.
+* Dark mode (Tailwind class strategy).
+
+---
+
+## 17) README
+
+Add a concise README with:
+
+* Quick start: `npm i && npm run dev`
+* Feature list and screenshots (placeholder).
+* How to enable OpenAI/Mapbox/Translate via `.env`.
+* Known limitations & next steps.
+
+---
+
+**Build it now.**
