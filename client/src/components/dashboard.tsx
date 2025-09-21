@@ -3,6 +3,7 @@ import { ChatPanel } from "./chat-panel"
 import { MapPanel } from "./map-panel"
 import { PMESIIAnalysis } from "./pmesii-analysis"
 import { RiskAssessment } from "./risk-assessment"
+import { IntelligenceIntegration } from "./intelligence-integration"
 import { FileDrop } from "./file-drop"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -183,11 +184,15 @@ export function Dashboard({ className }: DashboardProps) {
                 </CardTitle>
               </CardHeader>
               <CardContent className="pt-0 h-[calc(100%-80px)]">
-                <Tabs defaultValue="pmesii" className="h-full">
-                  <TabsList className="grid w-full grid-cols-2">
+                <Tabs defaultValue="intelligence" className="h-full">
+                  <TabsList className="grid w-full grid-cols-3">
+                    <TabsTrigger value="intelligence" data-testid="tab-intelligence">Intelligence</TabsTrigger>
                     <TabsTrigger value="pmesii" data-testid="tab-pmesii">PMESII</TabsTrigger>
                     <TabsTrigger value="risk" data-testid="tab-risk">Risk</TabsTrigger>
                   </TabsList>
+                  <TabsContent value="intelligence" className="h-[calc(100%-40px)] mt-4">
+                    <IntelligenceIntegration className="h-full overflow-y-auto" />
+                  </TabsContent>
                   <TabsContent value="pmesii" className="h-[calc(100%-40px)] mt-4">
                     <PMESIIAnalysis aoi={currentAOI} className="h-full" />
                   </TabsContent>
