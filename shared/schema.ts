@@ -22,6 +22,8 @@ export const analysisResults = pgTable("analysis_results", {
   fileId: text("file_id"),
   analysisType: text("analysis_type").notNull(), // 'pmesii', 'risk', 'intelligence'
   results: jsonb("results").notNull(),
+  region: text("region"), // Region/AOI name for PMESII analysis
+  aoiData: jsonb("aoi_data"), // AOI coordinates and metadata
   timestamp: timestamp("timestamp").defaultNow().notNull(),
 });
 
@@ -49,6 +51,8 @@ export const insertAnalysisResultSchema = createInsertSchema(analysisResults).pi
   fileId: true,
   analysisType: true,
   results: true,
+  region: true,
+  aoiData: true,
 });
 
 export const insertRiskAssessmentSchema = createInsertSchema(riskAssessments).pick({
@@ -86,6 +90,17 @@ export const riskAssessmentRequestSchema = z.object({
     lng: z.number(),
     radiusKm: z.number(),
   }),
+});
+
+export const pmesiiAnalysisRequestSchema = z.object({
+  region: z.string(),
+  context: z.string().optional(),
+  aoi: z.object({
+    name: z.string(),
+    lat: z.number(),
+    lng: z.number(),
+    radiusKm: z.number(),
+  }).optional(),
 });
 
 export type ChatQueryRequest = z.infer<typeof chatQuerySchema>;

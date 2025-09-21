@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { ChatPanel } from "./chat-panel"
 import { MapPanel } from "./map-panel"
-import { PMESIIPanels } from "./pmesii-panels"
+import { PMESIIAnalysis } from "./pmesii-analysis"
 import { FileDrop } from "./file-drop"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -175,7 +175,7 @@ export function Dashboard({ className }: DashboardProps) {
                 </CardTitle>
               </CardHeader>
               <CardContent className="pt-0 h-[calc(100%-80px)]">
-                <PMESIIPanels className="h-full" />
+                <PMESIIAnalysis aoi={currentAOI} className="h-full" />
               </CardContent>
             </Card>
           </div>

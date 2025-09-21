@@ -22,6 +22,7 @@ export interface IStorage {
   
   // Analysis operations
   getAnalysisResults(fileId?: string): Promise<AnalysisResult[]>;
+  getAnalysisResultsByType(analysisType: string, region?: string): Promise<AnalysisResult[]>;
   createAnalysisResult(result: InsertAnalysisResult): Promise<AnalysisResult>;
   
   // Risk assessment operations
@@ -84,13 +85,25 @@ export class MemStorage implements IStorage {
     return this.analysisResults;
   }
 
+  async getAnalysisResultsByType(analysisType: string, region?: string): Promise<AnalysisResult[]> {
+    return this.analysisResults
+      .filter(result => {
+        if (result.analysisType !== analysisType) return false;
+        if (region && result.region !== region) return false;
+        return true;
+      })
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  }
+
   async createAnalysisResult(insertResult: InsertAnalysisResult): Promise<AnalysisResult> {
     const id = randomUUID();
     const result: AnalysisResult = {
       ...insertResult,
       id,
       timestamp: new Date(),
-      fileId: insertResult.fileId || null
+      fileId: insertResult.fileId || null,
+      region: insertResult.region || null,
+      aoiData: insertResult.aoiData || null
     };
     this.analysisResults.push(result);
     return result;

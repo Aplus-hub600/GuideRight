@@ -10,11 +10,12 @@ import {
 import { 
   chatQuerySchema,
   riskAssessmentRequestSchema,
+  pmesiiAnalysisRequestSchema,
   type ChatQueryRequest,
   type RiskAssessmentRequest
 } from "@shared/schema";
 import multer from "multer";
-import pdfParse from "pdf-parse";
+// import pdfParse from "pdf-parse"; // Temporarily disabled due to initialization issues
 import mammoth from "mammoth";
 
 // Set up multer for file uploads
@@ -160,25 +161,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // PMESII Analysis endpoint
   app.post("/api/analysis/pmesii", async (req, res) => {
     try {
-      const { region, context } = req.body;
+      const { region, context, aoi } = pmesiiAnalysisRequestSchema.parse(req.body);
       
-      if (!region) {
-        return res.status(400).json({ 
-          success: false, 
-          error: "Region parameter is required" 
-        });
-      }
-
       const analysis = await generatePMESIIAnalysis(region, context);
       
-      // Save analysis result
+      // Save analysis result with AOI metadata
       await storage.createAnalysisResult({
         analysisType: "pmesii",
         results: analysis,
-        fileId: null
+        fileId: null,
+        region: region,
+        aoiData: aoi || null
       });
 
-      res.json({ success: true, analysis });
+      res.json({ success: true, analysis, region, aoi });
     } catch (error) {
       handleOpenAIError(error, res);
     }
@@ -231,13 +227,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else if (file.mimetype === 'text/plain') {
         content = file.buffer.toString('utf-8');
       } else if (file.mimetype === 'application/pdf') {
-        try {
-          const pdfData = await pdfParse(file.buffer);
-          content = pdfData.text || `PDF file: ${file.originalname} (could not extract text)`;
-        } catch (error) {
-          console.error('PDF parsing error:', error);
-          content = `PDF file: ${file.originalname} (extraction failed)`;
-        }
+        // PDF text extraction temporarily disabled - provide basic file info
+        content = `PDF document: ${file.originalname} (${Math.round(file.size / 1024)} KB) - text extraction to be implemented`;
       } else if (file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
         try {
           const docxData = await mammoth.extractRawText({ buffer: file.buffer });
@@ -310,7 +301,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/analysis/history", async (req, res) => {
     try {
       const fileId = req.query.fileId as string;
-      const results = await storage.getAnalysisResults(fileId);
+      const analysisType = req.query.analysisType as string;
+      const region = req.query.region as string;
+      
+      let results;
+      if (analysisType) {
+        results = await storage.getAnalysisResultsByType(analysisType, region);
+      } else {
+        results = await storage.getAnalysisResults(fileId);
+      }
+      
       res.json({ success: true, results });
     } catch (error) {
       console.error("Analysis history error:", error);
