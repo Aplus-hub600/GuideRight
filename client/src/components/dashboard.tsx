@@ -2,10 +2,12 @@ import { useState } from "react"
 import { ChatPanel } from "./chat-panel"
 import { MapPanel } from "./map-panel"
 import { PMESIIAnalysis } from "./pmesii-analysis"
+import { RiskAssessment } from "./risk-assessment"
 import { FileDrop } from "./file-drop"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable"
 import { Target, TrendingUp, Shield } from "lucide-react"
 import { useTranslation } from "react-i18next"
@@ -36,6 +38,7 @@ export function Dashboard({ className }: DashboardProps) {
     radiusKm: 5
   })
   const [riskScore, setRiskScore] = useState(67)
+  const [riskLevel, setRiskLevel] = useState('Moderate')
   const [movementPlan, setMovementPlan] = useState<MovementPlan | undefined>()
   const [mediaContextIds, setMediaContextIds] = useState<string[]>([])
   const [confidence, setConfidence] = useState({ belief: 0.78, disbelief: 0.12, uncertainty: 0.10 })
@@ -44,6 +47,11 @@ export function Dashboard({ className }: DashboardProps) {
     console.log('AOI changed:', newAOI)
     setCurrentAOI(newAOI)
     // In real app, this would trigger intelligence gathering
+  }
+
+  const handleRiskUpdate = (score: number, level: string) => {
+    setRiskScore(score)
+    setRiskLevel(level)
   }
 
   const handleMovementPlanRequest = () => {
@@ -164,7 +172,7 @@ export function Dashboard({ className }: DashboardProps) {
 
         <ResizableHandle withHandle />
 
-        {/* Right Panel - PMESII Intelligence */}
+        {/* Right Panel - Intelligence Analysis */}
         <ResizablePanel defaultSize={30} minSize={25}>
           <div className="h-full p-4">
             <Card className="h-full">
@@ -175,7 +183,22 @@ export function Dashboard({ className }: DashboardProps) {
                 </CardTitle>
               </CardHeader>
               <CardContent className="pt-0 h-[calc(100%-80px)]">
-                <PMESIIAnalysis aoi={currentAOI} className="h-full" />
+                <Tabs defaultValue="pmesii" className="h-full">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="pmesii" data-testid="tab-pmesii">PMESII</TabsTrigger>
+                    <TabsTrigger value="risk" data-testid="tab-risk">Risk</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="pmesii" className="h-[calc(100%-40px)] mt-4">
+                    <PMESIIAnalysis aoi={currentAOI} className="h-full" />
+                  </TabsContent>
+                  <TabsContent value="risk" className="h-[calc(100%-40px)] mt-4">
+                    <RiskAssessment 
+                      aoi={currentAOI} 
+                      onRiskUpdate={handleRiskUpdate}
+                      className="h-full overflow-y-auto" 
+                    />
+                  </TabsContent>
+                </Tabs>
               </CardContent>
             </Card>
           </div>

@@ -321,8 +321,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get risk assessment history
   app.get("/api/risk/history", async (req, res) => {
     try {
-      const assessments = await storage.getRiskAssessments();
-      res.json({ success: true, assessments });
+      const results = await storage.getRiskAssessments();
+      res.json({ success: true, results });
     } catch (error) {
       console.error("Risk history error:", error);
       res.status(500).json({ success: false, error: error.message });
