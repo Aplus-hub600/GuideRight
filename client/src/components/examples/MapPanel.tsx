@@ -8,9 +8,9 @@ export default function MapPanelExample() {
       <div className="h-96 w-full">
         <MapPanel 
           aoi={{
-            name: "Kandahar City",
-            lat: 31.6089,
-            lng: 65.7372,
+            name: "Dhaka",
+            lat: 23.8103,
+            lng: 90.4125,
             radiusKm: 5
           }}
           riskScore={67}

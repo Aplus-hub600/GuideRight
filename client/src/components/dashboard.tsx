@@ -30,9 +30,9 @@ interface DashboardProps {
 export function Dashboard({ className }: DashboardProps) {
   const { t } = useTranslation()
   const [currentAOI, setCurrentAOI] = useState<AOI>({
-    name: "Kandahar City",
-    lat: 31.6089,
-    lng: 65.7372,
+    name: "Dhaka",
+    lat: 23.8103,
+    lng: 90.4125,
     radiusKm: 5
   })
   const [riskScore, setRiskScore] = useState(67)

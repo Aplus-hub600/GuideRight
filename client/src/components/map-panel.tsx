@@ -52,9 +52,9 @@ export function MapPanel({
   
   // Default AOI for demo
   const currentAOI = aoi || {
-    name: "Kandahar City",
-    lat: 31.6089,
-    lng: 65.7372,
+    name: "Dhaka",
+    lat: 23.8103,
+    lng: 90.4125,
     radiusKm: 5
   }
 
