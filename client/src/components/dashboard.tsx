@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { ChatPanel } from "./chat-panel"
 import { MapPanel } from "./map-panel"
-import { PMESIIAnalysis } from "./pmesii-analysis"
+import { PMESIITest } from "./pmesii-test"
 import { RiskAssessment } from "./risk-assessment"
 import { IntelligenceIntegration } from "./intelligence-integration"
 import { FileDrop } from "./file-drop"
@@ -105,7 +105,25 @@ export function Dashboard({ className }: DashboardProps) {
               <CardContent>
                 <div className="space-y-3">
                   <div>
-                    <p className="font-medium">{currentAOI.name || "Unknown Location"}</p>
+                    <div className="flex items-center gap-2 mb-1">
+                      <div 
+                        className="w-6 h-4 rounded-sm relative overflow-hidden"
+                        style={{ backgroundColor: '#006A4E' }}
+                        data-testid="img-flag-bangladesh"
+                        title="Bangladesh Flag"
+                      >
+                        <div 
+                          className="absolute w-2.5 h-2.5 rounded-full"
+                          style={{ 
+                            backgroundColor: '#F42A41',
+                            top: '50%',
+                            left: '30%',
+                            transform: 'translate(-50%, -50%)'
+                          }}
+                        />
+                      </div>
+                      <p className="font-medium">{currentAOI.name || "Unknown Location"}</p>
+                    </div>
                     <p className="text-sm text-muted-foreground font-mono">
                       {currentAOI.lat.toFixed(4)}, {currentAOI.lng.toFixed(4)}
                     </p>
@@ -194,7 +212,7 @@ export function Dashboard({ className }: DashboardProps) {
                     <IntelligenceIntegration className="h-full overflow-y-auto" />
                   </TabsContent>
                   <TabsContent value="pmesii" className="h-[calc(100%-40px)] mt-4">
-                    <PMESIIAnalysis aoi={currentAOI} className="h-full" />
+                    <PMESIITest aoi={currentAOI} className="h-full overflow-y-auto" />
                   </TabsContent>
                   <TabsContent value="risk" className="h-[calc(100%-40px)] mt-4">
                     <RiskAssessment 
