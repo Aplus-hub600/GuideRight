@@ -1,23 +1,29 @@
 import { useState, useCallback } from "react"
 import { useDropzone } from "react-dropzone"
-import { Upload, FileImage, FileVideo, X, CheckCircle2, Loader2 } from "lucide-react"
+import { Upload, FileImage, FileVideo, FileText, X, CheckCircle2, Loader2, AlertCircle } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { useTranslation } from "react-i18next"
 import { cn } from "@/lib/utils"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useToast } from "@/hooks/use-toast"
 
 interface AnalyzedFile {
   id: string
   file: File
   preview?: string
   status: 'analyzing' | 'completed' | 'error'
+  fileName?: string
+  analysisType?: string
   extractedItems?: {
     id: string
     text: string
     pmesii: string[]
     quality: number
   }[]
+  analysis?: any
+  errorMessage?: string
 }
 
 interface FileDropProps {
@@ -34,13 +40,112 @@ export function FileDrop({
   className 
 }: FileDropProps) {
   const { t } = useTranslation()
+  const { toast } = useToast()
+  const queryClient = useQueryClient()
   const [analyzedFiles, setAnalyzedFiles] = useState<AnalyzedFile[]>([])
+
+  // File upload mutation
+  const uploadMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('analysisType', 'intelligence')
+
+      const response = await fetch('/api/analysis/file', {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || `Upload failed: ${response.status}`)
+      }
+
+      return response.json()
+    },
+    onSuccess: (data, file) => {
+      console.log('File upload successful:', data)
+      
+      // Update the file status to completed with analysis results
+      setAnalyzedFiles(prev => {
+        const updated = prev.map(f => {
+          if (f.file === file) {
+            const extractedItems = data.analysis ? [{
+              id: `item-${data.fileId}`,
+              text: data.analysis.summary || 'Analysis completed',
+              pmesii: data.analysis.categories || ['General'],
+              quality: data.analysis.confidence || 0.8
+            }] : []
+
+            const updatedFile = {
+              ...f,
+              id: data.fileId,
+              status: 'completed' as const,
+              fileName: data.fileName,
+              analysis: data.analysis,
+              extractedItems
+            }
+
+            // Notify parent component
+            onAnalysisComplete?.(data.fileId, extractedItems)
+            
+            return updatedFile
+          }
+          return f
+        })
+        
+        // Update parent with current file IDs from the updated array
+        const completedFileIds = updated
+          .filter(f => f.status === 'completed' && f.id && !f.id.startsWith('temp-'))
+          .map(f => f.id)
+        onFilesChange?.(completedFileIds)
+        
+        return updated
+      })
+
+      toast({
+        title: "File Analysis Complete",
+        description: `Successfully analyzed ${data.fileName || file.name}`,
+      })
+    },
+    onError: (error: Error, file) => {
+      console.error('File upload error:', error)
+      
+      // Update file status to error
+      setAnalyzedFiles(prev => 
+        prev.map(f => 
+          f.file === file 
+            ? { 
+                ...f, 
+                status: 'error' as const, 
+                errorMessage: error.message 
+              }
+            : f
+        )
+      )
+
+      toast({
+        variant: "destructive",
+        title: "File Analysis Failed",
+        description: error.message.includes('quota') 
+          ? "AI service quota exceeded. Please try again later."
+          : `Failed to analyze ${file.name}: ${error.message}`,
+      })
+    }
+  })
+
+  const updateFileIds = () => {
+    const completedFileIds = analyzedFiles
+      .filter(f => f.status === 'completed' && f.id && !f.id.startsWith('temp-'))
+      .map(f => f.id)
+    onFilesChange?.(completedFileIds)
+  }
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     console.log('Files dropped:', acceptedFiles)
     
     const newFiles = acceptedFiles.slice(0, maxFiles - analyzedFiles.length).map(file => ({
-      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      id: `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       file,
       preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : undefined,
       status: 'analyzing' as const
@@ -48,60 +153,28 @@ export function FileDrop({
 
     setAnalyzedFiles(prev => [...prev, ...newFiles])
     
-    // Mock analysis for each file
-    newFiles.forEach(async (analyzedFile) => {
-      try {
-        // Simulate processing time
-        await new Promise(resolve => setTimeout(resolve, 2000 + Math.random() * 3000))
-        
-        // Mock extraction results
-        const mockItems = [
-          {
-            id: `item-${analyzedFile.id}-1`,
-            text: `Visual analysis indicates increased vehicle movement in sector ${Math.floor(Math.random() * 10) + 1}. Estimated 15-20 personnel visible in image metadata.`,
-            pmesii: ['Military', 'Infrastructure'],
-            quality: 0.75 + Math.random() * 0.2
-          },
-          {
-            id: `item-${analyzedFile.id}-2`, 
-            text: `Geolocation data suggests proximity to key infrastructure. Environmental conditions appear favorable for operations.`,
-            pmesii: ['Infrastructure'],
-            quality: 0.65 + Math.random() * 0.25
-          }
-        ]
-
-        setAnalyzedFiles(prev => 
-          prev.map(f => 
-            f.id === analyzedFile.id 
-              ? { ...f, status: 'completed' as const, extractedItems: mockItems }
-              : f
-          )
-        )
-
-        onAnalysisComplete?.(analyzedFile.id, mockItems)
-        
-      } catch (error) {
-        console.error('File analysis error:', error)
-        setAnalyzedFiles(prev => 
-          prev.map(f => 
-            f.id === analyzedFile.id 
-              ? { ...f, status: 'error' as const }
-              : f
-          )
-        )
-      }
+    // Upload each file to the backend
+    newFiles.forEach(analyzedFile => {
+      uploadMutation.mutate(analyzedFile.file)
     })
-
-    // Update parent with current file IDs
-    const allFileIds = [...analyzedFiles, ...newFiles].map(f => f.id)
-    onFilesChange?.(allFileIds)
     
-  }, [analyzedFiles, maxFiles, onAnalysisComplete, onFilesChange])
+  }, [analyzedFiles, maxFiles, uploadMutation])
 
   const removeFile = (fileId: string) => {
     setAnalyzedFiles(prev => {
+      const fileToRemove = prev.find(f => f.id === fileId)
+      if (fileToRemove?.preview) {
+        URL.revokeObjectURL(fileToRemove.preview)
+      }
+      
       const updated = prev.filter(f => f.id !== fileId)
-      onFilesChange?.(updated.map(f => f.id))
+      
+      // Update parent with current file IDs
+      const completedFileIds = updated
+        .filter(f => f.status === 'completed' && f.id && !f.id.startsWith('temp-'))
+        .map(f => f.id)
+      onFilesChange?.(completedFileIds)
+      
       return updated
     })
   }
@@ -110,135 +183,178 @@ export function FileDrop({
     onDrop,
     accept: {
       'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.webp'],
-      'video/*': ['.mp4', '.avi', '.mov', '.wmv', '.webm']
+      'text/plain': ['.txt'],
+      'application/pdf': ['.pdf'],
+      'application/msword': ['.doc'],
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx']
     },
     maxFiles: maxFiles - analyzedFiles.length,
-    disabled: analyzedFiles.length >= maxFiles
+    disabled: analyzedFiles.length >= maxFiles,
+    maxSize: 50 * 1024 * 1024 // 50MB limit
   })
 
   const getFileIcon = (file: File) => {
     if (file.type.startsWith('image/')) return FileImage
     if (file.type.startsWith('video/')) return FileVideo
+    if (file.type.includes('text') || file.type.includes('document') || file.type.includes('pdf')) return FileText
     return Upload
   }
 
   const getStatusIcon = (status: AnalyzedFile['status']) => {
     switch (status) {
-      case 'analyzing': return <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
-      case 'completed': return <CheckCircle2 className="h-4 w-4 text-green-500" />
-      case 'error': return <X className="h-4 w-4 text-red-500" />
+      case 'analyzing':
+        return Loader2
+      case 'completed':
+        return CheckCircle2
+      case 'error':
+        return AlertCircle
+      default:
+        return Upload
     }
   }
 
-  const getStatusText = (status: AnalyzedFile['status']) => {
+  const getStatusColor = (status: AnalyzedFile['status']) => {
     switch (status) {
-      case 'analyzing': return 'Analyzing...'
-      case 'completed': return 'Analysis Complete'
-      case 'error': return 'Analysis Failed'
+      case 'analyzing':
+        return 'text-blue-500'
+      case 'completed':
+        return 'text-green-500'
+      case 'error':
+        return 'text-red-500'
+      default:
+        return 'text-muted-foreground'
     }
   }
 
   return (
     <div className={cn("space-y-4", className)}>
-      {analyzedFiles.length < maxFiles && (
-        <div
-          {...getRootProps()}
-          className={cn(
-            "border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors",
-            isDragActive 
-              ? "border-primary bg-primary/5" 
-              : "border-muted-foreground/25 hover:border-muted-foreground/50",
-            "hover-elevate"
-          )}
-          data-testid="dropzone-media"
-        >
-          <input {...getInputProps()} />
-          <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">
+      {/* Drop Zone */}
+      <Card 
+        {...getRootProps()} 
+        className={cn(
+          "border-2 border-dashed cursor-pointer transition-colors",
+          isDragActive ? "border-primary bg-primary/10" : "border-muted-foreground/25",
+          analyzedFiles.length >= maxFiles && "opacity-50 cursor-not-allowed"
+        )}
+        data-testid="file-drop-zone"
+      >
+        <input {...getInputProps()} />
+        <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
+          <Upload className={cn(
+            "h-8 w-8 mb-4",
+            isDragActive ? "text-primary" : "text-muted-foreground"
+          )} />
+          <p className="text-sm font-medium mb-2">
             {isDragActive 
-              ? "Drop files here..." 
-              : t('upload.drop') || "Drop image or video files here"
+              ? t('fileDrop.dragActive') || "Drop files here..."
+              : t('fileDrop.instruction') || "Drag & drop files or click to select"
             }
           </p>
-          <p className="text-xs text-muted-foreground mt-1">
-            {maxFiles - analyzedFiles.length} files remaining
+          <p className="text-xs text-muted-foreground">
+            Supports images, text files, PDFs, and Word documents • Max {maxFiles} files • 50MB each
           </p>
+          {analyzedFiles.length >= maxFiles && (
+            <p className="text-xs text-destructive mt-2">
+              Maximum files reached
+            </p>
+          )}
         </div>
-      )}
+      </Card>
 
+      {/* Analyzed Files List */}
       {analyzedFiles.length > 0 && (
         <div className="space-y-3">
-          <h4 className="text-sm font-medium">Uploaded Media ({analyzedFiles.length})</h4>
+          <h3 className="text-sm font-medium">
+            {t('fileDrop.uploadedFiles') || "Uploaded Files"} ({analyzedFiles.length}/{maxFiles})
+          </h3>
           
           {analyzedFiles.map((analyzedFile) => {
-            const FileIcon = getFileIcon(analyzedFile.file)
+            const Icon = getFileIcon(analyzedFile.file)
+            const StatusIcon = getStatusIcon(analyzedFile.status)
             
             return (
-              <Card key={analyzedFile.id} className="p-3">
+              <Card key={analyzedFile.id} className="p-4">
                 <div className="flex items-start gap-3">
-                  {analyzedFile.preview ? (
-                    <img 
-                      src={analyzedFile.preview} 
-                      alt={analyzedFile.file.name}
-                      className="w-16 h-16 object-cover rounded"
-                    />
-                  ) : (
-                    <div className="w-16 h-16 bg-muted rounded flex items-center justify-center">
-                      <FileIcon className="h-6 w-6 text-muted-foreground" />
-                    </div>
-                  )}
-                  
+                  {/* File preview or icon */}
+                  <div className="flex-shrink-0">
+                    {analyzedFile.preview ? (
+                      <img
+                        src={analyzedFile.preview}
+                        alt={analyzedFile.file.name}
+                        className="w-12 h-12 object-cover rounded"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 bg-muted rounded flex items-center justify-center">
+                        <Icon className="h-6 w-6 text-muted-foreground" />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* File info */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium truncate" title={analyzedFile.file.name}>
                           {analyzedFile.file.name}
                         </p>
-                        <p className="text-xs text-muted-foreground">
-                          {(analyzedFile.file.size / 1024 / 1024).toFixed(1)} MB
-                        </p>
-                        
-                        <div className="flex items-center gap-2 mt-1">
-                          {getStatusIcon(analyzedFile.status)}
-                          <span className="text-xs text-muted-foreground">
-                            {getStatusText(analyzedFile.status)}
-                          </span>
-                        </div>
+                        <StatusIcon className={cn(
+                          "h-4 w-4",
+                          getStatusColor(analyzedFile.status),
+                          analyzedFile.status === 'analyzing' && "animate-spin"
+                        )} />
                       </div>
-                      
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => removeFile(analyzedFile.id)}
-                        className="h-8 w-8 p-0"
                         data-testid={`button-remove-file-${analyzedFile.id}`}
                       >
                         <X className="h-4 w-4" />
                       </Button>
                     </div>
 
-                    {analyzedFile.extractedItems && (
-                      <div className="mt-3 space-y-2">
-                        <p className="text-xs font-medium text-muted-foreground">
-                          Extracted Intelligence:
-                        </p>
-                        {analyzedFile.extractedItems.map((item) => (
-                          <div key={item.id} className="text-xs p-2 bg-muted rounded">
-                            <div className="flex items-center gap-2 mb-1">
-                              {item.pmesii.map(category => (
-                                <Badge key={category} variant="secondary" className="text-xs">
-                                  {category}
-                                </Badge>
-                              ))}
-                              <span className="text-muted-foreground font-mono">
-                                {Math.round(item.quality * 100)}%
-                              </span>
-                            </div>
-                            <p>{item.text}</p>
-                          </div>
-                        ))}
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span>{(analyzedFile.file.size / 1024 / 1024).toFixed(1)} MB</span>
+                        <span>•</span>
+                        <span className="capitalize">{analyzedFile.status}</span>
                       </div>
-                    )}
+
+                      {/* Analysis Results */}
+                      {analyzedFile.status === 'completed' && analyzedFile.extractedItems && (
+                        <div className="space-y-2">
+                          {analyzedFile.extractedItems.map((item) => (
+                            <div key={item.id} className="bg-muted/50 rounded p-2">
+                              <p className="text-xs mb-1">{item.text}</p>
+                              <div className="flex flex-wrap gap-1">
+                                {item.pmesii.map((category) => (
+                                  <Badge key={category} variant="outline" className="text-xs">
+                                    {category}
+                                  </Badge>
+                                ))}
+                                <Badge variant="secondary" className="text-xs">
+                                  {Math.round(item.quality * 100)}% confidence
+                                </Badge>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Error Message */}
+                      {analyzedFile.status === 'error' && analyzedFile.errorMessage && (
+                        <div className="bg-destructive/10 text-destructive rounded p-2">
+                          <p className="text-xs">{analyzedFile.errorMessage}</p>
+                        </div>
+                      )}
+
+                      {/* Analyzing Status */}
+                      {analyzedFile.status === 'analyzing' && (
+                        <div className="bg-blue-50 dark:bg-blue-950/20 text-blue-700 dark:text-blue-300 rounded p-2">
+                          <p className="text-xs">Analyzing with AI intelligence systems...</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </Card>

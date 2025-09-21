@@ -14,6 +14,8 @@ import {
   type RiskAssessmentRequest
 } from "@shared/schema";
 import multer from "multer";
+import pdfParse from "pdf-parse";
+import mammoth from "mammoth";
 
 // Set up multer for file uploads
 const upload = multer({ 
@@ -195,17 +197,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
+      // Validate file size (50MB limit)
+      if (file.size > 50 * 1024 * 1024) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "File too large. Maximum size is 50MB." 
+        });
+      }
+
+      // Validate file type
+      const supportedTypes = [
+        'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
+        'text/plain',
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      ];
+      
+      if (!supportedTypes.includes(file.mimetype)) {
+        return res.status(400).json({ 
+          success: false, 
+          error: `Unsupported file type: ${file.mimetype}. Supported types: images (JPEG, PNG, GIF, WebP), text files, PDF, and Word documents.` 
+        });
+      }
+
       let content = '';
       let base64Image: string | undefined;
 
-      // Handle different file types
+      // Handle different file types with proper content extraction
       if (file.mimetype.startsWith('image/')) {
         base64Image = file.buffer.toString('base64');
         content = `Image file: ${file.originalname}`;
-      } else if (file.mimetype === 'text/plain' || file.mimetype === 'application/pdf') {
+      } else if (file.mimetype === 'text/plain') {
         content = file.buffer.toString('utf-8');
+      } else if (file.mimetype === 'application/pdf') {
+        try {
+          const pdfData = await pdfParse(file.buffer);
+          content = pdfData.text || `PDF file: ${file.originalname} (could not extract text)`;
+        } catch (error) {
+          console.error('PDF parsing error:', error);
+          content = `PDF file: ${file.originalname} (extraction failed)`;
+        }
+      } else if (file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+        try {
+          const docxData = await mammoth.extractRawText({ buffer: file.buffer });
+          content = docxData.value || `Word document: ${file.originalname} (could not extract text)`;
+        } catch (error) {
+          console.error('DOCX parsing error:', error);
+          content = `Word document: ${file.originalname} (extraction failed)`;
+        }
+      } else if (file.mimetype === 'application/msword') {
+        // DOC files are more complex to parse, provide basic info
+        content = `Word document: ${file.originalname} (legacy .doc format - text extraction not supported)`;
+      } else if (file.mimetype.startsWith('video/')) {
+        content = `Video file: ${file.originalname} (${file.mimetype}) - visual analysis not yet supported`;
       } else {
-        content = `File: ${file.originalname} (${file.mimetype})`;
+        return res.status(400).json({ 
+          success: false, 
+          error: `Unsupported file type: ${file.mimetype}. Supported types: images, text, PDF, Word documents.` 
+        });
       }
 
       const analysis = await analyzeMultimodalContent(content, base64Image, analysisType);
