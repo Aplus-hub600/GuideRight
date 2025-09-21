@@ -7,8 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { MicControl } from "./mic-control"
 import { useTranslation } from "react-i18next"
 import { cn } from "@/lib/utils"
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { apiRequest } from "@/lib/queryClient"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useToast } from "@/hooks/use-toast"
 
 interface ChatMessage {
@@ -39,9 +38,11 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, className }: ChatPan
   const queryClient = useQueryClient()
   const [input, setInput] = useState("")
   const [messages, setMessages] = useState<ChatMessage[]>([])
+  const [isStreaming, setIsStreaming] = useState(false)
+  const [currentAnalysis, setCurrentAnalysis] = useState<TacticalAnalysis | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const [currentAnalysis, setCurrentAnalysis] = useState<TacticalAnalysis | null>(null)
+  const eventSourceRef = useRef<EventSource | null>(null)
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -66,76 +67,15 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, className }: ChatPan
     }
   })
 
-  // Chat mutation
-  const chatMutation = useMutation({
-    mutationFn: async ({ query, contextIds }: { query: string, contextIds?: string[] }) => {
-      const response = await apiRequest('POST', '/api/chat', {
-        query,
-        contextIds: contextIds || []
-      })
-      return response.json()
-    },
-    onSuccess: (data) => {
-      if (data?.success && data?.analysis) {
-        // Parse assistant response from the analysis
-        let content = data.analysis.summary
-        
-        if (data.analysis.keyFindings?.length > 0) {
-          content += `\n\nKey findings:\n${data.analysis.keyFindings.map((finding: string) => `• ${finding}`).join('\n')}`
-        }
-        
-        if (data.analysis.recommendations?.length > 0) {
-          content += `\n\nRecommendations:\n${data.analysis.recommendations.map((rec: string, i: number) => `${i + 1}. ${rec}`).join('\n')}`
-        }
-        
-        content += `\n\nRisk Level: ${data.analysis.riskLevel}\nConfidence: ${Math.round(data.analysis.confidence * 100)}%`
-
-        const assistantMessage: ChatMessage = {
-          id: data.message?.id || Date.now().toString(),
-          role: "assistant",
-          content,
-          timestamp: new Date()
-        }
-        setMessages(prev => [...prev, assistantMessage])
-        setCurrentAnalysis(data.analysis)
-      }
-      queryClient.invalidateQueries({ queryKey: ['/api/chat/history'] })
-    },
-    onError: (error: Error) => {
-      console.error('Chat API error:', error)
-      toast({
-        variant: "destructive",
-        title: "Chat Error",
-        description: error.message || "Failed to process your query. Please try again."
-      })
-      
-      // Add error message to chat
-      const errorMessage: ChatMessage = {
-        id: Date.now().toString(),
-        role: "assistant",
-        content: "I encountered an error processing your request. Please try again or check your connection.",
-        timestamp: new Date()
-      }
-      setMessages(prev => [...prev, errorMessage])
-    }
-  })
-
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault()
     
-    if (!input.trim() || chatMutation.isPending) return
+    if (!input.trim() || isStreaming) return
     
     const query = input.trim()
-    const userMessage: ChatMessage = {
-      id: Date.now().toString(),
-      role: "user",
-      content: query,
-      timestamp: new Date()
-    }
-    
-    setMessages(prev => [...prev, userMessage])
     setInput("")
     setCurrentAnalysis(null)
+    setIsStreaming(true)
     
     console.log('Chat query submitted:', query)
     console.log('Query submitted:', query, 'with context:', mediaContextIds || [])
@@ -143,11 +83,125 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, className }: ChatPan
     // Call the onQuerySubmit callback for parent components
     onQuerySubmit?.(query, mediaContextIds)
     
-    // Submit to backend API
-    chatMutation.mutate({ 
-      query, 
-      contextIds: mediaContextIds 
-    })
+    // Close any existing event source
+    if (eventSourceRef.current) {
+      eventSourceRef.current.close()
+    }
+
+    try {
+      // Create FormData for the streaming request
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query,
+          contextIds: mediaContextIds || []
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      // Handle streaming response
+      const reader = response.body?.getReader()
+      const decoder = new TextDecoder()
+
+      if (!reader) {
+        throw new Error('No response body reader available')
+      }
+
+      let buffer = ''
+
+      while (true) {
+        const { done, value } = await reader.read()
+        
+        if (done) break
+        
+        buffer += decoder.decode(value, { stream: true })
+        
+        // Process complete lines
+        const lines = buffer.split('\n')
+        buffer = lines.pop() || '' // Keep incomplete line in buffer
+        
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.slice(6))
+              
+              switch (data.type) {
+                case 'user_message':
+                  setMessages(prev => [...prev, {
+                    ...data.data,
+                    timestamp: new Date(data.data.timestamp)
+                  }])
+                  break
+                  
+                case 'typing':
+                  // Typing indicator handled by isStreaming state
+                  break
+                  
+                case 'assistant_message':
+                  setMessages(prev => [...prev, {
+                    ...data.data.message,
+                    timestamp: new Date(data.data.message.timestamp)
+                  }])
+                  setCurrentAnalysis(data.data.analysis)
+                  break
+                  
+                case 'complete':
+                  setIsStreaming(false)
+                  queryClient.invalidateQueries({ queryKey: ['/api/chat/history'] })
+                  break
+                  
+                case 'error':
+                  setIsStreaming(false)
+                  toast({
+                    variant: "destructive",
+                    title: data.data.code === 'quota_exceeded' ? "API Quota Exceeded" : "Chat Error",
+                    description: data.data.error
+                  })
+                  
+                  // Add error message to chat
+                  const errorMessage: ChatMessage = {
+                    id: Date.now().toString(),
+                    role: "assistant",
+                    content: data.data.code === 'quota_exceeded' 
+                      ? "I'm currently experiencing API quota limits. Please try again later."
+                      : "I encountered an error processing your request. Please try again.",
+                    timestamp: new Date()
+                  }
+                  setMessages(prev => [...prev, errorMessage])
+                  break
+              }
+            } catch (parseError) {
+              console.error('Error parsing SSE data:', parseError)
+            }
+          }
+        }
+      }
+      
+    } catch (error) {
+      console.error('Chat streaming error:', error)
+      setIsStreaming(false)
+      
+      toast({
+        variant: "destructive",
+        title: "Connection Error",
+        description: "Failed to connect to the chat service. Please check your connection and try again."
+      })
+      
+      // Add error message to chat
+      const errorMessage: ChatMessage = {
+        id: Date.now().toString(),
+        role: "assistant",
+        content: "I'm having trouble connecting to the service. Please check your connection and try again.",
+        timestamp: new Date()
+      }
+      setMessages(prev => [...prev, errorMessage])
+    }
   }
 
   const handleTranscription = (text: string) => {
@@ -161,8 +215,6 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, className }: ChatPan
       handleSubmit()
     }
   }
-
-  const isAssistantTyping = chatMutation.isPending
 
   return (
     <div className={cn("flex flex-col h-full", className)}>
@@ -206,7 +258,7 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, className }: ChatPan
           </div>
         ))}
         
-        {isAssistantTyping && (
+        {isStreaming && (
           <div className="flex justify-start">
             <Card className="bg-muted p-4">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -230,21 +282,21 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, className }: ChatPan
               onKeyDown={handleKeyDown}
               placeholder={t('chat.placeholder') || "Ask about intelligence, threats, or request analysis..."}
               className="min-h-[40px] max-h-[120px] resize-none"
-              disabled={isAssistantTyping}
+              disabled={isStreaming}
               data-testid="textarea-chat-input"
             />
             <MicControl 
               onTranscription={handleTranscription}
-              disabled={isAssistantTyping}
+              disabled={isStreaming}
             />
           </div>
           <Button 
             type="submit" 
             size="icon"
-            disabled={!input.trim() || isAssistantTyping}
+            disabled={!input.trim() || isStreaming}
             data-testid="button-chat-send"
           >
-            {isAssistantTyping ? (
+            {isStreaming ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <Send className="h-4 w-4" />

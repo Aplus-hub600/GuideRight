@@ -21,49 +21,125 @@ const upload = multer({
   limits: { fileSize: 50 * 1024 * 1024 } // 50MB limit
 });
 
+function handleOpenAIError(error: any, res: any) {
+  console.error("OpenAI error:", error);
+  
+  if (error.message?.includes('429') || error.message?.includes('quota')) {
+    return res.status(429).json({ 
+      success: false, 
+      error: "OpenAI quota exceeded. Please try again later.",
+      code: 'quota_exceeded'
+    });
+  }
+  
+  return res.status(500).json({ 
+    success: false, 
+    error: error.message || "Internal server error" 
+  });
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Chat endpoint with streaming support
   app.post("/api/chat", async (req, res) => {
     try {
       const { query, contextIds } = chatQuerySchema.parse(req.body);
       
-      // Get context from previous messages or analysis results
-      const contextMessages = contextIds && contextIds.length > 0 
-        ? await storage.getChatMessages(10) 
-        : [];
-      
-      const contextStrings = contextMessages
-        .filter(msg => contextIds.includes(msg.id))
-        .map(msg => msg.content);
-
-      // Process the tactical query
-      const analysis = await processTacticalQuery(query, contextStrings);
+      // Set up Server-Sent Events headers
+      res.setHeader('Content-Type', 'text/event-stream');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.flushHeaders();
       
       // Save user message
-      await storage.createChatMessage({
+      const userMessage = await storage.createChatMessage({
         content: query,
         role: "user",
         contextIds: contextIds || []
       });
       
-      // Save assistant response
+      // Send user message confirmation
+      res.write(`data: ${JSON.stringify({ type: 'user_message', data: userMessage })}\n\n`);
+      
+      // Get context from both chat messages and analysis results
+      const contextStrings: string[] = [];
+      
+      if (contextIds && contextIds.length > 0) {
+        // Get all chat messages (not limited to 10)
+        const allMessages = await storage.getChatMessages(200);
+        const referencedMessages = allMessages.filter(msg => contextIds.includes(msg.id));
+        contextStrings.push(...referencedMessages.map(msg => msg.content));
+        
+        // Get referenced analysis results (for media context)
+        const analysisResults = await storage.getAnalysisResults();
+        const referencedAnalysis = analysisResults.filter(result => contextIds.includes(result.id));
+        contextStrings.push(...referencedAnalysis.map(result => {
+          if (typeof result.results === 'object') {
+            return JSON.stringify(result.results);
+          }
+          return String(result.results);
+        }));
+      }
+
+      // Send typing indicator
+      res.write(`data: ${JSON.stringify({ type: 'typing', data: { isTyping: true } })}\n\n`);
+
+      // Process the tactical query
+      const analysis = await processTacticalQuery(query, contextStrings);
+      
+      // Format assistant response content (consistent with frontend display)
+      let assistantContent = analysis.summary;
+      
+      if (analysis.keyFindings?.length > 0) {
+        assistantContent += `\n\nKey findings:\n${analysis.keyFindings.map((finding: string) => `• ${finding}`).join('\n')}`;
+      }
+      
+      if (analysis.recommendations?.length > 0) {
+        assistantContent += `\n\nRecommendations:\n${analysis.recommendations.map((rec: string, i: number) => `${i + 1}. ${rec}`).join('\n')}`;
+      }
+      
+      assistantContent += `\n\nRisk Level: ${analysis.riskLevel}\nConfidence: ${Math.round(analysis.confidence * 100)}%`;
+      
+      // Save assistant response with formatted content (consistent with display)
       const assistantMessage = await storage.createChatMessage({
-        content: JSON.stringify(analysis),
+        content: assistantContent,
         role: "assistant",
         contextIds: []
       });
-
-      res.json({
-        success: true,
-        message: assistantMessage,
-        analysis
-      });
+      
+      // Send assistant response with analysis data
+      res.write(`data: ${JSON.stringify({ 
+        type: 'assistant_message', 
+        data: { 
+          message: assistantMessage,
+          analysis 
+        }
+      })}\n\n`);
+      
+      // Send completion signal
+      res.write(`data: ${JSON.stringify({ type: 'complete' })}\n\n`);
+      res.end();
+      
     } catch (error) {
       console.error("Chat API error:", error);
-      res.status(500).json({ 
-        success: false, 
-        error: error.message || "Failed to process chat query" 
-      });
+      
+      // For streaming endpoints, send error as SSE event
+      if (res.headersSent) {
+        res.write(`data: ${JSON.stringify({ 
+          type: 'error', 
+          data: { 
+            error: error.message?.includes('429') || error.message?.includes('quota') 
+              ? "OpenAI quota exceeded. Please try again later."
+              : error.message || "Failed to process chat query",
+            code: error.message?.includes('429') || error.message?.includes('quota') 
+              ? 'quota_exceeded' 
+              : 'server_error'
+          }
+        })}\n\n`);
+        res.end();
+      } else {
+        handleOpenAIError(error, res);
+      }
     }
   });
 
@@ -102,8 +178,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ success: true, analysis });
     } catch (error) {
-      console.error("PMESII analysis error:", error);
-      res.status(500).json({ success: false, error: error.message });
+      handleOpenAIError(error, res);
     }
   });
 
@@ -149,8 +224,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         fileName: file.originalname
       });
     } catch (error) {
-      console.error("File analysis error:", error);
-      res.status(500).json({ success: false, error: error.message });
+      handleOpenAIError(error, res);
     }
   });
 
@@ -178,8 +252,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         assessment: riskData.assessment
       });
     } catch (error) {
-      console.error("Risk assessment error:", error);
-      res.status(500).json({ success: false, error: error.message });
+      handleOpenAIError(error, res);
     }
   });
 
