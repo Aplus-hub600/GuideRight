@@ -42,6 +42,21 @@ function handleOpenAIError(error: any, res: any) {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Google Maps API key endpoint
+  app.get("/api/config/maps", (req, res) => {
+    const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+    if (!apiKey) {
+      return res.status(500).json({ 
+        success: false, 
+        error: "Google Maps API key not configured" 
+      });
+    }
+    res.json({ 
+      success: true, 
+      apiKey: apiKey 
+    });
+  });
+
   // Chat endpoint with streaming support
   app.post("/api/chat", async (req, res) => {
     try {

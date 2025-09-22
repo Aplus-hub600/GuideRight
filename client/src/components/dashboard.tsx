@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { ChatPanel } from "./chat-panel"
-import { MapPanel } from "./map-panel"
+import { GoogleMapPanel } from "./google-map-panel"
 import { PMESIITest } from "./pmesii-test"
 import { RiskAssessment } from "./risk-assessment"
 import { IntelligenceIntegration } from "./intelligence-integration"
@@ -179,7 +179,7 @@ export function Dashboard({ className }: DashboardProps) {
 
         {/* Middle Panel - Map */}
         <ResizablePanel defaultSize={40} minSize={30}>
-          <MapPanel
+          <GoogleMapPanel
             aoi={currentAOI}
             riskScore={riskScore}
             movementPlan={movementPlan}
