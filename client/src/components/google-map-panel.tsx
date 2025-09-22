@@ -2,10 +2,11 @@ import { useEffect, useRef, useState, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Navigation, Route, Target, Layers, Globe } from "lucide-react"
+import { Navigation, Route, Target, Layers, Globe, MapPin, Crosshair } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { cn } from "@/lib/utils"
 import { useGoogleMaps } from "@/hooks/useGoogleMaps"
+import { useGeolocation } from "@/hooks/useGeolocation"
 
 interface AOI {
   name?: string
@@ -38,6 +39,7 @@ export function GoogleMapPanel({
 }: GoogleMapPanelProps) {
   const { t } = useTranslation()
   const { isLoaded, loadError } = useGoogleMaps()
+  const { position: userPosition, loading: locationLoading, getCurrentPosition } = useGeolocation({ enableHighAccuracy: true })
   const mapRef = useRef<HTMLDivElement>(null)
   const mapInstanceRef = useRef<google.maps.Map | null>(null)
   const markerRef = useRef<google.maps.marker.AdvancedMarkerElement | null>(null)
@@ -45,8 +47,10 @@ export function GoogleMapPanel({
   const polylineRef = useRef<google.maps.Polyline | null>(null)
   const waypointMarkersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([])
   const geotaggedMarkersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([])
+  const userMarkerRef = useRef<google.maps.marker.AdvancedMarkerElement | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [mapType, setMapType] = useState<'roadmap' | 'satellite' | 'hybrid' | 'terrain'>('satellite')
+  const [showUserLocation, setShowUserLocation] = useState(false)
 
   // Default AOI for demo
   const currentAOI = aoi || {
@@ -163,6 +167,32 @@ export function GoogleMapPanel({
       content: aoiPin.element
     })
 
+    // Update user location marker if available
+    if (showUserLocation && userPosition) {
+      // Clear existing user marker
+      if (userMarkerRef.current) {
+        userMarkerRef.current.map = null
+      }
+
+      // Create user location pin
+      const userPin = new PinElement({
+        background: '#3b82f6',
+        borderColor: '#ffffff',
+        scale: 0.9,
+        glyph: '📍'
+      })
+
+      // Add user location marker
+      const userMarker = new AdvancedMarkerElement({
+        position: { lat: userPosition.lat, lng: userPosition.lng },
+        map: map,
+        title: `Your Location (±${userPosition.accuracy?.toFixed(0)}m)`,
+        content: userPin.element
+      })
+
+      userMarkerRef.current = userMarker
+    }
+
     // Add info window
     const infoWindow = new window.google.maps.InfoWindow({
       content: `
@@ -213,7 +243,7 @@ export function GoogleMapPanel({
       })
       polylineRef.current = polyline
     }
-  }, [currentAOI, riskScore, movementPlan])
+  }, [currentAOI, riskScore, movementPlan, showUserLocation, userPosition])
 
   // Initialize map when Google Maps loads
   useEffect(() => {
@@ -230,7 +260,7 @@ export function GoogleMapPanel({
       // Pan to new AOI
       mapInstanceRef.current.panTo({ lat: currentAOI.lat, lng: currentAOI.lng })
     }
-  }, [currentAOI, riskScore, movementPlan, updateMapElements])
+  }, [currentAOI, riskScore, movementPlan, showUserLocation, userPosition, updateMapElements])
 
   // Update map type
   useEffect(() => {
@@ -305,16 +335,41 @@ export function GoogleMapPanel({
         </Card>
 
         <Card className="p-3 backdrop-blur bg-background/90">
-          <Button
-            onClick={handleMovementPlan}
-            disabled={isLoading}
-            size="sm"
-            className="w-full gap-2"
-            data-testid="button-movement-plan"
-          >
-            <Route className="h-4 w-4" />
-            {isLoading ? "Computing..." : t('map.route')}
-          </Button>
+          <div className="space-y-2">
+            <Button
+              onClick={handleMovementPlan}
+              disabled={isLoading}
+              size="sm"
+              className="w-full gap-2"
+              data-testid="button-movement-plan"
+            >
+              <Route className="h-4 w-4" />
+              {isLoading ? "Computing..." : t('map.route')}
+            </Button>
+            
+            <Button
+              onClick={() => {
+                if (!showUserLocation && userPosition) {
+                  setShowUserLocation(true)
+                  mapInstanceRef.current?.panTo({ lat: userPosition.lat, lng: userPosition.lng })
+                } else if (!userPosition) {
+                  getCurrentPosition()
+                  setShowUserLocation(true)
+                } else {
+                  setShowUserLocation(!showUserLocation)
+                }
+              }}
+              disabled={locationLoading}
+              variant={showUserLocation ? 'default' : 'outline'}
+              size="sm"
+              className="w-full gap-2"
+              data-testid="button-user-location"
+            >
+              <Crosshair className="h-4 w-4" />
+              {locationLoading ? 'Locating...' : 
+               showUserLocation ? 'Hide Location' : 'My Location'}
+            </Button>
+          </div>
         </Card>
       </div>
 
