@@ -2,13 +2,12 @@ import { useEffect, useRef, useState, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Navigation, Route, Target, Layers, Globe, MapPin, Crosshair, Camera, FileImage, Search } from "lucide-react"
+import { Navigation, Route, Target, Layers, Globe, MapPin, Crosshair, Camera, FileImage } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { useQuery } from "@tanstack/react-query"
 import { cn } from "@/lib/utils"
 import { useGoogleMaps } from "@/hooks/useGoogleMaps"
 import { useGeolocation } from "@/hooks/useGeolocation"
-import { Input } from "@/components/ui/input"
 
 interface AOI {
   name?: string
@@ -64,12 +63,9 @@ export function GoogleMapPanel({
   const waypointMarkersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([])
   const geotaggedMarkersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([])
   const userMarkerRef = useRef<google.maps.marker.AdvancedMarkerElement | null>(null)
-  const searchMarkerRef = useRef<google.maps.marker.AdvancedMarkerElement | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [mapType, setMapType] = useState<'roadmap' | 'satellite' | 'hybrid' | 'terrain'>('satellite')
   const [showUserLocation, setShowUserLocation] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [isSearching, setIsSearching] = useState(false)
 
   // Default AOI for demo
   const currentAOI = aoi || {
@@ -127,66 +123,6 @@ export function GoogleMapPanel({
     onMovementPlanRequest?.()
   }
 
-  const handleSearch = async () => {
-    if (!searchQuery.trim() || !isLoaded || !mapInstanceRef.current) return
-    
-    setIsSearching(true)
-    
-    try {
-      const geocoder = new google.maps.Geocoder()
-      const result = await geocoder.geocode({ address: searchQuery })
-      
-      if (result.results[0]) {
-        const location = result.results[0].geometry.location
-        const lat = location.lat()
-        const lng = location.lng()
-        
-        // Center map on the found location
-        mapInstanceRef.current.setCenter({ lat, lng })
-        mapInstanceRef.current.setZoom(15)
-        
-        // Clear existing search marker
-        if (searchMarkerRef.current) {
-          searchMarkerRef.current.map = null
-        }
-        
-        // Create marker element for search result
-        const markerElement = document.createElement('div')
-        markerElement.innerHTML = '🔍'
-        markerElement.style.fontSize = '24px'
-        markerElement.style.cursor = 'pointer'
-        markerElement.title = result.results[0].formatted_address
-        
-        // Create and position search marker
-        searchMarkerRef.current = new google.maps.marker.AdvancedMarkerElement({
-          map: mapInstanceRef.current,
-          position: { lat, lng },
-          content: markerElement,
-          title: result.results[0].formatted_address,
-        })
-        
-        // Update AOI if callback is provided
-        onAOIChange?.({
-          name: result.results[0].formatted_address,
-          lat,
-          lng,
-          radiusKm: 5
-        })
-        
-      } else {
-        console.error('No results found for:', searchQuery)
-      }
-    } catch (error) {
-      console.error('Geocoding error:', error)
-    } finally {
-      setIsSearching(false)
-    }
-  }
-
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    handleSearch()
-  }
 
   const initializeMap = useCallback(async () => {
     if (!isLoaded || !mapRef.current || !window.google || mapInstanceRef.current) return
@@ -504,32 +440,8 @@ export function GoogleMapPanel({
 
   return (
     <div className={cn("relative h-full", className)}>
-      {/* Search Bar */}
-      <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-[1001] w-96">
-        <Card className="p-3 backdrop-blur bg-background/90">
-          <form onSubmit={handleSearchSubmit} className="flex gap-2">
-            <Input
-              type="text"
-              placeholder="Search for a location..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="flex-1"
-              data-testid="input-location-search"
-            />
-            <Button
-              type="submit"
-              size="icon"
-              disabled={isSearching || !searchQuery.trim()}
-              data-testid="button-search-location"
-            >
-              <Search className="h-4 w-4" />
-            </Button>
-          </form>
-        </Card>
-      </div>
-
       {/* Control Panel */}
-      <div className="absolute top-20 left-4 z-[1000] space-y-2">
+      <div className="absolute top-4 left-4 z-[1000] space-y-2">
         <Card className="p-3 backdrop-blur bg-background/90">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
