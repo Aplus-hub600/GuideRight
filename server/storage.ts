@@ -10,7 +10,9 @@ import {
   type Waypoint,
   type InsertWaypoint,
   type GeotaggedFile,
-  type InsertGeotaggedFile
+  type InsertGeotaggedFile,
+  type SearchQuery,
+  type SearchResult
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 
@@ -44,6 +46,9 @@ export interface IStorage {
   createGeotaggedFile(file: InsertGeotaggedFile): Promise<GeotaggedFile>;
   getGeotaggedFilesByLocation(lat: number, lng: number, radiusKm: number): Promise<GeotaggedFile[]>;
   deleteGeotaggedFile(id: string): Promise<boolean>;
+  
+  // Search operations
+  searchAll(query: SearchQuery): Promise<SearchResult[]>;
 }
 
 export class MemStorage implements IStorage {
@@ -214,6 +219,219 @@ export class MemStorage implements IStorage {
     
     this.geotaggedFiles.splice(index, 1);
     return true;
+  }
+
+  async searchAll(query: SearchQuery): Promise<SearchResult[]> {
+    const searchTerm = query.q.toLowerCase();
+    const results: SearchResult[] = [];
+    
+    // Search waypoints
+    if (!query.filters?.type || query.filters.type === 'waypoint') {
+      for (const waypoint of this.waypoints) {
+        if (!waypoint.isActive) continue;
+        
+        const score = this.calculateSearchScore(searchTerm, [
+          waypoint.name,
+          waypoint.description || '',
+          waypoint.type,
+          JSON.stringify(waypoint.intelligenceData || {})
+        ]);
+        
+        if (score > 0) {
+          results.push({
+            id: waypoint.id,
+            type: 'waypoint',
+            title: waypoint.name,
+            snippet: this.createSnippet(searchTerm, [waypoint.name, waypoint.description || '', waypoint.type]),
+            tags: [waypoint.type],
+            timestamp: waypoint.timestamp.toISOString(),
+            score,
+            location: { lat: waypoint.lat, lng: waypoint.lng },
+            context: { type: waypoint.type, description: waypoint.description }
+          });
+        }
+      }
+    }
+    
+    // Search geotagged files
+    if (!query.filters?.type || query.filters.type === 'geotagged') {
+      for (const file of this.geotaggedFiles) {
+        const score = this.calculateSearchScore(searchTerm, [
+          file.filename,
+          file.source,
+          JSON.stringify(file.metadata || {})
+        ]);
+        
+        if (score > 0) {
+          results.push({
+            id: file.id,
+            type: 'geotagged',
+            title: file.filename,
+            snippet: this.createSnippet(searchTerm, [file.filename, file.source]),
+            tags: [file.source],
+            timestamp: file.timestamp.toISOString(),
+            score,
+            location: { lat: file.lat, lng: file.lng },
+            context: { source: file.source, metadata: file.metadata }
+          });
+        }
+      }
+    }
+    
+    // Search PMESII analysis results
+    if (!query.filters?.type || query.filters.type === 'pmesii') {
+      for (const result of this.analysisResults) {
+        if (result.analysisType !== 'pmesii') continue;
+        
+        const score = this.calculateSearchScore(searchTerm, [
+          result.region || '',
+          JSON.stringify(result.results),
+          JSON.stringify(result.aoiData || {})
+        ]);
+        
+        if (score > 0) {
+          results.push({
+            id: result.id,
+            type: 'pmesii',
+            title: `PMESII Analysis - ${result.region || 'Unknown Region'}`,
+            snippet: this.createSnippet(searchTerm, [result.region || '', JSON.stringify(result.results)]),
+            tags: ['pmesii', 'analysis'],
+            timestamp: result.timestamp.toISOString(),
+            score,
+            context: { region: result.region, analysisType: result.analysisType }
+          });
+        }
+      }
+    }
+    
+    // Search intelligence analysis results
+    if (!query.filters?.type || query.filters.type === 'intelligence') {
+      for (const result of this.analysisResults) {
+        if (result.analysisType === 'pmesii') continue;
+        
+        const score = this.calculateSearchScore(searchTerm, [
+          result.analysisType,
+          result.region || '',
+          JSON.stringify(result.results)
+        ]);
+        
+        if (score > 0) {
+          results.push({
+            id: result.id,
+            type: 'intelligence',
+            title: `${result.analysisType} Analysis - ${result.region || 'Unknown Region'}`,
+            snippet: this.createSnippet(searchTerm, [result.analysisType, JSON.stringify(result.results)]),
+            tags: [result.analysisType, 'analysis'],
+            timestamp: result.timestamp.toISOString(),
+            score,
+            context: { region: result.region, analysisType: result.analysisType }
+          });
+        }
+      }
+    }
+    
+    // Search risk assessments
+    if (!query.filters?.type || query.filters.type === 'risk') {
+      for (const assessment of this.riskAssessments) {
+        const aoiName = (assessment.aoi as any)?.name || '';
+        const riskFactors = Array.isArray(assessment.riskFactors) ? assessment.riskFactors.join(' ') : '';
+        
+        const score = this.calculateSearchScore(searchTerm, [
+          aoiName,
+          riskFactors,
+          assessment.riskScore.toString()
+        ]);
+        
+        if (score > 0) {
+          results.push({
+            id: assessment.id,
+            type: 'risk',
+            title: `Risk Assessment - ${aoiName}`,
+            snippet: this.createSnippet(searchTerm, [aoiName, riskFactors]),
+            tags: ['risk', 'assessment'],
+            timestamp: assessment.timestamp.toISOString(),
+            score,
+            location: (assessment.aoi as any)?.lat && (assessment.aoi as any)?.lng ? 
+              { lat: (assessment.aoi as any).lat, lng: (assessment.aoi as any).lng } : undefined,
+            context: { riskScore: assessment.riskScore, aoi: assessment.aoi }
+          });
+        }
+      }
+    }
+    
+    // Apply filters
+    let filteredResults = results;
+    
+    if (query.filters?.region) {
+      const { lat, lng, radius } = query.filters.region;
+      filteredResults = results.filter(result => {
+        if (!result.location) return false;
+        const distance = this.calculateDistance(lat, lng, result.location.lat, result.location.lng);
+        return distance <= radius;
+      });
+    }
+    
+    if (query.filters?.timeRange) {
+      const start = new Date(query.filters.timeRange.start);
+      const end = new Date(query.filters.timeRange.end);
+      filteredResults = filteredResults.filter(result => {
+        const timestamp = new Date(result.timestamp);
+        return timestamp >= start && timestamp <= end;
+      });
+    }
+    
+    // Sort by score (descending) and limit results
+    return filteredResults
+      .sort((a, b) => b.score - a.score)
+      .slice(0, query.limit || 50);
+  }
+  
+  private calculateSearchScore(searchTerm: string, fields: string[]): number {
+    let score = 0;
+    
+    for (const field of fields) {
+      const fieldLower = field.toLowerCase();
+      
+      // Exact match gets highest score
+      if (fieldLower === searchTerm) {
+        score += 1.0;
+      }
+      // Starts with search term gets high score
+      else if (fieldLower.startsWith(searchTerm)) {
+        score += 0.8;
+      }
+      // Contains search term gets medium score
+      else if (fieldLower.includes(searchTerm)) {
+        score += 0.6;
+      }
+      // Word boundary matches get lower score
+      else if (new RegExp(`\\b${searchTerm}\\b`).test(fieldLower)) {
+        score += 0.4;
+      }
+    }
+    
+    return Math.min(score, 1.0); // Cap at 1.0
+  }
+  
+  private createSnippet(searchTerm: string, fields: string[]): string {
+    for (const field of fields) {
+      const fieldLower = field.toLowerCase();
+      const index = fieldLower.indexOf(searchTerm);
+      
+      if (index !== -1) {
+        const start = Math.max(0, index - 30);
+        const end = Math.min(field.length, index + searchTerm.length + 30);
+        let snippet = field.substring(start, end);
+        
+        if (start > 0) snippet = '...' + snippet;
+        if (end < field.length) snippet = snippet + '...';
+        
+        return snippet;
+      }
+    }
+    
+    // Return first non-empty field if no match found
+    return fields.find(f => f.trim().length > 0)?.substring(0, 100) || '';
   }
 
   private calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
