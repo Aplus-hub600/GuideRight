@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { useQuery } from "@tanstack/react-query"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -14,6 +15,7 @@ import {
   TrendingUp
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import type { AnalysisResult } from "@shared/schema"
 
 interface IntelligenceReport {
   title: string
@@ -72,6 +74,39 @@ const enhancedAnalysis = {
 
 export function IntelligenceIntegration({ className }: IntelligenceIntegrationProps) {
   const [selectedTab, setSelectedTab] = useState("report")
+  
+  // Fetch analysis results from the API
+  const { data: analysisData, isLoading } = useQuery<{ success: boolean; results: AnalysisResult[] }>({
+    queryKey: ['/api/analysis/history', { analysisType: 'intelligence' }],
+    enabled: true
+  })
+  
+  // Get the latest intelligence analysis results
+  const intelligenceResults = analysisData?.results || []
+  
+  const filteredResults = intelligenceResults.filter(
+    (result: AnalysisResult) => result.analysisType === 'intelligence'
+  ).sort((a: AnalysisResult, b: AnalysisResult) => 
+    new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+  )
+  
+  // Use the first external intelligence result or fallback to hardcoded data
+  const currentIntelligence = filteredResults.length > 0 
+    ? filteredResults.find((r: AnalysisResult) => r.source && r.source !== 'internal')
+    : null
+  
+  const getSourceBadgeColor = (source: string) => {
+    const colors = {
+      "fraym": "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
+      "seerist": "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
+      "sprinklr": "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300",
+      "news": "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300",
+      "social": "bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-300",
+      "weather": "bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-300",
+      "infra": "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300"
+    }
+    return colors[source.toLowerCase() as keyof typeof colors] || colors.news
+  }
 
   const getSeverityColor = (severity: number) => {
     if (severity <= 2) return "text-red-600 dark:text-red-400"
@@ -80,8 +115,8 @@ export function IntelligenceIntegration({ className }: IntelligenceIntegrationPr
   }
 
   const getSeverityBadge = (severity: number) => {
-    if (severity <= 2) return { label: "HIGH", variant: "destructive" as const }
-    if (severity <= 3) return { label: "MEDIUM", variant: "secondary" as const }
+    if (severity >= 7) return { label: "HIGH", variant: "destructive" as const }
+    if (severity >= 4) return { label: "MEDIUM", variant: "secondary" as const }
     return { label: "LOW", variant: "outline" as const }
   }
 
@@ -102,9 +137,18 @@ export function IntelligenceIntegration({ className }: IntelligenceIntegrationPr
             <div className="flex items-center gap-2">
               <FileText className="h-5 w-5" />
               <CardTitle className="text-lg">Intelligence Report Integration</CardTitle>
+              {currentIntelligence?.source && (
+                <Badge 
+                  variant="outline" 
+                  className={cn("text-xs ml-2", getSourceBadgeColor(currentIntelligence.source))}
+                  data-testid="badge-intelligence-source"
+                >
+                  {currentIntelligence.source.toUpperCase()}
+                </Badge>
+              )}
             </div>
-            <Badge {...getSeverityBadge(dhakaIntelligence.severity)}>
-              SEVERITY {dhakaIntelligence.severity}
+            <Badge {...getSeverityBadge(currentIntelligence?.results?.severity || dhakaIntelligence.severity)}>
+              {getSeverityBadge(currentIntelligence?.results?.severity || dhakaIntelligence.severity).label} ({currentIntelligence?.results?.severity || dhakaIntelligence.severity})
             </Badge>
           </div>
         </CardHeader>
@@ -119,31 +163,47 @@ export function IntelligenceIntegration({ className }: IntelligenceIntegrationPr
 
             <TabsContent value="report" className="space-y-4 mt-4">
               <div className="space-y-3">
-                <h3 className="font-semibold text-lg">{dhakaIntelligence.title}</h3>
+                <h3 className="font-semibold text-lg">
+                  {currentIntelligence?.results?.title || dhakaIntelligence.title}
+                </h3>
                 
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4 text-muted-foreground" />
-                    <span>Occurred: {new Date(dhakaIntelligence.occurred).toLocaleDateString()}</span>
+                    <span>Occurred: {new Date(currentIntelligence?.timestamp || dhakaIntelligence.occurred).toLocaleDateString()}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <MapPin className="h-4 w-4 text-muted-foreground" />
-                    <span>{dhakaIntelligence.location}</span>
+                    <span>{currentIntelligence?.region || dhakaIntelligence.location}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Target className="h-4 w-4 text-muted-foreground" />
-                    <span>Event Type: {dhakaIntelligence.events}</span>
+                    <span>Event Type: {currentIntelligence?.results?.category || dhakaIntelligence.events}</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Users className="h-4 w-4 text-muted-foreground" />
-                    <span>Coordinates: {dhakaIntelligence.coordinates?.lat.toFixed(4)}, {dhakaIntelligence.coordinates?.lng.toFixed(4)}</span>
-                  </div>
+                  {currentIntelligence?.source && (
+                    <div className="flex items-center gap-2">
+                      <Users className="h-4 w-4 text-muted-foreground" />
+                      <span>Source: {currentIntelligence.source.toUpperCase()}</span>
+                    </div>
+                  )}
+                  {currentIntelligence?.aoiData && (
+                    <div className="flex items-center gap-2">
+                      <Users className="h-4 w-4 text-muted-foreground" />
+                      <span>Coordinates: {(currentIntelligence.aoiData as any)?.lat?.toFixed(4)}, {(currentIntelligence.aoiData as any)?.lng?.toFixed(4)}</span>
+                    </div>
+                  )}
+                  {!currentIntelligence && (
+                    <div className="flex items-center gap-2">
+                      <Users className="h-4 w-4 text-muted-foreground" />
+                      <span>Coordinates: {dhakaIntelligence.coordinates?.lat.toFixed(4)}, {dhakaIntelligence.coordinates?.lng.toFixed(4)}</span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="bg-muted/30 p-3 rounded-md">
                   <h4 className="font-medium mb-2">Intelligence Summary:</h4>
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    {dhakaIntelligence.summary}
+                    {currentIntelligence?.results?.summary || dhakaIntelligence.summary}
                   </p>
                 </div>
               </div>
