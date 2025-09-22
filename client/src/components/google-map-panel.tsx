@@ -83,7 +83,7 @@ export function GoogleMapPanel({
   }
 
   const initializeMap = useCallback(() => {
-    if (!isLoaded || !mapRef.current || !window.google) return
+    if (!isLoaded || !mapRef.current || !window.google || mapInstanceRef.current) return
 
     // Initialize map
     const map = new window.google.maps.Map(mapRef.current, {
@@ -94,6 +94,7 @@ export function GoogleMapPanel({
       streetViewControl: true,
       fullscreenControl: true,
       zoomControl: true,
+      tilt: 45, // Enable 3D terrain capability
       styles: [
         // Dark mode styling for better tactical appearance
         {
@@ -119,7 +120,7 @@ export function GoogleMapPanel({
     })
 
     updateMapElements(map)
-  }, [isLoaded, currentAOI, mapType, onAOIChange])
+  }, [isLoaded, onAOIChange])
 
   const updateMapElements = useCallback((map: google.maps.Map) => {
     // Clear existing elements
