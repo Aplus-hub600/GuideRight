@@ -10,6 +10,7 @@ const resources = {
       "nav.intelligence": "Intelligence",
       "nav.chat": "Chat",
       "nav.analytics": "Analytics",
+      "nav.timeline": "Timeline",
       
       // Chat Interface
       "chat.placeholder": "Ask about any area of interest...",
@@ -59,6 +60,7 @@ const resources = {
       "nav.intelligence": "Inteligencia",
       "nav.chat": "Chat", 
       "nav.analytics": "Análisis",
+      "nav.timeline": "Cronología",
       "chat.placeholder": "Consulta sobre cualquier área de interés...",
       "pmesii.political": "Político",
       "pmesii.military": "Militar",
@@ -76,6 +78,7 @@ const resources = {
       "nav.intelligence": "Renseignement",
       "nav.chat": "Chat",
       "nav.analytics": "Analyse",
+      "nav.timeline": "Chronologie",
       "chat.placeholder": "Demandez à propos de toute zone d'intérêt...",
       "pmesii.political": "Politique",
       "pmesii.military": "Militaire",
@@ -93,6 +96,7 @@ const resources = {
       "nav.intelligence": "استخبارات",
       "nav.chat": "محادثة",
       "nav.analytics": "تحليلات",
+      "nav.timeline": "الجدول الزمني",
       "chat.placeholder": "اسأل عن أي منطقة اهتمام...",
       "pmesii.political": "سياسي",
       "pmesii.military": "عسكري",
