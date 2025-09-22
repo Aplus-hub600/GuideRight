@@ -40,9 +40,11 @@ export function GoogleMapPanel({
   const { isLoaded, loadError } = useGoogleMaps()
   const mapRef = useRef<HTMLDivElement>(null)
   const mapInstanceRef = useRef<google.maps.Map | null>(null)
-  const markerRef = useRef<google.maps.Marker | null>(null)
+  const markerRef = useRef<google.maps.marker.AdvancedMarkerElement | null>(null)
   const circleRef = useRef<google.maps.Circle | null>(null)
   const polylineRef = useRef<google.maps.Polyline | null>(null)
+  const waypointMarkersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([])
+  const geotaggedMarkersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [mapType, setMapType] = useState<'roadmap' | 'satellite' | 'hybrid' | 'terrain'>('satellite')
 
@@ -82,13 +84,14 @@ export function GoogleMapPanel({
     onMovementPlanRequest?.()
   }
 
-  const initializeMap = useCallback(() => {
+  const initializeMap = useCallback(async () => {
     if (!isLoaded || !mapRef.current || !window.google || mapInstanceRef.current) return
 
-    // Initialize map
+    // Initialize map with map ID for advanced markers
     const map = new window.google.maps.Map(mapRef.current, {
       center: { lat: currentAOI.lat, lng: currentAOI.lng },
       zoom: 13,
+      mapId: 'TACTICAL_MAP', // Required for AdvancedMarkerElement
       mapTypeId: mapType,
       mapTypeControl: true,
       streetViewControl: true,
@@ -119,13 +122,23 @@ export function GoogleMapPanel({
       }
     })
 
-    updateMapElements(map)
+    // Load marker library for AdvancedMarkerElement
+    const { AdvancedMarkerElement, PinElement } = await google.maps.importLibrary("marker") as google.maps.MarkerLibrary;
+    
+    updateMapElements(map, AdvancedMarkerElement, PinElement)
   }, [isLoaded, onAOIChange])
 
-  const updateMapElements = useCallback((map: google.maps.Map) => {
+  const updateMapElements = useCallback(async (map: google.maps.Map, AdvancedMarkerElement?: any, PinElement?: any) => {
+    // Import marker library if not provided
+    if (!AdvancedMarkerElement || !PinElement) {
+      const { AdvancedMarkerElement: AME, PinElement: PE } = await google.maps.importLibrary("marker") as google.maps.MarkerLibrary;
+      AdvancedMarkerElement = AME;
+      PinElement = PE;
+    }
+
     // Clear existing elements
     if (markerRef.current) {
-      markerRef.current.setMap(null)
+      markerRef.current.map = null
     }
     if (circleRef.current) {
       circleRef.current.setMap(null)
@@ -134,19 +147,20 @@ export function GoogleMapPanel({
       polylineRef.current.setMap(null)
     }
 
-    // Add marker
-    const marker = new window.google.maps.Marker({
+    // Create custom pin for AOI marker
+    const aoiPin = new PinElement({
+      background: getRiskColor(riskScore),
+      borderColor: '#ffffff',
+      scale: 1.2,
+      glyph: '🎯'
+    })
+
+    // Add advanced marker for AOI
+    const marker = new AdvancedMarkerElement({
       position: { lat: currentAOI.lat, lng: currentAOI.lng },
       map: map,
       title: currentAOI.name || "Area of Interest",
-      icon: {
-        path: window.google.maps.SymbolPath.CIRCLE,
-        scale: 8,
-        fillColor: getRiskColor(riskScore),
-        fillOpacity: 0.8,
-        strokeColor: '#ffffff',
-        strokeWeight: 2
-      }
+      content: aoiPin.element
     })
 
     // Add info window
@@ -167,7 +181,7 @@ export function GoogleMapPanel({
     })
 
     marker.addListener('click', () => {
-      infoWindow.open(map, marker)
+      infoWindow.open({ map, anchor: marker })
     })
 
     markerRef.current = marker

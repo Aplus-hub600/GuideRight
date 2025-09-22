@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, jsonb, real } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, jsonb, real, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -35,6 +35,31 @@ export const riskAssessments = pgTable("risk_assessments", {
   timestamp: timestamp("timestamp").defaultNow().notNull(),
 });
 
+export const waypoints = pgTable("waypoints", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  lat: real("lat").notNull(),
+  lng: real("lng").notNull(),
+  type: text("type").notNull(), // 'cache', 'waypoint', 'target', 'safe_house'
+  description: text("description"),
+  intelligenceData: jsonb("intelligence_data"), // Associated tactical intelligence
+  isActive: boolean("is_active").default(true),
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
+});
+
+export const geotaggedFiles = pgTable("geotagged_files", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  fileId: text("file_id").notNull(),
+  filename: text("filename").notNull(),
+  lat: real("lat").notNull(),
+  lng: real("lng").notNull(),
+  altitude: real("altitude"), // Elevation data if available
+  accuracy: real("accuracy"), // GPS accuracy in meters
+  source: text("source").notNull(), // 'exif', 'manual', 'device'
+  metadata: jsonb("metadata"), // Additional EXIF or file metadata
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
+});
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
@@ -61,6 +86,27 @@ export const insertRiskAssessmentSchema = createInsertSchema(riskAssessments).pi
   riskFactors: true,
 });
 
+export const insertWaypointSchema = createInsertSchema(waypoints).pick({
+  name: true,
+  lat: true,
+  lng: true,
+  type: true,
+  description: true,
+  intelligenceData: true,
+  isActive: true,
+});
+
+export const insertGeotaggedFileSchema = createInsertSchema(geotaggedFiles).pick({
+  fileId: true,
+  filename: true,
+  lat: true,
+  lng: true,
+  altitude: true,
+  accuracy: true,
+  source: true,
+  metadata: true,
+});
+
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -70,6 +116,10 @@ export type AnalysisResult = typeof analysisResults.$inferSelect;
 export type InsertAnalysisResult = z.infer<typeof insertAnalysisResultSchema>;
 export type RiskAssessment = typeof riskAssessments.$inferSelect;
 export type InsertRiskAssessment = z.infer<typeof insertRiskAssessmentSchema>;
+export type Waypoint = typeof waypoints.$inferSelect;
+export type InsertWaypoint = z.infer<typeof insertWaypointSchema>;
+export type GeotaggedFile = typeof geotaggedFiles.$inferSelect;
+export type InsertGeotaggedFile = z.infer<typeof insertGeotaggedFileSchema>;
 
 // API Request/Response types
 export const chatQuerySchema = z.object({
@@ -103,6 +153,28 @@ export const pmesiiAnalysisRequestSchema = z.object({
   }).optional(),
 });
 
+export const waypointRequestSchema = z.object({
+  name: z.string().min(1),
+  lat: z.number(),
+  lng: z.number(),
+  type: z.enum(['cache', 'waypoint', 'target', 'safe_house']),
+  description: z.string().optional(),
+  intelligenceData: z.any().optional(),
+});
+
+export const geotagRequestSchema = z.object({
+  fileId: z.string(),
+  filename: z.string(),
+  lat: z.number(),
+  lng: z.number(),
+  altitude: z.number().optional(),
+  accuracy: z.number().optional(),
+  source: z.enum(['exif', 'manual', 'device']),
+  metadata: z.any().optional(),
+});
+
 export type ChatQueryRequest = z.infer<typeof chatQuerySchema>;
 export type FileAnalysisRequest = z.infer<typeof fileAnalysisSchema>;
 export type RiskAssessmentRequest = z.infer<typeof riskAssessmentRequestSchema>;
+export type WaypointRequest = z.infer<typeof waypointRequestSchema>;
+export type GeotagRequest = z.infer<typeof geotagRequestSchema>;

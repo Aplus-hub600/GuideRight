@@ -11,8 +11,12 @@ import {
   chatQuerySchema,
   riskAssessmentRequestSchema,
   pmesiiAnalysisRequestSchema,
+  waypointRequestSchema,
+  geotagRequestSchema,
   type ChatQueryRequest,
-  type RiskAssessmentRequest
+  type RiskAssessmentRequest,
+  type WaypointRequest,
+  type GeotagRequest
 } from "@shared/schema";
 import multer from "multer";
 // import pdfParse from "pdf-parse"; // Temporarily disabled due to initialization issues
@@ -340,6 +344,111 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: true, results });
     } catch (error) {
       console.error("Risk history error:", error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  // Waypoint endpoints
+  app.get("/api/waypoints", async (req, res) => {
+    try {
+      const waypoints = await storage.getWaypoints();
+      res.json({ success: true, waypoints });
+    } catch (error) {
+      console.error("Error getting waypoints:", error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  app.post("/api/waypoints", async (req, res) => {
+    try {
+      const waypointData = waypointRequestSchema.parse(req.body);
+      const waypoint = await storage.createWaypoint(waypointData);
+      res.json({ success: true, waypoint });
+    } catch (error) {
+      console.error("Error creating waypoint:", error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  app.put("/api/waypoints/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updates = waypointRequestSchema.partial().parse(req.body);
+      const waypoint = await storage.updateWaypoint(id, updates);
+      
+      if (!waypoint) {
+        return res.status(404).json({ success: false, error: "Waypoint not found" });
+      }
+      
+      res.json({ success: true, waypoint });
+    } catch (error) {
+      console.error("Error updating waypoint:", error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  app.delete("/api/waypoints/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const success = await storage.deleteWaypoint(id);
+      
+      if (!success) {
+        return res.status(404).json({ success: false, error: "Waypoint not found" });
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting waypoint:", error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  // Geotagged file endpoints
+  app.get("/api/geotagged", async (req, res) => {
+    try {
+      const { lat, lng, radius } = req.query;
+      
+      let files;
+      if (lat && lng && radius) {
+        files = await storage.getGeotaggedFilesByLocation(
+          parseFloat(lat as string),
+          parseFloat(lng as string),
+          parseFloat(radius as string)
+        );
+      } else {
+        files = await storage.getGeotaggedFiles();
+      }
+      
+      res.json({ success: true, files });
+    } catch (error) {
+      console.error("Error getting geotagged files:", error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  app.post("/api/geotagged", async (req, res) => {
+    try {
+      const geotagData = geotagRequestSchema.parse(req.body);
+      const file = await storage.createGeotaggedFile(geotagData);
+      res.json({ success: true, file });
+    } catch (error) {
+      console.error("Error creating geotagged file:", error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  app.delete("/api/geotagged/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const success = await storage.deleteGeotaggedFile(id);
+      
+      if (!success) {
+        return res.status(404).json({ success: false, error: "Geotagged file not found" });
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting geotagged file:", error);
       res.status(500).json({ success: false, error: error.message });
     }
   });

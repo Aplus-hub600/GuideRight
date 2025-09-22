@@ -6,7 +6,11 @@ import {
   type AnalysisResult,
   type InsertAnalysisResult,
   type RiskAssessment,
-  type InsertRiskAssessment
+  type InsertRiskAssessment,
+  type Waypoint,
+  type InsertWaypoint,
+  type GeotaggedFile,
+  type InsertGeotaggedFile
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 
@@ -28,6 +32,18 @@ export interface IStorage {
   // Risk assessment operations
   getRiskAssessments(): Promise<RiskAssessment[]>;
   createRiskAssessment(assessment: InsertRiskAssessment): Promise<RiskAssessment>;
+  
+  // Waypoint operations
+  getWaypoints(): Promise<Waypoint[]>;
+  createWaypoint(waypoint: InsertWaypoint): Promise<Waypoint>;
+  updateWaypoint(id: string, updates: Partial<InsertWaypoint>): Promise<Waypoint | null>;
+  deleteWaypoint(id: string): Promise<boolean>;
+  
+  // Geotagged file operations
+  getGeotaggedFiles(): Promise<GeotaggedFile[]>;
+  createGeotaggedFile(file: InsertGeotaggedFile): Promise<GeotaggedFile>;
+  getGeotaggedFilesByLocation(lat: number, lng: number, radiusKm: number): Promise<GeotaggedFile[]>;
+  deleteGeotaggedFile(id: string): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -35,12 +51,16 @@ export class MemStorage implements IStorage {
   private chatMessages: ChatMessage[];
   private analysisResults: AnalysisResult[];
   private riskAssessments: RiskAssessment[];
+  private waypoints: Waypoint[];
+  private geotaggedFiles: GeotaggedFile[];
 
   constructor() {
     this.users = new Map();
     this.chatMessages = [];
     this.analysisResults = [];
     this.riskAssessments = [];
+    this.waypoints = [];
+    this.geotaggedFiles = [];
   }
 
   async getUser(id: string): Promise<User | undefined> {
@@ -124,6 +144,88 @@ export class MemStorage implements IStorage {
     };
     this.riskAssessments.push(assessment);
     return assessment;
+  }
+
+  async getWaypoints(): Promise<Waypoint[]> {
+    return this.waypoints
+      .filter(w => w.isActive !== false)
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  }
+
+  async createWaypoint(insertWaypoint: InsertWaypoint): Promise<Waypoint> {
+    const id = randomUUID();
+    const waypoint: Waypoint = {
+      ...insertWaypoint,
+      id,
+      timestamp: new Date(),
+      description: insertWaypoint.description || null,
+      intelligenceData: insertWaypoint.intelligenceData || null,
+      isActive: insertWaypoint.isActive !== false
+    };
+    this.waypoints.push(waypoint);
+    return waypoint;
+  }
+
+  async updateWaypoint(id: string, updates: Partial<InsertWaypoint>): Promise<Waypoint | null> {
+    const index = this.waypoints.findIndex(w => w.id === id);
+    if (index === -1) return null;
+    
+    this.waypoints[index] = { ...this.waypoints[index], ...updates };
+    return this.waypoints[index];
+  }
+
+  async deleteWaypoint(id: string): Promise<boolean> {
+    const index = this.waypoints.findIndex(w => w.id === id);
+    if (index === -1) return false;
+    
+    this.waypoints[index].isActive = false;
+    return true;
+  }
+
+  async getGeotaggedFiles(): Promise<GeotaggedFile[]> {
+    return this.geotaggedFiles
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  }
+
+  async createGeotaggedFile(insertFile: InsertGeotaggedFile): Promise<GeotaggedFile> {
+    const id = randomUUID();
+    const file: GeotaggedFile = {
+      ...insertFile,
+      id,
+      timestamp: new Date(),
+      altitude: insertFile.altitude || null,
+      accuracy: insertFile.accuracy || null,
+      metadata: insertFile.metadata || null
+    };
+    this.geotaggedFiles.push(file);
+    return file;
+  }
+
+  async getGeotaggedFilesByLocation(lat: number, lng: number, radiusKm: number): Promise<GeotaggedFile[]> {
+    return this.geotaggedFiles.filter(file => {
+      const distance = this.calculateDistance(lat, lng, file.lat, file.lng);
+      return distance <= radiusKm;
+    });
+  }
+
+  async deleteGeotaggedFile(id: string): Promise<boolean> {
+    const index = this.geotaggedFiles.findIndex(f => f.id === id);
+    if (index === -1) return false;
+    
+    this.geotaggedFiles.splice(index, 1);
+    return true;
+  }
+
+  private calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
+    const R = 6371; // Earth's radius in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLng/2) * Math.sin(dLng/2);
+    
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
   }
 }
 
