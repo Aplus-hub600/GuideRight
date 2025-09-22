@@ -95,6 +95,26 @@ export function GoogleMapPanel({
     return 'Critical'
   }
 
+  const getWaypointColor = (type: string) => {
+    switch (type) {
+      case 'cache': return '#10b981' // green
+      case 'target': return '#ef4444' // red
+      case 'safe_house': return '#3b82f6' // blue
+      case 'waypoint':
+      default: return '#f59e0b' // orange
+    }
+  }
+
+  const getWaypointIcon = (type: string) => {
+    switch (type) {
+      case 'cache': return '📦'
+      case 'target': return '🎯'
+      case 'safe_house': return '🏠'
+      case 'waypoint':
+      default: return '📍'
+    }
+  }
+
   const handleMovementPlan = async () => {
     console.log('Movement plan requested')
     setIsLoading(true)
