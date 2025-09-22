@@ -470,7 +470,7 @@ export class MemStorage implements IStorage {
   private initializeExternalIntelligence(): void {
     // Seerist threat intelligence reports
     this.analysisResults.push({
-      id: randomUUID(),
+      id: "seerist-dhaka-civil-unrest-001",
       fileId: null,
       analysisType: 'intelligence',
       results: {
@@ -516,7 +516,7 @@ export class MemStorage implements IStorage {
     });
 
     this.analysisResults.push({
-      id: randomUUID(),
+      id: "seerist-south-asia-infrastructure-002",
       fileId: null,
       analysisType: 'intelligence',
       results: {
@@ -562,7 +562,7 @@ export class MemStorage implements IStorage {
 
     // Fraym geospatial intelligence reports
     this.analysisResults.push({
-      id: randomUUID(),
+      id: "fraym-population-displacement-001",
       fileId: null,
       analysisType: 'intelligence',
       results: {

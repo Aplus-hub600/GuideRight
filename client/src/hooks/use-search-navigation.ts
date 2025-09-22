@@ -38,8 +38,12 @@ export function useSearchNavigation() {
         break
 
       case 'intelligence':
-        // Navigate to intelligence analysis page
-        setLocation('/analysis')
+        // Navigate to intelligence analysis page with the specific item ID
+        if (result.id) {
+          setLocation(`/analysis?id=${result.id}`)
+        } else {
+          setLocation('/analysis')
+        }
         break
 
       case 'risk':

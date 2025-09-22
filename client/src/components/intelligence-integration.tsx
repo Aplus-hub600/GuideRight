@@ -75,9 +75,13 @@ const enhancedAnalysis = {
 export function IntelligenceIntegration({ className }: IntelligenceIntegrationProps) {
   const [selectedTab, setSelectedTab] = useState("report")
   
+  // Get the ID from URL parameters if navigated from search
+  const urlParams = new URLSearchParams(window.location.search)
+  const selectedId = urlParams.get('id')
+  
   // Fetch analysis results from the API
   const { data: analysisData, isLoading } = useQuery<{ success: boolean; results: AnalysisResult[] }>({
-    queryKey: ['/api/analysis/history', { analysisType: 'intelligence' }],
+    queryKey: ['/api/analysis/history?analysisType=intelligence'],
     enabled: true
   })
   
@@ -90,10 +94,12 @@ export function IntelligenceIntegration({ className }: IntelligenceIntegrationPr
     new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
   )
   
-  // Use the first external intelligence result or fallback to hardcoded data
-  const currentIntelligence = filteredResults.length > 0 
-    ? filteredResults.find((r: AnalysisResult) => r.source && r.source !== 'internal')
-    : null
+  // Use the specific intelligence result if ID is provided, otherwise use the first external one
+  const currentIntelligence = selectedId 
+    ? filteredResults.find((r: AnalysisResult) => r.id === selectedId)
+    : filteredResults.find((r: AnalysisResult) => r.source && r.source !== 'internal') || null
+    
+  
   
   const getSourceBadgeColor = (source: string) => {
     const colors = {
