@@ -290,20 +290,28 @@ export class MemStorage implements IStorage {
         
         const score = this.calculateSearchScore(searchTerm, [
           result.region || '',
+          result.source || '',
           JSON.stringify(result.results),
-          JSON.stringify(result.aoiData || {})
+          JSON.stringify(result.aoiData || {}),
+          JSON.stringify(result.sourceMetadata || {})
         ]);
         
         if (score > 0) {
+          const sourcePrefix = result.source ? `[${result.source.toUpperCase()}] ` : '';
           results.push({
             id: result.id,
             type: 'pmesii',
-            title: `PMESII Analysis - ${result.region || 'Unknown Region'}`,
+            title: `${sourcePrefix}PMESII Analysis - ${result.region || 'Unknown Region'}`,
             snippet: this.createSnippet(searchTerm, [result.region || '', JSON.stringify(result.results)]),
-            tags: ['pmesii', 'analysis'],
+            tags: ['pmesii', 'analysis', ...(result.source ? [result.source] : [])],
             timestamp: result.timestamp.toISOString(),
             score,
-            context: { region: result.region, analysisType: result.analysisType }
+            context: { 
+              region: result.region, 
+              analysisType: result.analysisType,
+              source: result.source,
+              sourceMetadata: result.sourceMetadata 
+            }
           });
         }
       }
