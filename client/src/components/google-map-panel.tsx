@@ -8,6 +8,7 @@ import { useQuery } from "@tanstack/react-query"
 import { cn } from "@/lib/utils"
 import { useGoogleMaps } from "@/hooks/useGoogleMaps"
 import { useGeolocation } from "@/hooks/useGeolocation"
+import { useMapFocus } from "@/hooks/use-search-navigation"
 
 interface AOI {
   name?: string
@@ -42,6 +43,35 @@ export function GoogleMapPanel({
   const { isLoaded, loadError } = useGoogleMaps()
   const { position: userPosition, loading: locationLoading, getCurrentPosition } = useGeolocation({ enableHighAccuracy: true })
   
+  // Handle map focus events from global search
+  useMapFocus(({ lat, lng, zoom = 15, title }) => {
+    if (!isLoaded || !mapInstanceRef.current) return
+    
+    // Center map on the location
+    mapInstanceRef.current.setCenter({ lat, lng })
+    mapInstanceRef.current.setZoom(zoom)
+    
+    // Clear existing search marker
+    if (searchMarkerRef.current) {
+      searchMarkerRef.current.map = null
+    }
+    
+    // Create marker element for search result
+    const markerElement = document.createElement('div')
+    markerElement.innerHTML = '🔍'
+    markerElement.style.fontSize = '24px'
+    markerElement.style.cursor = 'pointer'
+    markerElement.title = title || 'Search result'
+    
+    // Create and position search marker
+    searchMarkerRef.current = new google.maps.marker.AdvancedMarkerElement({
+      map: mapInstanceRef.current,
+      position: { lat, lng },
+      content: markerElement,
+      title: title || 'Search result',
+    })
+  })
+  
   // Fetch waypoints and geotagged files
   const { data: waypointsData } = useQuery({
     queryKey: ['/api/waypoints'],
@@ -63,6 +93,7 @@ export function GoogleMapPanel({
   const waypointMarkersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([])
   const geotaggedMarkersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([])
   const userMarkerRef = useRef<google.maps.marker.AdvancedMarkerElement | null>(null)
+  const searchMarkerRef = useRef<google.maps.marker.AdvancedMarkerElement | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [mapType, setMapType] = useState<'roadmap' | 'satellite' | 'hybrid' | 'terrain'>('satellite')
   const [showUserLocation, setShowUserLocation] = useState(false)
