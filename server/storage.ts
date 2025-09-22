@@ -12,7 +12,9 @@ import {
   type GeotaggedFile,
   type InsertGeotaggedFile,
   type SearchQuery,
-  type SearchResult
+  type SearchResult,
+  type TimelineEvent,
+  type TimelineQuery
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 
@@ -49,6 +51,9 @@ export interface IStorage {
   
   // Search operations
   searchAll(query: SearchQuery): Promise<SearchResult[]>;
+  
+  // Timeline operations
+  getTimelineEvents(query: TimelineQuery): Promise<TimelineEvent[]>;
 }
 
 export class MemStorage implements IStorage {
@@ -661,6 +666,183 @@ export class MemStorage implements IStorage {
       },
       timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000) // 3 days ago
     });
+  }
+
+  async getTimelineEvents(query: TimelineQuery): Promise<TimelineEvent[]> {
+    const events: TimelineEvent[] = [];
+    const { limit = 100, filters } = query;
+    
+    // Add chat messages as timeline events
+    if (!filters?.types || filters.types.includes('chat')) {
+      for (const message of this.chatMessages) {
+        events.push({
+          id: message.id,
+          type: 'chat',
+          title: `Chat Message - ${message.role}`,
+          description: message.content.length > 100 ? message.content.substring(0, 100) + '...' : message.content,
+          timestamp: message.timestamp.toISOString(),
+          metadata: { role: message.role, contextIds: message.contextIds }
+        });
+      }
+    }
+    
+    // Add intelligence analysis results as timeline events  
+    if (!filters?.types || filters.types.includes('intelligence')) {
+      for (const result of this.analysisResults) {
+        if (result.analysisType === 'pmesii') continue; // Handle PMESII separately
+        
+        const resultData = result.results as any;
+        const severity = this.mapSeverityToLevel(resultData.severity);
+        const sourcePrefix = result.source ? `[${result.source.toUpperCase()}] ` : '';
+        
+        events.push({
+          id: result.id,
+          type: 'intelligence',
+          title: `${sourcePrefix}${resultData.title || 'Intelligence Report'}`,
+          description: resultData.summary || resultData.description || 'Intelligence analysis completed',
+          timestamp: result.timestamp.toISOString(),
+          severity,
+          location: result.aoiData?.lat && result.aoiData?.lng ? 
+            { lat: result.aoiData.lat, lng: result.aoiData.lng } : undefined,
+          source: result.source,
+          metadata: { 
+            analysisType: result.analysisType, 
+            region: result.region,
+            sourceMetadata: result.sourceMetadata
+          }
+        });
+      }
+    }
+    
+    // Add PMESII analysis results as timeline events
+    if (!filters?.types || filters.types.includes('pmesii')) {
+      for (const result of this.analysisResults) {
+        if (result.analysisType !== 'pmesii') continue;
+        
+        const sourcePrefix = result.source ? `[${result.source.toUpperCase()}] ` : '';
+        events.push({
+          id: result.id,
+          type: 'pmesii',
+          title: `${sourcePrefix}PMESII Analysis - ${result.region}`,
+          description: `Multi-factor analysis completed for ${result.region}`,
+          timestamp: result.timestamp.toISOString(),
+          severity: 'MEDIUM', // PMESII analyses are generally medium priority
+          location: result.aoiData?.lat && result.aoiData?.lng ? 
+            { lat: result.aoiData.lat, lng: result.aoiData.lng } : undefined,
+          source: result.source,
+          metadata: { 
+            analysisType: result.analysisType, 
+            region: result.region,
+            sourceMetadata: result.sourceMetadata 
+          }
+        });
+      }
+    }
+    
+    // Add risk assessments as timeline events
+    if (!filters?.types || filters.types.includes('risk')) {
+      for (const assessment of this.riskAssessments) {
+        const aoiName = (assessment.aoi as any)?.name || 'Unknown Area';
+        const riskLevel = assessment.riskScore > 0.8 ? 'CRITICAL' : 
+                         assessment.riskScore > 0.6 ? 'HIGH' :
+                         assessment.riskScore > 0.4 ? 'MEDIUM' : 'LOW';
+        
+        events.push({
+          id: assessment.id,
+          type: 'risk',
+          title: `Risk Assessment - ${aoiName}`,
+          description: `Risk score: ${Math.round(assessment.riskScore * 100)}% - ${riskLevel} risk level`,
+          timestamp: assessment.timestamp.toISOString(),
+          severity: riskLevel as 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL',
+          location: (assessment.aoi as any)?.lat && (assessment.aoi as any)?.lng ? 
+            { lat: (assessment.aoi as any).lat, lng: (assessment.aoi as any).lng } : undefined,
+          metadata: { riskScore: assessment.riskScore, aoi: assessment.aoi, riskFactors: assessment.riskFactors }
+        });
+      }
+    }
+    
+    // Add waypoints as timeline events
+    if (!filters?.types || filters.types.includes('waypoint')) {
+      for (const waypoint of this.waypoints) {
+        if (!waypoint.isActive) continue;
+        
+        events.push({
+          id: waypoint.id,
+          type: 'waypoint',
+          title: `Waypoint Created - ${waypoint.name}`,
+          description: waypoint.description || `${waypoint.type} waypoint at ${waypoint.lat.toFixed(4)}, ${waypoint.lng.toFixed(4)}`,
+          timestamp: waypoint.timestamp.toISOString(),
+          severity: waypoint.type === 'target' ? 'HIGH' : 
+                   waypoint.type === 'safe_house' ? 'MEDIUM' : 'LOW',
+          location: { lat: waypoint.lat, lng: waypoint.lng },
+          metadata: { 
+            type: waypoint.type, 
+            description: waypoint.description,
+            intelligenceData: waypoint.intelligenceData 
+          }
+        });
+      }
+    }
+    
+    // Add geotagged files as timeline events
+    if (!filters?.types || filters.types.includes('file')) {
+      for (const file of this.geotaggedFiles) {
+        events.push({
+          id: file.id,
+          type: 'file',
+          title: `File Upload - ${file.filename}`,
+          description: `Geotagged file uploaded from ${file.source} at ${file.lat.toFixed(4)}, ${file.lng.toFixed(4)}`,
+          timestamp: file.timestamp.toISOString(),
+          severity: 'LOW', // Files are generally low priority events
+          location: { lat: file.lat, lng: file.lng },
+          metadata: { 
+            filename: file.filename, 
+            source: file.source, 
+            metadata: file.metadata 
+          }
+        });
+      }
+    }
+    
+    // Apply filters
+    let filteredEvents = events;
+    
+    // Filter by date range
+    if (filters?.dateRange) {
+      const startDate = new Date(filters.dateRange.start);
+      const endDate = new Date(filters.dateRange.end);
+      filteredEvents = filteredEvents.filter(event => {
+        const eventDate = new Date(event.timestamp);
+        return eventDate >= startDate && eventDate <= endDate;
+      });
+    }
+    
+    // Filter by severity
+    if (filters?.severity && filters.severity.length > 0) {
+      filteredEvents = filteredEvents.filter(event => 
+        event.severity && filters.severity!.includes(event.severity)
+      );
+    }
+    
+    // Filter by sources
+    if (filters?.sources && filters.sources.length > 0) {
+      filteredEvents = filteredEvents.filter(event => 
+        event.source && filters.sources!.includes(event.source)
+      );
+    }
+    
+    // Sort by timestamp (most recent first) and limit
+    return filteredEvents
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+      .slice(0, limit);
+  }
+  
+  private mapSeverityToLevel(severity?: number): 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' | undefined {
+    if (typeof severity !== 'number') return undefined;
+    if (severity >= 9) return 'CRITICAL';
+    if (severity >= 7) return 'HIGH';
+    if (severity >= 4) return 'MEDIUM';
+    return 'LOW';
   }
 }
 
