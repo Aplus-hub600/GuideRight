@@ -13,10 +13,12 @@ import {
   pmesiiAnalysisRequestSchema,
   waypointRequestSchema,
   geotagRequestSchema,
+  searchQuerySchema,
   type ChatQueryRequest,
   type RiskAssessmentRequest,
   type WaypointRequest,
-  type GeotagRequest
+  type GeotagRequest,
+  type SearchQuery
 } from "@shared/schema";
 import multer from "multer";
 // import pdfParse from "pdf-parse"; // Temporarily disabled due to initialization issues
@@ -449,6 +451,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: true });
     } catch (error) {
       console.error("Error deleting geotagged file:", error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  // Global search endpoint
+  app.get("/api/search", async (req, res) => {
+    try {
+      const query = searchQuerySchema.parse({
+        q: req.query.q,
+        filters: req.query.filters ? JSON.parse(req.query.filters as string) : undefined,
+        limit: req.query.limit ? parseInt(req.query.limit as string) : 50
+      });
+      
+      const results = await storage.searchAll(query);
+      
+      // Group results by type for easier frontend handling
+      const groupedResults = results.reduce((acc, result) => {
+        if (!acc[result.type]) {
+          acc[result.type] = [];
+        }
+        acc[result.type].push(result);
+        return acc;
+      }, {} as Record<string, typeof results>);
+      
+      res.json({ 
+        success: true, 
+        results,
+        grouped: groupedResults,
+        total: results.length
+      });
+    } catch (error) {
+      console.error("Error performing search:", error);
       res.status(500).json({ success: false, error: error.message });
     }
   });
