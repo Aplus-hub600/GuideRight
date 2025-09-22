@@ -14,11 +14,13 @@ import {
   waypointRequestSchema,
   geotagRequestSchema,
   searchQuerySchema,
+  timelineQuerySchema,
   type ChatQueryRequest,
   type RiskAssessmentRequest,
   type WaypointRequest,
   type GeotagRequest,
-  type SearchQuery
+  type SearchQuery,
+  type TimelineQuery
 } from "@shared/schema";
 import multer from "multer";
 // import pdfParse from "pdf-parse"; // Temporarily disabled due to initialization issues
@@ -483,6 +485,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("Error performing search:", error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  // Timeline events endpoint
+  app.get("/api/timeline", async (req, res) => {
+    try {
+      const query = timelineQuerySchema.parse({
+        limit: req.query.limit ? parseInt(req.query.limit as string) : 100,
+        filters: req.query.filters ? JSON.parse(req.query.filters as string) : undefined
+      });
+      
+      const events = await storage.getTimelineEvents(query);
+      
+      res.json({ 
+        success: true, 
+        events,
+        total: events.length
+      });
+    } catch (error) {
+      console.error("Error fetching timeline events:", error);
       res.status(500).json({ success: false, error: error.message });
     }
   });
