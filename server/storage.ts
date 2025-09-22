@@ -66,6 +66,9 @@ export class MemStorage implements IStorage {
     this.riskAssessments = [];
     this.waypoints = [];
     this.geotaggedFiles = [];
+    
+    // Initialize with external intelligence sources
+    this.initializeExternalIntelligence();
   }
 
   async getUser(id: string): Promise<User | undefined> {
@@ -128,7 +131,9 @@ export class MemStorage implements IStorage {
       timestamp: new Date(),
       fileId: insertResult.fileId || null,
       region: insertResult.region || null,
-      aoiData: insertResult.aoiData || null
+      aoiData: insertResult.aoiData || null,
+      source: insertResult.source || null,
+      sourceMetadata: insertResult.sourceMetadata || null
     };
     this.analysisResults.push(result);
     return result;
@@ -312,19 +317,27 @@ export class MemStorage implements IStorage {
         const score = this.calculateSearchScore(searchTerm, [
           result.analysisType,
           result.region || '',
-          JSON.stringify(result.results)
+          result.source || '',
+          JSON.stringify(result.results),
+          JSON.stringify(result.sourceMetadata || {})
         ]);
         
         if (score > 0) {
+          const sourcePrefix = result.source ? `[${result.source.toUpperCase()}] ` : '';
           results.push({
             id: result.id,
             type: 'intelligence',
-            title: `${result.analysisType} Analysis - ${result.region || 'Unknown Region'}`,
+            title: `${sourcePrefix}${result.analysisType} Analysis - ${result.region || 'Unknown Region'}`,
             snippet: this.createSnippet(searchTerm, [result.analysisType, JSON.stringify(result.results)]),
-            tags: [result.analysisType, 'analysis'],
+            tags: [result.analysisType, 'analysis', ...(result.source ? [result.source] : [])],
             timestamp: result.timestamp.toISOString(),
             score,
-            context: { region: result.region, analysisType: result.analysisType }
+            context: { 
+              region: result.region, 
+              analysisType: result.analysisType,
+              source: result.source,
+              sourceMetadata: result.sourceMetadata 
+            }
           });
         }
       }
@@ -444,6 +457,202 @@ export class MemStorage implements IStorage {
       Math.sin(dLng/2) * Math.sin(dLng/2);
     
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  }
+
+  private initializeExternalIntelligence(): void {
+    // Seerist threat intelligence reports
+    this.analysisResults.push({
+      id: randomUUID(),
+      fileId: null,
+      analysisType: 'intelligence',
+      results: {
+        title: "Security Alert: Heightened Civil Unrest Risk in Dhaka",
+        severity: 7,
+        category: "Political Violence",
+        summary: "Seerist AI has detected elevated risk indicators for civil unrest in Dhaka metropolitan area. Social media sentiment analysis shows increasing anti-government discourse, while economic indicators suggest growing public dissatisfaction.",
+        threats: [
+          "Student protests likely to escalate near university campuses",
+          "Transportation hubs at high risk for disruption",
+          "Government buildings may see increased security presence"
+        ],
+        riskFactors: [
+          "Youth unemployment at 15-month high",
+          "Recent fuel price increases",
+          "Opposition party mobilization activities"
+        ],
+        confidence: {
+          source: 0.89,
+          timing: 0.72,
+          impact: 0.84,
+          overall: 0.82
+        }
+      },
+      region: "Dhaka, Bangladesh",
+      aoiData: {
+        name: "Dhaka Metropolitan Area",
+        lat: 23.8103,
+        lng: 90.4125,
+        radiusKm: 25
+      },
+      source: "seerist",
+      sourceMetadata: {
+        reportId: "SR-2025-BD-001",
+        analystId: "AI-Engine-001",
+        dataSourceCount: 2847,
+        osintSources: 156,
+        socialMediaPosts: 12453,
+        newsArticles: 89,
+        governmentAlerts: 3
+      },
+      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000) // 2 hours ago
+    });
+
+    this.analysisResults.push({
+      id: randomUUID(),
+      fileId: null,
+      analysisType: 'intelligence',
+      results: {
+        title: "Critical Infrastructure Vulnerability Assessment",
+        severity: 9,
+        category: "Infrastructure Security",
+        summary: "Seerist analysis indicates potential vulnerabilities in power grid infrastructure across South Asia region. Cyber threat indicators suggest coordinated reconnaissance activities targeting electrical substations.",
+        threats: [
+          "SCADA system intrusion attempts detected",
+          "Physical surveillance of electrical facilities reported",
+          "Supply chain compromises affecting critical components"
+        ],
+        riskFactors: [
+          "Aging infrastructure with limited cybersecurity measures",
+          "Geopolitical tensions affecting regional stability",
+          "Increased dependency on foreign technology components"
+        ],
+        confidence: {
+          source: 0.95,
+          timing: 0.88,
+          impact: 0.91,
+          overall: 0.91
+        }
+      },
+      region: "South Asia",
+      aoiData: {
+        name: "South Asia Power Grid",
+        lat: 23.5,
+        lng: 78.0,
+        radiusKm: 2000
+      },
+      source: "seerist",
+      sourceMetadata: {
+        reportId: "SR-2025-SA-003",
+        analystId: "Control-Risks-Expert-007",
+        dataSourceCount: 1245,
+        governmentSources: 12,
+        industrialPartners: 8,
+        classificationLevel: "UNCLASSIFIED//FOR OFFICIAL USE ONLY"
+      },
+      timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000) // 6 hours ago
+    });
+
+    // Fraym geospatial intelligence reports
+    this.analysisResults.push({
+      id: randomUUID(),
+      fileId: null,
+      analysisType: 'intelligence',
+      results: {
+        title: "Population Displacement Patterns in Border Regions",
+        category: "Humanitarian Intelligence",
+        summary: "Fraym's high-resolution demographic analysis reveals significant population displacement patterns along the Myanmar-Bangladesh border. Satellite imagery combined with mobile phone data indicates 15,000+ individuals have relocated in the past 30 days.",
+        insights: [
+          "Cox's Bazar district showing 23% population increase",
+          "Rural areas experiencing highest displacement rates",
+          "Women and children comprise 67% of displaced population"
+        ],
+        demographics: {
+          totalDisplaced: 15847,
+          averageAge: 28.5,
+          householdSize: 4.2,
+          childrenUnder15: 0.34,
+          femaleRatio: 0.52
+        },
+        economicImpact: {
+          localGdpReduction: 0.08,
+          unemploymentIncrease: 0.12,
+          infrastructureStrain: "HIGH"
+        }
+      },
+      region: "Cox's Bazar, Bangladesh",
+      aoiData: {
+        name: "Myanmar-Bangladesh Border Region",
+        lat: 21.4272,
+        lng: 92.0058,
+        radiusKm: 50
+      },
+      source: "fraym",
+      sourceMetadata: {
+        datasetId: "FRAYM-BD-DISP-2025-Q1",
+        resolutionKm: 1,
+        satelliteImageryDate: "2025-01-15",
+        mobileDataPoints: 245783,
+        surveyResponses: 1247,
+        confidenceInterval: 0.95,
+        methodology: "ML-Enhanced Geospatial Analysis"
+      },
+      timestamp: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000) // 1 day ago
+    });
+
+    this.analysisResults.push({
+      id: randomUUID(),
+      fileId: null,
+      analysisType: 'pmesii',
+      results: {
+        political: {
+          stability: 6.2,
+          governance: "Moderate local government capacity, increasing refugee registration efforts",
+          keyActors: ["Local government officials", "UNHCR representatives", "Community leaders"]
+        },
+        military: {
+          presence: "Limited border patrol activity, humanitarian security coordination",
+          capability: 4.1,
+          threats: "Cross-border tensions, potential for spillover violence"
+        },
+        economic: {
+          conditions: "Local economy strained by population influx, aid dependency increasing",
+          gdpImpact: -8.3,
+          employmentRate: 0.71
+        },
+        social: {
+          cohesion: "Tensions between host and displaced communities emerging",
+          services: "Healthcare and education systems at capacity",
+          culturalFactors: "Language barriers affecting integration"
+        },
+        information: {
+          connectivity: "Mobile network coverage improving, information access limited",
+          mediaInfluence: "Local radio primary information source",
+          misinformation: "Moderate risk of rumors affecting community relations"
+        },
+        infrastructure: {
+          capacity: "Water and sanitation systems severely strained",
+          transportation: "Road networks congested, emergency access limited",
+          utilities: "Power grid unstable, temporary solutions deployed"
+        }
+      },
+      region: "Cox's Bazar District",
+      aoiData: {
+        name: "Cox's Bazar Humanitarian Zone",
+        lat: 21.4272,
+        lng: 92.0058,
+        radiusKm: 25
+      },
+      source: "fraym",
+      sourceMetadata: {
+        datasetId: "FRAYM-BD-PMESII-2025-001",
+        indicatorCount: 47,
+        householdSurveys: 2845,
+        keyInformantInterviews: 156,
+        satelliteAnalysis: true,
+        fieldTeamReports: 23
+      },
+      timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000) // 3 days ago
+    });
   }
 }
 
