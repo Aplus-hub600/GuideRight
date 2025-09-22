@@ -178,3 +178,29 @@ export type FileAnalysisRequest = z.infer<typeof fileAnalysisSchema>;
 export type RiskAssessmentRequest = z.infer<typeof riskAssessmentRequestSchema>;
 export type WaypointRequest = z.infer<typeof waypointRequestSchema>;
 export type GeotagRequest = z.infer<typeof geotagRequestSchema>;
+
+// Search schemas
+export const searchQuerySchema = z.object({
+  q: z.string().min(1).max(200),
+  filters: z.object({
+    type: z.enum(['waypoint', 'geotagged', 'pmesii', 'intelligence', 'risk']).optional(),
+    region: z.object({ lat: z.number(), lng: z.number(), radius: z.number() }).optional(),
+    timeRange: z.object({ start: z.string(), end: z.string() }).optional()
+  }).optional(),
+  limit: z.number().min(1).max(100).default(50)
+})
+
+export const searchResultSchema = z.object({
+  id: z.string(),
+  type: z.enum(['waypoint', 'geotagged', 'pmesii', 'intelligence', 'risk']),
+  title: z.string(),
+  snippet: z.string(),
+  tags: z.array(z.string()).optional(),
+  timestamp: z.string(),
+  score: z.number().min(0).max(1),
+  location: z.object({ lat: z.number(), lng: z.number() }).optional(),
+  context: z.record(z.any()).optional()
+})
+
+export type SearchQuery = z.infer<typeof searchQuerySchema>
+export type SearchResult = z.infer<typeof searchResultSchema>
