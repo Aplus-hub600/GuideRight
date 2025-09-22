@@ -24,6 +24,8 @@ export const analysisResults = pgTable("analysis_results", {
   results: jsonb("results").notNull(),
   region: text("region"), // Region/AOI name for PMESII analysis
   aoiData: jsonb("aoi_data"), // AOI coordinates and metadata
+  source: text("source"), // External intelligence source (e.g., 'seerist', 'fraym', 'internal')
+  sourceMetadata: jsonb("source_metadata"), // Source-specific metadata and attribution
   timestamp: timestamp("timestamp").defaultNow().notNull(),
 });
 
@@ -78,6 +80,8 @@ export const insertAnalysisResultSchema = createInsertSchema(analysisResults).pi
   results: true,
   region: true,
   aoiData: true,
+  source: true,
+  sourceMetadata: true,
 });
 
 export const insertRiskAssessmentSchema = createInsertSchema(riskAssessments).pick({
