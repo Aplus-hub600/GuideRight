@@ -2,8 +2,9 @@ import { useEffect, useRef, useState, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Navigation, Route, Target, Layers, Globe, MapPin, Crosshair } from "lucide-react"
+import { Navigation, Route, Target, Layers, Globe, MapPin, Crosshair, Camera, FileImage } from "lucide-react"
 import { useTranslation } from "react-i18next"
+import { useQuery } from "@tanstack/react-query"
 import { cn } from "@/lib/utils"
 import { useGoogleMaps } from "@/hooks/useGoogleMaps"
 import { useGeolocation } from "@/hooks/useGeolocation"
@@ -40,6 +41,20 @@ export function GoogleMapPanel({
   const { t } = useTranslation()
   const { isLoaded, loadError } = useGoogleMaps()
   const { position: userPosition, loading: locationLoading, getCurrentPosition } = useGeolocation({ enableHighAccuracy: true })
+  
+  // Fetch waypoints and geotagged files
+  const { data: waypointsData } = useQuery({
+    queryKey: ['/api/waypoints'],
+    enabled: isLoaded
+  })
+  
+  const { data: geotaggedData } = useQuery({
+    queryKey: ['/api/geotagged'],
+    enabled: isLoaded
+  })
+  
+  const waypoints = waypointsData?.waypoints || []
+  const geotaggedFiles = geotaggedData?.files || []
   const mapRef = useRef<HTMLDivElement>(null)
   const mapInstanceRef = useRef<google.maps.Map | null>(null)
   const markerRef = useRef<google.maps.marker.AdvancedMarkerElement | null>(null)
@@ -193,6 +208,104 @@ export function GoogleMapPanel({
       userMarkerRef.current = userMarker
     }
 
+    // Clear existing waypoint and geotagged markers
+    waypointMarkersRef.current.forEach(marker => {
+      marker.map = null
+    })
+    geotaggedMarkersRef.current.forEach(marker => {
+      marker.map = null
+    })
+    waypointMarkersRef.current = []
+    geotaggedMarkersRef.current = []
+
+    // Add waypoint markers
+    for (const waypoint of waypoints) {
+      const waypointPin = new PinElement({
+        background: getWaypointColor(waypoint.type),
+        borderColor: '#ffffff',
+        scale: 0.8,
+        glyph: getWaypointIcon(waypoint.type)
+      })
+
+      const waypointMarker = new AdvancedMarkerElement({
+        position: { lat: waypoint.lat, lng: waypoint.lng },
+        map: map,
+        title: `${waypoint.name} (${waypoint.type})`,
+        content: waypointPin.element
+      })
+
+      // Add info window for waypoint
+      const waypointInfoWindow = new window.google.maps.InfoWindow({
+        content: `
+          <div style="padding: 8px; min-width: 200px;">
+            <h3 style="margin: 0 0 8px 0; font-weight: 600;">${waypoint.name}</h3>
+            <p style="margin: 0 0 4px 0; color: #666; text-transform: capitalize;">
+              ${waypoint.type.replace('_', ' ')}
+            </p>
+            <p style="margin: 0 0 4px 0; color: #666; font-family: monospace;">
+              ${waypoint.lat.toFixed(4)}, ${waypoint.lng.toFixed(4)}
+            </p>
+            ${waypoint.description ? `
+              <p style="margin: 4px 0 0 0; font-size: 12px;">
+                ${waypoint.description}
+              </p>
+            ` : ''}
+          </div>
+        `
+      })
+
+      waypointMarker.addListener('click', () => {
+        waypointInfoWindow.open({ map, anchor: waypointMarker })
+      })
+
+      waypointMarkersRef.current.push(waypointMarker)
+    }
+
+    // Add geotagged file markers
+    for (const file of geotaggedFiles) {
+      const filePin = new PinElement({
+        background: '#8b5cf6',
+        borderColor: '#ffffff',
+        scale: 0.7,
+        glyph: '📷'
+      })
+
+      const fileMarker = new AdvancedMarkerElement({
+        position: { lat: file.lat, lng: file.lng },
+        map: map,
+        title: `Photo: ${file.filename}`,
+        content: filePin.element
+      })
+
+      // Add info window for geotagged file
+      const fileInfoWindow = new window.google.maps.InfoWindow({
+        content: `
+          <div style="padding: 8px; min-width: 200px;">
+            <h3 style="margin: 0 0 8px 0; font-weight: 600; display: flex; align-items: center; gap: 4px;">
+              📷 ${file.filename}
+            </h3>
+            <p style="margin: 0 0 4px 0; color: #666; font-family: monospace;">
+              ${file.lat.toFixed(4)}, ${file.lng.toFixed(4)}
+            </p>
+            ${file.altitude ? `
+              <p style="margin: 0 0 4px 0; color: #666; font-size: 12px;">
+                Altitude: ${file.altitude.toFixed(0)}m
+              </p>
+            ` : ''}
+            <p style="margin: 4px 0 0 0; font-size: 12px; color: #666;">
+              Source: ${file.source.toUpperCase()}
+            </p>
+          </div>
+        `
+      })
+
+      fileMarker.addListener('click', () => {
+        fileInfoWindow.open({ map, anchor: fileMarker })
+      })
+
+      geotaggedMarkersRef.current.push(fileMarker)
+    }
+
     // Add info window
     const infoWindow = new window.google.maps.InfoWindow({
       content: `
@@ -243,7 +356,7 @@ export function GoogleMapPanel({
       })
       polylineRef.current = polyline
     }
-  }, [currentAOI, riskScore, movementPlan, showUserLocation, userPosition])
+  }, [currentAOI, riskScore, movementPlan, showUserLocation, userPosition, waypoints, geotaggedFiles])
 
   // Initialize map when Google Maps loads
   useEffect(() => {
@@ -260,7 +373,7 @@ export function GoogleMapPanel({
       // Pan to new AOI
       mapInstanceRef.current.panTo({ lat: currentAOI.lat, lng: currentAOI.lng })
     }
-  }, [currentAOI, riskScore, movementPlan, showUserLocation, userPosition, updateMapElements])
+  }, [currentAOI, riskScore, movementPlan, showUserLocation, userPosition, waypoints, geotaggedFiles, updateMapElements])
 
   // Update map type
   useEffect(() => {

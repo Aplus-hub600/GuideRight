@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 
-interface GeolocationPosition {
+interface PositionData {
   lat: number
   lng: number
   accuracy?: number
@@ -22,7 +22,7 @@ interface UseGeolocationOptions {
 }
 
 interface UseGeolocationReturn {
-  position: GeolocationPosition | null
+  position: PositionData | null
   error: GeolocationError | null
   loading: boolean
   isSupported: boolean
@@ -39,7 +39,7 @@ export function useGeolocation(options: UseGeolocationOptions = {}): UseGeolocat
     watch = false
   } = options
 
-  const [position, setPosition] = useState<GeolocationPosition | null>(null)
+  const [position, setPosition] = useState<PositionData | null>(null)
   const [error, setError] = useState<GeolocationError | null>(null)
   const [loading, setLoading] = useState(false)
   const [watchId, setWatchId] = useState<number | null>(null)
@@ -53,7 +53,7 @@ export function useGeolocation(options: UseGeolocationOptions = {}): UseGeolocat
   }
 
   const handleSuccess = useCallback((pos: GeolocationPosition) => {
-    const newPosition: GeolocationPosition = {
+    const newPosition: PositionData = {
       lat: pos.coords.latitude,
       lng: pos.coords.longitude,
       accuracy: pos.coords.accuracy,

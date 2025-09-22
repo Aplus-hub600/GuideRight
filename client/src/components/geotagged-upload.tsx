@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Upload, MapPin, Camera, FileImage, X, CheckCircle, AlertCircle } from 'lucide-react'
 import { extractGPSFromFile, type ExifMetadata } from '@/utils/exifExtractor'
-import { apiRequest } from '@/lib/queryClient'
+import { apiRequest, queryClient } from '@/lib/queryClient'
 import { useToast } from '@/hooks/use-toast'
 import { cn } from '@/lib/utils'
 
@@ -128,10 +128,7 @@ export function GeotaggedUpload({
         }
       }
 
-      await apiRequest('/api/geotagged', {
-        method: 'POST',
-        body: JSON.stringify(geotagData)
-      })
+      await apiRequest('POST', '/api/geotagged', geotagData).then(res => res.json())
 
       // Update file status
       setGeotaggedFiles(prev => 
@@ -142,6 +139,9 @@ export function GeotaggedUpload({
         )
       )
 
+      // Invalidate geotagged files cache to refresh the map
+      queryClient.invalidateQueries({ queryKey: ['/api/geotagged'] })
+      
       toast({
         title: 'File Geotagged',
         description: `${geotaggedFile.file.name} has been saved with location data`,
