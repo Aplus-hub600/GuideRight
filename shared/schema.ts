@@ -208,3 +208,29 @@ export const searchResultSchema = z.object({
 
 export type SearchQuery = z.infer<typeof searchQuerySchema>
 export type SearchResult = z.infer<typeof searchResultSchema>
+
+// Timeline event types for event timeline feature
+export const timelineEventSchema = z.object({
+  id: z.string(),
+  type: z.enum(['chat', 'intelligence', 'pmesii', 'risk', 'waypoint', 'file']),
+  title: z.string(),
+  description: z.string(),
+  timestamp: z.string(),
+  severity: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']).optional(),
+  location: z.object({ lat: z.number(), lng: z.number() }).optional(),
+  source: z.string().optional(), // For external intelligence sources
+  metadata: z.record(z.any()).optional()
+})
+
+export const timelineQuerySchema = z.object({
+  limit: z.number().min(1).max(200).default(100),
+  filters: z.object({
+    types: z.array(z.enum(['chat', 'intelligence', 'pmesii', 'risk', 'waypoint', 'file'])).optional(),
+    dateRange: z.object({ start: z.string(), end: z.string() }).optional(),
+    severity: z.array(z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'])).optional(),
+    sources: z.array(z.string()).optional() // For filtering by intelligence source
+  }).optional()
+})
+
+export type TimelineEvent = z.infer<typeof timelineEventSchema>
+export type TimelineQuery = z.infer<typeof timelineQuerySchema>
