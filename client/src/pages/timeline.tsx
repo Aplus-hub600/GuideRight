@@ -22,7 +22,8 @@ import {
   Calendar,
   Filter,
   Users,
-  AlertTriangle
+  AlertTriangle,
+  CloudRain
 } from "lucide-react"
 import { format } from "date-fns"
 import type { TimelineEvent } from "@shared/schema"
@@ -33,7 +34,8 @@ const eventIcons = {
   pmesii: Brain,
   risk: AlertTriangle,
   waypoint: MapPin,
-  file: FileImage
+  file: FileImage,
+  weather: CloudRain
 }
 
 const eventColors = {
@@ -42,7 +44,8 @@ const eventColors = {
   pmesii: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300",
   risk: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300",
   waypoint: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
-  file: "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300"
+  file: "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300",
+  weather: "bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-300"
 }
 
 const severityColors = {
@@ -144,6 +147,7 @@ export default function Timeline() {
                 <SelectItem value="waypoint">Waypoints</SelectItem>
                 <SelectItem value="file">Files</SelectItem>
                 <SelectItem value="chat">Chat Messages</SelectItem>
+                <SelectItem value="weather">Weather</SelectItem>
               </SelectContent>
             </Select>
             
