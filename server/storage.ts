@@ -15,6 +15,8 @@ import {
   type InsertWeatherData,
   type WeatherAlert,
   type InsertWeatherAlert,
+  type SocialMediaPost,
+  type InsertSocialMediaPost,
   type SearchQuery,
   type SearchResult,
   type TimelineEvent,
@@ -65,6 +67,17 @@ export interface IStorage {
   getWeatherAlerts(lat?: number, lng?: number, activeOnly?: boolean): Promise<WeatherAlert[]>;
   createWeatherAlert(alert: InsertWeatherAlert): Promise<WeatherAlert>;
   updateWeatherAlert(id: string, updates: Partial<InsertWeatherAlert>): Promise<WeatherAlert | null>;
+  
+  // Social media operations
+  getSocialMediaPosts(filters?: {
+    lat?: number; lng?: number; radiusKm?: number;
+    sentiment?: string; country?: string; limit?: number;
+  }): Promise<SocialMediaPost[]>;
+  createSocialMediaPost(post: InsertSocialMediaPost): Promise<SocialMediaPost>;
+  createSocialMediaPostsBulk(posts: InsertSocialMediaPost[]): Promise<SocialMediaPost[]>;
+  getSocialMediaPostsByLocation(lat: number, lng: number, radiusKm: number): Promise<SocialMediaPost[]>;
+  getSocialMediaPostsBySentiment(sentiment: string): Promise<SocialMediaPost[]>;
+  getSocialMediaInfluencers(minFollowers?: number): Promise<SocialMediaPost[]>;
 }
 
 export class MemStorage implements IStorage {
@@ -76,6 +89,7 @@ export class MemStorage implements IStorage {
   private geotaggedFiles: GeotaggedFile[];
   private weatherData: WeatherData[];
   private weatherAlerts: WeatherAlert[];
+  private socialMediaPosts: SocialMediaPost[];
 
   constructor() {
     this.users = new Map();
@@ -86,10 +100,12 @@ export class MemStorage implements IStorage {
     this.geotaggedFiles = [];
     this.weatherData = [];
     this.weatherAlerts = [];
+    this.socialMediaPosts = [];
     
     // Initialize with external intelligence sources and sample weather data
     this.initializeExternalIntelligence();
     this.initializeSampleWeatherData();
+    this.initializeSampleSocialMediaData();
   }
 
   async getUser(id: string): Promise<User | undefined> {
@@ -366,6 +382,46 @@ export class MemStorage implements IStorage {
               analysisType: result.analysisType,
               source: result.source || undefined,
               sourceMetadata: result.sourceMetadata 
+            }
+          });
+        }
+      }
+    }
+    
+    // Search social media posts
+    if (!query.filters?.type || query.filters.type === 'social') {
+      for (const post of this.socialMediaPosts) {
+        const score = this.calculateSearchScore(searchTerm, [
+          post.message,
+          post.senderScreenName,
+          post.location || '',
+          post.country || '',
+          post.sentiment || '',
+          JSON.stringify({ 
+            retweets: post.retweets, 
+            favorites: post.favorites,
+            followers: post.senderFollowersCount 
+          })
+        ]);
+        
+        if (score > 0) {
+          results.push({
+            id: post.id,
+            type: 'social',
+            title: `${post.socialNetwork} - @${post.senderScreenName}`,
+            snippet: this.createSnippet(searchTerm, [post.message, post.location || '']),
+            tags: ['social-media', post.socialNetwork.toLowerCase(), ...(post.sentiment ? [post.sentiment.toLowerCase()] : [])],
+            timestamp: post.timestamp.toISOString(),
+            score,
+            location: post.lat && post.lng ? { lat: post.lat, lng: post.lng } : undefined,
+            context: { 
+              sentiment: post.sentiment,
+              location: post.location,
+              engagement: {
+                retweets: post.retweets,
+                favorites: post.favorites,
+                followers: post.senderFollowersCount
+              }
             }
           });
         }
@@ -1020,6 +1076,176 @@ export class MemStorage implements IStorage {
     const updatedAlert = { ...this.weatherAlerts[alertIndex], ...updates };
     this.weatherAlerts[alertIndex] = updatedAlert;
     return updatedAlert;
+  }
+
+  // Social media operations implementation
+  async getSocialMediaPosts(filters?: {
+    lat?: number; lng?: number; radiusKm?: number;
+    sentiment?: string; country?: string; limit?: number;
+  }): Promise<SocialMediaPost[]> {
+    let posts = [...this.socialMediaPosts];
+    
+    if (filters) {
+      if (filters.lat && filters.lng && filters.radiusKm) {
+        posts = posts.filter(post => {
+          if (!post.lat || !post.lng) return false;
+          const distance = this.calculateDistance(filters.lat!, filters.lng!, post.lat, post.lng);
+          return distance <= filters.radiusKm!;
+        });
+      }
+      
+      if (filters.sentiment) {
+        posts = posts.filter(post => post.sentiment === filters.sentiment);
+      }
+      
+      if (filters.country) {
+        posts = posts.filter(post => post.country === filters.country);
+      }
+      
+      if (filters.limit) {
+        posts = posts.slice(0, filters.limit);
+      }
+    }
+    
+    return posts.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  }
+
+  async createSocialMediaPost(insertPost: InsertSocialMediaPost): Promise<SocialMediaPost> {
+    const id = randomUUID();
+    const post: SocialMediaPost = {
+      ...insertPost,
+      id,
+      timestamp: new Date(),
+      senderListedName: insertPost.senderListedName || null,
+      senderProfileImgUrl: insertPost.senderProfileImgUrl || null,
+      senderProfileLink: insertPost.senderProfileLink || null,
+      senderFollowersCount: insertPost.senderFollowersCount || null,
+      senderInfluencerScore: insertPost.senderInfluencerScore || null,
+      senderAge: insertPost.senderAge || null,
+      senderGender: insertPost.senderGender || null,
+      originalAuthor: insertPost.originalAuthor || null,
+      originalAuthorProfileLink: insertPost.originalAuthorProfileLink || null,
+      title: insertPost.title || null,
+      language: insertPost.language || null,
+      languageCode: insertPost.languageCode || null,
+      countryCode: insertPost.countryCode || null,
+      mediaTypeList: insertPost.mediaTypeList || null,
+      domain: insertPost.domain || null,
+      tweetGenerator: insertPost.tweetGenerator || null,
+      sentiment: insertPost.sentiment || null,
+      location: insertPost.location || null,
+      country: insertPost.country || null,
+      state: insertPost.state || null,
+      city: insertPost.city || null,
+      lat: insertPost.lat || null,
+      lng: insertPost.lng || null,
+      conversationId: insertPost.conversationId || null,
+      campaignName: insertPost.campaignName || null,
+      isSpam: insertPost.isSpam || false
+    };
+    this.socialMediaPosts.push(post);
+    return post;
+  }
+
+  async createSocialMediaPostsBulk(insertPosts: InsertSocialMediaPost[]): Promise<SocialMediaPost[]> {
+    const posts: SocialMediaPost[] = [];
+    for (const insertPost of insertPosts) {
+      const post = await this.createSocialMediaPost(insertPost);
+      posts.push(post);
+    }
+    return posts;
+  }
+
+  async getSocialMediaPostsByLocation(lat: number, lng: number, radiusKm: number): Promise<SocialMediaPost[]> {
+    return this.getSocialMediaPosts({ lat, lng, radiusKm });
+  }
+
+  async getSocialMediaPostsBySentiment(sentiment: string): Promise<SocialMediaPost[]> {
+    return this.getSocialMediaPosts({ sentiment });
+  }
+
+  async getSocialMediaInfluencers(minFollowers: number = 1000): Promise<SocialMediaPost[]> {
+    return this.socialMediaPosts
+      .filter(post => (post.senderFollowersCount || 0) >= minFollowers)
+      .sort((a, b) => (b.senderFollowersCount || 0) - (a.senderFollowersCount || 0))
+      .slice(0, 50);
+  }
+
+  private async initializeSampleSocialMediaData() {
+    // Add sample social media posts from Bangladesh with geolocation and sentiment data
+    const samplePosts: InsertSocialMediaPost[] = [
+      {
+        universalMessageId: "TWITTER_SAMPLE_001",
+        socialNetwork: "TWITTER",
+        senderUserId: "bangladeshi_user_001",
+        senderScreenName: "dhaka_observer",
+        senderListedName: "Dhaka City Observer",
+        message: "Peaceful protest gathering at Shahbag Square demanding justice. Large crowd maintaining order. #DhakaUpdate #Bangladesh",
+        messageType: "X Update",
+        createdTime: Date.now() / 1000 - 3600,
+        countryCode: "BD",
+        permalink: "https://twitter.com/dhaka_observer/status/sample001",
+        sentiment: "NEUTRAL",
+        location: "Shahbag, Dhaka",
+        country: "Bangladesh",
+        state: "Dhaka",
+        city: "Dhaka",
+        lat: 23.8103,
+        lng: 90.4125,
+        senderFollowersCount: 5420,
+        retweets: 23,
+        favorites: 67
+      },
+      {
+        universalMessageId: "TWITTER_SAMPLE_002", 
+        socialNetwork: "TWITTER",
+        senderUserId: "chittagong_news_bd",
+        senderScreenName: "ChittagongNews",
+        senderListedName: "Chittagong News Network",
+        message: "Great news! New economic zone creating thousands of jobs in Chittagong. Development continues! 🇧🇩 #EconomicGrowth #Bangladesh",
+        messageType: "X Update",
+        createdTime: Date.now() / 1000 - 7200,
+        countryCode: "BD",
+        permalink: "https://twitter.com/ChittagongNews/status/sample002",
+        sentiment: "POSITIVE",
+        location: "Chittagong, Bangladesh", 
+        country: "Bangladesh",
+        state: "Chittagong",
+        city: "Chittagong",
+        lat: 22.3569,
+        lng: 91.7832,
+        senderFollowersCount: 12500,
+        retweets: 89,
+        favorites: 245
+      },
+      {
+        universalMessageId: "TWITTER_SAMPLE_003",
+        socialNetwork: "TWITTER", 
+        senderUserId: "sylhet_student_union",
+        senderScreenName: "SylhetStudents",
+        senderListedName: "Sylhet Student Union",
+        message: "University administration ignoring student demands again. This is unacceptable! We demand immediate action. #StudentRights #Sylhet",
+        messageType: "X Update",
+        createdTime: Date.now() / 1000 - 1800,
+        countryCode: "BD",
+        permalink: "https://twitter.com/SylhetStudents/status/sample003",
+        sentiment: "NEGATIVE",
+        location: "Sylhet, Bangladesh",
+        country: "Bangladesh", 
+        state: "Sylhet",
+        city: "Sylhet",
+        lat: 24.8949,
+        lng: 91.8687,
+        senderFollowersCount: 3200,
+        retweets: 156,
+        favorites: 402
+      }
+    ];
+
+    // Initialize with sample data
+    for (const post of samplePosts) {
+      await this.createSocialMediaPost(post);
+    }
   }
 
   private async initializeSampleWeatherData() {

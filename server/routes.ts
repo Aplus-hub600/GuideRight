@@ -18,6 +18,8 @@ import {
   weatherRequestSchema,
   weatherAlertRequestSchema,
   locationAnalysisRequestSchema,
+  socialMediaQuerySchema,
+  insertSocialMediaPostSchema,
   type ChatQueryRequest,
   type RiskAssessmentRequest,
   type WaypointRequest,
@@ -26,11 +28,16 @@ import {
   type TimelineQuery,
   type WeatherRequest,
   type WeatherAlertRequest,
-  type LocationAnalysisRequest
+  type LocationAnalysisRequest,
+  type SocialMediaQuery,
+  type InsertSocialMediaPost
 } from "@shared/schema";
 import multer from "multer";
 // import pdfParse from "pdf-parse"; // Temporarily disabled due to initialization issues
 import mammoth from "mammoth";
+import * as fs from 'fs/promises';
+import * as path from 'path';
+import * as XLSX from 'xlsx';
 
 // Set up multer for file uploads
 const upload = multer({ 
@@ -204,7 +211,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { region, context, aoi } = pmesiiAnalysisRequestSchema.parse(req.body);
       
-      const analysis = await generatePMESIIAnalysis(region, context);
+      const analysis = await generatePMESIIAnalysis(region, context, aoi);
       
       // Save analysis result with AOI metadata
       await storage.createAnalysisResult({
@@ -597,6 +604,221 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("Error fetching timeline events:", error);
+      res.status(500).json({ success: false, error: getErrorMessage(error) });
+    }
+  });
+
+  // Social Media Intelligence endpoints
+  
+  // Get social media posts with filters  
+  app.get("/api/social-media/posts", async (req, res) => {
+    try {
+      // Validate query parameters with normalization
+      const queryData = {
+        lat: req.query.lat ? parseFloat(req.query.lat as string) : undefined,
+        lng: req.query.lng ? parseFloat(req.query.lng as string) : undefined,
+        radiusKm: req.query.radiusKm ? parseFloat(req.query.radiusKm as string) : undefined,
+        sentiment: req.query.sentiment ? (req.query.sentiment as string).toUpperCase() : undefined,
+        country: req.query.country as string | undefined,
+        limit: req.query.limit ? parseInt(req.query.limit as string) : undefined
+      };
+      
+      // Remove undefined values and validate
+      const filters = Object.fromEntries(
+        Object.entries(queryData).filter(([_, v]) => v !== undefined)
+      );
+      
+      if (Object.keys(filters).length > 0) {
+        const validatedFilters = socialMediaQuerySchema.parse(filters);
+        const posts = await storage.getSocialMediaPosts(validatedFilters);
+        res.json({ success: true, posts, total: posts.length });
+      } else {
+        const posts = await storage.getSocialMediaPosts();
+        res.json({ success: true, posts, total: posts.length });
+      }
+    } catch (error) {
+      console.error("Error fetching social media posts:", error);
+      res.status(400).json({ success: false, error: getErrorMessage(error) });
+    }
+  });
+
+  // Get social media posts by location
+  app.get("/api/social-media/location/:lat/:lng/:radius", async (req, res) => {
+    try {
+      const lat = parseFloat(req.params.lat);
+      const lng = parseFloat(req.params.lng);
+      const radius = parseFloat(req.params.radius);
+      
+      const posts = await storage.getSocialMediaPostsByLocation(lat, lng, radius);
+      
+      res.json({ 
+        success: true, 
+        posts,
+        total: posts.length,
+        location: { lat, lng, radius }
+      });
+    } catch (error) {
+      console.error("Error fetching social media posts by location:", error);
+      res.status(500).json({ success: false, error: getErrorMessage(error) });
+    }
+  });
+
+  // Get social media posts by sentiment
+  app.get("/api/social-media/sentiment/:sentiment", async (req, res) => {
+    try {
+      const sentiment = req.params.sentiment.toUpperCase();
+      const posts = await storage.getSocialMediaPostsBySentiment(sentiment);
+      
+      res.json({ 
+        success: true, 
+        posts,
+        total: posts.length,
+        sentiment
+      });
+    } catch (error) {
+      console.error("Error fetching social media posts by sentiment:", error);
+      res.status(500).json({ success: false, error: getErrorMessage(error) });
+    }
+  });
+
+  // Get social media influencers
+  app.get("/api/social-media/influencers", async (req, res) => {
+    try {
+      const minFollowers = req.query.minFollowers ? parseInt(req.query.minFollowers as string) : 1000;
+      const influencers = await storage.getSocialMediaInfluencers(minFollowers);
+      
+      res.json({ 
+        success: true, 
+        influencers,
+        total: influencers.length,
+        criteria: { minFollowers }
+      });
+    } catch (error) {
+      console.error("Error fetching social media influencers:", error);
+      res.status(500).json({ success: false, error: getErrorMessage(error) });
+    }
+  });
+
+  // Import social media data from Excel file
+  app.post("/api/social-media/import", upload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ success: false, error: "No file uploaded" });
+      }
+
+      let socialMediaData: any[];
+
+      try {
+        if (req.file.originalname.endsWith('.xlsx') || req.file.originalname.endsWith('.xls')) {
+          // Process Excel file directly from buffer
+          const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+          const sheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[sheetName];
+          socialMediaData = XLSX.utils.sheet_to_json(worksheet);
+          
+          console.log(`Processing Excel file with ${socialMediaData.length} rows`);
+        } else {
+          return res.status(400).json({ 
+            success: false, 
+            error: "Unsupported file format. Please upload an Excel file (.xlsx or .xls)" 
+          });
+        }
+
+        if (!Array.isArray(socialMediaData) || socialMediaData.length === 0) {
+          return res.status(400).json({ success: false, error: "No data found in Excel file" });
+        }
+
+        // Transform and validate each row
+        const transformedPosts: InsertSocialMediaPost[] = [];
+        const errors: string[] = [];
+
+        for (let i = 0; i < Math.min(socialMediaData.length, 5000); i++) { // Limit to 5000 posts for performance
+          const row = socialMediaData[i];
+          
+          try {
+            const transformedPost: InsertSocialMediaPost = {
+              universalMessageId: row['Universal Message ID'] || `EXCEL_${Date.now()}_${i}`,
+              socialNetwork: row['Social Network'] || 'UNKNOWN',
+              senderUserId: row['Sender User ID'] || `user_${i}`,
+              senderScreenName: row['Sender Screen Name'] || 'Unknown',
+              senderListedName: row['Sender Listed Name'] || null,
+              senderProfileImgUrl: row['Sender Profile Img URL'] || null,
+              senderProfileLink: row['Sender Profile Link'] || null,
+              senderFollowersCount: parseFloat(row['Sender Followers Count']) || 0,
+              senderInfluencerScore: parseFloat(row['Sender Influencer Score']) || null,
+              senderAge: parseFloat(row['Sender Age']) || null,
+              senderGender: row['Sender Gender'] || null,
+              originalAuthor: row['Original Author'] || null,
+              originalAuthorProfileLink: row['Original Author Profile Link'] || null,
+              title: row['Title'] || null,
+              message: row['Message'] || '',
+              messageType: row['Message Type'] || 'Post',
+              createdTime: parseFloat(row['Created Time']) || Date.now() / 1000,
+              language: row['Language'] || null,
+              languageCode: row['Language Code'] || null,
+              countryCode: row['Country Code'] || null,
+              mediaTypeList: row['Media Type List'] || null,
+              permalink: row['Permalink'] || `https://example.com/post/${i}`,
+              domain: row['Domain'] || null,
+              retweets: parseFloat(row['Retweets']) || 0,
+              tweetGenerator: row['Tweet Generator'] || null,
+              favorites: parseFloat(row['Favorites']) || 0,
+              sentiment: row['Sentiment'] || null,
+              location: row['Location'] || null,
+              country: row['Country'] || null,
+              state: row['State'] || null,
+              city: row['City'] || null,
+              lat: parseFloat(row['Lat']) || null,
+              lng: parseFloat(row['Lng']) || null,
+              conversationId: row['Conversation ID'] || null,
+              campaignName: row['Campaign Name'] || null,
+              isSpam: Boolean(row['Is Spam']) || false
+            };
+
+            // Validate the transformed post
+            const validatedPost = insertSocialMediaPostSchema.parse(transformedPost);
+            transformedPosts.push(validatedPost);
+          } catch (validationError) {
+            errors.push(`Row ${i + 1}: ${getErrorMessage(validationError)}`);
+            if (errors.length > 10) break; // Limit error collection
+          }
+        }
+
+        if (transformedPosts.length === 0) {
+          return res.status(400).json({ 
+            success: false, 
+            error: "No valid social media posts found in Excel file",
+            sampleErrors: errors.slice(0, 5)
+          });
+        }
+
+        // Import validated data into storage
+        const imported = await storage.createSocialMediaPostsBulk(transformedPosts);
+        
+        res.json({ 
+          success: true, 
+          message: `Successfully imported ${imported.length} social media posts from Excel file`,
+          imported: imported.length,
+          errors: errors.length,
+          sample: imported.slice(0, 3).map(post => ({
+            id: post.id,
+            message: post.message.substring(0, 100),
+            location: post.location,
+            sentiment: post.sentiment,
+            lat: post.lat,
+            lng: post.lng
+          }))
+        });
+
+      } catch (processingError) {
+        console.error("Error processing Excel file:", processingError);
+        res.status(500).json({ 
+          success: false, 
+          error: `Error processing Excel file: ${getErrorMessage(processingError)}` 
+        });
+      }
+    } catch (error) {
+      console.error("Error importing social media data:", error);
       res.status(500).json({ success: false, error: getErrorMessage(error) });
     }
   });

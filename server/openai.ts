@@ -96,10 +96,52 @@ Focus on actionable intelligence, threat assessment, and tactical implications. 
 
 export async function generatePMESIIAnalysis(
   region: string,
-  additionalContext?: string
+  additionalContext?: string,
+  aoi?: { lat: number; lng: number; radiusKm?: number }
 ): Promise<PMESIIAnalysis> {
+  // Gather social media intelligence for the region
+  let socialMediaContext = '';
+  
+  try {
+    const { storage } = await import('./storage');
+    
+    if (aoi?.lat && aoi?.lng) {
+      const socialPosts = await storage.getSocialMediaPostsByLocation(
+        aoi.lat, 
+        aoi.lng, 
+        aoi.radiusKm || 50
+      );
+      
+      if (socialPosts.length > 0) {
+        const sentimentCounts = socialPosts.reduce((acc, post) => {
+          const sentiment = post.sentiment?.toLowerCase() || 'neutral';
+          acc[sentiment] = (acc[sentiment] || 0) + 1;
+          return acc;
+        }, {} as Record<string, number>);
+        
+        const messages = socialPosts.map(p => p.message).join(' ');
+        const hashtags = messages.match(/#\w+/g) || [];
+        const topHashtags = [...new Set(hashtags)].slice(0, 5);
+        
+        const influencers = socialPosts.filter(p => (p.senderFollowersCount || 0) > 1000);
+        
+        socialMediaContext = `
+
+SOCIAL MEDIA INTELLIGENCE:
+- Total posts analyzed: ${socialPosts.length}
+- Sentiment breakdown: ${Object.entries(sentimentCounts).map(([k,v]) => `${k}: ${v}`).join(', ')}
+- Key topics/hashtags: ${topHashtags.join(', ')}
+- Influencer posts: ${influencers.length}
+- Geographic coverage: Posts from ${socialPosts.filter(p => p.location).length} geotagged locations
+- Sample messages: ${socialPosts.slice(0, 3).map(p => `"${p.message.substring(0, 100)}..."`).join('; ')}`;
+      }
+    }
+  } catch (error) {
+    console.warn("Could not fetch social media data for PMESII analysis:", error);
+  }
+
   const prompt = `You are GuideRight, analyzing the PMESII factors for ${region}.
-${additionalContext ? `Additional context: ${additionalContext}` : ''}
+${additionalContext ? `Additional context: ${additionalContext}` : ''}${socialMediaContext}
 
 Provide a comprehensive PMESII (Political, Military, Economic, Social, Information, Infrastructure) analysis in JSON format:
 

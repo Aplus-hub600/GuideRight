@@ -289,6 +289,18 @@ export type InsertWeatherAlert = z.infer<typeof insertWeatherAlertSchema>;
 export type SocialMediaPost = typeof socialMediaPosts.$inferSelect;
 export type InsertSocialMediaPost = z.infer<typeof insertSocialMediaPostSchema>;
 
+// Social media query schemas
+export const socialMediaQuerySchema = z.object({
+  lat: z.number().optional(),
+  lng: z.number().optional(), 
+  radiusKm: z.number().positive().optional(),
+  sentiment: z.enum(['POSITIVE', 'NEGATIVE', 'NEUTRAL']).optional(),
+  country: z.string().optional(),
+  limit: z.number().positive().max(1000).optional()
+});
+
+export type SocialMediaQuery = z.infer<typeof socialMediaQuerySchema>;
+
 // API Request/Response types
 export const chatQuerySchema = z.object({
   query: z.string().min(1),
