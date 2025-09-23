@@ -16,6 +16,7 @@ import { useSearchNavigation } from "./hooks/use-search-navigation";
 import { useState, useEffect } from "react";
 import NotFound from "@/pages/not-found";
 import Timeline from "@/pages/timeline";
+import Weather from "@/pages/weather";
 import i18n from "./lib/i18n";
 
 function Router() {
@@ -30,6 +31,7 @@ function Router() {
       <Route path="/analysis"><Dashboard /></Route>
       <Route path="/risk"><Dashboard /></Route>
       <Route path="/timeline"><Timeline /></Route>
+      <Route path="/weather"><Weather /></Route>
       <Route><NotFound /></Route>
     </Switch>
   );

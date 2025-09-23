@@ -11,6 +11,7 @@ const resources = {
       "nav.chat": "Chat",
       "nav.analytics": "Analytics",
       "nav.timeline": "Timeline",
+      "nav.weather": "Weather",
       
       // Chat Interface
       "chat.placeholder": "Ask about any area of interest...",
@@ -51,7 +52,20 @@ const resources = {
       "sources.news": "News",
       "sources.social": "Social",
       "sources.weather": "Weather",
-      "sources.infra": "Infrastructure"
+      "sources.infra": "Infrastructure",
+      
+      // Weather
+      "weather.title": "Weather Intelligence",
+      "weather.description": "Real-time weather data and forecasting for tactical operations",
+      "weather.location.title": "Weather Location",
+      "weather.current": "Current Weather",
+      "weather.forecast": "Forecast",
+      "weather.alerts.title": "Weather Alerts",
+      "weather.fetch": "Fetch Weather",
+      "weather.noData": "No current weather data available",
+      "weather.noForecast": "No forecast data available",
+      "weather.fetchFirst": "Fetch Weather Data",
+      "weather.fetchForecast": "Fetch Forecast Data"
     }
   },
   es: {
@@ -61,6 +75,7 @@ const resources = {
       "nav.chat": "Chat", 
       "nav.analytics": "Análisis",
       "nav.timeline": "Cronología",
+      "nav.weather": "Clima",
       "chat.placeholder": "Consulta sobre cualquier área de interés...",
       "pmesii.political": "Político",
       "pmesii.military": "Militar",
@@ -79,6 +94,7 @@ const resources = {
       "nav.chat": "Chat",
       "nav.analytics": "Analyse",
       "nav.timeline": "Chronologie",
+      "nav.weather": "Météo",
       "chat.placeholder": "Demandez à propos de toute zone d'intérêt...",
       "pmesii.political": "Politique",
       "pmesii.military": "Militaire",
@@ -97,6 +113,7 @@ const resources = {
       "nav.chat": "محادثة",
       "nav.analytics": "تحليلات",
       "nav.timeline": "الجدول الزمني",
+      "nav.weather": "الطقس",
       "chat.placeholder": "اسأل عن أي منطقة اهتمام...",
       "pmesii.political": "سياسي",
       "pmesii.military": "عسكري",

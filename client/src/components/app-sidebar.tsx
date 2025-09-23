@@ -1,4 +1,4 @@
-import { Map, MessageSquare, BarChart3, Shield, Globe2, Clock } from "lucide-react"
+import { Map, MessageSquare, BarChart3, Shield, Globe2, Clock, Cloud } from "lucide-react"
 import { useLocation } from "wouter"
 
 import {
@@ -42,6 +42,11 @@ const navItems = [
     title: "nav.timeline",
     url: "/timeline",
     icon: Clock,
+  },
+  {
+    title: "nav.weather",
+    url: "/weather",
+    icon: Cloud,
   },
 ]
 
