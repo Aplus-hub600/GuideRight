@@ -11,6 +11,10 @@ import {
   type InsertWaypoint,
   type GeotaggedFile,
   type InsertGeotaggedFile,
+  type WeatherData,
+  type InsertWeatherData,
+  type WeatherAlert,
+  type InsertWeatherAlert,
   type SearchQuery,
   type SearchResult,
   type TimelineEvent,
@@ -54,6 +58,13 @@ export interface IStorage {
   
   // Timeline operations
   getTimelineEvents(query: TimelineQuery): Promise<TimelineEvent[]>;
+  
+  // Weather operations
+  getWeatherData(lat?: number, lng?: number, isCurrentOnly?: boolean): Promise<WeatherData[]>;
+  createWeatherData(weather: InsertWeatherData): Promise<WeatherData>;
+  getWeatherAlerts(lat?: number, lng?: number, activeOnly?: boolean): Promise<WeatherAlert[]>;
+  createWeatherAlert(alert: InsertWeatherAlert): Promise<WeatherAlert>;
+  updateWeatherAlert(id: string, updates: Partial<InsertWeatherAlert>): Promise<WeatherAlert | null>;
 }
 
 export class MemStorage implements IStorage {
@@ -63,6 +74,8 @@ export class MemStorage implements IStorage {
   private riskAssessments: RiskAssessment[];
   private waypoints: Waypoint[];
   private geotaggedFiles: GeotaggedFile[];
+  private weatherData: WeatherData[];
+  private weatherAlerts: WeatherAlert[];
 
   constructor() {
     this.users = new Map();
@@ -71,9 +84,12 @@ export class MemStorage implements IStorage {
     this.riskAssessments = [];
     this.waypoints = [];
     this.geotaggedFiles = [];
+    this.weatherData = [];
+    this.weatherAlerts = [];
     
-    // Initialize with external intelligence sources
+    // Initialize with external intelligence sources and sample weather data
     this.initializeExternalIntelligence();
+    this.initializeSampleWeatherData();
   }
 
   async getUser(id: string): Promise<User | undefined> {
@@ -702,8 +718,8 @@ export class MemStorage implements IStorage {
           description: resultData.summary || resultData.description || 'Intelligence analysis completed',
           timestamp: result.timestamp.toISOString(),
           severity,
-          location: result.aoiData?.lat && result.aoiData?.lng ? 
-            { lat: result.aoiData.lat, lng: result.aoiData.lng } : undefined,
+          location: result.aoiData && (result.aoiData as any)?.lat && (result.aoiData as any)?.lng ? 
+            { lat: (result.aoiData as any).lat, lng: (result.aoiData as any).lng } : undefined,
           source: result.source,
           metadata: { 
             analysisType: result.analysisType, 
@@ -727,8 +743,8 @@ export class MemStorage implements IStorage {
           description: `Multi-factor analysis completed for ${result.region}`,
           timestamp: result.timestamp.toISOString(),
           severity: 'MEDIUM', // PMESII analyses are generally medium priority
-          location: result.aoiData?.lat && result.aoiData?.lng ? 
-            { lat: result.aoiData.lat, lng: result.aoiData.lng } : undefined,
+          location: result.aoiData && (result.aoiData as any)?.lat && (result.aoiData as any)?.lng ? 
+            { lat: (result.aoiData as any).lat, lng: (result.aoiData as any).lng } : undefined,
           source: result.source,
           metadata: { 
             analysisType: result.analysisType, 
@@ -804,6 +820,73 @@ export class MemStorage implements IStorage {
       }
     }
     
+    // Add weather data and alerts as timeline events
+    if (!filters?.types || filters.types.includes('weather')) {
+      // Add weather alerts
+      for (const alert of this.weatherAlerts) {
+        events.push({
+          id: alert.id,
+          type: 'weather',
+          title: `Weather Alert - ${alert.title}`,
+          description: alert.description,
+          timestamp: alert.timestamp.toISOString(),
+          severity: alert.severity as 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL',
+          location: { lat: alert.lat, lng: alert.lng },
+          source: 'weather',
+          metadata: { 
+            alertType: alert.alertType,
+            location: alert.location,
+            isActive: alert.isActive,
+            startTime: alert.startTime,
+            endTime: alert.endTime,
+            weatherData: alert.weatherData
+          }
+        });
+      }
+      
+      // Add significant weather data (only current weather and notable conditions)
+      for (const weather of this.weatherData) {
+        if (!weather.isCurrentWeather) continue; // Only current weather for timeline
+        
+        // Only add notable weather conditions to timeline
+        const isNotable = 
+          weather.temperature < 0 || weather.temperature > 35 || // Extreme temperatures
+          (weather.windSpeed && weather.windSpeed > 50) || // High winds
+          (weather.precipitation && weather.precipitation > 10) || // Heavy precipitation
+          (weather.visibility && weather.visibility < 5); // Poor visibility
+          
+        if (!isNotable) continue;
+        
+        const weatherDescription = `Current weather: ${weather.temperature}°C, ${
+          weather.precipitation && weather.precipitation > 0 ? `${weather.precipitation}mm rain, ` : ''
+        }${weather.windSpeed ? `wind ${weather.windSpeed}km/h` : ''}${
+          weather.visibility ? `, visibility ${weather.visibility}km` : ''
+        }`;
+        
+        events.push({
+          id: weather.id,
+          type: 'weather',
+          title: `Weather Update - ${weather.location}`,
+          description: weatherDescription,
+          timestamp: weather.timestamp.toISOString(),
+          severity: isNotable ? (
+            weather.temperature < -10 || weather.temperature > 40 || 
+            (weather.windSpeed && weather.windSpeed > 80) ||
+            (weather.precipitation && weather.precipitation > 50) ? 'HIGH' : 'MEDIUM'
+          ) : 'LOW',
+          location: { lat: weather.lat, lng: weather.lng },
+          source: weather.dataSource || 'open-meteo',
+          metadata: { 
+            temperature: weather.temperature,
+            weatherCode: weather.weatherCode,
+            windSpeed: weather.windSpeed,
+            precipitation: weather.precipitation,
+            visibility: weather.visibility
+          }
+        });
+      }
+    }
+    
     // Apply filters
     let filteredEvents = events;
     
@@ -835,6 +918,153 @@ export class MemStorage implements IStorage {
     return filteredEvents
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
       .slice(0, limit);
+  }
+  
+  // Weather operations
+  async getWeatherData(lat?: number, lng?: number, isCurrentOnly?: boolean): Promise<WeatherData[]> {
+    let data = this.weatherData;
+    
+    // Filter by location if provided
+    if (lat !== undefined && lng !== undefined) {
+      data = data.filter(w => 
+        Math.abs(w.lat - lat) < 0.1 && Math.abs(w.lng - lng) < 0.1
+      );
+    }
+    
+    // Filter by current weather only if requested
+    if (isCurrentOnly) {
+      data = data.filter(w => w.isCurrentWeather);
+    }
+    
+    return data.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  }
+
+  async createWeatherData(insertWeather: InsertWeatherData): Promise<WeatherData> {
+    const id = randomUUID();
+    const weather: WeatherData = {
+      id,
+      lat: insertWeather.lat,
+      lng: insertWeather.lng,
+      location: insertWeather.location,
+      weatherCode: insertWeather.weatherCode,
+      temperature: insertWeather.temperature,
+      apparentTemperature: insertWeather.apparentTemperature ?? null,
+      humidity: insertWeather.humidity ?? null,
+      dewPoint: insertWeather.dewPoint ?? null,
+      precipitation: insertWeather.precipitation ?? null,
+      precipitationProbability: insertWeather.precipitationProbability ?? null,
+      windSpeed: insertWeather.windSpeed ?? null,
+      windDirection: insertWeather.windDirection ?? null,
+      windGusts: insertWeather.windGusts ?? null,
+      pressure: insertWeather.pressure ?? null,
+      visibility: insertWeather.visibility ?? null,
+      cloudCover: insertWeather.cloudCover ?? null,
+      uvIndex: insertWeather.uvIndex ?? null,
+      isCurrentWeather: insertWeather.isCurrentWeather ?? false,
+      forecastTime: insertWeather.forecastTime ?? null,
+      dataSource: insertWeather.dataSource ?? "open-meteo",
+      timestamp: new Date()
+    };
+    this.weatherData.push(weather);
+    return weather;
+  }
+
+  async getWeatherAlerts(lat?: number, lng?: number, activeOnly?: boolean): Promise<WeatherAlert[]> {
+    let alerts = this.weatherAlerts;
+    
+    // Filter by location if provided
+    if (lat !== undefined && lng !== undefined) {
+      alerts = alerts.filter(a => 
+        Math.abs(a.lat - lat) < 0.1 && Math.abs(a.lng - lng) < 0.1
+      );
+    }
+    
+    // Filter by active alerts only if requested
+    if (activeOnly) {
+      const now = new Date();
+      alerts = alerts.filter(a => 
+        a.isActive && 
+        new Date(a.startTime) <= now && 
+        (!a.endTime || new Date(a.endTime) >= now)
+      );
+    }
+    
+    return alerts.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  }
+
+  async createWeatherAlert(insertAlert: InsertWeatherAlert): Promise<WeatherAlert> {
+    const id = randomUUID();
+    const alert: WeatherAlert = {
+      id,
+      lat: insertAlert.lat,
+      lng: insertAlert.lng,
+      location: insertAlert.location,
+      alertType: insertAlert.alertType,
+      severity: insertAlert.severity,
+      title: insertAlert.title,
+      description: insertAlert.description,
+      startTime: insertAlert.startTime,
+      endTime: insertAlert.endTime ?? null,
+      isActive: insertAlert.isActive ?? true,
+      weatherData: insertAlert.weatherData ?? null,
+      timestamp: new Date()
+    };
+    this.weatherAlerts.push(alert);
+    return alert;
+  }
+
+  async updateWeatherAlert(id: string, updates: Partial<InsertWeatherAlert>): Promise<WeatherAlert | null> {
+    const alertIndex = this.weatherAlerts.findIndex(a => a.id === id);
+    if (alertIndex === -1) return null;
+    
+    const updatedAlert = { ...this.weatherAlerts[alertIndex], ...updates };
+    this.weatherAlerts[alertIndex] = updatedAlert;
+    return updatedAlert;
+  }
+
+  private async initializeSampleWeatherData() {
+    // Add sample current weather for Dhaka (tactical operations area)
+    await this.createWeatherData({
+      lat: 23.8103,
+      lng: 90.4125,
+      location: "Dhaka, Bangladesh",
+      weatherCode: "3", // Overcast
+      temperature: 28.5,
+      apparentTemperature: 32.1,
+      humidity: 78,
+      dewPoint: 24.2,
+      precipitation: 0,
+      precipitationProbability: 15,
+      windSpeed: 12,
+      windDirection: 220,
+      windGusts: 18,
+      pressure: 1012,
+      visibility: 8.5,
+      cloudCover: 85,
+      uvIndex: 6,
+      isCurrentWeather: true,
+      forecastTime: null,
+      dataSource: "open-meteo"
+    });
+
+    // Add sample weather alert for operational awareness
+    await this.createWeatherAlert({
+      lat: 23.8103,
+      lng: 90.4125,
+      location: "Dhaka Metropolitan Area",
+      alertType: "severe_weather",
+      severity: "MEDIUM",
+      title: "Thunderstorm Watch",
+      description: "Moderate thunderstorms possible this evening. Reduced visibility and gusty winds expected. Monitor conditions for tactical operations.",
+      startTime: new Date(),
+      endTime: new Date(Date.now() + 6 * 60 * 60 * 1000), // 6 hours from now
+      isActive: true,
+      weatherData: {
+        thunderstormProbability: 65,
+        gustWindSpeed: 45,
+        visibility: 2.5
+      }
+    });
   }
   
   private mapSeverityToLevel(severity?: number): 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' | undefined {
