@@ -280,6 +280,14 @@ export const weatherAlertRequestSchema = z.object({
   weatherData: z.any().optional(),
 });
 
+export const locationAnalysisRequestSchema = z.object({
+  lat: z.number(),
+  lng: z.number(),
+  radiusKm: z.number().optional().default(5),
+  analysisType: z.enum(['general', 'pmesii', 'threat', 'intelligence']).optional().default('general'),
+  context: z.string().optional()
+});
+
 export type ChatQueryRequest = z.infer<typeof chatQuerySchema>;
 export type FileAnalysisRequest = z.infer<typeof fileAnalysisSchema>;
 export type RiskAssessmentRequest = z.infer<typeof riskAssessmentRequestSchema>;
@@ -287,6 +295,7 @@ export type WaypointRequest = z.infer<typeof waypointRequestSchema>;
 export type GeotagRequest = z.infer<typeof geotagRequestSchema>;
 export type WeatherRequest = z.infer<typeof weatherRequestSchema>;
 export type WeatherAlertRequest = z.infer<typeof weatherAlertRequestSchema>;
+export type LocationAnalysisRequest = z.infer<typeof locationAnalysisRequestSchema>;
 
 // Search schemas
 export const searchQuerySchema = z.object({

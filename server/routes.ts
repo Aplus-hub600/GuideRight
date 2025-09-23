@@ -17,6 +17,7 @@ import {
   timelineQuerySchema,
   weatherRequestSchema,
   weatherAlertRequestSchema,
+  locationAnalysisRequestSchema,
   type ChatQueryRequest,
   type RiskAssessmentRequest,
   type WaypointRequest,
@@ -24,7 +25,8 @@ import {
   type SearchQuery,
   type TimelineQuery,
   type WeatherRequest,
-  type WeatherAlertRequest
+  type WeatherAlertRequest,
+  type LocationAnalysisRequest
 } from "@shared/schema";
 import multer from "multer";
 // import pdfParse from "pdf-parse"; // Temporarily disabled due to initialization issues
@@ -36,10 +38,21 @@ const upload = multer({
   limits: { fileSize: 50 * 1024 * 1024 } // 50MB limit
 });
 
-function handleOpenAIError(error: any, res: any) {
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (typeof error === 'string') {
+    return error;
+  }
+  return "Unknown error occurred";
+}
+
+function handleOpenAIError(error: unknown, res: any) {
   console.error("OpenAI error:", error);
+  const message = getErrorMessage(error);
   
-  if (error.message?.includes('429') || error.message?.includes('quota')) {
+  if (message.includes('429') || message.includes('quota')) {
     return res.status(429).json({ 
       success: false, 
       error: "OpenAI quota exceeded. Please try again later.",
@@ -49,7 +62,7 @@ function handleOpenAIError(error: any, res: any) {
   
   return res.status(500).json({ 
     success: false, 
-    error: error.message || "Internal server error" 
+    error: message || "Internal server error" 
   });
 }
 
@@ -152,16 +165,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
     } catch (error) {
       console.error("Chat API error:", error);
+      const message = getErrorMessage(error);
       
       // For streaming endpoints, send error as SSE event
       if (res.headersSent) {
         res.write(`data: ${JSON.stringify({ 
           type: 'error', 
           data: { 
-            error: error.message?.includes('429') || error.message?.includes('quota') 
+            error: message.includes('429') || message.includes('quota') 
               ? "OpenAI quota exceeded. Please try again later."
-              : error.message || "Failed to process chat query",
-            code: error.message?.includes('429') || error.message?.includes('quota') 
+              : message || "Failed to process chat query",
+            code: message.includes('429') || message.includes('quota') 
               ? 'quota_exceeded' 
               : 'server_error'
           }
@@ -181,7 +195,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: true, messages });
     } catch (error) {
       console.error("Chat history error:", error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: getErrorMessage(error) });
     }
   });
 
@@ -324,6 +338,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Location-based intelligence analysis endpoint
+  app.post("/api/analysis/location", async (req, res) => {
+    try {
+      const { lat, lng, radiusKm, analysisType, context } = locationAnalysisRequestSchema.parse(req.body);
+      
+      // Create location description for analysis
+      const locationName = `Location ${lat.toFixed(4)}, ${lng.toFixed(4)} (${radiusKm}km radius)`;
+      const analysisContext = context || `Tactical intelligence analysis for coordinates ${lat}, ${lng} within ${radiusKm}km radius.`;
+      
+      // Perform intelligence analysis based on type
+      let analysis;
+      if (analysisType === 'pmesii') {
+        analysis = await generatePMESIIAnalysis(locationName, analysisContext);
+      } else {
+        analysis = await processTacticalQuery(
+          `Analyze the tactical intelligence for location ${lat}, ${lng} with ${radiusKm}km radius. ${analysisContext}`,
+          context ? [context] : undefined
+        );
+      }
+      
+      // Calculate risk score for the location
+      const riskData = await calculateRiskScore({
+        name: locationName,
+        lat,
+        lng,
+        radiusKm
+      });
+      
+      // Save analysis result with location metadata
+      const result = await storage.createAnalysisResult({
+        analysisType: analysisType === 'pmesii' ? 'pmesii' : 'intelligence',
+        results: analysisType === 'pmesii' ? analysis : analysis,
+        region: locationName,
+        aoiData: { lat, lng, radiusKm },
+        source: 'map_click'
+      });
+
+      res.json({
+        success: true,
+        analysis,
+        riskScore: Math.round(riskData.score * 100),
+        riskLevel: riskData.score > 0.8 ? 'CRITICAL' : 
+                   riskData.score > 0.6 ? 'HIGH' :
+                   riskData.score > 0.4 ? 'MEDIUM' : 'LOW',
+        riskFactors: riskData.factors,
+        riskAssessment: riskData.assessment,
+        confidence: analysisType === 'pmesii' ? 0.8 : analysis.confidence,
+        location: { lat, lng, radiusKm, name: locationName },
+        resultId: result.id
+      });
+    } catch (error) {
+      handleOpenAIError(error, res);
+    }
+  });
+
   // Get analysis history
   app.get("/api/analysis/history", async (req, res) => {
     try {
@@ -341,7 +410,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: true, results });
     } catch (error) {
       console.error("Analysis history error:", error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: getErrorMessage(error) });
     }
   });
 
@@ -352,7 +421,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: true, results });
     } catch (error) {
       console.error("Risk history error:", error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: getErrorMessage(error) });
     }
   });
 
@@ -363,7 +432,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: true, waypoints });
     } catch (error) {
       console.error("Error getting waypoints:", error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: getErrorMessage(error) });
     }
   });
 
@@ -374,7 +443,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: true, waypoint });
     } catch (error) {
       console.error("Error creating waypoint:", error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: getErrorMessage(error) });
     }
   });
 
@@ -391,7 +460,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: true, waypoint });
     } catch (error) {
       console.error("Error updating waypoint:", error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: getErrorMessage(error) });
     }
   });
 
@@ -407,7 +476,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: true });
     } catch (error) {
       console.error("Error deleting waypoint:", error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: getErrorMessage(error) });
     }
   });
 
@@ -430,7 +499,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: true, files });
     } catch (error) {
       console.error("Error getting geotagged files:", error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: getErrorMessage(error) });
     }
   });
 
@@ -441,7 +510,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: true, file });
     } catch (error) {
       console.error("Error creating geotagged file:", error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: getErrorMessage(error) });
     }
   });
 
@@ -457,7 +526,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: true });
     } catch (error) {
       console.error("Error deleting geotagged file:", error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: getErrorMessage(error) });
     }
   });
 
@@ -489,7 +558,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("Error performing search:", error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: getErrorMessage(error) });
     }
   });
 
@@ -510,7 +579,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("Error fetching timeline events:", error);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(500).json({ success: false, error: getErrorMessage(error) });
     }
   });
 
