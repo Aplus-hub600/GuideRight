@@ -196,6 +196,10 @@ export function GoogleMapPanel({
         // Trigger intelligence analysis for the clicked location
         try {
           console.log('Triggering intelligence analysis for location:', newAOI)
+          
+          // Dispatch analysis start event
+          window.dispatchEvent(new CustomEvent('guideright:analysis-start'))
+          
           const response = await fetch('/api/analysis/location', {
             method: 'POST',
             headers: {
@@ -214,8 +218,11 @@ export function GoogleMapPanel({
             const analysisResult = await response.json()
             console.log('Intelligence analysis result:', analysisResult)
             
-            // Store analysis result for display (can be extended with proper state management)
-            // For now, just log the analysis result
+            // Dispatch analysis result event for the analysis panel to pick up
+            window.dispatchEvent(new CustomEvent('guideright:analysis-result', {
+              detail: analysisResult
+            }))
+            
             console.log('Analysis complete:', {
               confidence: analysisResult.confidence,
               riskLevel: analysisResult.riskLevel,
@@ -224,9 +231,17 @@ export function GoogleMapPanel({
             })
           } else {
             console.error('Failed to get intelligence analysis:', response.statusText)
+            // Dispatch error event
+            window.dispatchEvent(new CustomEvent('guideright:analysis-error', {
+              detail: { message: `Failed to analyze location: ${response.statusText}` }
+            }))
           }
         } catch (error) {
           console.error('Error during intelligence analysis:', error)
+          // Dispatch error event
+          window.dispatchEvent(new CustomEvent('guideright:analysis-error', {
+            detail: { message: `Network error during analysis: ${error instanceof Error ? error.message : 'Unknown error'}` }
+          }))
         }
       }
     })

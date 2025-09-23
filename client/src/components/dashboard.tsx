@@ -1,9 +1,10 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { ChatPanel } from "./chat-panel"
 import { GoogleMapPanel } from "./google-map-panel"
 import { PMESIITest } from "./pmesii-test"
 import { RiskAssessment } from "./risk-assessment"
 import { IntelligenceIntegration } from "./intelligence-integration"
+import { AnalysisPanel } from "./analysis-panel"
 import { FileDrop } from "./file-drop"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -43,6 +44,7 @@ export function Dashboard({ className }: DashboardProps) {
   const [movementPlan, setMovementPlan] = useState<MovementPlan | undefined>()
   const [mediaContextIds, setMediaContextIds] = useState<string[]>([])
   const [confidence, setConfidence] = useState({ belief: 0.78, disbelief: 0.12, uncertainty: 0.10 })
+  const [isAnalysisPanelVisible, setIsAnalysisPanelVisible] = useState(false)
 
   const handleAOIChange = (newAOI: AOI) => {
     console.log('AOI changed:', newAOI)
@@ -68,6 +70,16 @@ export function Dashboard({ className }: DashboardProps) {
       rationale: "Route avoids high-risk checkpoints identified in sector 7. Utilizes covered approach through industrial district. Cell coverage optimal along corridor. Hospital access available at waypoint 2."
     })
   }
+
+  // Show analysis panel when analysis starts
+  useEffect(() => {
+    const handleAnalysisStart = () => {
+      setIsAnalysisPanelVisible(true)
+    }
+
+    window.addEventListener('guideright:analysis-start', handleAnalysisStart)
+    return () => window.removeEventListener('guideright:analysis-start', handleAnalysisStart)
+  }, [])
 
   const handleQuerySubmit = (query: string, contextIds?: string[]) => {
     console.log('Query submitted:', query, 'with context:', contextIds)
@@ -179,14 +191,21 @@ export function Dashboard({ className }: DashboardProps) {
 
         {/* Middle Panel - Map */}
         <ResizablePanel defaultSize={40} minSize={30}>
-          <GoogleMapPanel
-            aoi={currentAOI}
-            riskScore={riskScore}
-            movementPlan={movementPlan}
-            onAOIChange={handleAOIChange}
-            onMovementPlanRequest={handleMovementPlanRequest}
-            className="h-full"
-          />
+          <div className="relative h-full">
+            <GoogleMapPanel
+              aoi={currentAOI}
+              riskScore={riskScore}
+              movementPlan={movementPlan}
+              onAOIChange={handleAOIChange}
+              onMovementPlanRequest={handleMovementPlanRequest}
+              className="h-full"
+            />
+            {/* Analysis Panel Overlay */}
+            <AnalysisPanel 
+              isVisible={isAnalysisPanelVisible} 
+              onClose={() => setIsAnalysisPanelVisible(false)}
+            />
+          </div>
         </ResizablePanel>
 
         <ResizableHandle withHandle />
