@@ -483,7 +483,7 @@ export function GoogleMapPanel({
     
     // Add confidence indicator
     const confidenceText = currentConfidence ? 
-      `${currentConfidence <= 1 ? Math.round(currentConfidence * 100) : Math.round(currentConfidence)}%` : '?'
+      `${currentConfidence <= 1 ? Math.round(currentConfidence * 100) : Math.round(currentConfidence)}%` : '●'
     aoiMarkerContent.innerHTML = confidenceText
 
     // Create title with confidence and risk information
@@ -514,8 +514,7 @@ export function GoogleMapPanel({
       const userPin = new PinElement({
         background: '#3b82f6',
         borderColor: '#ffffff',
-        scale: 0.9,
-        glyph: '⊙'
+        scale: 0.9
       })
 
       // Add user location marker
