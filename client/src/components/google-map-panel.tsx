@@ -10,6 +10,61 @@ import { useGoogleMaps } from "@/hooks/useGoogleMaps"
 import { useGeolocation } from "@/hooks/useGeolocation"
 import { useMapFocus } from "@/hooks/use-search-navigation"
 
+// Utility functions for production resilience
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
+
+const retryWithBackoff = async <T>(fn: () => Promise<T>, maxRetries: number = 3): Promise<T> => {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await fn()
+    } catch (error: any) {
+      // Don't retry if request was aborted
+      if (error.name === 'AbortError') {
+        throw error
+      }
+      
+      // Retry on rate limits, server errors, and network issues
+      const shouldRetry = error?.status === 429 || 
+                         (error?.status >= 500 && error?.status < 600 && error?.status !== 501) ||
+                         (error.name === 'TypeError' && error.message.includes('Failed to fetch'))
+      
+      if (shouldRetry && attempt < maxRetries - 1) {
+        const delay = Math.min(1000 * Math.pow(2, attempt) + Math.random() * 1000, 10000)
+        console.log(`Retrying due to ${error?.status || 'network error'} in ${Math.round(delay)}ms... (attempt ${attempt + 1}/${maxRetries})`)
+        await sleep(delay)
+        continue
+      }
+      throw error
+    }
+  }
+  throw new Error('Max retries exceeded')
+}
+
+// Cache for analysis results to avoid repeated API calls
+const analysisCache = new Map<string, { result: any; timestamp: number }>()
+const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
+
+const getCacheKey = (lat: number, lng: number, radiusKm: number) => {
+  // Round coordinates to reduce cache fragmentation
+  const roundedLat = Math.round(lat * 1000) / 1000
+  const roundedLng = Math.round(lng * 1000) / 1000
+  return `${roundedLat},${roundedLng},${radiusKm}`
+}
+
+const getCachedAnalysis = (lat: number, lng: number, radiusKm: number) => {
+  const key = getCacheKey(lat, lng, radiusKm)
+  const cached = analysisCache.get(key)
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return cached.result
+  }
+  return null
+}
+
+const setCachedAnalysis = (lat: number, lng: number, radiusKm: number, result: any) => {
+  const key = getCacheKey(lat, lng, radiusKm)
+  analysisCache.set(key, { result, timestamp: Date.now() })
+}
+
 // Security helper function to escape HTML content
 const escapeHtml = (unsafe: string): string => {
   return unsafe
@@ -110,6 +165,11 @@ export function GoogleMapPanel({
   const [mapType, setMapType] = useState<'roadmap' | 'satellite' | 'hybrid' | 'terrain'>('satellite')
   const [showUserLocation, setShowUserLocation] = useState(false)
   const [latestAnalysis, setLatestAnalysis] = useState<any>(null)
+  const [isAnalysisInProgress, setIsAnalysisInProgress] = useState(false)
+  const pendingRequestsRef = useRef(new Set<string>())
+  const abortControllerRef = useRef<AbortController | null>(null)
+  const lastClickTimeRef = useRef(0)
+  const CLICK_DEBOUNCE_MS = 500 // Prevent rapid clicking
 
   // Default AOI for demo
   const currentAOI = aoi || {
@@ -231,21 +291,28 @@ export function GoogleMapPanel({
       streetViewControl: true,
       fullscreenControl: true,
       zoomControl: true,
-      tilt: 45, // Enable 3D terrain capability
-      styles: [
-        // Dark mode styling for better tactical appearance
-        {
-          elementType: "labels",
-          stylers: [{ visibility: "on" }]
-        }
-      ]
+      tilt: 45 // Enable 3D terrain capability
+      // Note: styles removed when mapId is present (configured via Google Cloud Console)
     })
 
     mapInstanceRef.current = map
 
-    // Add click listener for AOI selection and intelligence analysis
+    // Add click listener for AOI selection and intelligence analysis with resilience
     map.addListener('click', async (e: any) => {
       if (e.latLng) {
+        // Debounce rapid clicks
+        const now = Date.now()
+        if (now - lastClickTimeRef.current < CLICK_DEBOUNCE_MS) {
+          console.log('Click debounced - too rapid')
+          return
+        }
+        lastClickTimeRef.current = now
+        
+        // Cancel any ongoing analysis and start new one
+        if (abortControllerRef.current) {
+          console.log('Canceling previous analysis for new location')
+          abortControllerRef.current.abort()
+        }
         const newAOI: AOI = {
           lat: e.latLng.lat(),
           lng: e.latLng.lng(),
@@ -254,58 +321,105 @@ export function GoogleMapPanel({
         console.log('New AOI selected:', newAOI)
         onAOIChange?.(newAOI)
         
-        // Trigger intelligence analysis for the clicked location
+        // Check if we're already analyzing this location
+        const requestKey = getCacheKey(newAOI.lat, newAOI.lng, newAOI.radiusKm)
+        if (pendingRequestsRef.current.has(requestKey)) {
+          console.log('Analysis already in progress for this location, skipping duplicate request')
+          return
+        }
+        
+        // Check cache first
+        const cachedResult = getCachedAnalysis(newAOI.lat, newAOI.lng, newAOI.radiusKm)
+        if (cachedResult) {
+          console.log('Using cached analysis result for location:', newAOI)
+          setLatestAnalysis(cachedResult)
+          window.dispatchEvent(new CustomEvent('guideright:analysis-result', {
+            detail: cachedResult
+          }))
+          return
+        }
+        
+        // Start analysis with resilience features
         try {
           console.log('Triggering intelligence analysis for location:', newAOI)
+          pendingRequestsRef.current.add(requestKey)
+          setIsAnalysisInProgress(true)
           
           // Dispatch analysis start event
           window.dispatchEvent(new CustomEvent('guideright:analysis-start'))
           
-          const response = await fetch('/api/analysis/location', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              lat: newAOI.lat,
-              lng: newAOI.lng,
-              radiusKm: newAOI.radiusKm,
-              analysisType: 'general',
-              context: `Tactical intelligence analysis for map click at coordinates ${newAOI.lat.toFixed(4)}, ${newAOI.lng.toFixed(4)}`
+          // Create abort controller for this request
+          const controller = new AbortController()
+          abortControllerRef.current = controller
+          
+          const analysisResult = await retryWithBackoff(async () => {
+            const response = await fetch('/api/analysis/location', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              signal: controller.signal,
+              body: JSON.stringify({
+                lat: newAOI.lat,
+                lng: newAOI.lng,
+                radiusKm: newAOI.radiusKm,
+                analysisType: 'general',
+                context: `Tactical intelligence analysis for map click at coordinates ${newAOI.lat.toFixed(4)}, ${newAOI.lng.toFixed(4)}`
+              })
             })
+            
+            if (!response.ok) {
+              const error = new Error(`HTTP ${response.status}: ${response.statusText}`)
+              ;(error as any).status = response.status
+              throw error
+            }
+            
+            return await response.json()
           })
           
-          if (response.ok) {
-            const analysisResult = await response.json()
-            console.log('Intelligence analysis result:', analysisResult)
-            
-            // Store analysis result for map markers
-            setLatestAnalysis(analysisResult)
-            
-            // Dispatch analysis result event for the analysis panel to pick up
+          console.log('Intelligence analysis result:', analysisResult)
+          
+          // Cache the result
+          setCachedAnalysis(newAOI.lat, newAOI.lng, newAOI.radiusKm, analysisResult)
+          
+          // Store analysis result for map markers
+          setLatestAnalysis(analysisResult)
+          
+          // Dispatch analysis result event for the analysis panel to pick up
+          window.dispatchEvent(new CustomEvent('guideright:analysis-result', {
+            detail: analysisResult
+          }))
+          
+          console.log('Analysis complete:', {
+            confidence: analysisResult.confidence,
+            riskLevel: analysisResult.riskLevel,
+            riskScore: analysisResult.riskScore,
+            location: analysisResult.location
+          })
+        } catch (error: any) {
+          console.error('Error during intelligence analysis:', error)
+          
+          // Try to fallback to any cached result for nearby location
+          const fallbackResult = getCachedAnalysis(newAOI.lat, newAOI.lng, newAOI.radiusKm)
+          if (fallbackResult) {
+            console.log('Using fallback cached result due to error')
+            setLatestAnalysis(fallbackResult)
             window.dispatchEvent(new CustomEvent('guideright:analysis-result', {
-              detail: analysisResult
+              detail: fallbackResult
             }))
-            
-            console.log('Analysis complete:', {
-              confidence: analysisResult.confidence,
-              riskLevel: analysisResult.riskLevel,
-              riskScore: analysisResult.riskScore,
-              location: analysisResult.location
-            })
           } else {
-            console.error('Failed to get intelligence analysis:', response.statusText)
-            // Dispatch error event
+            // Dispatch error event with user-friendly message
+            const errorMessage = error.status === 429 
+              ? 'Analysis service is currently busy. Please try again in a moment.'
+              : `Network error during analysis: ${error.message || 'Unknown error'}`
+            
             window.dispatchEvent(new CustomEvent('guideright:analysis-error', {
-              detail: { message: `Failed to analyze location: ${response.statusText}` }
+              detail: { message: errorMessage }
             }))
           }
-        } catch (error) {
-          console.error('Error during intelligence analysis:', error)
-          // Dispatch error event
-          window.dispatchEvent(new CustomEvent('guideright:analysis-error', {
-            detail: { message: `Network error during analysis: ${error instanceof Error ? error.message : 'Unknown error'}` }
-          }))
+        } finally {
+          pendingRequestsRef.current.delete(requestKey)
+          setIsAnalysisInProgress(false)
         }
       }
     })
@@ -314,7 +428,7 @@ export function GoogleMapPanel({
     const { AdvancedMarkerElement, PinElement } = await window.google.maps.importLibrary("marker") as any;
     
     updateMapElements(map, AdvancedMarkerElement, PinElement)
-  }, [isLoaded, onAOIChange])
+  }, [isLoaded, onAOIChange, currentAOI, mapType])
 
   // Update map elements when analysis results change
   useEffect(() => {
