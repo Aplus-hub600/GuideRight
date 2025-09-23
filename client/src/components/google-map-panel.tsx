@@ -13,7 +13,7 @@ import { useMapFocus } from "@/hooks/use-search-navigation"
 // Utility functions for production resilience
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
-const retryWithBackoff = async <T>(fn: () => Promise<T>, maxRetries: number = 3): Promise<T> => {
+const retryWithBackoff = async function<T>(fn: () => Promise<T>, maxRetries: number = 3): Promise<T> {
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
       return await fn()

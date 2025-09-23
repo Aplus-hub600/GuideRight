@@ -103,6 +103,47 @@ export const weatherAlerts = pgTable("weather_alerts", {
   timestamp: timestamp("timestamp").defaultNow().notNull(),
 });
 
+export const socialMediaPosts = pgTable("social_media_posts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  universalMessageId: text("universal_message_id").unique().notNull(),
+  socialNetwork: text("social_network").notNull(), // 'TWITTER', 'FACEBOOK', etc.
+  senderUserId: text("sender_user_id").notNull(),
+  senderScreenName: text("sender_screen_name").notNull(),
+  senderListedName: text("sender_listed_name"),
+  senderProfileImgUrl: text("sender_profile_img_url"),
+  senderProfileLink: text("sender_profile_link"),
+  senderFollowersCount: real("sender_followers_count"),
+  senderInfluencerScore: real("sender_influencer_score"),
+  senderAge: real("sender_age"),
+  senderGender: text("sender_gender"),
+  originalAuthor: text("original_author"),
+  originalAuthorProfileLink: text("original_author_profile_link"),
+  title: text("title"),
+  message: text("message").notNull(),
+  messageType: text("message_type").notNull(), // 'X Update', 'X Repost', etc.
+  createdTime: real("created_time").notNull(),
+  language: text("language"),
+  languageCode: text("language_code"),
+  countryCode: text("country_code"),
+  mediaTypeList: text("media_type_list"),
+  permalink: text("permalink").notNull(),
+  domain: text("domain"),
+  retweets: real("retweets").default(0),
+  tweetGenerator: text("tweet_generator"), // Platform/client used
+  favorites: real("favorites").default(0),
+  sentiment: text("sentiment"), // 'POSITIVE', 'NEGATIVE', 'NEUTRAL'
+  location: text("location"),
+  country: text("country"),
+  state: text("state"),
+  city: text("city"),
+  lat: real("lat"),
+  lng: real("lng"),
+  conversationId: text("conversation_id"),
+  campaignName: text("campaign_name"),
+  isSpam: boolean("is_spam").default(false),
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
+});
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
@@ -189,6 +230,45 @@ export const insertWeatherAlertSchema = createInsertSchema(weatherAlerts).pick({
   weatherData: true,
 });
 
+export const insertSocialMediaPostSchema = createInsertSchema(socialMediaPosts).pick({
+  universalMessageId: true,
+  socialNetwork: true,
+  senderUserId: true,
+  senderScreenName: true,
+  senderListedName: true,
+  senderProfileImgUrl: true,
+  senderProfileLink: true,
+  senderFollowersCount: true,
+  senderInfluencerScore: true,
+  senderAge: true,
+  senderGender: true,
+  originalAuthor: true,
+  originalAuthorProfileLink: true,
+  title: true,
+  message: true,
+  messageType: true,
+  createdTime: true,
+  language: true,
+  languageCode: true,
+  countryCode: true,
+  mediaTypeList: true,
+  permalink: true,
+  domain: true,
+  retweets: true,
+  tweetGenerator: true,
+  favorites: true,
+  sentiment: true,
+  location: true,
+  country: true,
+  state: true,
+  city: true,
+  lat: true,
+  lng: true,
+  conversationId: true,
+  campaignName: true,
+  isSpam: true,
+});
+
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -206,6 +286,8 @@ export type WeatherData = typeof weatherData.$inferSelect;
 export type InsertWeatherData = z.infer<typeof insertWeatherDataSchema>;
 export type WeatherAlert = typeof weatherAlerts.$inferSelect;
 export type InsertWeatherAlert = z.infer<typeof insertWeatherAlertSchema>;
+export type SocialMediaPost = typeof socialMediaPosts.$inferSelect;
+export type InsertSocialMediaPost = z.infer<typeof insertSocialMediaPostSchema>;
 
 // API Request/Response types
 export const chatQuerySchema = z.object({
