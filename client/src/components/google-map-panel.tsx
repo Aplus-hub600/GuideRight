@@ -68,9 +68,9 @@ const setCachedAnalysis = (lat: number, lng: number, radiusKm: number, result: a
 // Security helper function to escape HTML content
 const escapeHtml = (unsafe: string): string => {
   return unsafe
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
+    .replace(/&/g, "&")
+    .replace(/</g, "<")
+    .replace(/>/g, ">")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
 }
