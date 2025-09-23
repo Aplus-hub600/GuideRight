@@ -10,6 +10,16 @@ import { useGoogleMaps } from "@/hooks/useGoogleMaps"
 import { useGeolocation } from "@/hooks/useGeolocation"
 import { useMapFocus } from "@/hooks/use-search-navigation"
 
+// Security helper function to escape HTML content
+const escapeHtml = (unsafe: string): string => {
+  return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 interface AOI {
   name?: string
   lat: number
@@ -58,7 +68,7 @@ export function GoogleMapPanel({
     
     // Create marker element for search result
     const markerElement = document.createElement('div')
-    markerElement.innerHTML = '🔍'
+    markerElement.innerHTML = '⌕'
     markerElement.style.fontSize = '24px'
     markerElement.style.cursor = 'pointer'
     markerElement.title = title || 'Search result'
@@ -99,6 +109,7 @@ export function GoogleMapPanel({
   const [isLoading, setIsLoading] = useState(false)
   const [mapType, setMapType] = useState<'roadmap' | 'satellite' | 'hybrid' | 'terrain'>('satellite')
   const [showUserLocation, setShowUserLocation] = useState(false)
+  const [latestAnalysis, setLatestAnalysis] = useState<any>(null)
 
   // Default AOI for demo
   const currentAOI = aoi || {
@@ -124,6 +135,56 @@ export function GoogleMapPanel({
     return 'Critical'
   }
 
+  // Get confidence-based border styling
+  const getConfidenceBorder = (confidence?: number) => {
+    if (!confidence) return '#ffffff'
+    const normalizedConfidence = confidence <= 1 ? confidence * 100 : confidence
+    if (normalizedConfidence >= 80) return '#22c55e' // Green for high confidence
+    if (normalizedConfidence >= 60) return '#f59e0b' // Yellow for medium confidence
+    return '#ef4444' // Red for low confidence
+  }
+
+  // Get confidence-based scale
+  const getConfidenceScale = (confidence?: number, baseScale: number = 1.0) => {
+    if (!confidence) return baseScale
+    const normalizedConfidence = confidence <= 1 ? confidence * 100 : confidence
+    // Scale between 0.8 and 1.3 based on confidence
+    const scaleFactor = 0.8 + (normalizedConfidence / 100) * 0.5
+    return baseScale * scaleFactor
+  }
+
+  // Get confidence indicator content (using proper icons instead of emojis)
+  const getConfidenceContent = (confidence?: number, type: string = 'aoi') => {
+    const element = document.createElement('div')
+    element.style.fontSize = type === 'aoi' ? '20px' : '16px'
+    element.style.fontWeight = 'bold'
+    element.style.color = '#ffffff'
+    element.style.textAlign = 'center'
+    element.style.display = 'flex'
+    element.style.alignItems = 'center'
+    element.style.justifyContent = 'center'
+    element.style.width = '100%'
+    element.style.height = '100%'
+    
+    if (!confidence) {
+      element.innerHTML = type === 'aoi' ? '●' : type === 'waypoint' ? '◆' : '■'
+      return element
+    }
+    
+    const normalizedConfidence = confidence <= 1 ? confidence * 100 : confidence
+    if (normalizedConfidence >= 90) {
+      element.innerHTML = type === 'aoi' ? '●' : type === 'waypoint' ? '◆' : '■'
+    } else if (normalizedConfidence >= 70) {
+      element.innerHTML = '✓'
+    } else if (normalizedConfidence >= 50) {
+      element.innerHTML = '!'
+    } else {
+      element.innerHTML = '✗'
+    }
+    
+    return element
+  }
+
   const getWaypointColor = (type: string) => {
     switch (type) {
       case 'cache': return '#10b981' // green
@@ -136,11 +197,11 @@ export function GoogleMapPanel({
 
   const getWaypointIcon = (type: string) => {
     switch (type) {
-      case 'cache': return '📦'
-      case 'target': return '🎯'
-      case 'safe_house': return '🏠'
+      case 'cache': return '■'
+      case 'target': return '◉'
+      case 'safe_house': return '▲'
       case 'waypoint':
-      default: return '📍'
+      default: return '●'
     }
   }
 
@@ -218,6 +279,9 @@ export function GoogleMapPanel({
             const analysisResult = await response.json()
             console.log('Intelligence analysis result:', analysisResult)
             
+            // Store analysis result for map markers
+            setLatestAnalysis(analysisResult)
+            
             // Dispatch analysis result event for the analysis panel to pick up
             window.dispatchEvent(new CustomEvent('guideright:analysis-result', {
               detail: analysisResult
@@ -252,6 +316,18 @@ export function GoogleMapPanel({
     updateMapElements(map, AdvancedMarkerElement, PinElement)
   }, [isLoaded, onAOIChange])
 
+  // Update map elements when analysis results change
+  useEffect(() => {
+    if (mapInstanceRef.current && latestAnalysis) {
+      // Trigger a re-render of map elements to show updated confidence indicators
+      const updateMarkersWithAnalysis = async () => {
+        const { AdvancedMarkerElement, PinElement } = await window.google.maps.importLibrary("marker") as any;
+        updateMapElements(mapInstanceRef.current, AdvancedMarkerElement, PinElement)
+      }
+      updateMarkersWithAnalysis()
+    }
+  }, [latestAnalysis])
+
   const updateMapElements = useCallback(async (map: any, AdvancedMarkerElement?: any, PinElement?: any) => {
     // Import marker library if not provided
     if (!AdvancedMarkerElement || !PinElement) {
@@ -271,20 +347,46 @@ export function GoogleMapPanel({
       polylineRef.current.setMap(null)
     }
 
-    // Create custom pin for AOI marker
-    const aoiPin = new PinElement({
-      background: getRiskColor(riskScore),
-      borderColor: '#ffffff',
-      scale: 1.2,
-      glyph: '🎯'
-    })
+    // Create custom pin for AOI marker with confidence indicators
+    const currentConfidence = latestAnalysis?.confidence
+    const currentRiskScore = latestAnalysis?.riskScore || riskScore
+    
+    // Create AOI marker with custom content instead of PinElement to avoid emoji
+    const aoiMarkerContent = document.createElement('div')
+    aoiMarkerContent.style.width = `${24 * getConfidenceScale(currentConfidence, 1.2)}px`
+    aoiMarkerContent.style.height = `${24 * getConfidenceScale(currentConfidence, 1.2)}px`
+    aoiMarkerContent.style.backgroundColor = getRiskColor(currentRiskScore)
+    aoiMarkerContent.style.border = `3px solid ${getConfidenceBorder(currentConfidence)}`
+    aoiMarkerContent.style.borderRadius = '50%'
+    aoiMarkerContent.style.display = 'flex'
+    aoiMarkerContent.style.alignItems = 'center'
+    aoiMarkerContent.style.justifyContent = 'center'
+    aoiMarkerContent.style.color = '#ffffff'
+    aoiMarkerContent.style.fontSize = '12px'
+    aoiMarkerContent.style.fontWeight = 'bold'
+    aoiMarkerContent.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)'
+    aoiMarkerContent.style.cursor = 'pointer'
+    
+    // Add confidence indicator
+    const confidenceText = currentConfidence ? 
+      `${currentConfidence <= 1 ? Math.round(currentConfidence * 100) : Math.round(currentConfidence)}%` : '?'
+    aoiMarkerContent.innerHTML = confidenceText
+
+    // Create title with confidence and risk information
+    let markerTitle = currentAOI.name || "Area of Interest"
+    if (latestAnalysis) {
+      const confidenceText = currentConfidence ? 
+        `${currentConfidence <= 1 ? Math.round(currentConfidence * 100) : Math.round(currentConfidence)}%` : 'N/A'
+      const riskText = latestAnalysis.riskLevel || getRiskLevel(currentRiskScore)
+      markerTitle += `\nConfidence: ${confidenceText} | Risk: ${riskText} (${currentRiskScore}/100)`
+    }
 
     // Add advanced marker for AOI
     const marker = new AdvancedMarkerElement({
       position: { lat: currentAOI.lat, lng: currentAOI.lng },
       map: map,
-      title: currentAOI.name || "Area of Interest",
-      content: aoiPin.element
+      title: markerTitle,
+      content: aoiMarkerContent
     })
 
     // Update user location marker if available
@@ -299,7 +401,7 @@ export function GoogleMapPanel({
         background: '#3b82f6',
         borderColor: '#ffffff',
         scale: 0.9,
-        glyph: '📍'
+        glyph: '⊙'
       })
 
       // Add user location marker
@@ -323,36 +425,47 @@ export function GoogleMapPanel({
     waypointMarkersRef.current = []
     geotaggedMarkersRef.current = []
 
-    // Add waypoint markers
+    // Add waypoint markers with risk and confidence indicators
     for (const waypoint of waypoints) {
-      const waypointPin = new PinElement({
-        background: getWaypointColor(waypoint.type),
-        borderColor: '#ffffff',
-        scale: 0.8,
-        glyph: getWaypointIcon(waypoint.type)
-      })
+      // Create custom waypoint marker content with unified risk/confidence styling
+      const waypointContent = document.createElement('div')
+      waypointContent.style.width = '20px'
+      waypointContent.style.height = '20px'
+      waypointContent.style.backgroundColor = getRiskColor(currentRiskScore) // Use risk color instead of type color
+      waypointContent.style.border = `2px solid ${getConfidenceBorder(currentConfidence)}`
+      waypointContent.style.borderRadius = '4px'
+      waypointContent.style.display = 'flex'
+      waypointContent.style.alignItems = 'center'
+      waypointContent.style.justifyContent = 'center'
+      waypointContent.style.color = '#ffffff'
+      waypointContent.style.fontSize = '10px'
+      waypointContent.style.fontWeight = 'bold'
+      waypointContent.style.boxShadow = '0 1px 3px rgba(0,0,0,0.3)'
+      waypointContent.style.cursor = 'pointer'
+      waypointContent.style.transform = `scale(${getConfidenceScale(currentConfidence, 0.8)})`
+      waypointContent.innerHTML = getWaypointIcon(waypoint.type)
 
       const waypointMarker = new AdvancedMarkerElement({
         position: { lat: waypoint.lat, lng: waypoint.lng },
         map: map,
-        title: `${waypoint.name} (${waypoint.type})`,
-        content: waypointPin.element
+        title: `${escapeHtml(waypoint.name)} (${escapeHtml(waypoint.type)})${currentConfidence ? ` | Confidence: ${currentConfidence <= 1 ? Math.round(currentConfidence * 100) : Math.round(currentConfidence)}%` : ''}`,
+        content: waypointContent
       })
 
       // Add info window for waypoint
       const waypointInfoWindow = new window.google.maps.InfoWindow({
         content: `
           <div style="padding: 8px; min-width: 200px;">
-            <h3 style="margin: 0 0 8px 0; font-weight: 600;">${waypoint.name}</h3>
+            <h3 style="margin: 0 0 8px 0; font-weight: 600;">${escapeHtml(waypoint.name)}</h3>
             <p style="margin: 0 0 4px 0; color: #666; text-transform: capitalize;">
-              ${waypoint.type.replace('_', ' ')}
+              ${escapeHtml(waypoint.type.replace('_', ' '))}
             </p>
             <p style="margin: 0 0 4px 0; color: #666; font-family: monospace;">
               ${waypoint.lat.toFixed(4)}, ${waypoint.lng.toFixed(4)}
             </p>
             ${waypoint.description ? `
               <p style="margin: 4px 0 0 0; font-size: 12px;">
-                ${waypoint.description}
+                ${escapeHtml(waypoint.description || '')}
               </p>
             ` : ''}
           </div>
@@ -368,18 +481,29 @@ export function GoogleMapPanel({
 
     // Add geotagged file markers
     for (const file of geotaggedFiles) {
-      const filePin = new PinElement({
-        background: '#8b5cf6',
-        borderColor: '#ffffff',
-        scale: 0.7,
-        glyph: '📷'
-      })
+      // Create custom file marker with unified risk/confidence styling
+      const fileContent = document.createElement('div')
+      fileContent.style.width = '18px'
+      fileContent.style.height = '18px'
+      fileContent.style.backgroundColor = getRiskColor(currentRiskScore) // Use risk color
+      fileContent.style.border = `2px solid ${getConfidenceBorder(currentConfidence)}`
+      fileContent.style.borderRadius = '3px'
+      fileContent.style.display = 'flex'
+      fileContent.style.alignItems = 'center'
+      fileContent.style.justifyContent = 'center'
+      fileContent.style.color = '#ffffff'
+      fileContent.style.fontSize = '9px'
+      fileContent.style.fontWeight = 'bold'
+      fileContent.style.boxShadow = '0 1px 3px rgba(0,0,0,0.3)'
+      fileContent.style.cursor = 'pointer'
+      fileContent.style.transform = `scale(${getConfidenceScale(currentConfidence, 0.7)})`
+      fileContent.innerHTML = '□'
 
       const fileMarker = new AdvancedMarkerElement({
         position: { lat: file.lat, lng: file.lng },
         map: map,
-        title: `Photo: ${file.filename}`,
-        content: filePin.element
+        title: `Photo: ${escapeHtml(file.filename)}${currentConfidence ? ` | Confidence: ${currentConfidence <= 1 ? Math.round(currentConfidence * 100) : Math.round(currentConfidence)}%` : ''}${currentRiskScore ? ` | Risk: ${getRiskLevel(currentRiskScore)}` : ''}`,
+        content: fileContent
       })
 
       // Add info window for geotagged file
@@ -387,7 +511,7 @@ export function GoogleMapPanel({
         content: `
           <div style="padding: 8px; min-width: 200px;">
             <h3 style="margin: 0 0 8px 0; font-weight: 600; display: flex; align-items: center; gap: 4px;">
-              📷 ${file.filename}
+              ${escapeHtml(file.filename)}
             </h3>
             <p style="margin: 0 0 4px 0; color: #666; font-family: monospace;">
               ${file.lat.toFixed(4)}, ${file.lng.toFixed(4)}
@@ -398,7 +522,7 @@ export function GoogleMapPanel({
               </p>
             ` : ''}
             <p style="margin: 4px 0 0 0; font-size: 12px; color: #666;">
-              Source: ${file.source.toUpperCase()}
+              Source: ${escapeHtml(file.source || 'Unknown').toUpperCase()}
             </p>
           </div>
         `
@@ -415,13 +539,18 @@ export function GoogleMapPanel({
     const infoWindow = new window.google.maps.InfoWindow({
       content: `
         <div style="padding: 8px; min-width: 200px;">
-          <h3 style="margin: 0 0 8px 0; font-weight: 600;">${currentAOI.name || "Area of Interest"}</h3>
+          <h3 style="margin: 0 0 8px 0; font-weight: 600;">${escapeHtml(currentAOI.name || "Area of Interest")}</h3>
           <p style="margin: 0 0 4px 0; color: #666; font-family: monospace;">
             ${currentAOI.lat.toFixed(4)}, ${currentAOI.lng.toFixed(4)}
           </p>
-          ${riskScore !== undefined ? `
+          ${currentRiskScore !== undefined ? `
             <p style="margin: 4px 0 0 0; font-size: 12px;">
-              Risk: ${getRiskLevel(riskScore)} (${riskScore}/100)
+              Risk: ${getRiskLevel(currentRiskScore)} (${currentRiskScore}/100)
+            </p>
+          ` : ''}
+          ${currentConfidence !== undefined ? `
+            <p style="margin: 4px 0 0 0; font-size: 12px;">
+              Confidence: ${currentConfidence <= 1 ? Math.round(currentConfidence * 100) : Math.round(currentConfidence)}%
             </p>
           ` : ''}
         </div>
@@ -437,10 +566,10 @@ export function GoogleMapPanel({
     // Add AOI circle
     if (currentAOI.radiusKm) {
       const circle = new window.google.maps.Circle({
-        strokeColor: getRiskColor(riskScore),
+        strokeColor: getRiskColor(currentRiskScore),
         strokeOpacity: 0.6,
         strokeWeight: 2,
-        fillColor: getRiskColor(riskScore),
+        fillColor: getRiskColor(currentRiskScore),
         fillOpacity: 0.1,
         map: map,
         center: { lat: currentAOI.lat, lng: currentAOI.lng },
@@ -461,7 +590,7 @@ export function GoogleMapPanel({
       })
       polylineRef.current = polyline
     }
-  }, [currentAOI, riskScore, movementPlan, showUserLocation, userPosition, waypoints, geotaggedFiles])
+  }, [currentAOI, riskScore, movementPlan, showUserLocation, userPosition, waypoints, geotaggedFiles, latestAnalysis])
 
   // Initialize map when Google Maps loads
   useEffect(() => {
