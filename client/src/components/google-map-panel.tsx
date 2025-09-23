@@ -64,12 +64,14 @@ export function GoogleMapPanel({
     markerElement.title = title || 'Search result'
     
     // Create and position search marker
-    searchMarkerRef.current = new google.maps.marker.AdvancedMarkerElement({
-      map: mapInstanceRef.current,
-      position: { lat, lng },
-      content: markerElement,
-      title: title || 'Search result',
-    })
+    if (window.google?.maps?.marker?.AdvancedMarkerElement) {
+      searchMarkerRef.current = new window.google.maps.marker.AdvancedMarkerElement({
+        map: mapInstanceRef.current,
+        position: { lat, lng },
+        content: markerElement,
+        title: title || 'Search result',
+      })
+    }
   })
   
   // Fetch waypoints and geotagged files
@@ -83,17 +85,17 @@ export function GoogleMapPanel({
     enabled: isLoaded
   })
   
-  const waypoints = waypointsData?.waypoints || []
-  const geotaggedFiles = geotaggedData?.files || []
+  const waypoints = (waypointsData as any)?.waypoints || []
+  const geotaggedFiles = (geotaggedData as any)?.files || []
   const mapRef = useRef<HTMLDivElement>(null)
-  const mapInstanceRef = useRef<google.maps.Map | null>(null)
-  const markerRef = useRef<google.maps.marker.AdvancedMarkerElement | null>(null)
-  const circleRef = useRef<google.maps.Circle | null>(null)
-  const polylineRef = useRef<google.maps.Polyline | null>(null)
-  const waypointMarkersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([])
-  const geotaggedMarkersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([])
-  const userMarkerRef = useRef<google.maps.marker.AdvancedMarkerElement | null>(null)
-  const searchMarkerRef = useRef<google.maps.marker.AdvancedMarkerElement | null>(null)
+  const mapInstanceRef = useRef<any>(null)
+  const markerRef = useRef<any>(null)
+  const circleRef = useRef<any>(null)
+  const polylineRef = useRef<any>(null)
+  const waypointMarkersRef = useRef<any[]>([])
+  const geotaggedMarkersRef = useRef<any[]>([])
+  const userMarkerRef = useRef<any>(null)
+  const searchMarkerRef = useRef<any>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [mapType, setMapType] = useState<'roadmap' | 'satellite' | 'hybrid' | 'terrain'>('satellite')
   const [showUserLocation, setShowUserLocation] = useState(false)
@@ -180,8 +182,8 @@ export function GoogleMapPanel({
 
     mapInstanceRef.current = map
 
-    // Add click listener for AOI selection
-    map.addListener('click', (e: google.maps.MapMouseEvent) => {
+    // Add click listener for AOI selection and intelligence analysis
+    map.addListener('click', async (e: any) => {
       if (e.latLng) {
         const newAOI: AOI = {
           lat: e.latLng.lat(),
@@ -190,19 +192,55 @@ export function GoogleMapPanel({
         }
         console.log('New AOI selected:', newAOI)
         onAOIChange?.(newAOI)
+        
+        // Trigger intelligence analysis for the clicked location
+        try {
+          console.log('Triggering intelligence analysis for location:', newAOI)
+          const response = await fetch('/api/analysis/location', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              lat: newAOI.lat,
+              lng: newAOI.lng,
+              radiusKm: newAOI.radiusKm,
+              analysisType: 'general',
+              context: `Tactical intelligence analysis for map click at coordinates ${newAOI.lat.toFixed(4)}, ${newAOI.lng.toFixed(4)}`
+            })
+          })
+          
+          if (response.ok) {
+            const analysisResult = await response.json()
+            console.log('Intelligence analysis result:', analysisResult)
+            
+            // Store analysis result for display (can be extended with proper state management)
+            // For now, just log the analysis result
+            console.log('Analysis complete:', {
+              confidence: analysisResult.confidence,
+              riskLevel: analysisResult.riskLevel,
+              riskScore: analysisResult.riskScore,
+              location: analysisResult.location
+            })
+          } else {
+            console.error('Failed to get intelligence analysis:', response.statusText)
+          }
+        } catch (error) {
+          console.error('Error during intelligence analysis:', error)
+        }
       }
     })
 
     // Load marker library for AdvancedMarkerElement
-    const { AdvancedMarkerElement, PinElement } = await google.maps.importLibrary("marker") as google.maps.MarkerLibrary;
+    const { AdvancedMarkerElement, PinElement } = await window.google.maps.importLibrary("marker") as any;
     
     updateMapElements(map, AdvancedMarkerElement, PinElement)
   }, [isLoaded, onAOIChange])
 
-  const updateMapElements = useCallback(async (map: google.maps.Map, AdvancedMarkerElement?: any, PinElement?: any) => {
+  const updateMapElements = useCallback(async (map: any, AdvancedMarkerElement?: any, PinElement?: any) => {
     // Import marker library if not provided
     if (!AdvancedMarkerElement || !PinElement) {
-      const { AdvancedMarkerElement: AME, PinElement: PE } = await google.maps.importLibrary("marker") as google.maps.MarkerLibrary;
+      const { AdvancedMarkerElement: AME, PinElement: PE } = await window.google.maps.importLibrary("marker") as any;
       AdvancedMarkerElement = AME;
       PinElement = PE;
     }

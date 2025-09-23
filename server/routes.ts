@@ -375,6 +375,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         source: 'map_click'
       });
 
+      // Calculate confidence score based on analysis type
+      let confidence: number;
+      if (analysisType === 'pmesii') {
+        // For PMESII analysis, calculate average confidence from component scores
+        const pmesiiAnalysis = analysis as any; // Cast to access PMESII properties
+        const scores = [
+          pmesiiAnalysis.political?.stabilityScore || 0.5,
+          pmesiiAnalysis.military?.readinessScore || 0.5,
+          pmesiiAnalysis.economic?.stabilityScore || 0.5,
+          pmesiiAnalysis.social?.stabilityScore || 0.5,
+          pmesiiAnalysis.information?.reliabilityScore || 0.5,
+          pmesiiAnalysis.infrastructure?.integrityScore || 0.5
+        ];
+        confidence = scores.reduce((sum, score) => sum + score, 0) / scores.length;
+      } else {
+        confidence = (analysis as any).confidence || 0.7;
+      }
+
       res.json({
         success: true,
         analysis,
@@ -384,7 +402,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                    riskData.score > 0.4 ? 'MEDIUM' : 'LOW',
         riskFactors: riskData.factors,
         riskAssessment: riskData.assessment,
-        confidence: analysisType === 'pmesii' ? 0.8 : analysis.confidence,
+        confidence: Math.round(confidence * 100), // Convert to percentage
         location: { lat, lng, radiusKm, name: locationName },
         resultId: result.id
       });
