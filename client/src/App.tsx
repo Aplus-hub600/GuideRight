@@ -17,6 +17,7 @@ import { useState, useEffect } from "react";
 import NotFound from "@/pages/not-found";
 import Timeline from "@/pages/timeline";
 import Weather from "@/pages/weather";
+import SocialMedia from "@/pages/social-media";
 import i18n from "./lib/i18n";
 
 function Router() {
@@ -32,6 +33,7 @@ function Router() {
       <Route path="/risk"><Dashboard /></Route>
       <Route path="/timeline"><Timeline /></Route>
       <Route path="/weather"><Weather /></Route>
+      <Route path="/social-media"><SocialMedia /></Route>
       <Route><NotFound /></Route>
     </Switch>
   );
