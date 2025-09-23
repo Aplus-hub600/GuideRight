@@ -330,7 +330,7 @@ export class MemStorage implements IStorage {
             context: { 
               region: result.region, 
               analysisType: result.analysisType,
-              source: result.source,
+              source: result.source || undefined,
               sourceMetadata: result.sourceMetadata 
             }
           });
@@ -364,7 +364,7 @@ export class MemStorage implements IStorage {
             context: { 
               region: result.region, 
               analysisType: result.analysisType,
-              source: result.source,
+              source: result.source || undefined,
               sourceMetadata: result.sourceMetadata 
             }
           });
@@ -720,7 +720,7 @@ export class MemStorage implements IStorage {
           severity,
           location: result.aoiData && (result.aoiData as any)?.lat && (result.aoiData as any)?.lng ? 
             { lat: (result.aoiData as any).lat, lng: (result.aoiData as any).lng } : undefined,
-          source: result.source,
+          source: result.source || undefined,
           metadata: { 
             analysisType: result.analysisType, 
             region: result.region,
@@ -745,7 +745,7 @@ export class MemStorage implements IStorage {
           severity: 'MEDIUM', // PMESII analyses are generally medium priority
           location: result.aoiData && (result.aoiData as any)?.lat && (result.aoiData as any)?.lng ? 
             { lat: (result.aoiData as any).lat, lng: (result.aoiData as any).lng } : undefined,
-          source: result.source,
+          source: result.source || undefined,
           metadata: { 
             analysisType: result.analysisType, 
             region: result.region,

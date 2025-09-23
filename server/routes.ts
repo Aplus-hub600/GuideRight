@@ -15,12 +15,16 @@ import {
   geotagRequestSchema,
   searchQuerySchema,
   timelineQuerySchema,
+  weatherRequestSchema,
+  weatherAlertRequestSchema,
   type ChatQueryRequest,
   type RiskAssessmentRequest,
   type WaypointRequest,
   type GeotagRequest,
   type SearchQuery,
-  type TimelineQuery
+  type TimelineQuery,
+  type WeatherRequest,
+  type WeatherAlertRequest
 } from "@shared/schema";
 import multer from "multer";
 // import pdfParse from "pdf-parse"; // Temporarily disabled due to initialization issues
@@ -510,6 +514,211 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Weather endpoints
+  
+  // Get current weather data
+  app.get("/api/weather", async (req, res) => {
+    try {
+      const { lat, lng, current_only } = req.query;
+      const latitude = lat ? parseFloat(lat as string) : undefined;
+      const longitude = lng ? parseFloat(lng as string) : undefined;
+      const isCurrentOnly = current_only === 'true';
+      
+      const weatherData = await storage.getWeatherData(latitude, longitude, isCurrentOnly);
+      
+      res.json({ 
+        success: true, 
+        weather: weatherData,
+        total: weatherData.length
+      });
+    } catch (error) {
+      console.error("Error fetching weather data:", error);
+      res.status(500).json({ success: false, error: (error as any).message });
+    }
+  });
+
+  // Fetch weather data from Open-Meteo API and store it
+  app.post("/api/weather", async (req, res) => {
+    try {
+      const { lat, lng, location, includeForecast, forecastDays } = weatherRequestSchema.parse(req.body);
+      
+      // Fetch from Open-Meteo API
+      const weatherData = await fetchWeatherFromOpenMeteo(lat, lng, includeForecast, forecastDays);
+      
+      // Store current weather
+      if (weatherData.current) {
+        await storage.createWeatherData({
+          lat,
+          lng,
+          location: location || `${lat.toFixed(4)}, ${lng.toFixed(4)}`,
+          weatherCode: weatherData.current.weather_code?.toString() || '0',
+          temperature: weatherData.current.temperature_2m || 0,
+          apparentTemperature: weatherData.current.apparent_temperature,
+          humidity: weatherData.current.relative_humidity_2m,
+          dewPoint: weatherData.current.dew_point_2m,
+          precipitation: weatherData.current.precipitation,
+          precipitationProbability: null, // Not available in current data
+          windSpeed: weatherData.current.wind_speed_10m,
+          windDirection: weatherData.current.wind_direction_10m,
+          windGusts: weatherData.current.wind_gusts_10m,
+          pressure: weatherData.current.surface_pressure,
+          visibility: null, // Not available in Open-Meteo API
+          cloudCover: weatherData.current.cloud_cover,
+          uvIndex: weatherData.current.uv_index,
+          isCurrentWeather: true,
+          forecastTime: null,
+          dataSource: "open-meteo"
+        });
+      }
+      
+      // Store forecast data if requested
+      if (includeForecast && weatherData.daily) {
+        for (let i = 0; i < Math.min(weatherData.daily.time.length, forecastDays || 7); i++) {
+          await storage.createWeatherData({
+            lat,
+            lng,
+            location: location || `${lat.toFixed(4)}, ${lng.toFixed(4)}`,
+            weatherCode: weatherData.daily.weather_code?.[i]?.toString() || '0',
+            temperature: weatherData.daily.temperature_2m_max?.[i] || 0,
+            apparentTemperature: weatherData.daily.apparent_temperature_max?.[i],
+            humidity: null, // Not available in daily data
+            dewPoint: null,
+            precipitation: weatherData.daily.precipitation_sum?.[i],
+            precipitationProbability: weatherData.daily.precipitation_probability_max?.[i],
+            windSpeed: weatherData.daily.wind_speed_10m_max?.[i],
+            windDirection: weatherData.daily.wind_direction_10m_dominant?.[i],
+            windGusts: weatherData.daily.wind_gusts_10m_max?.[i],
+            pressure: null,
+            visibility: null,
+            cloudCover: null,
+            uvIndex: weatherData.daily.uv_index_max?.[i],
+            isCurrentWeather: false,
+            forecastTime: new Date(weatherData.daily.time[i]),
+            dataSource: "open-meteo"
+          });
+        }
+      }
+      
+      res.json({ 
+        success: true, 
+        message: "Weather data fetched and stored successfully",
+        data: weatherData
+      });
+    } catch (error) {
+      console.error("Error fetching weather from Open-Meteo:", error);
+      res.status(500).json({ success: false, error: (error as any).message });
+    }
+  });
+
+  // Get weather alerts
+  app.get("/api/weather/alerts", async (req, res) => {
+    try {
+      const { lat, lng, active_only } = req.query;
+      const latitude = lat ? parseFloat(lat as string) : undefined;
+      const longitude = lng ? parseFloat(lng as string) : undefined;
+      const activeOnly = active_only === 'true';
+      
+      const alerts = await storage.getWeatherAlerts(latitude, longitude, activeOnly);
+      
+      res.json({ 
+        success: true, 
+        alerts,
+        total: alerts.length
+      });
+    } catch (error) {
+      console.error("Error fetching weather alerts:", error);
+      res.status(500).json({ success: false, error: (error as any).message });
+    }
+  });
+
+  // Create weather alert
+  app.post("/api/weather/alerts", async (req, res) => {
+    try {
+      const alertData = weatherAlertRequestSchema.parse(req.body);
+      
+      const alert = await storage.createWeatherAlert({
+        lat: alertData.lat,
+        lng: alertData.lng,
+        location: alertData.location,
+        alertType: alertData.alertType,
+        severity: alertData.severity,
+        title: alertData.title,
+        description: alertData.description,
+        startTime: new Date(alertData.startTime),
+        endTime: alertData.endTime ? new Date(alertData.endTime) : undefined,
+        isActive: true,
+        weatherData: alertData.weatherData
+      });
+      
+      res.json({ 
+        success: true, 
+        alert
+      });
+    } catch (error) {
+      console.error("Error creating weather alert:", error);
+      res.status(500).json({ success: false, error: (error as any).message });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
+}
+
+// Open-Meteo API integration function
+async function fetchWeatherFromOpenMeteo(lat: number, lng: number, includeForecast = false, forecastDays = 7) {
+  const baseUrl = "https://api.open-meteo.com/v1/forecast";
+  
+  // Current weather parameters
+  const currentParams = [
+    "temperature_2m",
+    "apparent_temperature", 
+    "relative_humidity_2m",
+    "dew_point_2m",
+    "precipitation",
+    "weather_code",
+    "surface_pressure",
+    "cloud_cover",
+    "wind_speed_10m",
+    "wind_direction_10m",
+    "wind_gusts_10m",
+    "uv_index"
+  ].join(",");
+  
+  // Daily forecast parameters
+  const dailyParams = [
+    "weather_code",
+    "temperature_2m_max",
+    "temperature_2m_min",
+    "apparent_temperature_max",
+    "apparent_temperature_min",
+    "precipitation_sum",
+    "precipitation_probability_max",
+    "wind_speed_10m_max",
+    "wind_direction_10m_dominant",
+    "wind_gusts_10m_max",
+    "uv_index_max"
+  ].join(",");
+  
+  const params = new URLSearchParams({
+    latitude: lat.toString(),
+    longitude: lng.toString(),
+    current: currentParams,
+    timezone: "auto"
+  });
+  
+  if (includeForecast) {
+    params.append("daily", dailyParams);
+    params.append("forecast_days", forecastDays.toString());
+  }
+  
+  const url = `${baseUrl}?${params}`;
+  console.log(`Fetching weather from Open-Meteo: ${url}`);
+  
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Open-Meteo API error: ${response.status} ${response.statusText}`);
+  }
+  
+  const data = await response.json();
+  return data;
 }
