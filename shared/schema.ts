@@ -20,7 +20,7 @@ export const chatMessages = pgTable("chat_messages", {
 export const analysisResults = pgTable("analysis_results", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   fileId: text("file_id"),
-  analysisType: text("analysis_type").notNull(), // 'pmesii', 'risk', 'intelligence'
+  analysisType: text("analysis_type").notNull(), // 'pmesii', 'risk', 'intelligence', 'social', 'waypoint', 'geotagged', 'weather'
   results: jsonb("results").notNull(),
   region: text("region"), // Region/AOI name for PMESII analysis
   aoiData: jsonb("aoi_data"), // AOI coordinates and metadata
@@ -141,6 +141,7 @@ export const socialMediaPosts = pgTable("social_media_posts", {
   conversationId: text("conversation_id"),
   campaignName: text("campaign_name"),
   isSpam: boolean("is_spam").default(false),
+  platform: text("platform"),
   timestamp: timestamp("timestamp").defaultNow().notNull(),
 });
 
@@ -267,6 +268,7 @@ export const insertSocialMediaPostSchema = createInsertSchema(socialMediaPosts).
   conversationId: true,
   campaignName: true,
   isSpam: true,
+  platform: true,
 });
 
 // Types

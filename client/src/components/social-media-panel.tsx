@@ -11,6 +11,7 @@ import { Separator } from "@/components/ui/separator"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, AreaChart, Area } from "recharts"
 import { Search, Users, TrendingUp, MapPin, Hash, MessageCircle, Heart, Repeat2, Filter, Activity, Zap, Target } from "lucide-react"
+import { SiFacebook, SiX, SiInstagram, SiWhatsapp, SiTelegram, SiTiktok, SiLinkedin, SiYoutube } from 'react-icons/si'
 import { useTranslation } from "react-i18next"
 
 interface SocialMediaPost {
@@ -26,11 +27,13 @@ interface SocialMediaPost {
   retweets: number
   favorites: number
   country: string
+  platform?: string
 }
 
 interface SocialMediaFilters {
   sentiment?: string
   country?: string
+  platform?: string
   minFollowers?: number
   location?: { lat: number; lng: number; radius: number }
   limit?: number
@@ -51,6 +54,26 @@ const TACTICAL_COLORS = {
   muted: '#6b7280'
 }
 
+// Social media platform configurations
+const PLATFORMS = {
+  Facebook: { icon: SiFacebook, color: '#1877F2', name: 'Facebook' },
+  Twitter: { icon: SiX, color: '#000000', name: 'X (Twitter)' },
+  Instagram: { icon: SiInstagram, color: '#E4405F', name: 'Instagram' },
+  WhatsApp: { icon: SiWhatsapp, color: '#25D366', name: 'WhatsApp' },
+  Telegram: { icon: SiTelegram, color: '#0088CC', name: 'Telegram' },
+  TikTok: { icon: SiTiktok, color: '#FF0050', name: 'TikTok' },
+  LinkedIn: { icon: SiLinkedin, color: '#0A66C2', name: 'LinkedIn' },
+  YouTube: { icon: SiYoutube, color: '#FF0000', name: 'YouTube' }
+}
+
+const getPlatformIcon = (platform: string) => {
+  const platformData = PLATFORMS[platform as keyof typeof PLATFORMS]
+  if (!platformData) return null
+  
+  const IconComponent = platformData.icon
+  return <IconComponent className="h-4 w-4" style={{ color: platformData.color }} />
+}
+
 export function SocialMediaPanel({ "data-testid": testId }: { "data-testid"?: string }) {
   const { t } = useTranslation()
   const [filters, setFilters] = useState<SocialMediaFilters>({ limit: 100 })
@@ -67,6 +90,21 @@ export function SocialMediaPanel({ "data-testid": testId }: { "data-testid"?: st
 
   const { data: postsData, isLoading } = useQuery({
     queryKey: ['/api/social-media/posts', filters],
+    queryFn: async ({ queryKey }) => {
+      const [url, filters] = queryKey;
+      const params = new URLSearchParams();
+      
+      if (filters && typeof filters === 'object') {
+        Object.entries(filters).forEach(([key, value]) => {
+          if (value !== undefined && value !== null) {
+            params.append(key, String(value));
+          }
+        });
+      }
+      
+      const response = await fetch(`${url}?${params.toString()}`);
+      return response.json();
+    },
     enabled: true
   })
 
@@ -78,7 +116,7 @@ export function SocialMediaPanel({ "data-testid": testId }: { "data-testid"?: st
   const posts: SocialMediaPost[] = (postsData as any)?.posts || []
   const influencers: SocialMediaPost[] = (influencersData as any)?.influencers || []
 
-  // Filter posts based on search query and sentiment filter
+  // Filter posts based on search query, sentiment, and platform filters
   const filteredPosts = posts.filter(post => {
     // Apply search filter
     const matchesSearch = !searchQuery || 
@@ -89,7 +127,11 @@ export function SocialMediaPanel({ "data-testid": testId }: { "data-testid"?: st
     const matchesSentiment = !filters.sentiment || 
       post.sentiment?.toUpperCase() === filters.sentiment.toUpperCase()
     
-    return matchesSearch && matchesSentiment
+    // Apply platform filter
+    const matchesPlatform = !filters.platform || 
+      post.platform === filters.platform
+    
+    return matchesSearch && matchesSentiment && matchesPlatform
   })
 
   // Calculate analytics
@@ -144,6 +186,19 @@ export function SocialMediaPanel({ "data-testid": testId }: { "data-testid"?: st
     .sort(([,a], [,b]) => b - a)
     .slice(0, 10)
 
+  // Platform statistics
+  const platformStats = posts.reduce((acc, post) => {
+    const platform = post.platform || 'Unknown'
+    acc[platform] = (acc[platform] || 0) + 1
+    return acc
+  }, {} as Record<string, number>)
+
+  const platformChartData = Object.entries(platformStats).map(([platform, count]) => ({
+    platform,
+    count,
+    fill: PLATFORMS[platform as keyof typeof PLATFORMS]?.color || '#6b7280'
+  }))
+
   return (
     <div className="space-y-6" data-testid={testId}>
       {/* Search and Filters */}
@@ -179,6 +234,25 @@ export function SocialMediaPanel({ "data-testid": testId }: { "data-testid"?: st
                 <SelectItem value="NEUTRAL">Neutral</SelectItem>
               </SelectContent>
             </Select>
+            <Select 
+              value={filters.platform || "all"} 
+              onValueChange={(value) => setFilters({...filters, platform: value === "all" ? undefined : value})}
+            >
+              <SelectTrigger className="w-48" data-testid="select-platform-filter">
+                <SelectValue placeholder="Platform" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Platforms</SelectItem>
+                {Object.entries(PLATFORMS).map(([key, platform]) => (
+                  <SelectItem key={key} value={key}>
+                    <div className="flex items-center gap-2">
+                      {getPlatformIcon(key)}
+                      {platform.name}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Button 
               variant="outline" 
               size="sm" 
@@ -206,7 +280,7 @@ export function SocialMediaPanel({ "data-testid": testId }: { "data-testid"?: st
 
         <TabsContent value="overview" className="space-y-6">
           {/* Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Total Posts</CardTitle>
@@ -215,6 +289,17 @@ export function SocialMediaPanel({ "data-testid": testId }: { "data-testid"?: st
               <CardContent>
                 <div className="text-2xl font-bold" data-testid="text-total-posts">{posts.length.toLocaleString()}</div>
                 <p className="text-xs text-muted-foreground">From social media sources</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Platforms</CardTitle>
+                <Activity className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold" data-testid="text-platforms-count">{Object.keys(platformStats).length}</div>
+                <p className="text-xs text-muted-foreground">Active sources</p>
               </CardContent>
             </Card>
 
@@ -252,8 +337,8 @@ export function SocialMediaPanel({ "data-testid": testId }: { "data-testid"?: st
             </Card>
           </div>
 
-          {/* Sentiment Analysis Chart */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Analytics Charts */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -337,7 +422,52 @@ export function SocialMediaPanel({ "data-testid": testId }: { "data-testid"?: st
             <Card className="border-2 border-warning/20 shadow-lg hover:shadow-xl transition-all duration-300">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Hash className="h-5 w-5 text-warning animate-spin" style={{animationDuration: '3s'}} />
+                  <Target className="h-5 w-5 text-warning" />
+                  Platform Distribution
+                </CardTitle>
+                <CardDescription>Intelligence sources across social media platforms</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={platformChartData}
+                      dataKey="count"
+                      nameKey="platform"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={90}
+                      innerRadius={40}
+                      paddingAngle={5}
+                      animationBegin={400}
+                      animationDuration={1500}
+                      label={({ platform, count }) => `${platform}: ${count}`}
+                    >
+                      {platformChartData.map((entry, index) => (
+                        <Cell 
+                          key={`cell-${index}`} 
+                          fill={entry.fill}
+                          stroke="rgba(255,255,255,0.2)"
+                          strokeWidth={2}
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'hsl(var(--popover))',
+                        border: '1px solid hsl(var(--primary))',
+                        borderRadius: '8px'
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+            
+            <Card className="border-2 border-accent/20 shadow-lg hover:shadow-xl transition-all duration-300">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Hash className="h-5 w-5 text-accent animate-spin" style={{animationDuration: '3s'}} />
                   Trending Hashtags
                 </CardTitle>
                 <CardDescription>Most frequently used hashtags in intelligence chatter</CardDescription>
@@ -399,6 +529,12 @@ export function SocialMediaPanel({ "data-testid": testId }: { "data-testid"?: st
                       <Card key={post.id} className="p-4">
                         <div className="flex items-start justify-between mb-2">
                           <div className="flex items-center gap-2">
+                            {post.platform && (
+                              <Badge variant="outline" className="flex items-center gap-1">
+                                {getPlatformIcon(post.platform)}
+                                {post.platform}
+                              </Badge>
+                            )}
                             <span className="font-medium" data-testid={`text-username-${post.id}`}>@{post.senderScreenName}</span>
                             <Badge 
                               variant={post.sentiment === 'POSITIVE' ? 'default' : post.sentiment === 'NEGATIVE' ? 'destructive' : 'secondary'}
