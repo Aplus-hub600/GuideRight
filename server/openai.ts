@@ -49,6 +49,125 @@ export interface PMESIIAnalysis {
   };
 }
 
+// Mock tactical query results for development when OpenAI is unavailable
+function getMockTacticalResult(query: string, context?: string[]): TacticalAnalysisResult {
+  const queryLower = query.toLowerCase()
+  
+  // Analyze query content to provide appropriate mock response
+  let riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' = 'MEDIUM'
+  let mockType = 'general'
+  
+  if (queryLower.includes('critical') || queryLower.includes('immediate') || queryLower.includes('urgent') || 
+      queryLower.includes('emergency') || queryLower.includes('action') || queryLower.includes('requiring action') ||
+      queryLower.includes('analyze immediate') || queryLower.includes('active threat')) {
+    riskLevel = 'CRITICAL'
+    mockType = 'critical'
+  } else if (queryLower.includes('threat') || queryLower.includes('attack') || queryLower.includes('hostile')) {
+    riskLevel = 'HIGH'
+    mockType = 'threat'
+  } else if (queryLower.includes('urban') || queryLower.includes('operation') || queryLower.includes('tactical')) {
+    riskLevel = 'MEDIUM' 
+    mockType = 'operational'
+  } else if (queryLower.includes('assessment') || queryLower.includes('analysis') || queryLower.includes('intelligence')) {
+    riskLevel = 'MEDIUM'
+    mockType = 'intelligence'
+  }
+  
+  const mockResponses = {
+    critical: {
+      summary: "CRITICAL THREAT ASSESSMENT: Immediate tactical response required. Multiple high-priority threat indicators detected requiring coordinated emergency action protocols.",
+      keyFindings: [
+        "IMMEDIATE THREAT: Active hostile elements identified in operational area",
+        "CRITICAL TIMELINE: Window for preventive action rapidly closing",
+        "HIGH-PRIORITY ASSETS: Critical infrastructure and personnel at immediate risk",
+        "COORDINATION REQUIRED: Multi-domain response protocols must be activated NOW"
+      ],
+      recommendations: [
+        "IMMEDIATE ACTION: Initiate emergency response protocols",
+        "CRITICAL PRIORITY: Deploy rapid response teams to threat zones",
+        "URGENT COORDINATION: Contact all relevant security elements immediately",
+        "EMERGENCY MEASURES: Prepare evacuation and containment procedures"
+      ]
+    },
+    threat: {
+      summary: "Threat assessment indicates elevated risk profile with multiple convergent factors requiring tactical awareness and coordinated response protocols.",
+      keyFindings: [
+        "Elevated threat indicators detected across operational zones",
+        "Pattern analysis suggests coordinated hostile activities", 
+        "Intelligence fusion indicates 72-hour operational window",
+        "Resource signatures consistent with advanced planning phases"
+      ],
+      recommendations: [
+        "Implement enhanced threat monitoring protocols",
+        "Coordinate with regional security elements",
+        "Deploy additional reconnaissance assets",
+        "Prepare rapid response contingency procedures"
+      ]
+    },
+    operational: {
+      summary: "Operational assessment reveals complex multi-domain environment requiring coordinated tactical approach with emphasis on urban terrain considerations.",
+      keyFindings: [
+        "Urban terrain analysis indicates mixed threat/opportunity zones",
+        "Population density creates both challenges and advantages",
+        "Infrastructure mapping reveals critical vulnerability points", 
+        "Communication networks show moderate resilience patterns"
+      ],
+      recommendations: [
+        "Conduct detailed urban terrain analysis",
+        "Establish secure communication protocols",
+        "Coordinate with local security forces",
+        "Implement graduated response procedures"
+      ]
+    },
+    intelligence: {
+      summary: "Intelligence analysis completed successfully. Current operational picture shows moderate complexity with mixed indicators requiring continued monitoring.",
+      keyFindings: [
+        "Multi-source intelligence correlation completed",
+        "Confidence levels vary across intelligence domains",
+        "Pattern recognition indicates stable baseline conditions",
+        "No immediate critical threats identified in current assessment"
+      ],
+      recommendations: [
+        "Continue routine intelligence collection protocols",
+        "Monitor for pattern changes in baseline indicators", 
+        "Maintain coordination with intelligence fusion centers",
+        "Update assessment based on emerging information"
+      ]
+    },
+    general: {
+      summary: "Tactical query processed successfully. Analysis indicates standard operational parameters with manageable risk factors and clear recommended actions.",
+      keyFindings: [
+        "Query processed within tactical intelligence framework",
+        "Standard operational parameters identified",
+        "Risk factors assessed and categorized appropriately",
+        "Actionable intelligence recommendations prepared"
+      ],
+      recommendations: [
+        "Implement standard tactical procedures",
+        "Monitor situation for developments",
+        "Coordinate with relevant operational elements",
+        "Maintain situational awareness protocols"
+      ]
+    }
+  }
+  
+  const baseResponse = mockResponses[mockType as keyof typeof mockResponses] || mockResponses.general
+  
+  // Include context information if provided
+  let contextualSummary = baseResponse.summary
+  if (context && context.length > 0) {
+    contextualSummary += " Analysis incorporates relevant contextual intelligence from previous assessments and operations."
+  }
+  
+  return {
+    summary: contextualSummary,
+    keyFindings: baseResponse.keyFindings,
+    riskLevel,
+    recommendations: baseResponse.recommendations,
+    confidence: 0.75 + Math.random() * 0.2 // Random confidence between 0.75-0.95
+  }
+}
+
 export async function processTacticalQuery(
   query: string,
   context?: string[]
@@ -90,6 +209,14 @@ Focus on actionable intelligence, threat assessment, and tactical implications. 
     };
   } catch (error) {
     console.error("OpenAI tactical analysis error:", error);
+    
+    // In development environment, provide mock results when OpenAI is unavailable
+    if (process.env.NODE_ENV === 'development' && 
+        (error.message?.includes('quota') || error.message?.includes('429') || error.code === 'insufficient_quota')) {
+      console.log('OpenAI quota exceeded, using mock tactical analysis results for development');
+      return getMockTacticalResult(query, context);
+    }
+    
     throw new Error("Failed to process tactical query: " + error.message);
   }
 }

@@ -16,6 +16,7 @@ interface ChatMessage {
   content: string
   timestamp: Date
   contextIds?: string[]
+  analysis?: TacticalAnalysis
 }
 
 interface TacticalAnalysis {
@@ -39,7 +40,7 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, className }: ChatPan
   const [input, setInput] = useState("")
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [isStreaming, setIsStreaming] = useState(false)
-  const [currentAnalysis, setCurrentAnalysis] = useState<TacticalAnalysis | null>(null)
+  // Analysis is now stored per message instead of global state
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const eventSourceRef = useRef<EventSource | null>(null)
@@ -74,7 +75,7 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, className }: ChatPan
     
     const query = input.trim()
     setInput("")
-    setCurrentAnalysis(null)
+    // Analysis will be stored per message
     setIsStreaming(true)
     
     console.log('Chat query submitted:', query)
@@ -146,9 +147,9 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, className }: ChatPan
                 case 'assistant_message':
                   setMessages(prev => [...prev, {
                     ...data.data.message,
-                    timestamp: new Date(data.data.message.timestamp)
+                    timestamp: new Date(data.data.message.timestamp),
+                    analysis: data.data.analysis || null
                   }])
-                  setCurrentAnalysis(data.data.analysis)
                   break
                   
                 case 'complete':
@@ -241,16 +242,19 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, className }: ChatPan
               <div className="space-y-3">
                 <p className="text-sm whitespace-pre-wrap">{message.content}</p>
                 
-                {message.role === "assistant" && currentAnalysis && (
+                {message.role === "assistant" && message.analysis && (
                   <div className="mt-3">
                     <Badge 
-                      variant={currentAnalysis.riskLevel === 'CRITICAL' ? 'destructive' :
-                              currentAnalysis.riskLevel === 'HIGH' ? 'destructive' :
-                              currentAnalysis.riskLevel === 'MEDIUM' ? 'secondary' : 'default'}
-                      data-testid={`badge-risk-${currentAnalysis.riskLevel.toLowerCase()}`}
+                      variant={message.analysis.riskLevel === 'CRITICAL' ? 'destructive' :
+                              message.analysis.riskLevel === 'HIGH' ? 'destructive' :
+                              message.analysis.riskLevel === 'MEDIUM' ? 'secondary' : 'default'}
+                      data-testid={`badge-risk-${message.analysis.riskLevel.toLowerCase()}`}
                     >
-                      {currentAnalysis.riskLevel} Risk
+                      {message.analysis.riskLevel} Risk
                     </Badge>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      Confidence: {Math.round(message.analysis.confidence * 100)}%
+                    </div>
                   </div>
                 )}
               </div>
