@@ -217,7 +217,7 @@ export function PMESIIPanels({ items = mockIntelItems, coverage, className }: PM
                                 </span>
                               </div>
                               
-                              <p className="text-sm leading-relaxed">
+                              <p className="text-sm leading-relaxed break-words">
                                 {item.text}
                               </p>
                               

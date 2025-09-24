@@ -278,7 +278,7 @@ export function PMESIITest({ aoi, className }: PMESIITestProps) {
 
             <TabsContent value="summary" className="mt-4">
               <div className="space-y-3">
-                <p className="text-sm leading-relaxed">{selectedData.summary}</p>
+                <p className="text-sm leading-relaxed break-words">{selectedData.summary}</p>
                 {(selectedData.score !== undefined && selectedData.score !== null) && (
                   <div>
                     <div className="flex items-center justify-between mb-2">
@@ -298,7 +298,7 @@ export function PMESIITest({ aoi, className }: PMESIITestProps) {
                 {selectedData.keyPoints.map((point, index) => (
                   <div key={index} className="flex items-start gap-2 p-2 bg-muted/30 rounded-md text-sm">
                     <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-2 flex-shrink-0" />
-                    <span>{point}</span>
+                    <span className="break-words">{point}</span>
                   </div>
                 ))}
               </div>
@@ -309,7 +309,7 @@ export function PMESIITest({ aoi, className }: PMESIITestProps) {
                 {selectedData.threats.map((threat, index) => (
                   <div key={index} className="flex items-start gap-2 p-2 bg-red-50 dark:bg-red-950/20 rounded-md text-sm">
                     <AlertTriangle className="h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" />
-                    <span>{threat}</span>
+                    <span className="break-words">{threat}</span>
                   </div>
                 ))}
               </div>
@@ -320,7 +320,7 @@ export function PMESIITest({ aoi, className }: PMESIITestProps) {
                 {selectedData.capabilities.map((capability, index) => (
                   <div key={index} className="flex items-start gap-2 p-2 bg-green-50 dark:bg-green-950/20 rounded-md text-sm">
                     <CheckCircle2 className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span>{capability}</span>
+                    <span className="break-words">{capability}</span>
                   </div>
                 ))}
               </div>

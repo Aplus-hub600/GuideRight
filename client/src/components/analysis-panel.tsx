@@ -208,7 +208,7 @@ export function AnalysisPanel({ isVisible, onClose }: AnalysisPanelProps) {
               {analysisResult.riskAssessment && (
                 <div className="space-y-2">
                   <h4 className="text-sm font-medium">Risk Assessment</h4>
-                  <p className="text-sm text-muted-foreground leading-relaxed" data-testid="text-risk-assessment">
+                  <p className="text-sm text-muted-foreground leading-relaxed break-words" data-testid="text-risk-assessment">
                     {analysisResult.riskAssessment}
                   </p>
                 </div>
@@ -218,7 +218,7 @@ export function AnalysisPanel({ isVisible, onClose }: AnalysisPanelProps) {
               {analysisResult.analysis?.summary && (
                 <div className="space-y-2">
                   <h4 className="text-sm font-medium">Intelligence Summary</h4>
-                  <p className="text-sm text-muted-foreground leading-relaxed" data-testid="text-analysis-summary">
+                  <p className="text-sm text-muted-foreground leading-relaxed break-words" data-testid="text-analysis-summary">
                     {analysisResult.analysis.summary}
                   </p>
                 </div>
@@ -232,7 +232,7 @@ export function AnalysisPanel({ isVisible, onClose }: AnalysisPanelProps) {
                     {analysisResult.analysis.keyFindings.map((finding: string, index: number) => (
                       <li key={index} className="text-sm text-muted-foreground flex items-start gap-2">
                         <span className="text-primary mt-1">•</span>
-                        <span>{finding}</span>
+                        <span className="break-words">{finding}</span>
                       </li>
                     ))}
                   </ul>
@@ -247,7 +247,7 @@ export function AnalysisPanel({ isVisible, onClose }: AnalysisPanelProps) {
                     {analysisResult.riskFactors.map((factor: string, index: number) => (
                       <li key={index} className="text-sm text-muted-foreground flex items-start gap-2">
                         <AlertTriangle className="w-3 h-3 text-yellow-500 mt-1 flex-shrink-0" />
-                        <span>{factor}</span>
+                        <span className="break-words">{factor}</span>
                       </li>
                     ))}
                   </ul>
@@ -262,7 +262,7 @@ export function AnalysisPanel({ isVisible, onClose }: AnalysisPanelProps) {
                     {analysisResult.analysis.recommendations.map((rec: string, index: number) => (
                       <li key={index} className="text-sm text-muted-foreground flex items-start gap-2">
                         <Target className="w-3 h-3 text-blue-500 mt-1 flex-shrink-0" />
-                        <span>{rec}</span>
+                        <span className="break-words">{rec}</span>
                       </li>
                     ))}
                   </ul>

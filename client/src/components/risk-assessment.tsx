@@ -199,7 +199,7 @@ export function RiskAssessment({ aoi, className, onRiskUpdate }: RiskAssessmentP
                 className="h-2 mb-3" 
                 data-testid="progress-risk-score"
               />
-              <AlertDescription className="text-sm">
+              <AlertDescription className="text-sm break-words">
                 {riskMutation.data.assessment}
               </AlertDescription>
             </div>
@@ -225,7 +225,7 @@ export function RiskAssessment({ aoi, className, onRiskUpdate }: RiskAssessmentP
                   data-testid={`factor-${index}`}
                 >
                   <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
-                  <span>{factor}</span>
+                  <span className="break-words">{factor}</span>
                 </div>
               ))}
             </div>
@@ -266,8 +266,8 @@ export function RiskAssessment({ aoi, className, onRiskUpdate }: RiskAssessmentP
                   {assessment.riskFactors.length > 0 && (
                     <div className="mt-2 text-xs">
                       <span className="font-medium">Factors: </span>
-                      {assessment.riskFactors.slice(0, 2).join(', ')}
-                      {assessment.riskFactors.length > 2 && ` +${assessment.riskFactors.length - 2} more`}
+                      <span className="break-words">{assessment.riskFactors.slice(0, 2).join(', ')}
+                      {assessment.riskFactors.length > 2 && ` +${assessment.riskFactors.length - 2} more`}</span>
                     </div>
                   )}
                 </Card>

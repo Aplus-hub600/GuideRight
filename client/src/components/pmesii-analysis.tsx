@@ -209,7 +209,7 @@ export function PMESIIAnalysis({ aoi, className }: PMESIIAnalysisProps) {
         {/* Summary */}
         <div>
           <h4 className="font-medium mb-2">Summary</h4>
-          <p className="text-sm text-muted-foreground">{factor.summary}</p>
+          <p className="text-sm text-muted-foreground break-words">{factor.summary}</p>
         </div>
 
         {/* Score */}
@@ -241,7 +241,7 @@ export function PMESIIAnalysis({ aoi, className }: PMESIIAnalysisProps) {
               {factor.keyPoints.map((point, index) => (
                 <li key={index} className="flex items-start gap-2">
                   <span className="text-primary">•</span>
-                  <span>{point}</span>
+                  <span className="break-words">{point}</span>
                 </li>
               ))}
             </ul>
