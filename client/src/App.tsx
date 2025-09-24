@@ -18,6 +18,7 @@ import NotFound from "@/pages/not-found";
 import Timeline from "@/pages/timeline";
 import Weather from "@/pages/weather";
 import SocialMedia from "@/pages/social-media";
+import Analytics from "@/pages/analytics";
 import i18n from "./lib/i18n";
 
 function Router() {
@@ -26,7 +27,7 @@ function Router() {
       <Route path="/"><Dashboard /></Route>
       <Route path="/chat"><Dashboard /></Route>
       <Route path="/intelligence"><Dashboard /></Route>
-      <Route path="/analytics"><Dashboard /></Route>
+      <Route path="/analytics"><Analytics /></Route>
       <Route path="/map"><Dashboard /></Route>
       <Route path="/pmesii"><Dashboard /></Route>
       <Route path="/analysis"><Dashboard /></Route>
