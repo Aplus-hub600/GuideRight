@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { useDebounce } from "@/hooks/use-debounce"
-import { Dialog, DialogContent } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
@@ -92,6 +92,10 @@ export function GlobalSearch({ open, onOpenChange, onSelectResult }: GlobalSearc
         onKeyDown={handleKeyDown}
         data-testid="dialog-global-search"
       >
+        <DialogTitle className="sr-only">Global Search</DialogTitle>
+        <DialogDescription className="sr-only">
+          Search across waypoints, files, analysis, and intelligence data
+        </DialogDescription>
         <Command className="rounded-lg border-0">
           <div className="border-b px-3">
             <CommandInput
@@ -153,8 +157,8 @@ export function GlobalSearch({ open, onOpenChange, onSelectResult }: GlobalSearc
 
             <ScrollArea className="flex-1">
               {Object.entries(groupedResults).map(([type, results], index) => {
-                const Icon = typeIcons[type as keyof typeof typeIcons]
-                const label = typeLabels[type as keyof typeof typeLabels]
+                const Icon = typeIcons[type as keyof typeof typeIcons] || Search
+                const label = typeLabels[type as keyof typeof typeLabels] || type.charAt(0).toUpperCase() + type.slice(1)
                 
                 return (
                   <div key={type}>

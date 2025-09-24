@@ -8,8 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts"
-import { Search, Users, TrendingUp, MapPin, Hash, MessageCircle, Heart, Repeat2, Filter } from "lucide-react"
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, AreaChart, Area } from "recharts"
+import { Search, Users, TrendingUp, MapPin, Hash, MessageCircle, Heart, Repeat2, Filter, Activity, Zap, Target } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 interface SocialMediaPost {
@@ -39,6 +39,15 @@ const SENTIMENT_COLORS = {
   POSITIVE: "#10b981",
   NEGATIVE: "#ef4444", 
   NEUTRAL: "#6b7280"
+}
+
+// Enhanced colors for tactical theme
+const TACTICAL_COLORS = {
+  primary: '#3b82f6',
+  secondary: '#ef4444', 
+  accent: '#10b981',
+  warning: '#f59e0b',
+  muted: '#6b7280'
 }
 
 export function SocialMediaPanel({ "data-testid": testId }: { "data-testid"?: string }) {
@@ -102,6 +111,17 @@ export function SocialMediaPanel({ "data-testid": testId }: { "data-testid"?: st
   const topLocations = Object.entries(locationStats)
     .sort(([,a], [,b]) => b - a)
     .slice(0, 5)
+
+  // Enhanced trending data for time-based analytics
+  const trendingData = posts.slice(0, 24).reduce((acc, post, index) => {
+    const hour = Math.floor(index / 2) // Group by hours
+    if (!acc[hour]) acc[hour] = { hour, positive: 0, negative: 0, neutral: 0 }
+    const sentiment = post.sentiment?.toLowerCase() || 'neutral'
+    acc[hour][sentiment] = (acc[hour][sentiment] || 0) + 1
+    return acc
+  }, {} as Record<number, any>)
+  
+  const trendChartData = Object.values(trendingData).slice(0, 12)
 
   const hashtags = posts
     .flatMap(post => post.message.match(/#\w+/g) || [])
@@ -224,10 +244,13 @@ export function SocialMediaPanel({ "data-testid": testId }: { "data-testid"?: st
 
           {/* Sentiment Analysis Chart */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
+            <Card className="border-2 border-primary/20 shadow-lg hover:shadow-xl transition-all duration-300">
               <CardHeader>
-                <CardTitle>Sentiment Distribution</CardTitle>
-                <CardDescription>Overall sentiment analysis of social media posts</CardDescription>
+                <CardTitle className="flex items-center gap-2">
+                  <Activity className="h-5 w-5 text-primary animate-pulse" />
+                  Sentiment Distribution
+                </CardTitle>
+                <CardDescription>Real-time sentiment analysis across {posts.length} posts</CardDescription>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
@@ -238,35 +261,71 @@ export function SocialMediaPanel({ "data-testid": testId }: { "data-testid"?: st
                       nameKey="sentiment"
                       cx="50%"
                       cy="50%"
-                      outerRadius={80}
+                      outerRadius={90}
+                      innerRadius={40}
+                      paddingAngle={5}
+                      animationBegin={0}
+                      animationDuration={1500}
                       label={({ sentiment, count }) => `${sentiment}: ${count}`}
                     >
                       {sentimentChartData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.fill} />
+                        <Cell 
+                          key={`cell-${index}`} 
+                          fill={entry.fill}
+                          stroke={entry.fill}
+                          strokeWidth={2}
+                        />
                       ))}
                     </Pie>
-                    <Tooltip />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'hsl(var(--card))', 
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '6px'
+                      }}
+                    />
                   </PieChart>
                 </ResponsiveContainer>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="border-2 border-warning/20 shadow-lg hover:shadow-xl transition-all duration-300">
               <CardHeader>
-                <CardTitle>Top Hashtags</CardTitle>
-                <CardDescription>Most frequently used hashtags</CardDescription>
+                <CardTitle className="flex items-center gap-2">
+                  <Hash className="h-5 w-5 text-warning animate-spin" style={{animationDuration: '3s'}} />
+                  Trending Hashtags
+                </CardTitle>
+                <CardDescription>Most frequently used hashtags in intelligence chatter</CardDescription>
               </CardHeader>
               <CardContent>
                 <ScrollArea className="h-[300px]">
-                  <div className="space-y-2">
-                    {topHashtags.map(([hashtag, count], index) => (
-                      <div key={hashtag} className="flex items-center justify-between">
-                        <Badge variant="outline" className="text-sm">
-                          {hashtag}
-                        </Badge>
-                        <span className="text-sm text-muted-foreground">{count}</span>
-                      </div>
-                    ))}
+                  <div className="space-y-3">
+                    {topHashtags.map(([hashtag, count], index) => {
+                      const intensity = Math.min(count / Math.max(...topHashtags.map(([,c]) => c)), 1)
+                      const size = 0.8 + (intensity * 0.4) // Scale from 0.8 to 1.2
+                      return (
+                        <div key={hashtag} className="group p-2 rounded-lg hover:bg-muted/30 transition-all duration-200">
+                          <div className="flex items-center justify-between">
+                            <Badge 
+                              variant="outline" 
+                              className={`text-sm transition-all duration-300 group-hover:scale-110 ${intensity > 0.7 ? 'bg-warning/20 border-warning text-warning' : intensity > 0.4 ? 'bg-primary/20 border-primary text-primary' : ''}`}
+                              style={{ fontSize: `${size}rem` }}
+                            >
+                              {hashtag}
+                            </Badge>
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm text-muted-foreground font-mono">{count}</span>
+                              <div className="w-12 h-1 bg-muted rounded-full overflow-hidden">
+                                <div 
+                                  className="bg-gradient-to-r from-warning to-primary h-full transition-all duration-1000"
+                                  style={{ width: `${intensity * 100}%` }}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
                   </div>
                 </ScrollArea>
               </CardContent>
@@ -392,44 +451,150 @@ export function SocialMediaPanel({ "data-testid": testId }: { "data-testid"?: st
           </Card>
         </TabsContent>
 
-        <TabsContent value="analytics" className="space-y-4">
+        <TabsContent value="analytics" className="space-y-6">
+          {/* Real-time Sentiment Timeline */}
+          <Card className="border-2 border-accent/30 shadow-xl">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Zap className="h-5 w-5 text-accent animate-pulse" />
+                Sentiment Timeline Trends
+              </CardTitle>
+              <CardDescription>Real-time sentiment patterns over operational hours</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={250}>
+                <AreaChart data={trendChartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted))" opacity={0.3} />
+                  <XAxis 
+                    dataKey="hour" 
+                    stroke="hsl(var(--muted-foreground))"
+                    fontSize={12}
+                    tickFormatter={(hour) => `${hour}:00`}
+                  />
+                  <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: 'hsl(var(--popover))', 
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '6px'
+                    }}
+                    labelFormatter={(hour) => `Hour ${hour}:00`}
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="positive" 
+                    stackId="1" 
+                    stroke={SENTIMENT_COLORS.POSITIVE} 
+                    fill={SENTIMENT_COLORS.POSITIVE}
+                    fillOpacity={0.6}
+                    animationDuration={2000}
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="neutral" 
+                    stackId="1" 
+                    stroke={SENTIMENT_COLORS.NEUTRAL} 
+                    fill={SENTIMENT_COLORS.NEUTRAL}
+                    fillOpacity={0.6}
+                    animationDuration={2000}
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="negative" 
+                    stackId="1" 
+                    stroke={SENTIMENT_COLORS.NEGATIVE} 
+                    fill={SENTIMENT_COLORS.NEGATIVE}
+                    fillOpacity={0.6}
+                    animationDuration={2000}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+          
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
+            <Card className="border-2 border-secondary/20 shadow-lg hover:shadow-xl transition-all duration-300">
               <CardHeader>
-                <CardTitle>Engagement Analysis</CardTitle>
-                <CardDescription>Top posts by retweets and favorites</CardDescription>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5 text-secondary animate-bounce" />
+                  Engagement Analysis
+                </CardTitle>
+                <CardDescription>Top {engagementData.length} posts by interaction metrics</CardDescription>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={engagementData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="user" />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="retweets" fill="#3b82f6" />
-                    <Bar dataKey="favorites" fill="#ef4444" />
+                  <BarChart data={engagementData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted))" opacity={0.3} />
+                    <XAxis 
+                      dataKey="user" 
+                      stroke="hsl(var(--muted-foreground))"
+                      fontSize={12}
+                    />
+                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'hsl(var(--popover))', 
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '6px'
+                      }}
+                    />
+                    <Bar 
+                      dataKey="retweets" 
+                      fill={TACTICAL_COLORS.primary}
+                      radius={[4, 4, 0, 0]}
+                      animationDuration={1200}
+                    />
+                    <Bar 
+                      dataKey="favorites" 
+                      fill={TACTICAL_COLORS.secondary}
+                      radius={[4, 4, 0, 0]}
+                      animationDuration={1200}
+                    />
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="border-2 border-accent/20 shadow-lg hover:shadow-xl transition-all duration-300">
               <CardHeader>
-                <CardTitle>Geographic Distribution</CardTitle>
-                <CardDescription>Top locations by post count</CardDescription>
+                <CardTitle className="flex items-center gap-2">
+                  <MapPin className="h-5 w-5 text-accent animate-pulse" />
+                  Geographic Distribution
+                </CardTitle>
+                <CardDescription>Top {topLocations.length} locations by intelligence activity</CardDescription>
               </CardHeader>
               <CardContent>
                 <ScrollArea className="h-[300px]">
                   <div className="space-y-3">
-                    {topLocations.map(([location, count], index) => (
-                      <div key={location} className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium">#{index + 1}</span>
-                          <span className="text-sm">{location}</span>
+                    {topLocations.map(([location, count], index) => {
+                      const percentage = Math.round((count / posts.length) * 100)
+                      return (
+                        <div key={location} className="group p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-all duration-200">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-3">
+                              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-bold text-sm">
+                                #{index + 1}
+                              </div>
+                              <span className="text-sm font-medium group-hover:text-primary transition-colors">{location}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className="animate-in fade-in duration-300">
+                                {count} posts
+                              </Badge>
+                              <Badge variant="secondary" className="text-xs">
+                                {percentage}%
+                              </Badge>
+                            </div>
+                          </div>
+                          <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
+                            <div 
+                              className="bg-gradient-to-r from-primary to-accent h-full transition-all duration-1000 ease-out"
+                              style={{ width: `${percentage}%` }}
+                            />
+                          </div>
                         </div>
-                        <Badge variant="outline">{count} posts</Badge>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 </ScrollArea>
               </CardContent>
