@@ -198,6 +198,99 @@ All scores should be between 0 and 1. Focus on current intelligence and operatio
   }
 }
 
+// Mock analysis results for development when OpenAI is unavailable
+function getMockAnalysisResult(content: string, base64Image?: string, analysisType: string = 'general'): TacticalAnalysisResult {
+  const mockResults = {
+    intelligence: {
+      summary: "Intelligence analysis completed successfully. Document contains strategic operational information with moderate threat indicators.",
+      keyFindings: [
+        "Location coordinates identified: Strategic operational zone",
+        "Communication patterns suggest coordinated activity", 
+        "Resource allocation indicates medium-scale operations",
+        "Timeline analysis reveals 72-hour operational window"
+      ],
+      riskLevel: "MEDIUM" as const,
+      recommendations: [
+        "Increase surveillance in identified operational zones",
+        "Coordinate with regional intelligence units",
+        "Monitor communication channels for 72-hour period",
+        "Deploy additional reconnaissance assets"
+      ],
+      confidence: 0.83
+    },
+    pmesii: {
+      summary: "PMESII analysis reveals complex multi-domain operational environment with interconnected political, military, and social factors.",
+      keyFindings: [
+        "Political stability indicators show moderate volatility",
+        "Military readiness assessed at 75% operational capacity",
+        "Economic infrastructure shows resilience patterns",
+        "Social cohesion metrics indicate stable population",
+        "Information warfare signatures detected",
+        "Infrastructure vulnerabilities in power and communications"
+      ],
+      riskLevel: "HIGH" as const,
+      recommendations: [
+        "Monitor political developments closely",
+        "Assess military capability changes",
+        "Evaluate economic stability factors",
+        "Track social sentiment indicators"
+      ],
+      confidence: 0.78
+    },
+    threat: {
+      summary: "Threat assessment indicates elevated risk profile with multiple convergent factors requiring immediate attention.",
+      keyFindings: [
+        "Elevated threat indicators across multiple domains",
+        "Pattern recognition suggests coordinated threat activity",
+        "Timeline analysis indicates imminent operational window",
+        "Resource signatures consistent with hostile preparations"
+      ],
+      riskLevel: "CRITICAL" as const,
+      recommendations: [
+        "Immediate threat mitigation protocols required",
+        "Coordinate with security response teams",
+        "Implement enhanced surveillance measures",
+        "Prepare contingency response procedures"
+      ],
+      confidence: 0.91
+    },
+    general: {
+      summary: "General intelligence analysis completed. Content processed successfully with tactical intelligence extraction.",
+      keyFindings: [
+        "Document classification: Operational intelligence",
+        "Content relevance: High tactical value",
+        "Information quality: Reliable sources identified",
+        "Analysis completeness: Comprehensive assessment"
+      ],
+      riskLevel: "LOW" as const,
+      recommendations: [
+        "Archive analysis results for future reference",
+        "Cross-reference with existing intelligence",
+        "Monitor for related intelligence updates",
+        "Update operational awareness briefings"
+      ],
+      confidence: 0.75
+    }
+  }
+  
+  const baseResult = mockResults[analysisType as keyof typeof mockResults] || mockResults.general
+  
+  // Add image-specific analysis if image is provided
+  if (base64Image) {
+    return {
+      ...baseResult,
+      summary: baseResult.summary + " Visual intelligence analysis indicates photographic evidence supports textual findings.",
+      keyFindings: [
+        ...baseResult.keyFindings,
+        "Visual analysis: Geospatial context confirmed",
+        "Image metadata: Temporal and spatial markers validated"
+      ]
+    }
+  }
+  
+  return baseResult
+}
+
 export async function analyzeMultimodalContent(
   content: string,
   base64Image?: string,
@@ -251,6 +344,14 @@ export async function analyzeMultimodalContent(
     };
   } catch (error) {
     console.error("OpenAI multimodal analysis error:", error);
+    
+    // In development environment, provide mock results when OpenAI is unavailable
+    if (process.env.NODE_ENV === 'development' && 
+        (error.message?.includes('quota') || error.message?.includes('429') || error.code === 'insufficient_quota')) {
+      console.log('OpenAI quota exceeded, using mock analysis results for development');
+      return getMockAnalysisResult(content, base64Image, analysisType);
+    }
+    
     throw new Error("Failed to analyze multimodal content: " + error.message);
   }
 }
