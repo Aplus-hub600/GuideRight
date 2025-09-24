@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { MapPin, TrendingUp, Shield, AlertTriangle, CheckCircle, Target } from "lucide-react"
+import { MapPin, TrendingUp, Shield, AlertTriangle, CheckCircle, Target, Activity, Zap, Eye } from "lucide-react"
 import { useState, useEffect } from "react"
 
 interface AnalysisResult {
@@ -88,21 +88,32 @@ export function AnalysisPanel({ isVisible, onClose }: AnalysisPanelProps) {
   const getRiskColor = (level: string) => {
     const normalized = normalizeRiskLevel(level)
     switch (normalized) {
-      case 'LOW': return 'bg-green-500'
-      case 'MEDIUM': return 'bg-yellow-500'
-      case 'HIGH': return 'bg-orange-500'
-      case 'CRITICAL': return 'bg-red-500'
-      default: return 'bg-gray-500'
+      case 'LOW': return 'bg-gradient-to-r from-green-500 to-green-600'
+      case 'MEDIUM': return 'bg-gradient-to-r from-yellow-500 to-yellow-600'
+      case 'HIGH': return 'bg-gradient-to-r from-orange-500 to-red-500'
+      case 'CRITICAL': return 'bg-gradient-to-r from-red-500 to-red-700'
+      default: return 'bg-gradient-to-r from-gray-500 to-gray-600'
+    }
+  }
+
+  const getRiskBorderColor = (level: string) => {
+    const normalized = normalizeRiskLevel(level)
+    switch (normalized) {
+      case 'LOW': return 'border-green-500/50'
+      case 'MEDIUM': return 'border-yellow-500/50'
+      case 'HIGH': return 'border-orange-500/50'
+      case 'CRITICAL': return 'border-red-500/50'
+      default: return 'border-gray-500/50'
     }
   }
 
   const getRiskIcon = (level: string) => {
     const normalized = normalizeRiskLevel(level)
     switch (normalized) {
-      case 'LOW': return <CheckCircle className="w-4 h-4" />
-      case 'MEDIUM': return <TrendingUp className="w-4 h-4" />
-      case 'HIGH': return <AlertTriangle className="w-4 h-4" />
-      case 'CRITICAL': return <AlertTriangle className="w-4 h-4" />
+      case 'LOW': return <CheckCircle className="w-4 h-4 animate-pulse text-green-400" />
+      case 'MEDIUM': return <TrendingUp className="w-4 h-4 animate-bounce text-yellow-400" />
+      case 'HIGH': return <AlertTriangle className="w-4 h-4 animate-pulse text-orange-400" />
+      case 'CRITICAL': return <AlertTriangle className="w-4 h-4 animate-bounce text-red-400" />
       default: return <Shield className="w-4 h-4" />
     }
   }
@@ -116,11 +127,11 @@ export function AnalysisPanel({ isVisible, onClose }: AnalysisPanelProps) {
   if (!isVisible) return null
 
   return (
-    <Card className="absolute top-4 right-4 w-96 max-h-[calc(100vh-2rem)] shadow-lg border-border z-10" data-testid="panel-analysis">
+    <Card className="absolute top-4 right-4 w-96 max-h-[calc(100vh-2rem)] shadow-2xl border-2 border-primary/20 bg-card/95 backdrop-blur-sm z-10 hover:shadow-xl transition-all duration-300" data-testid="panel-analysis">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg font-semibold flex items-center gap-2">
-            <Target className="w-5 h-5" />
+            <Target className="w-5 h-5 text-primary animate-pulse" />
             Tactical Analysis
           </CardTitle>
           {onClose && (
@@ -137,9 +148,17 @@ export function AnalysisPanel({ isVisible, onClose }: AnalysisPanelProps) {
       
       <CardContent className="space-y-4">
         {isLoading ? (
-          <div className="flex items-center justify-center py-8" data-testid="loading-analysis">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            <span className="ml-3 text-muted-foreground">Analyzing location...</span>
+          <div className="flex flex-col items-center justify-center py-8" data-testid="loading-analysis">
+            <div className="relative">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+              <Activity className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-5 h-5 text-primary animate-pulse" />
+            </div>
+            <span className="mt-4 text-muted-foreground animate-pulse">Analyzing tactical situation...</span>
+            <div className="flex gap-1 mt-2">
+              <div className="w-2 h-2 bg-primary rounded-full animate-bounce"></div>
+              <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+              <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+            </div>
           </div>
         ) : error ? (
           <div className="text-center py-8" data-testid="error-analysis">
@@ -162,27 +181,33 @@ export function AnalysisPanel({ isVisible, onClose }: AnalysisPanelProps) {
               </div>
 
               {/* Confidence Score */}
-              <div className="space-y-2">
+              <div className="space-y-2 p-3 rounded-lg border border-accent/20 bg-accent/5">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Confidence Level</span>
+                  <span className="text-sm font-medium flex items-center gap-2">
+                    <Eye className="w-4 h-4 text-accent animate-pulse" />
+                    Confidence Level
+                  </span>
                   <span className={`text-sm font-bold ${getConfidenceColor(normalizeConfidence(analysisResult.confidence))}`} data-testid="text-confidence">
                     {normalizeConfidence(analysisResult.confidence)}%
                   </span>
                 </div>
                 <Progress 
                   value={normalizeConfidence(analysisResult.confidence)} 
-                  className="h-2"
+                  className="h-3 bg-muted/50"
                   data-testid="progress-confidence"
                 />
               </div>
 
               {/* Risk Assessment */}
-              <div className="space-y-2">
+              <div className={`space-y-3 p-4 rounded-lg border-2 ${getRiskBorderColor(analysisResult.riskLevel)} bg-gradient-to-r from-transparent to-muted/20`}>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Risk Level</span>
+                  <span className="text-sm font-medium flex items-center gap-2">
+                    <Shield className="w-4 h-4 text-primary" />
+                    Risk Assessment
+                  </span>
                   <Badge 
                     variant="outline" 
-                    className={`${getRiskColor(analysisResult.riskLevel)} text-white border-0`}
+                    className={`${getRiskColor(analysisResult.riskLevel)} text-white border-0 shadow-lg`}
                     data-testid="badge-risk-level"
                   >
                     <span className="flex items-center gap-1">
@@ -192,16 +217,23 @@ export function AnalysisPanel({ isVisible, onClose }: AnalysisPanelProps) {
                   </Badge>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Risk Score</span>
-                  <span className="text-sm font-medium" data-testid="text-risk-score">
+                  <span className="text-sm text-muted-foreground">Threat Level</span>
+                  <span className="text-sm font-mono font-bold" data-testid="text-risk-score">
                     {analysisResult.riskScore}/100
                   </span>
                 </div>
-                <Progress 
-                  value={Math.max(0, Math.min(100, analysisResult.riskScore))} 
-                  className="h-2"
-                  data-testid="progress-risk-score"
-                />
+                <div className="relative">
+                  <Progress 
+                    value={Math.max(0, Math.min(100, analysisResult.riskScore))} 
+                    className="h-4 bg-muted/50"
+                    data-testid="progress-risk-score"
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-xs font-bold text-white drop-shadow">
+                      {Math.max(0, Math.min(100, analysisResult.riskScore))}%
+                    </span>
+                  </div>
+                </div>
               </div>
 
               {/* Risk Assessment Summary */}
@@ -344,10 +376,22 @@ export function AnalysisPanel({ isVisible, onClose }: AnalysisPanelProps) {
             </div>
           </ScrollArea>
         ) : (
-          <div className="text-center py-8 text-muted-foreground" data-testid="text-no-analysis">
-            <Target className="w-12 h-12 mx-auto mb-3 opacity-50" />
-            <p className="text-sm">Click on the map to trigger tactical analysis</p>
-            <p className="text-xs mt-1">Intelligence analysis will appear here</p>
+          <div className="text-center py-12 text-muted-foreground" data-testid="text-no-analysis">
+            <div className="relative mb-4">
+              <Target className="w-16 h-16 mx-auto opacity-30 animate-pulse" />
+              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                <Zap className="w-6 h-6 text-primary animate-bounce" />
+              </div>
+            </div>
+            <p className="text-sm font-medium">Initialize Tactical Analysis</p>
+            <p className="text-xs mt-2 max-w-xs mx-auto leading-relaxed">
+              Click anywhere on the operational map to trigger comprehensive intelligence analysis
+            </p>
+            <div className="flex justify-center gap-2 mt-4">
+              <div className="w-1 h-1 bg-primary rounded-full animate-ping"></div>
+              <div className="w-1 h-1 bg-primary rounded-full animate-ping" style={{animationDelay: '0.5s'}}></div>
+              <div className="w-1 h-1 bg-primary rounded-full animate-ping" style={{animationDelay: '1s'}}></div>
+            </div>
           </div>
         )}
       </CardContent>

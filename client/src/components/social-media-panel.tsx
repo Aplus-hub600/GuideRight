@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query"
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { motion, AnimatePresence } from "framer-motion"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
@@ -54,6 +55,15 @@ export function SocialMediaPanel({ "data-testid": testId }: { "data-testid"?: st
   const { t } = useTranslation()
   const [filters, setFilters] = useState<SocialMediaFilters>({ limit: 100 })
   const [searchQuery, setSearchQuery] = useState("")
+  const [realTimeData, setRealTimeData] = useState(0)
+  
+  // Simulate real-time data updates
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setRealTimeData(prev => prev + 1)
+    }, 3000) // Update every 3 seconds
+    return () => clearInterval(interval)
+  }, [])
 
   const { data: postsData, isLoading } = useQuery({
     queryKey: ['/api/social-media/posts', filters],
@@ -244,50 +254,85 @@ export function SocialMediaPanel({ "data-testid": testId }: { "data-testid"?: st
 
           {/* Sentiment Analysis Chart */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card className="border-2 border-primary/20 shadow-lg hover:shadow-xl transition-all duration-300">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Activity className="h-5 w-5 text-primary animate-pulse" />
-                  Sentiment Distribution
-                </CardTitle>
-                <CardDescription>Real-time sentiment analysis across {posts.length} posts</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie
-                      data={sentimentChartData}
-                      dataKey="count"
-                      nameKey="sentiment"
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={90}
-                      innerRadius={40}
-                      paddingAngle={5}
-                      animationBegin={0}
-                      animationDuration={1500}
-                      label={({ sentiment, count }) => `${sentiment}: ${count}`}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+            >
+              <Card className="border-2 border-primary/30 shadow-2xl bg-gradient-to-br from-card via-card to-primary/5 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent animate-pulse" />
+                <CardHeader className="relative z-10">
+                  <CardTitle className="flex items-center gap-2">
+                    <motion.div
+                      animate={{ rotate: [0, 360] }}
+                      transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
                     >
-                      {sentimentChartData.map((entry, index) => (
-                        <Cell 
-                          key={`cell-${index}`} 
-                          fill={entry.fill}
-                          stroke={entry.fill}
-                          strokeWidth={2}
-                        />
-                      ))}
-                    </Pie>
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: 'hsl(var(--card))', 
-                        border: '1px solid hsl(var(--border))',
-                        borderRadius: '6px'
-                      }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
+                      <Activity className="h-5 w-5 text-primary" />
+                    </motion.div>
+                    <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                      Sentiment Distribution
+                    </span>
+                    <motion.div
+                      className="ml-auto px-2 py-1 bg-primary/20 rounded-full text-xs text-primary font-mono"
+                      key={realTimeData}
+                      initial={{ scale: 0.8, opacity: 0.5 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      LIVE
+                    </motion.div>
+                  </CardTitle>
+                  <CardDescription>Real-time sentiment analysis • {posts.length} posts tracked</CardDescription>
+                </CardHeader>
+              <CardContent>
+                <motion.div
+                  initial={{ scale: 0.9, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ duration: 1, delay: 0.3 }}
+                >
+                  <ResponsiveContainer width="100%" height={300}>
+                    <PieChart>
+                      <Pie
+                        data={sentimentChartData}
+                        dataKey="count"
+                        nameKey="sentiment"
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={90}
+                        innerRadius={40}
+                        paddingAngle={8}
+                        animationBegin={300}
+                        animationDuration={2000}
+                        animationEasing="ease-out"
+                        label={({ sentiment, count }) => `${sentiment}: ${count}`}
+                      >
+                        {sentimentChartData.map((entry, index) => (
+                          <Cell 
+                            key={`cell-${index}`} 
+                            fill={entry.fill}
+                            stroke="rgba(255,255,255,0.2)"
+                            strokeWidth={3}
+                            style={{
+                              filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))',
+                            }}
+                          />
+                        ))}
+                      </Pie>
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: 'hsl(var(--popover))',
+                          border: '1px solid hsl(var(--primary))',
+                          borderRadius: '12px',
+                          boxShadow: '0 10px 25px rgba(0,0,0,0.3)',
+                          backdropFilter: 'blur(8px)'
+                        }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </motion.div>
               </CardContent>
             </Card>
+            </motion.div>
 
             <Card className="border-2 border-warning/20 shadow-lg hover:shadow-xl transition-all duration-300">
               <CardHeader>
