@@ -153,12 +153,12 @@ export function IntelligenceIntegration({ className }: IntelligenceIntegrationPr
                 </Badge>
               )}
             </div>
-            <Badge {...getSeverityBadge(currentIntelligence?.results?.severity || dhakaIntelligence.severity)}>
-              {getSeverityBadge(currentIntelligence?.results?.severity || dhakaIntelligence.severity).label} ({currentIntelligence?.results?.severity || dhakaIntelligence.severity})
+            <Badge {...getSeverityBadge((currentIntelligence?.results as any)?.severity || dhakaIntelligence.severity)}>
+              {getSeverityBadge((currentIntelligence?.results as any)?.severity || dhakaIntelligence.severity).label} ({(currentIntelligence?.results as any)?.severity || dhakaIntelligence.severity})
             </Badge>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-6">
           <Tabs value={selectedTab} onValueChange={setSelectedTab}>
             <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="report" data-testid="tab-intel-report">Report</TabsTrigger>
@@ -167,55 +167,55 @@ export function IntelligenceIntegration({ className }: IntelligenceIntegrationPr
               <TabsTrigger value="risk" data-testid="tab-intel-risk">Risk Assessment</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="report" className="space-y-4 mt-4">
+            <TabsContent value="report" className="space-y-4 mt-6 p-4">
               <div className="space-y-3">
-                <h3 className="font-semibold text-lg">
-                  {currentIntelligence?.results?.title || dhakaIntelligence.title}
+                <h3 className="font-semibold text-lg break-words">
+                  {(currentIntelligence?.results as any)?.title || dhakaIntelligence.title}
                 </h3>
                 
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4 text-muted-foreground" />
-                    <span>Occurred: {new Date(currentIntelligence?.timestamp || dhakaIntelligence.occurred).toLocaleDateString()}</span>
+                    <span className="break-words">Occurred: {new Date(currentIntelligence?.timestamp || dhakaIntelligence.occurred).toLocaleDateString()}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <MapPin className="h-4 w-4 text-muted-foreground" />
-                    <span>{currentIntelligence?.region || dhakaIntelligence.location}</span>
+                    <span className="break-words">{currentIntelligence?.region || dhakaIntelligence.location}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Target className="h-4 w-4 text-muted-foreground" />
-                    <span>Event Type: {currentIntelligence?.results?.category || dhakaIntelligence.events}</span>
+                    <span className="break-words">Event Type: {(currentIntelligence?.results as any)?.category || dhakaIntelligence.events}</span>
                   </div>
                   {currentIntelligence?.source && (
                     <div className="flex items-center gap-2">
                       <Users className="h-4 w-4 text-muted-foreground" />
-                      <span>Source: {currentIntelligence.source.toUpperCase()}</span>
+                      <span className="break-words">Source: {currentIntelligence.source.toUpperCase()}</span>
                     </div>
                   )}
                   {currentIntelligence?.aoiData && (
                     <div className="flex items-center gap-2">
                       <Users className="h-4 w-4 text-muted-foreground" />
-                      <span>Coordinates: {(currentIntelligence.aoiData as any)?.lat?.toFixed(4)}, {(currentIntelligence.aoiData as any)?.lng?.toFixed(4)}</span>
+                      <span className="break-words">Coordinates: {(currentIntelligence.aoiData as any)?.lat?.toFixed(4)}, {(currentIntelligence.aoiData as any)?.lng?.toFixed(4)}</span>
                     </div>
                   )}
                   {!currentIntelligence && (
                     <div className="flex items-center gap-2">
                       <Users className="h-4 w-4 text-muted-foreground" />
-                      <span>Coordinates: {dhakaIntelligence.coordinates?.lat.toFixed(4)}, {dhakaIntelligence.coordinates?.lng.toFixed(4)}</span>
+                      <span className="break-words">Coordinates: {dhakaIntelligence.coordinates?.lat.toFixed(4)}, {dhakaIntelligence.coordinates?.lng.toFixed(4)}</span>
                     </div>
                   )}
                 </div>
 
                 <div className="bg-muted/30 p-3 rounded-md">
                   <h4 className="font-medium mb-2">Intelligence Summary:</h4>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    {currentIntelligence?.results?.summary || dhakaIntelligence.summary}
+                  <p className="text-sm text-muted-foreground leading-relaxed break-words">
+                    {(currentIntelligence?.results as any)?.summary || dhakaIntelligence.summary}
                   </p>
                 </div>
               </div>
             </TabsContent>
 
-            <TabsContent value="analysis" className="space-y-4 mt-4">
+            <TabsContent value="analysis" className="space-y-4 mt-6 p-4">
               <div className="space-y-4">
                 <div>
                   <h4 className="font-medium mb-2 flex items-center gap-2">
@@ -226,7 +226,7 @@ export function IntelligenceIntegration({ className }: IntelligenceIntegrationPr
                     {enhancedAnalysis.threats.map((threat, index) => (
                       <div key={index} className="flex items-start gap-2 p-2 bg-red-50 dark:bg-red-950/20 rounded-md text-sm">
                         <div className="w-1.5 h-1.5 bg-red-500 rounded-full mt-2 flex-shrink-0" />
-                        <span>{threat}</span>
+                        <span className="break-words">{threat}</span>
                       </div>
                     ))}
                   </div>
@@ -251,7 +251,7 @@ export function IntelligenceIntegration({ className }: IntelligenceIntegrationPr
               </div>
             </TabsContent>
 
-            <TabsContent value="impact" className="space-y-4 mt-4">
+            <TabsContent value="impact" className="space-y-4 mt-6 p-4">
               <div className="space-y-3">
                 <h4 className="font-medium mb-3 flex items-center gap-2">
                   <TrendingUp className="h-4 w-4 text-purple-600 dark:text-purple-400" />
@@ -264,13 +264,13 @@ export function IntelligenceIntegration({ className }: IntelligenceIntegrationPr
                        factor === 'infrastructure' ? 'Infrastructure' : 
                        factor.charAt(0).toUpperCase() + factor.slice(1)}
                     </h5>
-                    <p className="text-sm text-muted-foreground">{implication}</p>
+                    <p className="text-sm text-muted-foreground break-words">{implication}</p>
                   </div>
                 ))}
               </div>
             </TabsContent>
 
-            <TabsContent value="risk" className="space-y-4 mt-4">
+            <TabsContent value="risk" className="space-y-4 mt-6 p-4">
               <div className="space-y-4">
                 <div>
                   <h4 className="font-medium mb-2 flex items-center gap-2">
@@ -281,7 +281,7 @@ export function IntelligenceIntegration({ className }: IntelligenceIntegrationPr
                     {enhancedAnalysis.riskFactors.map((factor, index) => (
                       <div key={index} className="flex items-start gap-2 p-2 bg-amber-50 dark:bg-amber-950/20 rounded-md text-sm">
                         <AlertTriangle className="h-3 w-3 text-amber-600 dark:text-amber-400 mt-1 flex-shrink-0" />
-                        <span>{factor}</span>
+                        <span className="break-words">{factor}</span>
                       </div>
                     ))}
                   </div>
@@ -289,7 +289,7 @@ export function IntelligenceIntegration({ className }: IntelligenceIntegrationPr
 
                 <Alert className="border-amber-200 dark:border-amber-800">
                   <Target className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                  <AlertDescription>
+                  <AlertDescription className="break-words">
                     <strong>Tactical Recommendation:</strong> Increase surveillance in Jatrabari district, 
                     monitor VIP Tower residential complexes, and assess potential network expansion. 
                     Coordinate with local law enforcement for ongoing intelligence gathering.
