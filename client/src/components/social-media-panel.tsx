@@ -528,15 +528,15 @@ export function SocialMediaPanel({ "data-testid": testId }: { "data-testid"?: st
                   ) : (
                     filteredPosts.slice(0, 50).map((post) => (
                       <Card key={post.id} className="p-4">
-                        <div className="flex items-start justify-between mb-2">
-                          <div className="flex items-center gap-2">
+                        <div className="flex items-start justify-between mb-2 gap-2">
+                          <div className="flex items-center gap-2 flex-wrap min-w-0">
                             {post.platform && (
-                              <Badge variant="outline" className="flex items-center gap-1">
+                              <Badge variant="outline" className="flex items-center gap-1 flex-shrink-0">
                                 {getPlatformIcon(post.platform)}
                                 {post.platform}
                               </Badge>
                             )}
-                            <span className="font-medium" data-testid={`text-username-${post.id}`}>@{post.senderScreenName}</span>
+                            <span className="font-medium truncate" data-testid={`text-username-${post.id}`} title={`@${post.senderScreenName}`}>@{post.senderScreenName}</span>
                             <Badge 
                               variant={post.sentiment === 'POSITIVE' ? 'default' : post.sentiment === 'NEGATIVE' ? 'destructive' : 'secondary'}
                               data-testid={`badge-sentiment-${post.id}`}
@@ -551,14 +551,14 @@ export function SocialMediaPanel({ "data-testid": testId }: { "data-testid"?: st
                             )}
                           </div>
                           {post.location && (
-                            <Badge variant="outline">
-                              <MapPin className="h-3 w-3 mr-1" />
-                              {post.location}
+                            <Badge variant="outline" className="flex-shrink-0 max-w-[200px]" title={post.location}>
+                              <MapPin className="h-3 w-3 mr-1 flex-shrink-0" />
+                              <span className="truncate">{post.location}</span>
                             </Badge>
                           )}
                         </div>
-                        <p className="text-sm mb-3" data-testid={`text-message-${post.id}`}>{post.message}</p>
-                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                        <p className="text-sm mb-3 break-words" data-testid={`text-message-${post.id}`}>{post.message}</p>
+                        <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
                           <div className="flex items-center gap-1">
                             <Repeat2 className="h-3 w-3" />
                             {post.retweets || 0}
@@ -592,10 +592,10 @@ export function SocialMediaPanel({ "data-testid": testId }: { "data-testid"?: st
                   ) : (
                     influencers.slice(0, 20).map((influencer) => (
                       <Card key={influencer.id} className="p-4">
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center gap-3">
-                            <div>
-                              <h4 className="font-medium" data-testid={`text-influencer-${influencer.id}`}>@{influencer.senderScreenName}</h4>
+                        <div className="flex items-center justify-between mb-3 gap-2">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="min-w-0">
+                              <h4 className="font-medium truncate" data-testid={`text-influencer-${influencer.id}`} title={`@${influencer.senderScreenName}`}>@{influencer.senderScreenName}</h4>
                               <p className="text-sm text-muted-foreground">
                                 {influencer.senderFollowersCount.toLocaleString()} followers
                               </p>
@@ -607,8 +607,8 @@ export function SocialMediaPanel({ "data-testid": testId }: { "data-testid"?: st
                             {influencer.sentiment}
                           </Badge>
                         </div>
-                        <p className="text-sm mb-3">{influencer.message}</p>
-                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                        <p className="text-sm mb-3 break-words">{influencer.message}</p>
+                        <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
                           <div className="flex items-center gap-1">
                             <Repeat2 className="h-3 w-3" />
                             {influencer.retweets || 0}
@@ -691,13 +691,13 @@ export function SocialMediaPanel({ "data-testid": testId }: { "data-testid"?: st
                 <div className="space-y-3">
                   <h4 className="text-sm font-medium text-muted-foreground">Top Locations</h4>
                   {topLocations.map(([location, count], index) => (
-                    <div key={location} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
-                      <div className="flex items-center gap-3">
-                        <Badge variant="outline" className="bg-warning/20 text-warning border-warning">
+                    <div key={location} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 gap-2">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <Badge variant="outline" className="bg-warning/20 text-warning border-warning flex-shrink-0">
                           #{index + 1}
                         </Badge>
-                        <div>
-                          <span className="font-medium">{location}</span>
+                        <div className="min-w-0">
+                          <span className="font-medium block truncate" title={location}>{location}</span>
                           <p className="text-xs text-muted-foreground">Strategic location</p>
                         </div>
                       </div>
@@ -711,10 +711,10 @@ export function SocialMediaPanel({ "data-testid": testId }: { "data-testid"?: st
                 <div className="space-y-3">
                   <h4 className="text-sm font-medium text-muted-foreground">Coordinate Summary</h4>
                   {posts.filter(p => p.lat && p.lng).slice(0, 5).map((post) => (
-                    <div key={post.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
-                      <div>
-                        <span className="font-medium text-sm">{post.location}</span>
-                        <p className="text-xs text-muted-foreground">
+                    <div key={post.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 gap-2">
+                      <div className="min-w-0">
+                        <span className="font-medium text-sm block truncate" title={post.location}>{post.location}</span>
+                        <p className="text-xs text-muted-foreground font-mono">
                           {post.lat?.toFixed(4)}°N, {post.lng?.toFixed(4)}°E
                         </p>
                       </div>
@@ -846,12 +846,12 @@ export function SocialMediaPanel({ "data-testid": testId }: { "data-testid"?: st
                       const percentage = Math.round((count / posts.length) * 100)
                       return (
                         <div key={location} className="group p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-all duration-200">
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center gap-3">
-                              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-bold text-sm">
+                          <div className="flex items-center justify-between mb-2 gap-2">
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-bold text-sm flex-shrink-0">
                                 #{index + 1}
                               </div>
-                              <span className="text-sm font-medium group-hover:text-primary transition-colors">{location}</span>
+                              <span className="text-sm font-medium group-hover:text-primary transition-colors truncate" title={location}>{location}</span>
                             </div>
                             <div className="flex items-center gap-2">
                               <Badge variant="outline" className="animate-in fade-in duration-300">
