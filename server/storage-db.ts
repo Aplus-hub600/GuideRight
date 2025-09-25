@@ -311,10 +311,20 @@ export class DatabaseStorage implements IStorage {
   async createSocialMediaPostsBulk(insertPosts: InsertSocialMediaPost[]): Promise<SocialMediaPost[]> {
     if (insertPosts.length === 0) return [];
     
-    return await db
-      .insert(socialMediaPosts)
-      .values(insertPosts)
-      .returning();
+    // Process in batches of 100 to avoid stack overflow
+    const batchSize = 100;
+    const results: SocialMediaPost[] = [];
+    
+    for (let i = 0; i < insertPosts.length; i += batchSize) {
+      const batch = insertPosts.slice(i, i + batchSize);
+      const batchResults = await db
+        .insert(socialMediaPosts)
+        .values(batch)
+        .returning();
+      results.push(...batchResults);
+    }
+    
+    return results;
   }
 
   async getSocialMediaPostsByLocation(lat: number, lng: number, radiusKm: number): Promise<SocialMediaPost[]> {
