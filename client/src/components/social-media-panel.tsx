@@ -634,6 +634,100 @@ export function SocialMediaPanel({ "data-testid": testId }: { "data-testid"?: st
         </TabsContent>
 
         <TabsContent value="analytics" className="space-y-6">
+          {/* Engagement Analysis */}
+          <Card className="border-2 border-primary/30 shadow-xl">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 text-primary" />
+                Engagement Analysis
+              </CardTitle>
+              <CardDescription>Social media engagement metrics and performance indicators</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart data={engagementData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted))" opacity={0.3} />
+                  <XAxis 
+                    dataKey="user" 
+                    stroke="hsl(var(--muted-foreground))"
+                    fontSize={12}
+                  />
+                  <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: 'hsl(var(--popover))', 
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '6px'
+                    }}
+                  />
+                  <Bar 
+                    dataKey="retweets" 
+                    fill={TACTICAL_COLORS.secondary}
+                    name="Retweets"
+                    radius={[2, 2, 0, 0]}
+                  />
+                  <Bar 
+                    dataKey="favorites" 
+                    fill={TACTICAL_COLORS.accent}
+                    name="Favorites"
+                    radius={[2, 2, 0, 0]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          {/* Geographic Distribution */}
+          <Card className="border-2 border-warning/30 shadow-xl">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MapPin className="h-5 w-5 text-warning" />
+                Geographic Distribution
+              </CardTitle>
+              <CardDescription>Intelligence source locations across Bangladesh operational areas</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-3">
+                  <h4 className="text-sm font-medium text-muted-foreground">Top Locations</h4>
+                  {topLocations.map(([location, count], index) => (
+                    <div key={location} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+                      <div className="flex items-center gap-3">
+                        <Badge variant="outline" className="bg-warning/20 text-warning border-warning">
+                          #{index + 1}
+                        </Badge>
+                        <div>
+                          <span className="font-medium">{location}</span>
+                          <p className="text-xs text-muted-foreground">Strategic location</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-lg font-bold">{count}</span>
+                        <p className="text-xs text-muted-foreground">posts</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="space-y-3">
+                  <h4 className="text-sm font-medium text-muted-foreground">Coordinate Summary</h4>
+                  {posts.filter(p => p.lat && p.lng).slice(0, 5).map((post) => (
+                    <div key={post.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+                      <div>
+                        <span className="font-medium text-sm">{post.location}</span>
+                        <p className="text-xs text-muted-foreground">
+                          {post.lat?.toFixed(4)}°N, {post.lng?.toFixed(4)}°E
+                        </p>
+                      </div>
+                      <Badge variant={post.sentiment === 'POSITIVE' ? 'default' : post.sentiment === 'NEGATIVE' ? 'destructive' : 'secondary'}>
+                        {post.sentiment}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Real-time Sentiment Timeline */}
           <Card className="border-2 border-accent/30 shadow-xl">
             <CardHeader>
