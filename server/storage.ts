@@ -388,8 +388,8 @@ export class MemStorage implements IStorage {
       }
     }
     
-    // Search social media posts
-    if (!query.filters?.type || query.filters.type === 'social') {
+    // Note: Social media search functionality moved to DatabaseStorage
+    /*
       for (const post of this.socialMediaPosts) {
         const score = this.calculateSearchScore(searchTerm, [
           post.message,
@@ -407,7 +407,7 @@ export class MemStorage implements IStorage {
         if (score > 0) {
           results.push({
             id: post.id,
-            type: 'social',
+            type: 'intelligence',
             title: `${post.socialNetwork} - @${post.senderScreenName}`,
             snippet: this.createSnippet(searchTerm, [post.message, post.location || '']),
             tags: ['social-media', post.socialNetwork.toLowerCase(), ...(post.sentiment ? [post.sentiment.toLowerCase()] : [])],
@@ -426,7 +426,7 @@ export class MemStorage implements IStorage {
           });
         }
       }
-    }
+    */
     
     // Search risk assessments
     if (!query.filters?.type || query.filters.type === 'risk') {
@@ -1400,4 +1400,6 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+import { DatabaseStorage } from "./storage-db";
+
+export const storage = new DatabaseStorage();
