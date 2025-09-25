@@ -114,6 +114,7 @@ export function SocialMediaPanel({ "data-testid": testId }: { "data-testid"?: st
   })
 
   const posts: SocialMediaPost[] = (postsData as any)?.posts || []
+  const totalPosts: number = (postsData as any)?.total || 0
   const influencers: SocialMediaPost[] = (influencersData as any)?.influencers || []
 
   // Filter posts based on search query, sentiment, and platform filters
@@ -287,7 +288,7 @@ export function SocialMediaPanel({ "data-testid": testId }: { "data-testid"?: st
                 <MessageCircle className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold" data-testid="text-total-posts">{posts.length.toLocaleString()}</div>
+                <div className="text-2xl font-bold" data-testid="text-total-posts">{totalPosts.toLocaleString()}</div>
                 <p className="text-xs text-muted-foreground">From social media sources</p>
               </CardContent>
             </Card>

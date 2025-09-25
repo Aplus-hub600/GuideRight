@@ -231,7 +231,9 @@ export const insertWeatherAlertSchema = createInsertSchema(weatherAlerts).pick({
   weatherData: true,
 });
 
-export const insertSocialMediaPostSchema = createInsertSchema(socialMediaPosts).pick({
+export const insertSocialMediaPostSchema = createInsertSchema(socialMediaPosts, {
+  createdTime: z.number().positive(), // Allow large timestamp values
+}).pick({
   universalMessageId: true,
   socialNetwork: true,
   senderUserId: true,
