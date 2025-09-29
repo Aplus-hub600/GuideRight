@@ -30,6 +30,7 @@ interface FileDropProps {
   onAnalysisComplete?: (fileId: string, items: any[]) => void
   onFilesChange?: (fileIds: string[]) => void
   maxFiles?: number
+  compact?: boolean
   className?: string
 }
 
@@ -37,6 +38,7 @@ export function FileDrop({
   onAnalysisComplete, 
   onFilesChange, 
   maxFiles = 5,
+  compact = false,
   className 
 }: FileDropProps) {
   const { t } = useTranslation()
@@ -239,23 +241,33 @@ export function FileDrop({
         data-testid="file-drop-zone"
       >
         <input {...getInputProps()} />
-        <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
+        <div className={cn(
+          "flex flex-col items-center justify-center text-center",
+          compact ? "py-3 px-3" : "py-8 px-4"
+        )}>
           <Upload className={cn(
-            "h-8 w-8 mb-4",
+            compact ? "h-5 w-5 mb-2" : "h-8 w-8 mb-4",
             isDragActive ? "text-primary" : "text-muted-foreground"
           )} />
-          <p className="text-sm font-medium mb-2">
+          <p className={cn(
+            "font-medium mb-1",
+            compact ? "text-xs" : "text-sm mb-2"
+          )}>
             {isDragActive 
               ? t('fileDrop.dragActive') || "Drop files here..."
-              : t('fileDrop.instruction') || "Drag & drop files or click to select"
+              : compact 
+                ? "Drop files or click"
+                : t('fileDrop.instruction') || "Drag & drop files or click to select"
             }
           </p>
-          <p className="text-xs text-muted-foreground">
-            Supports images, text files, PDFs, and Word documents • Max {maxFiles} files • 50MB each
-          </p>
+          {!compact && (
+            <p className="text-xs text-muted-foreground">
+              Supports images, text files, PDFs, and Word documents • Max {maxFiles} files • 50MB each
+            </p>
+          )}
           {analyzedFiles.length >= maxFiles && (
-            <p className="text-xs text-destructive mt-2">
-              Maximum files reached
+            <p className="text-xs text-destructive mt-1">
+              Max files reached
             </p>
           )}
         </div>
@@ -263,9 +275,9 @@ export function FileDrop({
 
       {/* Analyzed Files List */}
       {analyzedFiles.length > 0 && (
-        <div className="space-y-3">
-          <h3 className="text-sm font-medium">
-            {t('fileDrop.uploadedFiles') || "Uploaded Files"} ({analyzedFiles.length}/{maxFiles})
+        <div className={cn("space-y-2", compact && "space-y-1")}>
+          <h3 className={cn("font-medium", compact ? "text-xs" : "text-sm")}>
+            {compact ? `Files (${analyzedFiles.length}/${maxFiles})` : `${t('fileDrop.uploadedFiles') || "Uploaded Files"} (${analyzedFiles.length}/${maxFiles})`}
           </h3>
           
           {analyzedFiles.map((analyzedFile) => {
@@ -273,43 +285,44 @@ export function FileDrop({
             const StatusIcon = getStatusIcon(analyzedFile.status)
             
             return (
-              <Card key={analyzedFile.id} className="p-4">
-                <div className="flex items-start gap-3">
+              <Card key={analyzedFile.id} className={cn(compact ? "p-2" : "p-4")}>
+                <div className={cn("flex items-start", compact ? "gap-2" : "gap-3")}>
                   {/* File preview or icon */}
                   <div className="flex-shrink-0">
                     {analyzedFile.preview ? (
                       <img
                         src={analyzedFile.preview}
                         alt={analyzedFile.file.name}
-                        className="w-12 h-12 object-cover rounded"
+                        className={cn("object-cover rounded", compact ? "w-8 h-8" : "w-12 h-12")}
                       />
                     ) : (
-                      <div className="w-12 h-12 bg-muted rounded flex items-center justify-center">
-                        <Icon className="h-6 w-6 text-muted-foreground" />
+                      <div className={cn("bg-muted rounded flex items-center justify-center", compact ? "w-8 h-8" : "w-12 h-12")}>
+                        <Icon className={cn("text-muted-foreground", compact ? "h-4 w-4" : "h-6 w-6")} />
                       </div>
                     )}
                   </div>
 
                   {/* File info */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm font-medium truncate" title={analyzedFile.file.name}>
-                          {analyzedFile.file.name}
+                    <div className={cn("flex items-center justify-between", compact ? "mb-1" : "mb-2")}>
+                      <div className="flex items-center gap-2 min-w-0">
+                        <p className={cn("font-medium truncate", compact ? "text-xs" : "text-sm")} title={analyzedFile.file.name}>
+                          {compact ? analyzedFile.file.name.split('.')[0].slice(0, 15) + (analyzedFile.file.name.length > 15 ? '...' : '') : analyzedFile.file.name}
                         </p>
                         <StatusIcon className={cn(
-                          "h-4 w-4",
+                          compact ? "h-3 w-3" : "h-4 w-4",
                           getStatusColor(analyzedFile.status),
                           analyzedFile.status === 'analyzing' && "animate-spin"
                         )} />
                       </div>
                       <Button
                         variant="ghost"
-                        size="sm"
+                        size={compact ? "sm" : "sm"}
                         onClick={() => removeFile(analyzedFile.id)}
+                        className={compact ? "h-6 w-6 p-0" : ""}
                         data-testid={`button-remove-file-${analyzedFile.id}`}
                       >
-                        <X className="h-4 w-4" />
+                        <X className={compact ? "h-3 w-3" : "h-4 w-4"} />
                       </Button>
                     </div>
 

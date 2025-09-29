@@ -160,16 +160,17 @@ export function Dashboard({ className }: DashboardProps) {
               </CardContent>
             </Card>
 
-            {/* File Drop */}
+            {/* File Drop - Compact Version */}
             <Card className="flex-shrink-0">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm">Media Analysis</CardTitle>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-xs">Media Analysis</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="py-2">
                 <FileDrop 
                   onAnalysisComplete={handleFileAnalysis}
                   onFilesChange={setMediaContextIds}
-                  maxFiles={3}
+                  maxFiles={2}
+                  compact={true}
                 />
               </CardContent>
             </Card>
