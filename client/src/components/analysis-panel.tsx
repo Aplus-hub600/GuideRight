@@ -127,7 +127,7 @@ export function AnalysisPanel({ isVisible, onClose }: AnalysisPanelProps) {
   if (!isVisible) return null
 
   return (
-    <Card className="absolute top-4 right-4 w-96 max-h-[calc(100vh-2rem)] shadow-2xl border-2 border-primary/20 bg-card/95 backdrop-blur-sm z-10 hover:shadow-xl transition-all duration-300" data-testid="panel-analysis">
+    <Card className="absolute top-4 right-4 w-96 max-h-[calc(100vh-2rem)] shadow-2xl border-2 border-primary/20 bg-card/95 backdrop-blur-sm z-10 hover:shadow-xl transition-all duration-300 font-mono" data-testid="panel-analysis">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg font-semibold flex items-center gap-2">
