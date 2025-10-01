@@ -176,7 +176,6 @@ export function PMESIIPanels({ items = mockIntelItems, coverage, className }: PM
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
                         <span>Coverage</span>
-                        <span>{Math.round(coverage[category as PMESIICategory] * 100)}%</span>
                       </div>
                       <Progress value={coverage[category as PMESIICategory] * 100} className="h-2" />
                     </div>
@@ -197,7 +196,7 @@ export function PMESIIPanels({ items = mockIntelItems, coverage, className }: PM
                         {categoryItems.map((item) => (
                           <Card key={item.id} className="p-3">
                             <div className="space-y-2">
-                              <div className="flex items-start justify-between gap-2">
+                              <div className="flex items-start gap-2">
                                 <div className="flex items-center gap-2">
                                   {getQualityIcon(item.quality)}
                                   <Badge 
@@ -212,9 +211,6 @@ export function PMESIIPanels({ items = mockIntelItems, coverage, className }: PM
                                     </span>
                                   )}
                                 </div>
-                                <span className="text-xs text-muted-foreground font-mono">
-                                  {Math.round(item.quality * 100)}%
-                                </span>
                               </div>
                               
                               <p className="text-sm leading-relaxed break-words">

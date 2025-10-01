@@ -215,19 +215,14 @@ export function PMESIIAnalysis({ aoi, className }: PMESIIAnalysisProps) {
         {/* Score */}
         {(score !== undefined && score !== null) && (
           <div>
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2 mb-2">
               <span className="text-sm font-medium">
                 {category === 'military' ? 'Readiness' :
                  category === 'information' ? 'Reliability' :
                  category === 'infrastructure' ? 'Integrity' :
                  'Stability'} Score
               </span>
-              <div className="flex items-center gap-1">
-                {getScoreIcon(score)}
-                <span className={cn("text-sm font-medium", getScoreColor(score))}>
-                  {Math.round(score * 100)}%
-                </span>
-              </div>
+              {getScoreIcon(score)}
             </div>
             <Progress value={score * 100} className="h-2" />
           </div>

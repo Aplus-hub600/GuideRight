@@ -252,9 +252,6 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, className }: ChatPan
                     >
                       {message.analysis.riskLevel} Risk
                     </Badge>
-                    <div className="text-xs text-muted-foreground mt-1">
-                      Confidence: {Math.round(message.analysis.confidence * 100)}%
-                    </div>
                   </div>
                 )}
               </div>
