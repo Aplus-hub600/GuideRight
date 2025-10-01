@@ -308,67 +308,37 @@ export function AnalysisPanel({ isVisible, onClose }: AnalysisPanelProps) {
                   
                   {/* Political */}
                   <div className="space-y-1">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium text-muted-foreground">Political</span>
-                      <span className="text-xs" data-testid="score-political">
-                        {Math.round((analysisResult.analysis.political?.stabilityScore || 0) * 100)}%
-                      </span>
-                    </div>
+                    <span className="text-xs font-medium text-muted-foreground">Political</span>
                     <Progress value={(analysisResult.analysis.political?.stabilityScore || 0) * 100} className="h-1" />
                   </div>
 
                   {/* Military */}
                   <div className="space-y-1">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium text-muted-foreground">Military</span>
-                      <span className="text-xs" data-testid="score-military">
-                        {Math.round((analysisResult.analysis.military?.readinessScore || 0) * 100)}%
-                      </span>
-                    </div>
+                    <span className="text-xs font-medium text-muted-foreground">Military</span>
                     <Progress value={(analysisResult.analysis.military?.readinessScore || 0) * 100} className="h-1" />
                   </div>
 
                   {/* Economic */}
                   <div className="space-y-1">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium text-muted-foreground">Economic</span>
-                      <span className="text-xs" data-testid="score-economic">
-                        {Math.round((analysisResult.analysis.economic?.stabilityScore || 0) * 100)}%
-                      </span>
-                    </div>
+                    <span className="text-xs font-medium text-muted-foreground">Economic</span>
                     <Progress value={(analysisResult.analysis.economic?.stabilityScore || 0) * 100} className="h-1" />
                   </div>
 
                   {/* Social */}
                   <div className="space-y-1">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium text-muted-foreground">Social</span>
-                      <span className="text-xs" data-testid="score-social">
-                        {Math.round((analysisResult.analysis.social?.stabilityScore || 0) * 100)}%
-                      </span>
-                    </div>
+                    <span className="text-xs font-medium text-muted-foreground">Social</span>
                     <Progress value={(analysisResult.analysis.social?.stabilityScore || 0) * 100} className="h-1" />
                   </div>
 
                   {/* Information */}
                   <div className="space-y-1">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium text-muted-foreground">Information</span>
-                      <span className="text-xs" data-testid="score-information">
-                        {Math.round((analysisResult.analysis.information?.reliabilityScore || 0) * 100)}%
-                      </span>
-                    </div>
+                    <span className="text-xs font-medium text-muted-foreground">Information</span>
                     <Progress value={(analysisResult.analysis.information?.reliabilityScore || 0) * 100} className="h-1" />
                   </div>
 
                   {/* Infrastructure */}
                   <div className="space-y-1">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium text-muted-foreground">Infrastructure</span>
-                      <span className="text-xs" data-testid="score-infrastructure">
-                        {Math.round((analysisResult.analysis.infrastructure?.integrityScore || 0) * 100)}%
-                      </span>
-                    </div>
+                    <span className="text-xs font-medium text-muted-foreground">Infrastructure</span>
                     <Progress value={(analysisResult.analysis.infrastructure?.integrityScore || 0) * 100} className="h-1" />
                   </div>
                 </div>

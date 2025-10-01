@@ -345,9 +345,6 @@ export function FileDrop({
                                     {category}
                                   </Badge>
                                 ))}
-                                <Badge variant="secondary" className="text-xs">
-                                  {Math.round(item.quality * 100)}% confidence
-                                </Badge>
                               </div>
                             </div>
                           ))}
