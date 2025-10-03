@@ -1,22 +1,13 @@
 import { Home, MessageSquare, Brain, Upload, TrendingUp, CloudRain, Share2, Clock } from "lucide-react";
-import { useLocation } from "wouter";
 
 export type NavSection = "map" | "chat" | "intelligence" | "files" | "timeline" | "weather" | "analytics" | "social";
 
 interface BottomNavBarProps {
-  activeSection: NavSection;
-  onSectionChange: (section: NavSection) => void;
+  activePanels: Set<NavSection>;
+  onTogglePanel: (section: NavSection) => void;
 }
 
-export function BottomNavBar({ activeSection, onSectionChange }: BottomNavBarProps) {
-  const [, setLocation] = useLocation();
-
-  const handleNavClick = (section: NavSection, route?: string) => {
-    onSectionChange(section);
-    if (route) {
-      setLocation(route);
-    }
-  };
+export function BottomNavBar({ activePanels, onTogglePanel }: BottomNavBarProps) {
 
   return (
     <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-30" data-testid="bottom-nav-bar">
@@ -24,29 +15,29 @@ export function BottomNavBar({ activeSection, onSectionChange }: BottomNavBarPro
         <NavButton
           icon={Home}
           label="Map"
-          active={activeSection === "map"}
-          onClick={() => handleNavClick("map", "/")}
+          active={activePanels.has("map")}
+          onClick={() => onTogglePanel("map")}
           testId="nav-map"
         />
         <NavButton
           icon={MessageSquare}
           label="Chat"
-          active={activeSection === "chat"}
-          onClick={() => handleNavClick("chat", "/chat")}
+          active={activePanels.has("chat")}
+          onClick={() => onTogglePanel("chat")}
           testId="nav-chat"
         />
         <NavButton
           icon={Brain}
           label="Intelligence"
-          active={activeSection === "intelligence"}
-          onClick={() => handleNavClick("intelligence", "/intelligence")}
+          active={activePanels.has("intelligence")}
+          onClick={() => onTogglePanel("intelligence")}
           testId="nav-intelligence"
         />
         <NavButton
           icon={Upload}
           label="Files"
-          active={activeSection === "files"}
-          onClick={() => handleNavClick("files", "/files")}
+          active={activePanels.has("files")}
+          onClick={() => onTogglePanel("files")}
           testId="nav-files"
         />
         
@@ -56,29 +47,29 @@ export function BottomNavBar({ activeSection, onSectionChange }: BottomNavBarPro
         <NavButton
           icon={Clock}
           label="Timeline"
-          active={activeSection === "timeline"}
-          onClick={() => handleNavClick("timeline", "/timeline")}
+          active={activePanels.has("timeline")}
+          onClick={() => onTogglePanel("timeline")}
           testId="nav-timeline"
         />
         <NavButton
           icon={CloudRain}
           label="Weather"
-          active={activeSection === "weather"}
-          onClick={() => handleNavClick("weather", "/weather")}
+          active={activePanels.has("weather")}
+          onClick={() => onTogglePanel("weather")}
           testId="nav-weather"
         />
         <NavButton
           icon={TrendingUp}
           label="Analytics"
-          active={activeSection === "analytics"}
-          onClick={() => handleNavClick("analytics", "/analytics")}
+          active={activePanels.has("analytics")}
+          onClick={() => onTogglePanel("analytics")}
           testId="nav-analytics"
         />
         <NavButton
           icon={Share2}
           label="Social"
-          active={activeSection === "social"}
-          onClick={() => handleNavClick("social", "/social-media")}
+          active={activePanels.has("social")}
+          onClick={() => onTogglePanel("social")}
           testId="nav-social"
         />
       </div>

@@ -6,10 +6,15 @@ import { RiskAssessment } from "./risk-assessment"
 import { IntelligenceIntegration } from "./intelligence-integration"
 import { AnalysisPanel } from "./analysis-panel"
 import { FileDrop } from "./file-drop"
+import { WeatherPanel } from "./weather-panel"
+import { SocialMediaPanel } from "./social-media-panel"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Target, TrendingUp, Shield, X } from "lucide-react"
+import { Target, TrendingUp, Shield, X, CloudRain, Share2, BarChart3, Clock } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { cn } from "@/lib/utils"
+import { NavSection } from "./bottom-nav-bar"
+import Timeline from "@/pages/timeline"
+import Analytics from "@/pages/analytics"
 
 interface AOI {
   name?: string
@@ -25,33 +30,19 @@ interface MovementPlan {
 
 interface DashboardProps {
   className?: string
-  activePanel?: string
+  activePanels: Set<NavSection>
+  currentAOI: AOI
+  onAOIChange: (aoi: AOI) => void
 }
 
-export function Dashboard({ className, activePanel = "map" }: DashboardProps) {
+export function Dashboard({ className, activePanels, currentAOI, onAOIChange }: DashboardProps) {
   const { t } = useTranslation()
-  const [currentAOI, setCurrentAOI] = useState<AOI>({
-    name: "Dhaka",
-    lat: 23.8103,
-    lng: 90.4125,
-    radiusKm: 5
-  })
   const [riskScore, setRiskScore] = useState(67)
   const [riskLevel, setRiskLevel] = useState('Moderate')
   const [movementPlan, setMovementPlan] = useState<MovementPlan | undefined>()
   const [mediaContextIds, setMediaContextIds] = useState<string[]>([])
   const [confidence, setConfidence] = useState({ belief: 0.78, disbelief: 0.12, uncertainty: 0.10 })
   const [isAnalysisPanelVisible, setIsAnalysisPanelVisible] = useState(false)
-  
-  // Panel visibility controlled by activePanel prop from BottomNavBar
-  const showChatPanel = activePanel === "chat"
-  const showIntelPanel = activePanel === "intelligence"
-  const showFilesPanel = activePanel === "files"
-
-  const handleAOIChange = (newAOI: AOI) => {
-    console.log('AOI changed:', newAOI)
-    setCurrentAOI(newAOI)
-  }
 
   const handleRiskUpdate = (score: number, level: string) => {
     setRiskScore(score)
@@ -105,10 +96,75 @@ export function Dashboard({ className, activePanel = "map" }: DashboardProps) {
           aoi={currentAOI}
           riskScore={riskScore}
           movementPlan={movementPlan}
-          onAOIChange={handleAOIChange}
+          onAOIChange={onAOIChange}
           onMovementPlanRequest={handleMovementPlanRequest}
           className="h-full w-full"
         />
+      </div>
+
+      {/* Bottom panels container - above nav bar, spanning most of width */}
+      <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-20 w-[90%] max-w-7xl">
+        <div className="flex flex-col-reverse gap-4 max-h-[calc(100vh-12rem)] overflow-y-auto pb-4">
+          {/* Timeline Panel */}
+          {activePanels.has("timeline") && (
+            <div className="bg-white/70 backdrop-blur-md rounded-3xl shadow-lg overflow-hidden flex-shrink-0" data-testid="panel-timeline">
+              <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+                <h2 className="flex items-center gap-2 text-base font-medium text-gray-800">
+                  <Clock className="h-4 w-4 text-blue-600" />
+                  Timeline
+                </h2>
+              </div>
+              <div className="overflow-y-auto max-h-80">
+                <Timeline />
+              </div>
+            </div>
+          )}
+
+          {/* Weather Panel */}
+          {activePanels.has("weather") && (
+            <div className="bg-white/70 backdrop-blur-md rounded-3xl shadow-lg overflow-hidden flex-shrink-0" data-testid="panel-weather">
+              <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+                <h2 className="flex items-center gap-2 text-base font-medium text-gray-800">
+                  <CloudRain className="h-4 w-4 text-blue-600" />
+                  Weather Intelligence
+                </h2>
+              </div>
+              <div className="overflow-y-auto max-h-80 p-4">
+                <WeatherPanel data-testid="weather-panel-main" />
+              </div>
+            </div>
+          )}
+
+          {/* Analytics Panel */}
+          {activePanels.has("analytics") && (
+            <div className="bg-white/70 backdrop-blur-md rounded-3xl shadow-lg overflow-hidden flex-shrink-0" data-testid="panel-analytics">
+              <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+                <h2 className="flex items-center gap-2 text-base font-medium text-gray-800">
+                  <BarChart3 className="h-4 w-4 text-blue-600" />
+                  Analytics Dashboard
+                </h2>
+              </div>
+              <div className="overflow-y-auto max-h-80">
+                <Analytics />
+              </div>
+            </div>
+          )}
+
+          {/* Social Media Panel */}
+          {activePanels.has("social") && (
+            <div className="bg-white/70 backdrop-blur-md rounded-3xl shadow-lg overflow-hidden flex-shrink-0" data-testid="panel-social">
+              <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+                <h2 className="flex items-center gap-2 text-base font-medium text-gray-800">
+                  <Share2 className="h-4 w-4 text-blue-600" />
+                  Social Media Intelligence
+                </h2>
+              </div>
+              <div className="overflow-y-auto max-h-80 p-4">
+                <SocialMediaPanel data-testid="social-media-panel-main" />
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Top left AOI info panel - floating */}
@@ -177,7 +233,7 @@ export function Dashboard({ className, activePanel = "map" }: DashboardProps) {
       </div>
 
       {/* Chat Panel - floating, toggleable */}
-      {showChatPanel && (
+      {activePanels.has("chat") && (
         <div className="absolute left-4 bottom-24 z-20 w-96 max-h-[60vh]" data-testid="panel-chat-floating">
           <div className="bg-white/70 backdrop-blur-md rounded-3xl shadow-lg overflow-hidden h-full flex flex-col">
             <div className="p-4 border-b border-gray-100 flex items-center justify-between">
@@ -193,7 +249,7 @@ export function Dashboard({ className, activePanel = "map" }: DashboardProps) {
       )}
 
       {/* Intelligence Panel - floating, toggleable */}
-      {showIntelPanel && (
+      {activePanels.has("intelligence") && (
         <div className="absolute right-4 bottom-24 z-20 w-96 max-h-[70vh]" data-testid="panel-intel-floating">
           <div className="bg-white/70 backdrop-blur-md rounded-3xl shadow-lg overflow-hidden h-full flex flex-col">
             <div className="p-4 border-b border-gray-100 flex items-center justify-between">
@@ -229,7 +285,7 @@ export function Dashboard({ className, activePanel = "map" }: DashboardProps) {
       )}
 
       {/* Files Panel - floating, toggleable */}
-      {showFilesPanel && (
+      {activePanels.has("files") && (
         <div className="absolute left-1/2 -translate-x-1/2 bottom-24 z-20 w-96" data-testid="panel-files-floating">
           <div className="bg-white/70 backdrop-blur-md rounded-3xl shadow-lg overflow-hidden">
             <div className="p-4 border-b border-gray-100 flex items-center justify-between">
