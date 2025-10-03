@@ -72,24 +72,20 @@ function App() {
               <div className="flex h-screen w-full">
                 <AppSidebar />
                 <div className="flex flex-col flex-1">
-                  <header className="flex items-center justify-between p-2 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+                  <header className="flex items-center justify-between p-4 border-b border-gray-100 bg-white">
                     <SidebarTrigger data-testid="button-sidebar-toggle" />
                     <div className="flex items-center gap-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
+                      <button 
                         onClick={() => setSearchOpen(true)}
-                        className="relative h-8 w-48 justify-start text-sm text-muted-foreground bg-background hover:bg-accent overflow-hidden"
+                        className="bg-gray-200 rounded-3xl px-4 py-2 text-gray-800 text-sm hover:bg-gray-300 transition-colors flex items-center gap-2"
                         data-testid="button-global-search"
                       >
-                        <Search className="mr-2 h-4 w-4 flex-shrink-0" />
-                        <span className="hidden lg:inline-flex truncate">Search...</span>
-                        <span className="inline-flex lg:hidden">Search</span>
-                        <kbd className="pointer-events-none absolute right-1.5 top-1.5 hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex">
+                        <Search className="h-4 w-4" />
+                        <span className="hidden lg:inline-flex">Search...</span>
+                        <kbd className="pointer-events-none hidden h-5 select-none items-center gap-1 rounded border border-gray-300 bg-gray-100 px-1.5 text-[10px] font-medium sm:flex">
                           <span className="text-xs">⌘</span>K
                         </kbd>
-                      </Button>
-                      <ThemeToggle />
+                      </button>
                     </div>
                   </header>
                   <main className="flex-1 overflow-hidden">

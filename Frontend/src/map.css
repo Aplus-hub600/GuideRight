@@ -1,0 +1,42 @@
+/* RESTORED MAP CSS - Conservative approach that actually works */
+
+/* Basic Leaflet container setup */
+.leaflet-container {
+  height: 100% !important;
+  width: 100% !important;
+  position: relative !important;
+  background-color: #f3f4f6;
+}
+
+/* Fix for grey tiles - the actual problem */
+.leaflet-tile {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Fix Tailwind CSS conflicts - this is the key issue */
+.leaflet-container img {
+  max-width: none !important;
+  height: auto !important;
+  border: 0 !important;
+}
+
+/* Essential positioning */
+.leaflet-container * {
+  box-sizing: content-box !important;
+}
+
+/* Controls */
+.leaflet-control-zoom {
+  z-index: 1000 !important;
+}
+
+.leaflet-control-attribution {
+  z-index: 1000 !important;
+  background: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* Popups */
+.leaflet-popup {
+  z-index: 1010 !important;
+}

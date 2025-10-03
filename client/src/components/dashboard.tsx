@@ -101,20 +101,20 @@ export function Dashboard({ className }: DashboardProps) {
   const riskInfo = getRiskLevel(riskScore)
 
   return (
-    <div className={cn("h-full", className)}>
+    <div className={cn("h-full bg-gray-50", className)}>
       <ResizablePanelGroup direction="horizontal" className="h-full">
         {/* Left Panel - Chat & Controls */}
         <ResizablePanel defaultSize={30} minSize={25} maxSize={45}>
           <div className="h-full flex flex-col p-4 gap-4">
             {/* AOI Info Card */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Target className="h-5 w-5" />
+            <div className="bg-white/70 backdrop-blur-md rounded-3xl shadow-sm overflow-hidden">
+              <div className="p-6 border-b border-gray-100">
+                <h2 className="flex items-center gap-2 text-lg font-medium text-gray-800">
+                  <Target className="h-5 w-5 text-blue-600" />
                   Current AOI
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
+                </h2>
+              </div>
+              <div className="p-6">
                 <div className="space-y-3">
                   <div>
                     <div className="flex items-center gap-2 mb-1">
@@ -134,57 +134,64 @@ export function Dashboard({ className }: DashboardProps) {
                           }}
                         />
                       </div>
-                      <p className="font-medium">{currentAOI.name || "Unknown Location"}</p>
+                      <p className="font-medium text-gray-800">{currentAOI.name || "Unknown Location"}</p>
                     </div>
-                    <p className="text-sm text-muted-foreground font-mono">
+                    <p className="text-sm text-gray-600">
                       {currentAOI.lat.toFixed(4)}, {currentAOI.lng.toFixed(4)}
                     </p>
                   </div>
                   
                   <div className="flex items-center gap-2">
-                    <Shield className="h-4 w-4" />
-                    <span className="text-sm">Risk Assessment:</span>
-                    <Badge variant="outline" className={riskInfo.color}>
+                    <Shield className="h-4 w-4 text-gray-600" />
+                    <span className="text-sm text-gray-700">Risk Assessment:</span>
+                    <span className={`text-sm px-2 py-1 rounded-lg font-medium ${
+                      riskScore < 30 ? 'bg-green-100 text-green-800' :
+                      riskScore < 60 ? 'bg-yellow-100 text-yellow-800' :
+                      riskScore < 80 ? 'bg-orange-100 text-orange-800' :
+                      'bg-red-100 text-red-800'
+                    }`}>
                       {riskInfo.level} ({riskScore}/100)
-                    </Badge>
+                    </span>
                   </div>
                   
                   <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
+                    <div className="flex justify-between text-sm text-gray-700">
                       <span>Confidence</span>
-                      <span>{Math.round(confidence.belief * 100)}%</span>
                     </div>
-                    <Progress value={confidence.belief * 100} className="h-2" />
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        className="bg-blue-600 h-2 rounded-full transition-all"
+                        style={{ width: `${confidence.belief * 100}%` }}
+                      />
+                    </div>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
             {/* File Drop - Compact Version */}
-            <Card className="flex-shrink-0">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-xs">Media Analysis</CardTitle>
-              </CardHeader>
-              <CardContent className="py-2">
+            <div className="bg-white/70 backdrop-blur-md rounded-3xl shadow-sm overflow-hidden flex-shrink-0">
+              <div className="p-4 border-b border-gray-100">
+                <h3 className="text-sm font-medium text-gray-800">Media Analysis</h3>
+              </div>
+              <div className="p-4">
                 <FileDrop 
                   onAnalysisComplete={handleFileAnalysis}
                   onFilesChange={setMediaContextIds}
                   maxFiles={2}
                   compact={true}
                 />
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
             {/* Chat Panel */}
-            <Card className="flex-1 min-h-0">
-              <CardContent className="p-0 h-full">
-                <ChatPanel 
-                  onQuerySubmit={handleQuerySubmit}
-                  mediaContextIds={mediaContextIds}
-                  className="h-full"
-                />
-              </CardContent>
-            </Card>
+            <div className="bg-white/70 backdrop-blur-md rounded-3xl shadow-sm overflow-hidden flex-1 min-h-0">
+              <ChatPanel 
+                onQuerySubmit={handleQuerySubmit}
+                mediaContextIds={mediaContextIds}
+                className="h-full"
+              />
+            </div>
           </div>
         </ResizablePanel>
 
@@ -214,36 +221,36 @@ export function Dashboard({ className }: DashboardProps) {
         {/* Right Panel - Intelligence Analysis */}
         <ResizablePanel defaultSize={30} minSize={25}>
           <div className="h-full p-4">
-            <Card className="h-full">
-              <CardHeader className="pb-4">
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5" />
+            <div className="bg-white/70 backdrop-blur-md rounded-3xl shadow-sm overflow-hidden h-full flex flex-col">
+              <div className="p-6 border-b border-gray-100">
+                <h2 className="flex items-center gap-2 text-lg font-medium text-gray-800">
+                  <TrendingUp className="h-5 w-5 text-blue-600" />
                   Intelligence Analysis
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-0 h-[calc(100%-80px)]">
-                <Tabs defaultValue="intelligence" className="h-full">
-                  <TabsList className="grid w-full grid-cols-3">
-                    <TabsTrigger value="intelligence" data-testid="tab-intelligence">Intelligence</TabsTrigger>
-                    <TabsTrigger value="pmesii" data-testid="tab-pmesii">PMESII</TabsTrigger>
-                    <TabsTrigger value="risk" data-testid="tab-risk">Risk</TabsTrigger>
+                </h2>
+              </div>
+              <div className="flex-1 overflow-hidden p-6">
+                <Tabs defaultValue="intelligence" className="h-full flex flex-col">
+                  <TabsList className="inline-flex h-10 items-center justify-center rounded-lg bg-gray-100 p-1 text-gray-600 w-full">
+                    <TabsTrigger value="intelligence" data-testid="tab-intelligence" className="data-[state=active]:bg-white data-[state=active]:text-gray-800 data-[state=active]:shadow-sm flex-1">Intelligence</TabsTrigger>
+                    <TabsTrigger value="pmesii" data-testid="tab-pmesii" className="data-[state=active]:bg-white data-[state=active]:text-gray-800 data-[state=active]:shadow-sm flex-1">PMESII</TabsTrigger>
+                    <TabsTrigger value="risk" data-testid="tab-risk" className="data-[state=active]:bg-white data-[state=active]:text-gray-800 data-[state=active]:shadow-sm flex-1">Risk</TabsTrigger>
                   </TabsList>
-                  <TabsContent value="intelligence" className="h-[calc(100%-40px)] mt-4">
-                    <IntelligenceIntegration className="h-full overflow-y-auto" />
+                  <TabsContent value="intelligence" className="flex-1 mt-4 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                    <IntelligenceIntegration className="h-full" />
                   </TabsContent>
-                  <TabsContent value="pmesii" className="h-[calc(100%-40px)] mt-4">
-                    <PMESIITest aoi={currentAOI} className="h-full overflow-y-auto" />
+                  <TabsContent value="pmesii" className="flex-1 mt-4 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                    <PMESIITest aoi={currentAOI} className="h-full" />
                   </TabsContent>
-                  <TabsContent value="risk" className="h-[calc(100%-40px)] mt-4">
+                  <TabsContent value="risk" className="flex-1 mt-4 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
                     <RiskAssessment 
                       aoi={currentAOI} 
                       onRiskUpdate={handleRiskUpdate}
-                      className="h-full overflow-y-auto" 
+                      className="h-full" 
                     />
                   </TabsContent>
                 </Tabs>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>
