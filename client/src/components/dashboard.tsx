@@ -6,12 +6,8 @@ import { RiskAssessment } from "./risk-assessment"
 import { IntelligenceIntegration } from "./intelligence-integration"
 import { AnalysisPanel } from "./analysis-panel"
 import { FileDrop } from "./file-drop"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable"
-import { Target, TrendingUp, Shield } from "lucide-react"
+import { Target, TrendingUp, Shield, X } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { cn } from "@/lib/utils"
 
@@ -29,9 +25,10 @@ interface MovementPlan {
 
 interface DashboardProps {
   className?: string
+  activePanel?: string
 }
 
-export function Dashboard({ className }: DashboardProps) {
+export function Dashboard({ className, activePanel = "map" }: DashboardProps) {
   const { t } = useTranslation()
   const [currentAOI, setCurrentAOI] = useState<AOI>({
     name: "Dhaka",
@@ -45,11 +42,15 @@ export function Dashboard({ className }: DashboardProps) {
   const [mediaContextIds, setMediaContextIds] = useState<string[]>([])
   const [confidence, setConfidence] = useState({ belief: 0.78, disbelief: 0.12, uncertainty: 0.10 })
   const [isAnalysisPanelVisible, setIsAnalysisPanelVisible] = useState(false)
+  
+  // Panel visibility controlled by activePanel prop from BottomNavBar
+  const showChatPanel = activePanel === "chat"
+  const showIntelPanel = activePanel === "intelligence"
+  const showFilesPanel = activePanel === "files"
 
   const handleAOIChange = (newAOI: AOI) => {
     console.log('AOI changed:', newAOI)
     setCurrentAOI(newAOI)
-    // In real app, this would trigger intelligence gathering
   }
 
   const handleRiskUpdate = (score: number, level: string) => {
@@ -59,7 +60,6 @@ export function Dashboard({ className }: DashboardProps) {
 
   const handleMovementPlanRequest = () => {
     console.log('Movement plan requested for AOI:', currentAOI)
-    // Mock movement plan
     setMovementPlan({
       route: [
         { lat: currentAOI.lat - 0.02, lng: currentAOI.lng - 0.02 },
@@ -71,7 +71,6 @@ export function Dashboard({ className }: DashboardProps) {
     })
   }
 
-  // Show analysis panel when analysis starts
   useEffect(() => {
     const handleAnalysisStart = () => {
       setIsAnalysisPanelVisible(true)
@@ -83,12 +82,10 @@ export function Dashboard({ className }: DashboardProps) {
 
   const handleQuerySubmit = (query: string, contextIds?: string[]) => {
     console.log('Query submitted:', query, 'with context:', contextIds)
-    // In real app, this would submit to backend API
   }
 
   const handleFileAnalysis = (fileId: string, items: any[]) => {
     console.log('File analysis completed:', fileId, items)
-    // In real app, these items would be added to intelligence database
   }
 
   const getRiskLevel = (score: number) => {
@@ -101,159 +98,160 @@ export function Dashboard({ className }: DashboardProps) {
   const riskInfo = getRiskLevel(riskScore)
 
   return (
-    <div className={cn("h-full bg-gray-50", className)}>
-      <ResizablePanelGroup direction="horizontal" className="h-full">
-        {/* Left Panel - Chat & Controls */}
-        <ResizablePanel defaultSize={30} minSize={25} maxSize={45}>
-          <div className="h-full flex flex-col p-4 gap-4">
-            {/* AOI Info Card */}
-            <div className="bg-white/70 backdrop-blur-md rounded-3xl shadow-sm overflow-hidden">
-              <div className="p-6 border-b border-gray-100">
-                <h2 className="flex items-center gap-2 text-lg font-medium text-gray-800">
-                  <Target className="h-5 w-5 text-blue-600" />
-                  Current AOI
-                </h2>
+    <div className={cn("relative h-full w-full", className)}>
+      {/* Full viewport map - base layer */}
+      <div className="absolute inset-0 z-0">
+        <GoogleMapPanel
+          aoi={currentAOI}
+          riskScore={riskScore}
+          movementPlan={movementPlan}
+          onAOIChange={handleAOIChange}
+          onMovementPlanRequest={handleMovementPlanRequest}
+          className="h-full w-full"
+        />
+      </div>
+
+      {/* Top left AOI info panel - floating */}
+      <div className="absolute top-4 left-4 z-20 w-80" data-testid="panel-aoi-info">
+        <div className="bg-white/70 backdrop-blur-md rounded-3xl shadow-lg overflow-hidden">
+          <div className="p-4 border-b border-gray-100">
+            <h2 className="flex items-center gap-2 text-base font-medium text-gray-800">
+              <Target className="h-4 w-4 text-blue-600" />
+              Current AOI
+            </h2>
+          </div>
+          <div className="p-4">
+            <div className="space-y-3">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <div 
+                    className="w-6 h-4 rounded-sm relative overflow-hidden"
+                    style={{ backgroundColor: '#006A4E' }}
+                    data-testid="img-flag-bangladesh"
+                    title="Bangladesh Flag"
+                  >
+                    <div 
+                      className="absolute w-2.5 h-2.5 rounded-full"
+                      style={{ 
+                        backgroundColor: '#F42A41',
+                        top: '50%',
+                        left: '30%',
+                        transform: 'translate(-50%, -50%)'
+                      }}
+                    />
+                  </div>
+                  <p className="font-medium text-gray-800">{currentAOI.name || "Unknown Location"}</p>
+                </div>
+                <p className="text-sm text-gray-600">
+                  {currentAOI.lat.toFixed(4)}, {currentAOI.lng.toFixed(4)}
+                </p>
               </div>
-              <div className="p-6">
-                <div className="space-y-3">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <div 
-                        className="w-6 h-4 rounded-sm relative overflow-hidden"
-                        style={{ backgroundColor: '#006A4E' }}
-                        data-testid="img-flag-bangladesh"
-                        title="Bangladesh Flag"
-                      >
-                        <div 
-                          className="absolute w-2.5 h-2.5 rounded-full"
-                          style={{ 
-                            backgroundColor: '#F42A41',
-                            top: '50%',
-                            left: '30%',
-                            transform: 'translate(-50%, -50%)'
-                          }}
-                        />
-                      </div>
-                      <p className="font-medium text-gray-800">{currentAOI.name || "Unknown Location"}</p>
-                    </div>
-                    <p className="text-sm text-gray-600">
-                      {currentAOI.lat.toFixed(4)}, {currentAOI.lng.toFixed(4)}
-                    </p>
-                  </div>
-                  
-                  <div className="flex items-center gap-2">
-                    <Shield className="h-4 w-4 text-gray-600" />
-                    <span className="text-sm text-gray-700">Risk Assessment:</span>
-                    <span className={`text-sm px-2 py-1 rounded-lg font-medium ${
-                      riskScore < 30 ? 'bg-green-100 text-green-800' :
-                      riskScore < 60 ? 'bg-yellow-100 text-yellow-800' :
-                      riskScore < 80 ? 'bg-orange-100 text-orange-800' :
-                      'bg-red-100 text-red-800'
-                    }`}>
-                      {riskInfo.level} ({riskScore}/100)
-                    </span>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm text-gray-700">
-                      <span>Confidence</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div 
-                        className="bg-blue-600 h-2 rounded-full transition-all"
-                        style={{ width: `${confidence.belief * 100}%` }}
-                      />
-                    </div>
-                  </div>
+              
+              <div className="flex items-center gap-2">
+                <Shield className="h-4 w-4 text-gray-600" />
+                <span className="text-sm text-gray-700">Risk:</span>
+                <span className={`text-sm px-2 py-1 rounded-lg font-medium ${
+                  riskScore < 30 ? 'bg-green-100 text-green-800' :
+                  riskScore < 60 ? 'bg-yellow-100 text-yellow-800' :
+                  riskScore < 80 ? 'bg-orange-100 text-orange-800' :
+                  'bg-red-100 text-red-800'
+                }`}>
+                  {riskInfo.level} ({riskScore}/100)
+                </span>
+              </div>
+              
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm text-gray-700">
+                  <span>Confidence</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div 
+                    className="bg-blue-600 h-2 rounded-full transition-all"
+                    style={{ width: `${confidence.belief * 100}%` }}
+                  />
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
 
-            {/* File Drop - Compact Version */}
-            <div className="bg-white/70 backdrop-blur-md rounded-3xl shadow-sm overflow-hidden flex-shrink-0">
-              <div className="p-4 border-b border-gray-100">
-                <h3 className="text-sm font-medium text-gray-800">Media Analysis</h3>
-              </div>
-              <div className="p-4">
-                <FileDrop 
-                  onAnalysisComplete={handleFileAnalysis}
-                  onFilesChange={setMediaContextIds}
-                  maxFiles={2}
-                  compact={true}
-                />
-              </div>
+      {/* Chat Panel - floating, toggleable */}
+      {showChatPanel && (
+        <div className="absolute left-4 bottom-24 z-20 w-96 max-h-[60vh]" data-testid="panel-chat-floating">
+          <div className="bg-white/70 backdrop-blur-md rounded-3xl shadow-lg overflow-hidden h-full flex flex-col">
+            <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+              <h2 className="text-base font-medium text-gray-800">Chat Assistant</h2>
             </div>
+            <ChatPanel 
+              onQuerySubmit={handleQuerySubmit}
+              mediaContextIds={mediaContextIds}
+              className="flex-1"
+            />
+          </div>
+        </div>
+      )}
 
-            {/* Chat Panel */}
-            <div className="bg-white/70 backdrop-blur-md rounded-3xl shadow-sm overflow-hidden flex-1 min-h-0">
-              <ChatPanel 
-                onQuerySubmit={handleQuerySubmit}
-                mediaContextIds={mediaContextIds}
-                className="h-full"
+      {/* Intelligence Panel - floating, toggleable */}
+      {showIntelPanel && (
+        <div className="absolute right-4 bottom-24 z-20 w-96 max-h-[70vh]" data-testid="panel-intel-floating">
+          <div className="bg-white/70 backdrop-blur-md rounded-3xl shadow-lg overflow-hidden h-full flex flex-col">
+            <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+              <h2 className="flex items-center gap-2 text-base font-medium text-gray-800">
+                <TrendingUp className="h-4 w-4 text-blue-600" />
+                Intelligence Analysis
+              </h2>
+            </div>
+            <div className="flex-1 overflow-hidden p-4">
+              <Tabs defaultValue="intelligence" className="h-full flex flex-col">
+                <TabsList className="inline-flex h-10 items-center justify-center rounded-lg bg-gray-100 p-1 text-gray-600 w-full">
+                  <TabsTrigger value="intelligence" data-testid="tab-intelligence" className="data-[state=active]:bg-white data-[state=active]:text-gray-800 data-[state=active]:shadow-sm flex-1">Intel</TabsTrigger>
+                  <TabsTrigger value="pmesii" data-testid="tab-pmesii" className="data-[state=active]:bg-white data-[state=active]:text-gray-800 data-[state=active]:shadow-sm flex-1">PMESII</TabsTrigger>
+                  <TabsTrigger value="risk" data-testid="tab-risk" className="data-[state=active]:bg-white data-[state=active]:text-gray-800 data-[state=active]:shadow-sm flex-1">Risk</TabsTrigger>
+                </TabsList>
+                <TabsContent value="intelligence" className="flex-1 mt-4 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                  <IntelligenceIntegration className="h-full" />
+                </TabsContent>
+                <TabsContent value="pmesii" className="flex-1 mt-4 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                  <PMESIITest aoi={currentAOI} className="h-full" />
+                </TabsContent>
+                <TabsContent value="risk" className="flex-1 mt-4 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                  <RiskAssessment 
+                    aoi={currentAOI} 
+                    onRiskUpdate={handleRiskUpdate}
+                    className="h-full" 
+                  />
+                </TabsContent>
+              </Tabs>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Files Panel - floating, toggleable */}
+      {showFilesPanel && (
+        <div className="absolute left-1/2 -translate-x-1/2 bottom-24 z-20 w-96" data-testid="panel-files-floating">
+          <div className="bg-white/70 backdrop-blur-md rounded-3xl shadow-lg overflow-hidden">
+            <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+              <h3 className="text-base font-medium text-gray-800">Media Analysis</h3>
+            </div>
+            <div className="p-4">
+              <FileDrop 
+                onAnalysisComplete={handleFileAnalysis}
+                onFilesChange={setMediaContextIds}
+                maxFiles={5}
+                compact={false}
               />
             </div>
           </div>
-        </ResizablePanel>
+        </div>
+      )}
 
-        <ResizableHandle withHandle />
-
-        {/* Middle Panel - Map */}
-        <ResizablePanel defaultSize={40} minSize={30}>
-          <div className="relative h-full">
-            <GoogleMapPanel
-              aoi={currentAOI}
-              riskScore={riskScore}
-              movementPlan={movementPlan}
-              onAOIChange={handleAOIChange}
-              onMovementPlanRequest={handleMovementPlanRequest}
-              className="h-full"
-            />
-            {/* Analysis Panel Overlay */}
-            <AnalysisPanel 
-              isVisible={isAnalysisPanelVisible} 
-              onClose={() => setIsAnalysisPanelVisible(false)}
-            />
-          </div>
-        </ResizablePanel>
-
-        <ResizableHandle withHandle />
-
-        {/* Right Panel - Intelligence Analysis */}
-        <ResizablePanel defaultSize={30} minSize={25}>
-          <div className="h-full p-4">
-            <div className="bg-white/70 backdrop-blur-md rounded-3xl shadow-sm overflow-hidden h-full flex flex-col">
-              <div className="p-6 border-b border-gray-100">
-                <h2 className="flex items-center gap-2 text-lg font-medium text-gray-800">
-                  <TrendingUp className="h-5 w-5 text-blue-600" />
-                  Intelligence Analysis
-                </h2>
-              </div>
-              <div className="flex-1 overflow-hidden p-6">
-                <Tabs defaultValue="intelligence" className="h-full flex flex-col">
-                  <TabsList className="inline-flex h-10 items-center justify-center rounded-lg bg-gray-100 p-1 text-gray-600 w-full">
-                    <TabsTrigger value="intelligence" data-testid="tab-intelligence" className="data-[state=active]:bg-white data-[state=active]:text-gray-800 data-[state=active]:shadow-sm flex-1">Intelligence</TabsTrigger>
-                    <TabsTrigger value="pmesii" data-testid="tab-pmesii" className="data-[state=active]:bg-white data-[state=active]:text-gray-800 data-[state=active]:shadow-sm flex-1">PMESII</TabsTrigger>
-                    <TabsTrigger value="risk" data-testid="tab-risk" className="data-[state=active]:bg-white data-[state=active]:text-gray-800 data-[state=active]:shadow-sm flex-1">Risk</TabsTrigger>
-                  </TabsList>
-                  <TabsContent value="intelligence" className="flex-1 mt-4 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-                    <IntelligenceIntegration className="h-full" />
-                  </TabsContent>
-                  <TabsContent value="pmesii" className="flex-1 mt-4 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-                    <PMESIITest aoi={currentAOI} className="h-full" />
-                  </TabsContent>
-                  <TabsContent value="risk" className="flex-1 mt-4 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-                    <RiskAssessment 
-                      aoi={currentAOI} 
-                      onRiskUpdate={handleRiskUpdate}
-                      className="h-full" 
-                    />
-                  </TabsContent>
-                </Tabs>
-              </div>
-            </div>
-          </div>
-        </ResizablePanel>
-      </ResizablePanelGroup>
+      {/* Analysis Panel - already floating */}
+      <AnalysisPanel 
+        isVisible={isAnalysisPanelVisible} 
+        onClose={() => setIsAnalysisPanelVisible(false)}
+      />
     </div>
   )
 }
