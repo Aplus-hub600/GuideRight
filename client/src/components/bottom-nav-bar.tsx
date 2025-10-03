@@ -1,4 +1,4 @@
-import { Home, MessageSquare, Brain, Upload, TrendingUp, CloudRain, Share2, Clock } from "lucide-react";
+import { Home, MessageSquare, Brain, Upload, TrendingUp, CloudRain, Share2, Clock, Settings } from "lucide-react";
 
 export type NavSection = "map" | "chat" | "intelligence" | "files" | "settings" | "timeline" | "weather" | "analytics" | "social";
 
@@ -22,20 +22,20 @@ export function BottomNavBar({ activeTopPanel, activeBottomPanel, onTogglePanel 
           testId="nav-map"
         />
         
-        {/* Left group - bottom panels */}
+        {/* Left group - bottom panels (timeline, weather, files, settings) */}
         <NavButton
-          icon={MessageSquare}
-          label="Chat"
-          active={activeBottomPanel === "chat"}
-          onClick={() => onTogglePanel("chat")}
-          testId="nav-chat"
+          icon={Clock}
+          label="Timeline"
+          active={activeBottomPanel === "timeline"}
+          onClick={() => onTogglePanel("timeline")}
+          testId="nav-timeline"
         />
         <NavButton
-          icon={Brain}
-          label="Intelligence"
-          active={activeBottomPanel === "intelligence"}
-          onClick={() => onTogglePanel("intelligence")}
-          testId="nav-intelligence"
+          icon={CloudRain}
+          label="Weather"
+          active={activeBottomPanel === "weather"}
+          onClick={() => onTogglePanel("weather")}
+          testId="nav-weather"
         />
         <NavButton
           icon={Upload}
@@ -44,24 +44,31 @@ export function BottomNavBar({ activeTopPanel, activeBottomPanel, onTogglePanel 
           onClick={() => onTogglePanel("files")}
           testId="nav-files"
         />
+        <NavButton
+          icon={Settings}
+          label="Settings"
+          active={activeBottomPanel === "settings"}
+          onClick={() => onTogglePanel("settings")}
+          testId="nav-settings"
+        />
         
         {/* Divider */}
         <div className="w-px h-8 bg-gray-300 mx-1" />
         
-        {/* Right group - top panels */}
+        {/* Right group - top panels (chat, intelligence, analytics, social) */}
         <NavButton
-          icon={Clock}
-          label="Timeline"
-          active={activeTopPanel === "timeline"}
-          onClick={() => onTogglePanel("timeline")}
-          testId="nav-timeline"
+          icon={MessageSquare}
+          label="Chat"
+          active={activeTopPanel === "chat"}
+          onClick={() => onTogglePanel("chat")}
+          testId="nav-chat"
         />
         <NavButton
-          icon={CloudRain}
-          label="Weather"
-          active={activeTopPanel === "weather"}
-          onClick={() => onTogglePanel("weather")}
-          testId="nav-weather"
+          icon={Brain}
+          label="Intelligence"
+          active={activeTopPanel === "intelligence"}
+          onClick={() => onTogglePanel("intelligence")}
+          testId="nav-intelligence"
         />
         <NavButton
           icon={TrendingUp}

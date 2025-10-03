@@ -103,36 +103,56 @@ export function Dashboard({ className, activeTopPanel, activeBottomPanel, curren
         />
       </div>
 
-      {/* Top container - 80% width, 60% height, centered - for right nav items */}
+      {/* Top container - 80% width, 60% height, centered - for right nav items (chat, intelligence, analytics, social) */}
       {activeTopPanel && (
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 w-[80%] h-[60%]">
           <div className="bg-white/70 backdrop-blur-md rounded-3xl shadow-lg overflow-hidden h-full flex flex-col">
-            {/* Timeline */}
-            {activeTopPanel === "timeline" && (
+            {/* Chat */}
+            {activeTopPanel === "chat" && (
               <>
                 <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-                  <h2 className="flex items-center gap-2 text-base font-medium text-gray-800">
-                    <Clock className="h-4 w-4 text-blue-600" />
-                    Timeline
-                  </h2>
+                  <h2 className="text-base font-medium text-gray-800">Chat Assistant</h2>
                 </div>
-                <div className="flex-1 overflow-y-auto" data-testid="panel-timeline">
-                  <Timeline />
+                <div className="flex-1 overflow-hidden" data-testid="panel-chat">
+                  <ChatPanel 
+                    onQuerySubmit={handleQuerySubmit}
+                    mediaContextIds={mediaContextIds}
+                    className="h-full"
+                  />
                 </div>
               </>
             )}
 
-            {/* Weather */}
-            {activeTopPanel === "weather" && (
+            {/* Intelligence */}
+            {activeTopPanel === "intelligence" && (
               <>
                 <div className="p-4 border-b border-gray-100 flex items-center justify-between">
                   <h2 className="flex items-center gap-2 text-base font-medium text-gray-800">
-                    <CloudRain className="h-4 w-4 text-blue-600" />
-                    Weather Intelligence
+                    <TrendingUp className="h-4 w-4 text-blue-600" />
+                    Intelligence Analysis
                   </h2>
                 </div>
-                <div className="flex-1 overflow-y-auto p-4" data-testid="panel-weather">
-                  <WeatherPanel data-testid="weather-panel-main" />
+                <div className="flex-1 overflow-hidden p-4" data-testid="panel-intel">
+                  <Tabs defaultValue="intelligence" className="h-full flex flex-col">
+                    <TabsList className="inline-flex h-10 items-center justify-center rounded-lg bg-gray-100 p-1 text-gray-600 w-full">
+                      <TabsTrigger value="intelligence" data-testid="tab-intelligence" className="data-[state=active]:bg-white data-[state=active]:text-gray-800 data-[state=active]:shadow-sm flex-1">Intel</TabsTrigger>
+                      <TabsTrigger value="pmesii" data-testid="tab-pmesii" className="data-[state=active]:bg-white data-[state=active]:text-gray-800 data-[state=active]:shadow-sm flex-1">PMESII</TabsTrigger>
+                      <TabsTrigger value="risk" data-testid="tab-risk" className="data-[state=active]:bg-white data-[state=active]:text-gray-800 data-[state=active]:shadow-sm flex-1">Risk</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="intelligence" className="flex-1 mt-4 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                      <IntelligenceIntegration className="h-full" />
+                    </TabsContent>
+                    <TabsContent value="pmesii" className="flex-1 mt-4 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                      <PMESIITest aoi={currentAOI} className="h-full" />
+                    </TabsContent>
+                    <TabsContent value="risk" className="flex-1 mt-4 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                      <RiskAssessment 
+                        aoi={currentAOI} 
+                        onRiskUpdate={handleRiskUpdate}
+                        className="h-full" 
+                      />
+                    </TabsContent>
+                  </Tabs>
                 </div>
               </>
             )}
@@ -170,56 +190,36 @@ export function Dashboard({ className, activeTopPanel, activeBottomPanel, curren
         </div>
       )}
 
-      {/* Bottom container - 80% width, 20% height, centered, above nav - for left nav items */}
+      {/* Bottom container - 80% width, 20% height, centered, above nav - for left nav items (timeline, weather, files, settings) */}
       {activeBottomPanel && (
         <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-20 w-[80%] h-[20%]">
           <div className="bg-white/70 backdrop-blur-md rounded-3xl shadow-lg overflow-hidden h-full flex flex-col">
-            {/* Chat */}
-            {activeBottomPanel === "chat" && (
+            {/* Timeline */}
+            {activeBottomPanel === "timeline" && (
               <>
                 <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-                  <h2 className="text-base font-medium text-gray-800">Chat Assistant</h2>
+                  <h2 className="flex items-center gap-2 text-base font-medium text-gray-800">
+                    <Clock className="h-4 w-4 text-blue-600" />
+                    Timeline
+                  </h2>
                 </div>
-                <div className="flex-1 overflow-hidden" data-testid="panel-chat">
-                  <ChatPanel 
-                    onQuerySubmit={handleQuerySubmit}
-                    mediaContextIds={mediaContextIds}
-                    className="h-full"
-                  />
+                <div className="flex-1 overflow-y-auto" data-testid="panel-timeline">
+                  <Timeline />
                 </div>
               </>
             )}
 
-            {/* Intelligence */}
-            {activeBottomPanel === "intelligence" && (
+            {/* Weather */}
+            {activeBottomPanel === "weather" && (
               <>
                 <div className="p-4 border-b border-gray-100 flex items-center justify-between">
                   <h2 className="flex items-center gap-2 text-base font-medium text-gray-800">
-                    <TrendingUp className="h-4 w-4 text-blue-600" />
-                    Intelligence Analysis
+                    <CloudRain className="h-4 w-4 text-blue-600" />
+                    Weather Intelligence
                   </h2>
                 </div>
-                <div className="flex-1 overflow-hidden p-4" data-testid="panel-intel">
-                  <Tabs defaultValue="intelligence" className="h-full flex flex-col">
-                    <TabsList className="inline-flex h-10 items-center justify-center rounded-lg bg-gray-100 p-1 text-gray-600 w-full">
-                      <TabsTrigger value="intelligence" data-testid="tab-intelligence" className="data-[state=active]:bg-white data-[state=active]:text-gray-800 data-[state=active]:shadow-sm flex-1">Intel</TabsTrigger>
-                      <TabsTrigger value="pmesii" data-testid="tab-pmesii" className="data-[state=active]:bg-white data-[state=active]:text-gray-800 data-[state=active]:shadow-sm flex-1">PMESII</TabsTrigger>
-                      <TabsTrigger value="risk" data-testid="tab-risk" className="data-[state=active]:bg-white data-[state=active]:text-gray-800 data-[state=active]:shadow-sm flex-1">Risk</TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="intelligence" className="flex-1 mt-4 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-                      <IntelligenceIntegration className="h-full" />
-                    </TabsContent>
-                    <TabsContent value="pmesii" className="flex-1 mt-4 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-                      <PMESIITest aoi={currentAOI} className="h-full" />
-                    </TabsContent>
-                    <TabsContent value="risk" className="flex-1 mt-4 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-                      <RiskAssessment 
-                        aoi={currentAOI} 
-                        onRiskUpdate={handleRiskUpdate}
-                        className="h-full" 
-                      />
-                    </TabsContent>
-                  </Tabs>
+                <div className="flex-1 overflow-y-auto p-4" data-testid="panel-weather">
+                  <WeatherPanel data-testid="weather-panel-main" />
                 </div>
               </>
             )}
@@ -240,75 +240,23 @@ export function Dashboard({ className, activeTopPanel, activeBottomPanel, curren
                 </div>
               </>
             )}
+
+            {/* Settings */}
+            {activeBottomPanel === "settings" && (
+              <>
+                <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+                  <h3 className="text-base font-medium text-gray-800">Settings</h3>
+                </div>
+                <div className="flex-1 overflow-y-auto p-4" data-testid="panel-settings">
+                  <div className="space-y-4">
+                    <p className="text-sm text-gray-600">Application settings and preferences</p>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
-
-      {/* Top left AOI info panel - floating */}
-      <div className="absolute top-4 left-4 z-20 w-80" data-testid="panel-aoi-info">
-        <div className="bg-white/70 backdrop-blur-md rounded-3xl shadow-lg overflow-hidden">
-          <div className="p-4 border-b border-gray-100">
-            <h2 className="flex items-center gap-2 text-base font-medium text-gray-800">
-              <Target className="h-4 w-4 text-blue-600" />
-              Current AOI
-            </h2>
-          </div>
-          <div className="p-4">
-            <div className="space-y-3">
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <div 
-                    className="w-6 h-4 rounded-sm relative overflow-hidden"
-                    style={{ backgroundColor: '#006A4E' }}
-                    data-testid="img-flag-bangladesh"
-                    title="Bangladesh Flag"
-                  >
-                    <div 
-                      className="absolute w-2.5 h-2.5 rounded-full"
-                      style={{ 
-                        backgroundColor: '#F42A41',
-                        top: '50%',
-                        left: '30%',
-                        transform: 'translate(-50%, -50%)'
-                      }}
-                    />
-                  </div>
-                  <p className="font-medium text-gray-800">{currentAOI.name || "Unknown Location"}</p>
-                </div>
-                <p className="text-sm text-gray-600">
-                  {currentAOI.lat.toFixed(4)}, {currentAOI.lng.toFixed(4)}
-                </p>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <Shield className="h-4 w-4 text-gray-600" />
-                <span className="text-sm text-gray-700">Risk:</span>
-                <span className={`text-sm px-2 py-1 rounded-lg font-medium ${
-                  riskScore < 30 ? 'bg-green-100 text-green-800' :
-                  riskScore < 60 ? 'bg-yellow-100 text-yellow-800' :
-                  riskScore < 80 ? 'bg-orange-100 text-orange-800' :
-                  'bg-red-100 text-red-800'
-                }`}>
-                  {riskInfo.level} ({riskScore}/100)
-                </span>
-              </div>
-              
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm text-gray-700">
-                  <span>Confidence</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div 
-                    className="bg-blue-600 h-2 rounded-full transition-all"
-                    style={{ width: `${confidence.belief * 100}%` }}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
 
       {/* Analysis Panel - already floating */}
       <AnalysisPanel 

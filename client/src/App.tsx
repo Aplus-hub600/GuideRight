@@ -8,6 +8,7 @@ import { Dashboard } from "./components/dashboard";
 import { GlobalSearch } from "./components/global-search";
 import { BottomNavBar, NavSection } from "./components/bottom-nav-bar";
 import { LocationSearchBar } from "./components/location-search-bar";
+import { AoiInfo } from "./components/aoi-info";
 import { Filter } from "lucide-react";
 import { useSearchNavigation } from "./hooks/use-search-navigation";
 import { useState, useEffect } from "react";
@@ -51,8 +52,10 @@ function App() {
   }, [])
 
   // Define panel groups
-  const topPanels: NavSection[] = ["timeline", "weather", "analytics", "social"]
-  const bottomPanels: NavSection[] = ["chat", "intelligence", "files", "settings"]
+  // Top panels (right side of nav): chat, intelligence, analytics, social - displayed in top container
+  const topPanels: NavSection[] = ["chat", "intelligence", "analytics", "social"]
+  // Bottom panels (left side of nav): timeline, weather, files, settings - displayed in bottom container
+  const bottomPanels: NavSection[] = ["timeline", "weather", "files", "settings"]
 
   const togglePanel = (section: NavSection) => {
     // Home button clears all panels
@@ -99,12 +102,13 @@ function App() {
                 />
               </div>
 
-              {/* Top centered search bar with filter button */}
-              <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2">
+              {/* Top centered search bar, AOI info, and filter button */}
+              <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-3">
                 <LocationSearchBar 
                   onLocationSelect={handleLocationSelect}
                   currentLocation={currentAOI.name}
                 />
+                <AoiInfo aoi={currentAOI} />
                 <button 
                   onClick={() => setSearchOpen(true)}
                   className="bg-white/80 backdrop-blur-md rounded-full px-4 py-3 text-gray-800 text-sm hover:bg-white/90 transition-all shadow-lg flex items-center gap-2"
