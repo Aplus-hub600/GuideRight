@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -6,6 +6,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { I18nextProvider } from 'react-i18next';
 import { ThemeProvider } from "./components/theme-provider";
 import { Dashboard } from "./components/dashboard";
+import { GoogleMapPanel } from "./components/google-map-panel";
+import { MapOverlayContainer } from "./components/map-overlay-container";
 import { GlobalSearch } from "./components/global-search";
 import { BottomNavBar, NavSection } from "./components/bottom-nav-bar";
 import { Search } from "lucide-react";
@@ -19,21 +21,65 @@ import Analytics from "@/pages/analytics";
 import i18n from "./lib/i18n";
 
 function Router({ activePanel }: { activePanel: string }) {
+  const [location] = useLocation();
+  
+  // Dashboard routes render their own map, others show map background + overlay
+  const isDashboardRoute = ["/", "/chat", "/intelligence", "/map", "/pmesii", "/analysis", "/risk"].includes(location);
+  
   return (
-    <Switch>
-      <Route path="/"><Dashboard activePanel={activePanel} /></Route>
-      <Route path="/chat"><Dashboard activePanel={activePanel} /></Route>
-      <Route path="/intelligence"><Dashboard activePanel={activePanel} /></Route>
-      <Route path="/analytics"><Analytics /></Route>
-      <Route path="/map"><Dashboard activePanel={activePanel} /></Route>
-      <Route path="/pmesii"><Dashboard activePanel={activePanel} /></Route>
-      <Route path="/analysis"><Dashboard activePanel={activePanel} /></Route>
-      <Route path="/risk"><Dashboard activePanel={activePanel} /></Route>
-      <Route path="/timeline"><Timeline /></Route>
-      <Route path="/weather"><Weather /></Route>
-      <Route path="/social-media"><SocialMedia /></Route>
-      <Route><NotFound /></Route>
-    </Switch>
+    <>
+      {/* Map background for non-dashboard pages */}
+      {!isDashboardRoute && (
+        <div className="absolute inset-0 z-0">
+          <GoogleMapPanel
+            aoi={{ name: "Dhaka", lat: 23.8103, lng: 90.4125, radiusKm: 5 }}
+            riskScore={0}
+            onAOIChange={() => {}}
+            onMovementPlanRequest={() => {}}
+            className="h-full w-full"
+          />
+        </div>
+      )}
+      
+      {/* Page content */}
+      <Switch>
+        {/* Dashboard routes - handle their own map and layout */}
+        <Route path="/"><Dashboard activePanel={activePanel} /></Route>
+        <Route path="/chat"><Dashboard activePanel={activePanel} /></Route>
+        <Route path="/intelligence"><Dashboard activePanel={activePanel} /></Route>
+        <Route path="/map"><Dashboard activePanel={activePanel} /></Route>
+        <Route path="/pmesii"><Dashboard activePanel={activePanel} /></Route>
+        <Route path="/analysis"><Dashboard activePanel={activePanel} /></Route>
+        <Route path="/risk"><Dashboard activePanel={activePanel} /></Route>
+        
+        {/* Other pages - centered overlay on map */}
+        <Route path="/analytics">
+          <MapOverlayContainer>
+            <Analytics />
+          </MapOverlayContainer>
+        </Route>
+        <Route path="/timeline">
+          <MapOverlayContainer>
+            <Timeline />
+          </MapOverlayContainer>
+        </Route>
+        <Route path="/weather">
+          <MapOverlayContainer>
+            <Weather />
+          </MapOverlayContainer>
+        </Route>
+        <Route path="/social-media">
+          <MapOverlayContainer>
+            <SocialMedia />
+          </MapOverlayContainer>
+        </Route>
+        <Route>
+          <MapOverlayContainer maxWidth="max-w-2xl">
+            <NotFound />
+          </MapOverlayContainer>
+        </Route>
+      </Switch>
+    </>
   );
 }
 
@@ -61,8 +107,8 @@ function App() {
         <ThemeProvider>
           <TooltipProvider>
             {/* Map-centric layout: everything is absolutely positioned over the map */}
-            <div className="relative h-screen w-screen overflow-hidden">
-              {/* Main content area - map will fill this from Dashboard */}
+            <div className="relative h-screen w-screen overflow-hidden bg-gray-100">
+              {/* Main content area */}
               <div className="absolute inset-0 z-0">
                 <Router activePanel={activeNav} />
               </div>
