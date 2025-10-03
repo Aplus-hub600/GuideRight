@@ -54,19 +54,21 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, className }: ChatPan
   }, [messages])
 
   // Load chat history
-  const { data: chatHistory } = useQuery({
+  const { data: chatHistory } = useQuery<{ messages: any[] }>({
     queryKey: ['/api/chat/history'],
-    enabled: true,
-    onSuccess: (data) => {
-      if (data?.messages && Array.isArray(data.messages)) {
-        const formattedMessages = data.messages.reverse().map((msg: any) => ({
-          ...msg,
-          timestamp: new Date(msg.timestamp)
-        }))
-        setMessages(formattedMessages)
-      }
-    }
+    enabled: true
   })
+
+  // Handle chat history data
+  useEffect(() => {
+    if (chatHistory?.messages && Array.isArray(chatHistory.messages)) {
+      const formattedMessages = chatHistory.messages.reverse().map((msg: any) => ({
+        ...msg,
+        timestamp: new Date(msg.timestamp)
+      }))
+      setMessages(formattedMessages)
+    }
+  }, [chatHistory])
 
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault()
@@ -219,10 +221,10 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, className }: ChatPan
 
   return (
     <div className={cn("flex flex-col h-full", className)}>
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-6 space-y-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
         {messages.length === 0 && (
-          <div className="text-center text-muted-foreground py-8">
-            <p className="text-lg font-medium">GuideRight Tactical Assistant</p>
+          <div className="text-center text-gray-500 py-8">
+            <p className="text-lg font-medium text-gray-800">GuideRight Tactical Assistant</p>
             <p className="text-sm mt-2">Ask about any area of interest for intelligence analysis</p>
           </div>
         )}
@@ -235,66 +237,70 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, className }: ChatPan
               message.role === "user" ? "justify-end" : "justify-start"
             )}
           >
-            <Card className={cn(
-              "max-w-[80%] p-4",
-              message.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted"
+            <div className={cn(
+              "max-w-[80%] p-4 rounded-2xl shadow-sm",
+              message.role === "user" 
+                ? "bg-blue-600 text-white" 
+                : "bg-white/70 backdrop-blur-md text-gray-800"
             )}>
               <div className="space-y-3">
                 <p className="text-sm whitespace-pre-wrap">{message.content}</p>
                 
                 {message.role === "assistant" && message.analysis && (
                   <div className="mt-3">
-                    <Badge 
-                      variant={message.analysis.riskLevel === 'CRITICAL' ? 'destructive' :
-                              message.analysis.riskLevel === 'HIGH' ? 'destructive' :
-                              message.analysis.riskLevel === 'MEDIUM' ? 'secondary' : 'default'}
+                    <span className={cn(
+                      "text-xs px-2 py-1 rounded-lg font-medium",
+                      message.analysis.riskLevel === 'CRITICAL' ? 'bg-red-100 text-red-800' :
+                      message.analysis.riskLevel === 'HIGH' ? 'bg-orange-100 text-orange-800' :
+                      message.analysis.riskLevel === 'MEDIUM' ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-green-100 text-green-800'
+                    )}
                       data-testid={`badge-risk-${message.analysis.riskLevel.toLowerCase()}`}
                     >
                       {message.analysis.riskLevel} Risk
-                    </Badge>
+                    </span>
                   </div>
                 )}
               </div>
-            </Card>
+            </div>
           </div>
         ))}
         
         {isStreaming && (
           <div className="flex justify-start">
-            <Card className="bg-muted p-4">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <div className="bg-white/70 backdrop-blur-md p-4 rounded-2xl shadow-sm">
+              <div className="flex items-center gap-2 text-sm text-gray-600">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 Analyzing intelligence data...
               </div>
-            </Card>
+            </div>
           </div>
         )}
         
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="border-t bg-background p-4">
+      <div className="border-t border-gray-100 bg-white/50 p-4">
         <form onSubmit={handleSubmit} className="flex gap-2">
           <div className="flex-1 flex gap-2">
-            <Textarea
+            <textarea
               ref={textareaRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder={t('chat.placeholder') || "Ask about intelligence, threats, or request analysis..."}
-              className="min-h-[40px] max-h-[120px] resize-none"
+              className="flex-1 bg-gray-100 rounded-2xl px-4 py-2 text-gray-800 placeholder-gray-500 outline-none focus:ring-2 focus:ring-blue-500 resize-none min-h-[40px] max-h-[120px]"
               disabled={isStreaming}
               data-testid="textarea-chat-input"
             />
             <MicControl 
               onTranscription={handleTranscription}
-              disabled={isStreaming}
             />
           </div>
-          <Button 
-            type="submit" 
-            size="icon"
+          <button 
+            type="submit"
             disabled={!input.trim() || isStreaming}
+            className="w-10 h-10 rounded-full bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
             data-testid="button-chat-send"
           >
             {isStreaming ? (
@@ -302,16 +308,16 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, className }: ChatPan
             ) : (
               <Send className="h-4 w-4" />
             )}
-          </Button>
+          </button>
         </form>
         
         {mediaContextIds && mediaContextIds.length > 0 && (
-          <div className="flex flex-wrap gap-1 mt-2">
-            <span className="text-xs text-muted-foreground">Context:</span>
+          <div className="flex flex-wrap gap-2 mt-2">
+            <span className="text-xs text-gray-600">Context:</span>
             {mediaContextIds.map((id) => (
-              <Badge key={id} variant="outline" className="text-xs">
+              <span key={id} className="text-xs px-2 py-1 rounded-lg bg-gray-100 text-gray-700 border border-gray-200">
                 {id}
-              </Badge>
+              </span>
             ))}
           </div>
         )}

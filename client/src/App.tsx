@@ -8,7 +8,6 @@ import { I18nextProvider } from 'react-i18next';
 import { ThemeProvider } from "./components/theme-provider";
 import { AppSidebar } from "./components/app-sidebar";
 import { Dashboard } from "./components/dashboard";
-import { ThemeToggle } from "./components/theme-toggle";
 import { GlobalSearch } from "./components/global-search";
 import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";

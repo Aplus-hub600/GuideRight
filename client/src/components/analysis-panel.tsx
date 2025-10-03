@@ -127,44 +127,44 @@ export function AnalysisPanel({ isVisible, onClose }: AnalysisPanelProps) {
   if (!isVisible) return null
 
   return (
-    <Card className="absolute top-4 right-4 w-96 max-h-[calc(100vh-2rem)] shadow-2xl border-2 border-primary/20 bg-card/95 backdrop-blur-sm z-10 hover:shadow-xl transition-all duration-300 font-mono" data-testid="panel-analysis">
-      <CardHeader className="pb-3">
+    <div className="absolute top-4 right-4 w-96 max-h-[calc(100vh-2rem)] shadow-lg bg-white/70 backdrop-blur-md rounded-3xl z-10 transition-all duration-300 overflow-hidden" data-testid="panel-analysis">
+      <div className="p-6 border-b border-gray-100">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg font-semibold flex items-center gap-2">
-            <Target className="w-5 h-5 text-primary animate-pulse" />
+          <h2 className="text-lg font-medium text-gray-800 flex items-center gap-2">
+            <Target className="w-5 h-5 text-blue-600" />
             Tactical Analysis
-          </CardTitle>
+          </h2>
           {onClose && (
             <button 
               onClick={onClose}
-              className="text-muted-foreground hover:text-foreground transition-colors"
+              className="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-600 transition-colors"
               data-testid="button-close-analysis"
             >
               ✕
             </button>
           )}
         </div>
-      </CardHeader>
+      </div>
       
-      <CardContent className="space-y-4">
+      <div className="p-6 space-y-4">
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-8" data-testid="loading-analysis">
             <div className="relative">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-              <Activity className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-5 h-5 text-primary animate-pulse" />
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+              <Activity className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-5 h-5 text-blue-600 animate-pulse" />
             </div>
-            <span className="mt-4 text-muted-foreground animate-pulse">Analyzing tactical situation...</span>
+            <span className="mt-4 text-gray-600 animate-pulse">Analyzing tactical situation...</span>
             <div className="flex gap-1 mt-2">
-              <div className="w-2 h-2 bg-primary rounded-full animate-bounce"></div>
-              <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-              <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+              <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce"></div>
+              <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+              <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
             </div>
           </div>
         ) : error ? (
           <div className="text-center py-8" data-testid="error-analysis">
             <AlertTriangle className="w-12 h-12 mx-auto mb-3 text-red-500" />
             <p className="text-sm text-red-600 font-medium">Analysis Failed</p>
-            <p className="text-xs text-muted-foreground mt-1">{error}</p>
+            <p className="text-xs text-gray-600 mt-1">{error}</p>
           </div>
         ) : analysisResult ? (
           <ScrollArea className="h-[calc(100vh-12rem)]">
@@ -364,7 +364,7 @@ export function AnalysisPanel({ isVisible, onClose }: AnalysisPanelProps) {
             </div>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }

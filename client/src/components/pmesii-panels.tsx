@@ -113,13 +113,13 @@ export function PMESIIPanels({ items = mockIntelItems, coverage, className }: PM
 
   const getSourceBadgeColor = (source: string) => {
     const colors = {
-      "Fraym": "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
-      "Seerist": "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
-      "Sprinklr": "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300",
-      "News": "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300",
-      "Social": "bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-300",
-      "Weather": "bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-300",
-      "Infra": "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300"
+      "Fraym": "bg-blue-100 text-blue-800",
+      "Seerist": "bg-green-100 text-green-800",
+      "Sprinklr": "bg-purple-100 text-purple-800",
+      "News": "bg-orange-100 text-orange-800",
+      "Social": "bg-pink-100 text-pink-800",
+      "Weather": "bg-cyan-100 text-cyan-800",
+      "Infra": "bg-gray-100 text-gray-800"
     }
     return colors[source as keyof typeof colors] || colors.News
   }
@@ -127,7 +127,7 @@ export function PMESIIPanels({ items = mockIntelItems, coverage, className }: PM
   return (
     <div className={cn("h-full", className)}>
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as PMESIICategory)} className="h-full flex flex-col">
-        <TabsList className="grid w-full grid-cols-6 mb-4">
+        <TabsList className="inline-flex h-10 items-center justify-center rounded-lg bg-gray-100 p-1 text-gray-600 w-full mb-4">
           {Object.entries(pmesiiConfig).map(([category, config]) => {
             const Icon = config.icon
             const categoryItems = getItemsByCategory(category as PMESIICategory)
@@ -135,20 +135,17 @@ export function PMESIIPanels({ items = mockIntelItems, coverage, className }: PM
               <TabsTrigger 
                 key={category} 
                 value={category}
-                className="relative flex flex-col gap-1 p-2"
+                className="relative flex flex-col gap-1 p-2 flex-1 min-w-[60px] data-[state=active]:bg-white data-[state=active]:text-gray-800 data-[state=active]:shadow-sm rounded-lg transition-all"
                 data-testid={`tab-pmesii-${category.toLowerCase()}`}
               >
-                <Icon className="h-4 w-4" />
+                <Icon className="h-4 w-4 mx-auto" />
                 <span className="text-xs hidden sm:inline">
                   {t(`pmesii.${category.toLowerCase()}`)}
                 </span>
                 {categoryItems.length > 0 && (
-                  <Badge 
-                    variant="secondary" 
-                    className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-xs flex items-center justify-center"
-                  >
+                  <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-xs flex items-center justify-center bg-blue-600 text-white">
                     {categoryItems.length}
-                  </Badge>
+                  </span>
                 )}
               </TabsTrigger>
             )
