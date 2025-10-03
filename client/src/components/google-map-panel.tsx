@@ -768,7 +768,7 @@ export function GoogleMapPanel({
     <div className={cn("relative h-full", className)}>
       {/* Control Panel */}
       <div className="absolute top-4 left-4 z-[1000] space-y-2">
-        <Card className="p-3 backdrop-blur bg-background/90">
+        <Card className="p-3 bg-white/80 backdrop-blur-md border-gray-200">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <Target className="h-4 w-4" />
@@ -794,7 +794,7 @@ export function GoogleMapPanel({
           </div>
         </Card>
 
-        <Card className="p-3 backdrop-blur bg-background/90">
+        <Card className="p-3 bg-white/80 backdrop-blur-md border-gray-200">
           <div className="space-y-2">
             <Button
               onClick={handleMovementPlan}
@@ -835,7 +835,7 @@ export function GoogleMapPanel({
 
       {/* Map Type Selector */}
       <div className="absolute top-4 right-4 z-[1000]">
-        <Card className="p-2 backdrop-blur bg-background/90">
+        <Card className="p-2 bg-white/80 backdrop-blur-md border-gray-200">
           <div className="flex gap-1">
             <Button
               size="sm"
@@ -873,7 +873,7 @@ export function GoogleMapPanel({
       {/* Movement Plan Info */}
       {movementPlan && (
         <div className="absolute bottom-4 left-4 z-[1000]">
-          <Card className="p-3 backdrop-blur bg-background/90 max-w-sm">
+          <Card className="p-3 bg-white/80 backdrop-blur-md border-gray-200 max-w-sm">
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <Navigation className="h-4 w-4" />

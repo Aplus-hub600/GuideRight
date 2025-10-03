@@ -24,7 +24,7 @@ function Router({ activePanel }: { activePanel: string }) {
   const [location] = useLocation();
   
   // Dashboard routes render their own map, others show map background + overlay
-  const isDashboardRoute = ["/", "/chat", "/intelligence", "/map", "/pmesii", "/analysis", "/risk"].includes(location);
+  const isDashboardRoute = ["/", "/chat", "/intelligence", "/files", "/map", "/pmesii", "/analysis", "/risk"].includes(location);
   
   return (
     <>
@@ -47,6 +47,7 @@ function Router({ activePanel }: { activePanel: string }) {
         <Route path="/"><Dashboard activePanel={activePanel} /></Route>
         <Route path="/chat"><Dashboard activePanel={activePanel} /></Route>
         <Route path="/intelligence"><Dashboard activePanel={activePanel} /></Route>
+        <Route path="/files"><Dashboard activePanel={activePanel} /></Route>
         <Route path="/map"><Dashboard activePanel={activePanel} /></Route>
         <Route path="/pmesii"><Dashboard activePanel={activePanel} /></Route>
         <Route path="/analysis"><Dashboard activePanel={activePanel} /></Route>
@@ -87,6 +88,21 @@ function App() {
   const { handleResultSelect } = useSearchNavigation()
   const [searchOpen, setSearchOpen] = useState(false)
   const [activeNav, setActiveNav] = useState<NavSection>("map")
+  const [location] = useLocation()
+
+  // Sync activeNav with current route
+  useEffect(() => {
+    // Page routes
+    if (location === "/timeline") setActiveNav("timeline")
+    else if (location === "/weather") setActiveNav("weather")
+    else if (location === "/analytics") setActiveNav("analytics")
+    else if (location === "/social-media") setActiveNav("social")
+    // Dashboard routes
+    else if (location === "/chat") setActiveNav("chat")
+    else if (location === "/intelligence" || location === "/pmesii") setActiveNav("intelligence")
+    else if (location === "/files") setActiveNav("files")
+    else if (location === "/" || location === "/map" || location === "/analysis" || location === "/risk") setActiveNav("map")
+  }, [location])
 
   // Keyboard shortcut for global search (Cmd/Ctrl+K)
   useEffect(() => {

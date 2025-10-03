@@ -1,7 +1,7 @@
-import { Home, MessageSquare, Brain, Upload, Settings, Map } from "lucide-react";
-import { useState } from "react";
+import { Home, MessageSquare, Brain, Upload, TrendingUp, CloudRain, Share2, Clock } from "lucide-react";
+import { useLocation } from "wouter";
 
-export type NavSection = "map" | "chat" | "intelligence" | "files" | "settings";
+export type NavSection = "map" | "chat" | "intelligence" | "files" | "timeline" | "weather" | "analytics" | "social";
 
 interface BottomNavBarProps {
   activeSection: NavSection;
@@ -9,43 +9,77 @@ interface BottomNavBarProps {
 }
 
 export function BottomNavBar({ activeSection, onSectionChange }: BottomNavBarProps) {
+  const [, setLocation] = useLocation();
+
+  const handleNavClick = (section: NavSection, route?: string) => {
+    onSectionChange(section);
+    if (route) {
+      setLocation(route);
+    }
+  };
+
   return (
     <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-30" data-testid="bottom-nav-bar">
-      <div className="flex items-center gap-2 bg-white/70 backdrop-blur-md rounded-full p-2 shadow-lg">
+      <div className="flex items-center gap-2 bg-white/80 backdrop-blur-md rounded-full p-2 shadow-lg">
         <NavButton
-          icon={Map}
+          icon={Home}
           label="Map"
           active={activeSection === "map"}
-          onClick={() => onSectionChange("map")}
+          onClick={() => handleNavClick("map", "/")}
           testId="nav-map"
         />
         <NavButton
           icon={MessageSquare}
           label="Chat"
           active={activeSection === "chat"}
-          onClick={() => onSectionChange("chat")}
+          onClick={() => handleNavClick("chat", "/chat")}
           testId="nav-chat"
         />
         <NavButton
           icon={Brain}
           label="Intelligence"
           active={activeSection === "intelligence"}
-          onClick={() => onSectionChange("intelligence")}
+          onClick={() => handleNavClick("intelligence", "/intelligence")}
           testId="nav-intelligence"
         />
         <NavButton
           icon={Upload}
           label="Files"
           active={activeSection === "files"}
-          onClick={() => onSectionChange("files")}
+          onClick={() => handleNavClick("files", "/files")}
           testId="nav-files"
         />
+        
+        {/* Divider */}
+        <div className="w-px h-8 bg-gray-300 mx-1" />
+        
         <NavButton
-          icon={Settings}
-          label="Settings"
-          active={activeSection === "settings"}
-          onClick={() => onSectionChange("settings")}
-          testId="nav-settings"
+          icon={Clock}
+          label="Timeline"
+          active={activeSection === "timeline"}
+          onClick={() => handleNavClick("timeline", "/timeline")}
+          testId="nav-timeline"
+        />
+        <NavButton
+          icon={CloudRain}
+          label="Weather"
+          active={activeSection === "weather"}
+          onClick={() => handleNavClick("weather", "/weather")}
+          testId="nav-weather"
+        />
+        <NavButton
+          icon={TrendingUp}
+          label="Analytics"
+          active={activeSection === "analytics"}
+          onClick={() => handleNavClick("analytics", "/analytics")}
+          testId="nav-analytics"
+        />
+        <NavButton
+          icon={Share2}
+          label="Social"
+          active={activeSection === "social"}
+          onClick={() => handleNavClick("social", "/social-media")}
+          testId="nav-social"
         />
       </div>
     </div>
@@ -69,7 +103,7 @@ function NavButton({ icon: Icon, label, active, onClick, testId }: NavButtonProp
         transition-all duration-200
         ${active 
           ? "bg-blue-600 text-white shadow-md" 
-          : "bg-white/50 text-gray-600 hover:bg-white/80"
+          : "bg-white/60 text-gray-600 hover:bg-white/90"
         }
       `}
       title={label}

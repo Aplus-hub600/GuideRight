@@ -171,7 +171,7 @@ export function GlobalSearch({ open, onOpenChange, onSelectResult }: GlobalSearc
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent 
-        className="max-w-2xl p-0 gap-0 overflow-hidden"
+        className="max-w-2xl p-0 gap-0 overflow-hidden bg-white/90 backdrop-blur-md border-gray-200"
         onKeyDown={handleKeyDown}
         data-testid="dialog-global-search"
       >
