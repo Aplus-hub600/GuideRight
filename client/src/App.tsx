@@ -23,7 +23,13 @@ interface AOI {
 function App() {
   const { handleResultSelect } = useSearchNavigation()
   const [searchOpen, setSearchOpen] = useState(false)
-  const [activePanels, setActivePanels] = useState<Set<NavSection>>(new Set(["map"]))
+  
+  // Top panels (right side of nav): timeline, weather, analytics, social - only one at a time
+  const [activeTopPanel, setActiveTopPanel] = useState<NavSection | null>(null)
+  
+  // Bottom panels (left side of nav): chat, intelligence, files, settings - only one at a time  
+  const [activeBottomPanel, setActiveBottomPanel] = useState<NavSection | null>(null)
+  
   const [currentAOI, setCurrentAOI] = useState<AOI>({
     name: "Dhaka",
     lat: 23.8103,
@@ -44,20 +50,27 @@ function App() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [])
 
+  // Define panel groups
+  const topPanels: NavSection[] = ["timeline", "weather", "analytics", "social"]
+  const bottomPanels: NavSection[] = ["chat", "intelligence", "files", "settings"]
+
   const togglePanel = (section: NavSection) => {
-    setActivePanels(prev => {
-      const newPanels = new Set(prev)
-      if (newPanels.has(section)) {
-        newPanels.delete(section)
-      } else {
-        newPanels.add(section)
-      }
-      // Always keep at least map visible
-      if (newPanels.size === 0) {
-        newPanels.add("map")
-      }
-      return newPanels
-    })
+    // Home button clears all panels
+    if (section === "map") {
+      setActiveTopPanel(null)
+      setActiveBottomPanel(null)
+      return
+    }
+
+    // Top panels - only one active at a time, toggle off if clicking same one
+    if (topPanels.includes(section)) {
+      setActiveTopPanel(prev => prev === section ? null : section)
+    }
+    
+    // Bottom panels - only one active at a time, toggle off if clicking same one  
+    if (bottomPanels.includes(section)) {
+      setActiveBottomPanel(prev => prev === section ? null : section)
+    }
   }
 
   const handleLocationSelect = (location: { name: string; lat: number; lng: number }) => {
@@ -79,7 +92,8 @@ function App() {
               {/* Dashboard with map and panels */}
               <div className="absolute inset-0 z-0">
                 <Dashboard 
-                  activePanels={activePanels}
+                  activeTopPanel={activeTopPanel}
+                  activeBottomPanel={activeBottomPanel}
                   currentAOI={currentAOI}
                   onAOIChange={setCurrentAOI}
                 />
@@ -103,7 +117,8 @@ function App() {
 
               {/* Bottom navigation bar */}
               <BottomNavBar 
-                activePanels={activePanels}
+                activeTopPanel={activeTopPanel}
+                activeBottomPanel={activeBottomPanel}
                 onTogglePanel={togglePanel}
               />
 

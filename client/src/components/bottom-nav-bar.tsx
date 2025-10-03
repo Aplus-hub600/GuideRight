@@ -1,42 +1,46 @@
 import { Home, MessageSquare, Brain, Upload, TrendingUp, CloudRain, Share2, Clock } from "lucide-react";
 
-export type NavSection = "map" | "chat" | "intelligence" | "files" | "timeline" | "weather" | "analytics" | "social";
+export type NavSection = "map" | "chat" | "intelligence" | "files" | "settings" | "timeline" | "weather" | "analytics" | "social";
 
 interface BottomNavBarProps {
-  activePanels: Set<NavSection>;
+  activeTopPanel: NavSection | null;
+  activeBottomPanel: NavSection | null;
   onTogglePanel: (section: NavSection) => void;
 }
 
-export function BottomNavBar({ activePanels, onTogglePanel }: BottomNavBarProps) {
+export function BottomNavBar({ activeTopPanel, activeBottomPanel, onTogglePanel }: BottomNavBarProps) {
 
   return (
     <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-30" data-testid="bottom-nav-bar">
       <div className="flex items-center gap-2 bg-white/80 backdrop-blur-md rounded-full p-2 shadow-lg">
+        {/* Home button - clears all panels */}
         <NavButton
           icon={Home}
           label="Map"
-          active={activePanels.has("map")}
+          active={activeTopPanel === null && activeBottomPanel === null}
           onClick={() => onTogglePanel("map")}
           testId="nav-map"
         />
+        
+        {/* Left group - bottom panels */}
         <NavButton
           icon={MessageSquare}
           label="Chat"
-          active={activePanels.has("chat")}
+          active={activeBottomPanel === "chat"}
           onClick={() => onTogglePanel("chat")}
           testId="nav-chat"
         />
         <NavButton
           icon={Brain}
           label="Intelligence"
-          active={activePanels.has("intelligence")}
+          active={activeBottomPanel === "intelligence"}
           onClick={() => onTogglePanel("intelligence")}
           testId="nav-intelligence"
         />
         <NavButton
           icon={Upload}
           label="Files"
-          active={activePanels.has("files")}
+          active={activeBottomPanel === "files"}
           onClick={() => onTogglePanel("files")}
           testId="nav-files"
         />
@@ -44,31 +48,32 @@ export function BottomNavBar({ activePanels, onTogglePanel }: BottomNavBarProps)
         {/* Divider */}
         <div className="w-px h-8 bg-gray-300 mx-1" />
         
+        {/* Right group - top panels */}
         <NavButton
           icon={Clock}
           label="Timeline"
-          active={activePanels.has("timeline")}
+          active={activeTopPanel === "timeline"}
           onClick={() => onTogglePanel("timeline")}
           testId="nav-timeline"
         />
         <NavButton
           icon={CloudRain}
           label="Weather"
-          active={activePanels.has("weather")}
+          active={activeTopPanel === "weather"}
           onClick={() => onTogglePanel("weather")}
           testId="nav-weather"
         />
         <NavButton
           icon={TrendingUp}
           label="Analytics"
-          active={activePanels.has("analytics")}
+          active={activeTopPanel === "analytics"}
           onClick={() => onTogglePanel("analytics")}
           testId="nav-analytics"
         />
         <NavButton
           icon={Share2}
           label="Social"
-          active={activePanels.has("social")}
+          active={activeTopPanel === "social"}
           onClick={() => onTogglePanel("social")}
           testId="nav-social"
         />
