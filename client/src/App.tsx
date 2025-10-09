@@ -101,14 +101,17 @@ function App() {
                 />
               </div>
 
-              {/* Top right: chat panel */}
-              <div className="absolute top-4 right-4 z-30 flex flex-col gap-3 items-end">
-
-                {/* Chat Assistant - underneath location panel - hidden when top panels are active */}
-                {!activeTopPanel && (
-                  <div className="w-80 max-h-[60vh] bg-gradient-to-br from-slate-900/95 via-slate-800/95 to-slate-900/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-slate-700/50 flex flex-col" id="chat-assistant-container">
-                    <div className="p-4 border-b border-slate-700/50 flex items-center justify-between">
-                      <h2 className="text-base font-semibold text-slate-100">Chat Assistant</h2>
+              {/* Left side: chat assistant - positioned below map controls */}
+              {!activeTopPanel && (
+                <div className="absolute top-[280px] left-4 z-30 w-80">
+                  <div className="bg-white/80 backdrop-blur-md rounded-2xl shadow-xl border border-gray-200 flex flex-col max-h-[calc(100vh-300px)]" id="chat-assistant-container">
+                    <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+                      <h2 className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+                        <svg className="h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                        </svg>
+                        Chat Assistant
+                      </h2>
                       <ScreenshotFAB 
                         elementId="chat-assistant-container"
                         viewName="chat"
@@ -123,8 +126,8 @@ function App() {
                       />
                     </div>
                   </div>
-                )}
-              </div>
+                </div>
+              )}
 
               {/* Bottom navigation bar */}
               <BottomNavBar 
