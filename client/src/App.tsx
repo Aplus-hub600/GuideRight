@@ -7,7 +7,6 @@ import { ThemeProvider } from "./components/theme-provider";
 import { Dashboard } from "./components/dashboard";
 import { BottomNavBar, NavSection } from "./components/bottom-nav-bar";
 import { LocationSearchBar } from "./components/location-search-bar";
-import { AoiInfo } from "./components/aoi-info";
 import { ChatPanel } from "./components/chat-panel";
 import { ScreenshotFAB } from "./components/screenshot-fab";
 import { useState } from "react";
@@ -94,16 +93,16 @@ function App() {
                 />
               </div>
 
-              {/* Top right: location panel and chat underneath */}
+              {/* Top center: location search bar */}
+              <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30">
+                <LocationSearchBar 
+                  onLocationSelect={handleLocationSelect}
+                  currentLocation={currentAOI.name}
+                />
+              </div>
+
+              {/* Top right: chat panel */}
               <div className="absolute top-4 right-4 z-30 flex flex-col gap-3 items-end">
-                {/* Location search bar with integrated advanced search and AOI info */}
-                <div className="flex items-center gap-3 flex-wrap justify-end">
-                  <LocationSearchBar 
-                    onLocationSelect={handleLocationSelect}
-                    currentLocation={currentAOI.name}
-                  />
-                  <AoiInfo aoi={currentAOI} />
-                </div>
 
                 {/* Chat Assistant - underneath location panel - hidden when top panels are active */}
                 {!activeTopPanel && (
