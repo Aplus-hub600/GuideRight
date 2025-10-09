@@ -46,10 +46,10 @@ export function BottomNavBar({ activeTopPanel, activeBottomPanel, onTogglePanel 
         />
         <NavButton
           icon={Settings}
-          label="Settings"
+          label="Export"
           active={activeBottomPanel === "settings"}
           onClick={() => onTogglePanel("settings")}
-          testId="nav-settings"
+          testId="nav-export"
         />
         
         {/* Divider */}

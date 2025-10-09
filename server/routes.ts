@@ -969,6 +969,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Export test endpoint
+  app.get("/api/export/test", (req, res) => {
+    const testExport = {
+      version: "1.0",
+      timestamp: new Date().toISOString(),
+      type: "test_export",
+      data: {
+        aoi: {
+          name: "Test Location",
+          lat: 23.8103,
+          lng: 90.4125,
+          radiusKm: 5
+        },
+        activePanels: {
+          top: "intelligence",
+          bottom: "timeline"
+        },
+        sampleData: {
+          riskScore: 65,
+          confidence: {
+            belief: 0.75,
+            disbelief: 0.15,
+            uncertainty: 0.10
+          },
+          pmesii: {
+            political: 0.6,
+            military: 0.7,
+            economic: 0.5,
+            social: 0.8,
+            information: 0.6,
+            infrastructure: 0.4
+          }
+        },
+        metadata: {
+          exported: new Date().toISOString(),
+          purpose: "QA Testing"
+        }
+      }
+    };
+
+    res.json({ success: true, ...testExport });
+  });
+
+  // Feedback submission endpoint
+  app.post("/api/feedback", async (req, res) => {
+    try {
+      const feedbackData = req.body;
+      
+      // Store feedback in storage
+      console.log("Feedback received:", {
+        exportResult: feedbackData.exportResult,
+        timestamp: feedbackData.timestamp,
+        hasNotes: !!feedbackData.notes
+      });
+
+      // In a real implementation, you would store this in the database
+      // For now, we just log it
+      
+      res.status(201).json({ 
+        success: true, 
+        message: "Feedback received successfully" 
+      });
+    } catch (error) {
+      console.error("Error saving feedback:", error);
+      res.status(500).json({ 
+        success: false, 
+        error: (error as any).message 
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

@@ -8,6 +8,8 @@ import { AnalysisPanel } from "./analysis-panel"
 import { FileDrop } from "./file-drop"
 import { WeatherPanel } from "./weather-panel"
 import { SocialMediaPanel } from "./social-media-panel"
+import { ExportPanel } from "./export-panel"
+import { ScreenshotFAB } from "./screenshot-fab"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Target, TrendingUp, Shield, X, CloudRain, Share2, BarChart3, Clock } from "lucide-react"
 import { useTranslation } from "react-i18next"
@@ -92,7 +94,7 @@ export function Dashboard({ className, activeTopPanel, activeBottomPanel, curren
   return (
     <div className={cn("relative h-full w-full", className)}>
       {/* Full viewport map - base layer */}
-      <div className="absolute inset-0 z-0">
+      <div className="absolute inset-0 z-0" id="map-view-container">
         <GoogleMapPanel
           aoi={currentAOI}
           riskScore={riskScore}
@@ -102,6 +104,15 @@ export function Dashboard({ className, activeTopPanel, activeBottomPanel, curren
           className="h-full w-full"
         />
       </div>
+
+      {/* Map Screenshot FAB - only visible when no panels are active */}
+      {!activeTopPanel && !activeBottomPanel && (
+        <ScreenshotFAB 
+          elementId="map-view-container"
+          viewName="map"
+          className="absolute bottom-24 right-4 z-20"
+        />
+      )}
 
       {/* Top container - 80% width, 60% height, centered - for right nav items (chat, intelligence, analytics, social) */}
       {activeTopPanel && (
@@ -113,13 +124,18 @@ export function Dashboard({ className, activeTopPanel, activeBottomPanel, curren
                 <div className="p-4 border-b border-gray-100 flex items-center justify-between">
                   <h2 className="text-base font-medium text-gray-800">Chat Assistant</h2>
                 </div>
-                <div className="flex-1 overflow-hidden" data-testid="panel-chat">
+                <div className="flex-1 overflow-hidden" data-testid="panel-chat" id="chat-panel-container">
                   <ChatPanel 
                     onQuerySubmit={handleQuerySubmit}
                     mediaContextIds={mediaContextIds}
                     className="h-full"
                   />
                 </div>
+                <ScreenshotFAB 
+                  elementId="chat-panel-container"
+                  viewName="chat"
+                  className="absolute bottom-4 right-4"
+                />
               </>
             )}
 
@@ -241,18 +257,15 @@ export function Dashboard({ className, activeTopPanel, activeBottomPanel, curren
               </>
             )}
 
-            {/* Settings */}
+            {/* Export & Feedback (formerly Settings) */}
             {activeBottomPanel === "settings" && (
-              <>
-                <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-                  <h3 className="text-base font-medium text-gray-800">Settings</h3>
-                </div>
-                <div className="flex-1 overflow-y-auto p-4" data-testid="panel-settings">
-                  <div className="space-y-4">
-                    <p className="text-sm text-gray-600">Application settings and preferences</p>
-                  </div>
-                </div>
-              </>
+              <div className="flex-1 overflow-y-auto" data-testid="panel-export">
+                <ExportPanel 
+                  currentAOI={currentAOI}
+                  activeTopPanel={activeTopPanel}
+                  activeBottomPanel={activeBottomPanel}
+                />
+              </div>
             )}
           </div>
         </div>
