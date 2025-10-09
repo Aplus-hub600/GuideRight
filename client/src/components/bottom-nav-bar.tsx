@@ -11,8 +11,8 @@ interface BottomNavBarProps {
 export function BottomNavBar({ activeTopPanel, activeBottomPanel, onTogglePanel }: BottomNavBarProps) {
 
   return (
-    <div className="fixed bottom-0 left-1/2 -translate-x-1/2 z-30" data-testid="bottom-nav-bar">
-      <div className="flex items-center gap-2 bg-white/80 backdrop-blur-md rounded-full p-2 shadow-lg">
+    <div className="fixed bottom-0 left-1/2 -translate-x-1/2 z-30 pb-3" data-testid="bottom-nav-bar">
+      <div className="flex items-center gap-2 bg-gradient-to-r from-slate-900/90 via-slate-800/90 to-slate-900/90 backdrop-blur-xl rounded-full p-2.5 shadow-2xl border border-slate-700/50">
         {/* Home button - clears all panels */}
         <NavButton
           icon={Home}
@@ -53,7 +53,7 @@ export function BottomNavBar({ activeTopPanel, activeBottomPanel, onTogglePanel 
         />
         
         {/* Divider */}
-        <div className="w-px h-8 bg-gray-300 mx-1" />
+        <div className="w-px h-8 bg-gradient-to-b from-transparent via-slate-500/50 to-transparent mx-1" />
         
         {/* Right group - top panels (chat, intelligence, analytics, social) */}
         {/* Chat is now a permanent left sidebar, removed from navigation */}
@@ -97,16 +97,16 @@ function NavButton({ icon: Icon, label, active, onClick, testId }: NavButtonProp
       onClick={onClick}
       className={`
         w-12 h-12 rounded-full flex items-center justify-center
-        transition-all duration-200
+        transition-all duration-300 ease-out
         ${active 
-          ? "bg-blue-600 text-white shadow-md" 
-          : "bg-white/60 text-gray-600 hover:bg-white/90"
+          ? "bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/50 scale-105" 
+          : "bg-slate-700/50 text-slate-300 hover:bg-slate-600/70 hover:text-white hover:scale-105"
         }
       `}
       title={label}
       data-testid={testId}
     >
-      <Icon className="w-5 h-5" />
+      <Icon className={`w-5 h-5 ${active ? 'animate-pulse-subtle' : ''}`} />
     </button>
   );
 }

@@ -11,7 +11,7 @@ import { SocialMediaPanel } from "./social-media-panel"
 import { ExportPanel } from "./export-panel"
 import { ScreenshotFAB } from "./screenshot-fab"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Target, TrendingUp, Shield, X, CloudRain, Share2, BarChart3, Clock } from "lucide-react"
+import { Target, TrendingUp, Shield, X, CloudRain, Share2, BarChart3, Clock, Upload } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { cn } from "@/lib/utils"
 import { NavSection } from "./bottom-nav-bar"
@@ -120,14 +120,14 @@ export function Dashboard({ className, activeTopPanel, activeBottomPanel, curren
 
         {/* Top container - 80% width, 60% height, centered - for right nav items (intelligence, analytics, social) */}
         {activeTopPanel && (
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 w-[80%] h-[60%]">
-            <div className="bg-white/70 backdrop-blur-md rounded-3xl shadow-lg overflow-hidden h-full flex flex-col">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 w-[80%] h-[60%] animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="bg-gradient-to-br from-slate-900/95 via-slate-800/95 to-slate-900/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-slate-700/50 overflow-hidden h-full flex flex-col">
               {/* Intelligence */}
             {activeTopPanel === "intelligence" && (
               <>
-                <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-                  <h2 className="flex items-center gap-2 text-base font-medium text-gray-800">
-                    <TrendingUp className="h-4 w-4 text-blue-600" />
+                <div className="p-4 border-b border-slate-700/50 flex items-center justify-between">
+                  <h2 className="flex items-center gap-2 text-base font-semibold text-slate-100">
+                    <TrendingUp className="h-5 w-5 text-blue-400" />
                     Intelligence Analysis
                   </h2>
                 </div>
@@ -159,9 +159,9 @@ export function Dashboard({ className, activeTopPanel, activeBottomPanel, curren
             {/* Analytics */}
             {activeTopPanel === "analytics" && (
               <>
-                <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-                  <h2 className="flex items-center gap-2 text-base font-medium text-gray-800">
-                    <BarChart3 className="h-4 w-4 text-blue-600" />
+                <div className="p-4 border-b border-slate-700/50 flex items-center justify-between">
+                  <h2 className="flex items-center gap-2 text-base font-semibold text-slate-100">
+                    <BarChart3 className="h-5 w-5 text-blue-400" />
                     Analytics Dashboard
                   </h2>
                 </div>
@@ -174,9 +174,9 @@ export function Dashboard({ className, activeTopPanel, activeBottomPanel, curren
             {/* Social Media */}
             {activeTopPanel === "social" && (
               <>
-                <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-                  <h2 className="flex items-center gap-2 text-base font-medium text-gray-800">
-                    <Share2 className="h-4 w-4 text-blue-600" />
+                <div className="p-4 border-b border-slate-700/50 flex items-center justify-between">
+                  <h2 className="flex items-center gap-2 text-base font-semibold text-slate-100">
+                    <Share2 className="h-5 w-5 text-blue-400" />
                     Social Media Intelligence
                   </h2>
                 </div>
@@ -191,15 +191,15 @@ export function Dashboard({ className, activeTopPanel, activeBottomPanel, curren
 
         {/* Bottom container - 80% width, 20% height, centered, above nav - for left nav items (timeline, weather, files, settings) */}
         {activeBottomPanel && (
-          <div className="absolute bottom-14 left-1/2 -translate-x-1/2 z-20 w-[80%] h-[20%]">
-            <div className="bg-white/70 backdrop-blur-md rounded-3xl shadow-lg overflow-hidden h-full flex flex-col">
+          <div className="absolute bottom-14 left-1/2 -translate-x-1/2 z-20 w-[80%] h-[20%] animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="bg-gradient-to-br from-slate-900/95 via-slate-800/95 to-slate-900/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-slate-700/50 overflow-hidden h-full flex flex-col">
               {/* Timeline */}
               {activeBottomPanel === "timeline" && (
               <>
-                <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-                  <h2 className="flex items-center gap-2 text-base font-medium text-gray-800">
-                    <Clock className="h-4 w-4 text-blue-600" />
-                    Timeline
+                <div className="p-4 border-b border-slate-700/50 flex items-center justify-between">
+                  <h2 className="flex items-center gap-2 text-base font-semibold text-slate-100">
+                    <Clock className="h-5 w-5 text-blue-400" />
+                    Event Timeline
                   </h2>
                 </div>
                 <div className="flex-1 overflow-y-auto" data-testid="panel-timeline">
@@ -211,9 +211,9 @@ export function Dashboard({ className, activeTopPanel, activeBottomPanel, curren
               {/* Weather */}
               {activeBottomPanel === "weather" && (
               <>
-                <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-                  <h2 className="flex items-center gap-2 text-base font-medium text-gray-800">
-                    <CloudRain className="h-4 w-4 text-blue-600" />
+                <div className="p-4 border-b border-slate-700/50 flex items-center justify-between">
+                  <h2 className="flex items-center gap-2 text-base font-semibold text-slate-100">
+                    <CloudRain className="h-5 w-5 text-blue-400" />
                     Weather Intelligence
                   </h2>
                 </div>
@@ -226,8 +226,11 @@ export function Dashboard({ className, activeTopPanel, activeBottomPanel, curren
               {/* Files */}
               {activeBottomPanel === "files" && (
               <>
-                <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-                  <h3 className="text-base font-medium text-gray-800">Media Analysis</h3>
+                <div className="p-4 border-b border-slate-700/50 flex items-center justify-between">
+                  <h3 className="flex items-center gap-2 text-base font-semibold text-slate-100">
+                    <Upload className="h-5 w-5 text-blue-400" />
+                    Media Analysis
+                  </h3>
                 </div>
                 <div className="flex-1 overflow-y-auto p-4" data-testid="panel-files">
                   <FileDrop 

@@ -60,14 +60,14 @@ export function LocationSearchBar({ onLocationSelect, currentLocation }: Locatio
   return (
     <div 
       className={`
-        bg-white/80 backdrop-blur-md rounded-full shadow-lg
+        bg-gradient-to-r from-slate-900/90 to-slate-800/90 backdrop-blur-xl rounded-full shadow-2xl border border-slate-700/50
         transition-all duration-300 ease-in-out
         ${isExpanded ? 'w-96' : 'w-72'}
       `}
       data-testid="location-search-bar"
     >
-      <div className="flex items-center gap-2 px-4 py-3">
-        <MapPin className="h-4 w-4 text-gray-600 flex-shrink-0" />
+      <div className="flex items-center gap-3 px-4 py-3">
+        <MapPin className="h-4 w-4 text-blue-400 flex-shrink-0" />
         <input
           ref={inputRef}
           type="text"
@@ -76,10 +76,10 @@ export function LocationSearchBar({ onLocationSelect, currentLocation }: Locatio
           onFocus={handleFocus}
           onBlur={handleBlur}
           placeholder={currentLocation || "Search location..."}
-          className="flex-1 bg-transparent border-none outline-none text-sm text-gray-800 placeholder:text-gray-500"
+          className="flex-1 bg-transparent border-none outline-none text-sm text-slate-100 placeholder:text-slate-400"
           data-testid="input-location-search"
         />
-        <Search className="h-4 w-4 text-gray-400 flex-shrink-0" />
+        <Search className="h-4 w-4 text-slate-500 flex-shrink-0" />
       </div>
     </div>
   );

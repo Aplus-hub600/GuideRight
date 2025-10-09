@@ -124,7 +124,7 @@ function App() {
                   <AoiInfo aoi={currentAOI} />
                   <button 
                     onClick={() => setSearchOpen(true)}
-                    className="bg-white/80 backdrop-blur-md rounded-full px-4 py-3 text-gray-800 text-sm hover:bg-white/90 transition-all shadow-lg flex items-center gap-2"
+                    className="bg-gradient-to-br from-slate-900/90 to-slate-800/90 backdrop-blur-xl rounded-full px-4 py-3 text-slate-100 text-sm hover:from-slate-800/90 hover:to-slate-700/90 transition-all shadow-xl border border-slate-700/50 flex items-center gap-2"
                     data-testid="button-advanced-filter"
                     title="Advanced Filters"
                   >
@@ -133,9 +133,9 @@ function App() {
                 </div>
 
                 {/* Chat Assistant - underneath location panel */}
-                <div className="w-96 max-h-[60vh] bg-white/70 backdrop-blur-md rounded-3xl shadow-lg flex flex-col" id="chat-assistant-container">
-                  <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-                    <h2 className="text-base font-medium text-gray-800">Chat Assistant</h2>
+                <div className="w-96 max-h-[60vh] bg-gradient-to-br from-slate-900/95 via-slate-800/95 to-slate-900/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-slate-700/50 flex flex-col" id="chat-assistant-container">
+                  <div className="p-4 border-b border-slate-700/50 flex items-center justify-between">
+                    <h2 className="text-base font-semibold text-slate-100">Chat Assistant</h2>
                     <ScreenshotFAB 
                       elementId="chat-assistant-container"
                       viewName="chat"

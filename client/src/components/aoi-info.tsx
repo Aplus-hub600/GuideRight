@@ -24,21 +24,21 @@ export function AoiInfo({ aoi, riskScore = 67, confidence = { belief: 0.78, disb
   const riskLevel = getRiskLevel(riskScore)
 
   return (
-    <div className="bg-white/80 backdrop-blur-md rounded-full px-4 py-3 text-gray-800 text-sm shadow-lg flex items-center gap-3" data-testid="aoi-info-display">
+    <div className="bg-gradient-to-r from-slate-900/90 to-slate-800/90 backdrop-blur-xl rounded-full px-4 py-3 text-slate-100 text-sm shadow-2xl border border-slate-700/50 flex items-center gap-3" data-testid="aoi-info-display">
       <div className="flex items-center gap-2">
-        <Target className="h-4 w-4 text-blue-600" />
+        <Target className="h-4 w-4 text-blue-400" />
         <span className="font-medium">{aoi.name || "Unknown Location"}</span>
       </div>
       
-      <div className="h-4 w-px bg-gray-300" />
+      <div className="h-4 w-px bg-gradient-to-b from-transparent via-slate-500/50 to-transparent" />
       
       <div className="flex items-center gap-2">
-        <Shield className="h-4 w-4 text-gray-600" />
-        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-          riskScore < 30 ? 'bg-green-100 text-green-800' :
-          riskScore < 60 ? 'bg-yellow-100 text-yellow-800' :
-          riskScore < 80 ? 'bg-orange-100 text-orange-800' :
-          'bg-red-100 text-red-800'
+        <Shield className="h-4 w-4 text-slate-400" />
+        <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
+          riskScore < 30 ? 'bg-green-500/20 text-green-400 border border-green-500/30' :
+          riskScore < 60 ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' :
+          riskScore < 80 ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30' :
+          'bg-red-500/20 text-red-400 border border-red-500/30'
         }`}>
           {riskLevel}
         </span>
