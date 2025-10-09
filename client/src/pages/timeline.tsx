@@ -91,7 +91,7 @@ export default function Timeline() {
     return (
       <Badge 
         variant={severity === 'CRITICAL' ? 'destructive' : 'secondary'}
-        className="ml-2 text-xs"
+        className="ml-2 text-sm font-bold px-3 py-1"
         data-testid={`badge-severity-${severity.toLowerCase()}`}
       >
         {severity}
@@ -109,7 +109,7 @@ export default function Timeline() {
     
     return (
       <Badge 
-        className={`ml-2 text-xs ${colors[source as keyof typeof colors] || 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300'}`}
+        className={`ml-2 text-sm font-bold px-3 py-1 ${colors[source as keyof typeof colors] || 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300'}`}
         data-testid={`badge-timeline-source-${source}`}
       >
         {source.toUpperCase()}
@@ -205,27 +205,27 @@ export default function Timeline() {
                   
                   {/* Event card */}
                   <Card 
-                    className={`ml-8 hover-elevate ${
+                    className={`ml-8 hover-elevate transition-all duration-300 shadow-[0_4px_12px_rgba(0,0,0,0.15)] hover:shadow-[0_8px_24px_rgba(59,130,246,0.3)] ${
                       event.severity ? severityColors[event.severity] : 'border-l-muted'
                     } border-l-4`}
                   >
-                    <CardHeader className="pb-3">
+                    <CardHeader className="pb-4">
                       <div className="flex items-start justify-between">
-                        <div className="flex items-start gap-3 flex-1">
+                        <div className="flex items-start gap-4 flex-1">
                           {/* Event icon */}
                           <div 
-                            className={`rounded-full p-2 mt-1 ${
+                            className={`rounded-full p-3 mt-1 ${
                               eventColors[event.type] || eventColors.file
                             }`}
                           >
-                            <Icon className="h-4 w-4" />
+                            <Icon className="h-6 w-6" />
                           </div>
                           
                           {/* Event details */}
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center flex-wrap gap-2">
                               <CardTitle 
-                                className="text-base font-semibold truncate"
+                                className="text-lg font-bold truncate"
                                 data-testid={`text-event-title-${event.id}`}
                               >
                                 {event.title}
@@ -235,7 +235,7 @@ export default function Timeline() {
                             </div>
                             
                             <p 
-                              className="text-sm text-muted-foreground mt-1 line-clamp-2"
+                              className="text-base text-foreground/80 mt-2 line-clamp-2 font-medium"
                               data-testid={`text-event-description-${event.id}`}
                             >
                               {event.description}
@@ -244,8 +244,8 @@ export default function Timeline() {
                         </div>
                         
                         {/* Timestamp */}
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground flex-shrink-0 ml-4">
-                          <Calendar className="h-3 w-3" />
+                        <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground flex-shrink-0 ml-4">
+                          <Calendar className="h-4 w-4" />
                           <time dateTime={event.timestamp}>
                             {format(new Date(event.timestamp), 'MMM d, HH:mm')}
                           </time>

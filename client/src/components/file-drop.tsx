@@ -234,8 +234,8 @@ export function FileDrop({
       <Card 
         {...getRootProps()} 
         className={cn(
-          "border-2 border-dashed cursor-pointer transition-colors",
-          isDragActive ? "border-primary bg-primary/10" : "border-muted-foreground/25",
+          "border-2 border-dashed cursor-pointer transition-all duration-300",
+          isDragActive ? "border-blue-500 bg-blue-500/20 shadow-[0_0_25px_rgba(59,130,246,0.4)] scale-[1.02]" : "border-blue-500/40 hover:border-blue-500/60 hover:bg-blue-500/5",
           analyzedFiles.length >= maxFiles && "opacity-50 cursor-not-allowed"
         )}
         data-testid="file-drop-zone"
@@ -246,12 +246,12 @@ export function FileDrop({
           compact ? "py-3 px-3" : "py-8 px-4"
         )}>
           <Upload className={cn(
-            compact ? "h-5 w-5 mb-2" : "h-8 w-8 mb-4",
-            isDragActive ? "text-primary" : "text-muted-foreground"
+            compact ? "h-5 w-5 mb-2" : "h-10 w-10 mb-4",
+            isDragActive ? "text-blue-500 drop-shadow-[0_0_8px_rgba(59,130,246,0.6)]" : "text-blue-400"
           )} />
           <p className={cn(
-            "font-medium mb-1",
-            compact ? "text-xs" : "text-sm mb-2"
+            "font-bold mb-1",
+            compact ? "text-xs" : "text-base mb-2 text-foreground"
           )}>
             {isDragActive 
               ? t('fileDrop.dragActive') || "Drop files here..."
@@ -261,12 +261,12 @@ export function FileDrop({
             }
           </p>
           {!compact && (
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm font-semibold text-foreground/70">
               Supports images, text files, PDFs, and Word documents • Max {maxFiles} files • 50MB each
             </p>
           )}
           {analyzedFiles.length >= maxFiles && (
-            <p className="text-xs text-destructive mt-1">
+            <p className="text-sm font-bold text-destructive mt-1">
               Max files reached
             </p>
           )}
@@ -285,19 +285,19 @@ export function FileDrop({
             const StatusIcon = getStatusIcon(analyzedFile.status)
             
             return (
-              <Card key={analyzedFile.id} className={cn(compact ? "p-2" : "p-4")}>
-                <div className={cn("flex items-start", compact ? "gap-2" : "gap-3")}>
+              <Card key={analyzedFile.id} className={cn(compact ? "p-2" : "p-4", "hover-elevate shadow-md border-blue-500/20")}>
+                <div className={cn("flex items-start", compact ? "gap-2" : "gap-4")}>
                   {/* File preview or icon */}
                   <div className="flex-shrink-0">
                     {analyzedFile.preview ? (
                       <img
                         src={analyzedFile.preview}
                         alt={analyzedFile.file.name}
-                        className={cn("object-cover rounded", compact ? "w-8 h-8" : "w-12 h-12")}
+                        className={cn("object-cover rounded-xl border-2 border-blue-500/30", compact ? "w-8 h-8" : "w-14 h-14")}
                       />
                     ) : (
-                      <div className={cn("bg-muted rounded flex items-center justify-center", compact ? "w-8 h-8" : "w-12 h-12")}>
-                        <Icon className={cn("text-muted-foreground", compact ? "h-4 w-4" : "h-6 w-6")} />
+                      <div className={cn("bg-blue-500/10 rounded-xl flex items-center justify-center", compact ? "w-8 h-8" : "w-14 h-14")}>
+                        <Icon className={cn("text-blue-400", compact ? "h-4 w-4" : "h-7 w-7")} />
                       </div>
                     )}
                   </div>
@@ -306,11 +306,11 @@ export function FileDrop({
                   <div className="flex-1 min-w-0">
                     <div className={cn("flex items-center justify-between", compact ? "mb-1" : "mb-2")}>
                       <div className="flex items-center gap-2 min-w-0">
-                        <p className={cn("font-medium truncate", compact ? "text-xs" : "text-sm")} title={analyzedFile.file.name}>
+                        <p className={cn("font-bold truncate", compact ? "text-xs" : "text-base")} title={analyzedFile.file.name}>
                           {compact ? analyzedFile.file.name.split('.')[0].slice(0, 15) + (analyzedFile.file.name.length > 15 ? '...' : '') : analyzedFile.file.name}
                         </p>
                         <StatusIcon className={cn(
-                          compact ? "h-3 w-3" : "h-4 w-4",
+                          compact ? "h-3 w-3" : "h-5 w-5",
                           getStatusColor(analyzedFile.status),
                           analyzedFile.status === 'analyzing' && "animate-spin"
                         )} />

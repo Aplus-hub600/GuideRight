@@ -299,56 +299,58 @@ export function WeatherPanel({ className, currentLocation, onLocationSelect }: W
               </CardContent>
             </Card>
           ) : currentWeather ? (
-            <Card data-testid="card-current-weather">
-              <CardHeader>
+            <Card data-testid="card-current-weather" className="shadow-lg border-2 border-blue-500/30">
+              <CardHeader className="pb-4">
                 <CardTitle className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    {getWeatherIcon(currentWeather.weatherCode)}
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 bg-blue-500/10 rounded-2xl">
+                      {getWeatherIcon(currentWeather.weatherCode)}
+                    </div>
                     <div>
-                      <div className="text-2xl font-bold">{currentWeather.temperature}°C</div>
-                      <div className="text-sm text-muted-foreground">
+                      <div className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">{currentWeather.temperature}°C</div>
+                      <div className="text-base font-semibold text-foreground/80 mt-1">
                         {getWeatherDescription(currentWeather.weatherCode)}
                       </div>
                     </div>
                   </div>
-                  <Badge variant="outline">{currentWeather.location}</Badge>
+                  <Badge variant="outline" className="text-sm font-bold px-3 py-1.5">{currentWeather.location}</Badge>
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {currentWeather.apparentTemperature && (
-                    <div className="flex items-center gap-2">
-                      <Thermometer className="h-4 w-4 text-orange-500" />
+                    <div className="flex items-center gap-3 p-3 bg-orange-500/10 rounded-xl">
+                      <Thermometer className="h-6 w-6 text-orange-500" />
                       <div>
-                        <div className="text-sm font-medium">Feels like</div>
-                        <div className="text-lg">{currentWeather.apparentTemperature}°C</div>
+                        <div className="text-sm font-bold text-foreground/70">Feels like</div>
+                        <div className="text-xl font-bold">{currentWeather.apparentTemperature}°C</div>
                       </div>
                     </div>
                   )}
                   {currentWeather.humidity && (
-                    <div className="flex items-center gap-2">
-                      <Droplets className="h-4 w-4 text-blue-500" />
+                    <div className="flex items-center gap-3 p-3 bg-blue-500/10 rounded-xl">
+                      <Droplets className="h-6 w-6 text-blue-500" />
                       <div>
-                        <div className="text-sm font-medium">Humidity</div>
-                        <div className="text-lg">{currentWeather.humidity}%</div>
+                        <div className="text-sm font-bold text-foreground/70">Humidity</div>
+                        <div className="text-xl font-bold">{currentWeather.humidity}%</div>
                       </div>
                     </div>
                   )}
                   {currentWeather.windSpeed && (
-                    <div className="flex items-center gap-2">
-                      <Wind className="h-4 w-4 text-gray-500" />
+                    <div className="flex items-center gap-3 p-3 bg-gray-500/10 rounded-xl">
+                      <Wind className="h-6 w-6 text-gray-500" />
                       <div>
-                        <div className="text-sm font-medium">Wind Speed</div>
-                        <div className="text-lg">{currentWeather.windSpeed} km/h</div>
+                        <div className="text-sm font-bold text-foreground/70">Wind Speed</div>
+                        <div className="text-xl font-bold">{currentWeather.windSpeed} km/h</div>
                       </div>
                     </div>
                   )}
                   {currentWeather.pressure && (
-                    <div className="flex items-center gap-2">
-                      <Activity className="h-4 w-4 text-purple-500" />
+                    <div className="flex items-center gap-3 p-3 bg-purple-500/10 rounded-xl">
+                      <Activity className="h-6 w-6 text-purple-500" />
                       <div>
-                        <div className="text-sm font-medium">Pressure</div>
-                        <div className="text-lg">{currentWeather.pressure} hPa</div>
+                        <div className="text-sm font-bold text-foreground/70">Pressure</div>
+                        <div className="text-xl font-bold">{currentWeather.pressure} hPa</div>
                       </div>
                     </div>
                   )}
@@ -401,27 +403,29 @@ export function WeatherPanel({ className, currentLocation, onLocationSelect }: W
           ) : forecastWeather.length > 0 ? (
             <div className="grid gap-4">
               {forecastWeather.map((forecast: WeatherData, index: number) => (
-                <Card key={forecast.id} data-testid={`card-forecast-${index}`}>
-                  <CardContent className="py-4">
+                <Card key={forecast.id} data-testid={`card-forecast-${index}`} className="hover-elevate shadow-md border-blue-500/20">
+                  <CardContent className="py-5">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        {getWeatherIcon(forecast.weatherCode)}
+                      <div className="flex items-center gap-4">
+                        <div className="p-2 bg-blue-500/10 rounded-xl">
+                          {getWeatherIcon(forecast.weatherCode)}
+                        </div>
                         <div>
-                          <div className="font-medium">
+                          <div className="font-bold text-base">
                             {forecast.forecastTime ? 
                               new Date(forecast.forecastTime).toLocaleDateString() : 
                               `Day ${index + 1}`
                             }
                           </div>
-                          <div className="text-sm text-muted-foreground">
+                          <div className="text-sm font-semibold text-foreground/70 mt-1">
                             {getWeatherDescription(forecast.weatherCode)}
                           </div>
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="text-lg font-bold">{forecast.temperature}°C</div>
+                        <div className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">{forecast.temperature}°C</div>
                         {forecast.precipitationProbability && (
-                          <div className="text-sm text-blue-500">
+                          <div className="text-sm font-bold text-blue-500 mt-1">
                             {forecast.precipitationProbability}% rain
                           </div>
                         )}
