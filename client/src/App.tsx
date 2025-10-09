@@ -26,10 +26,11 @@ function App() {
   const { handleResultSelect } = useSearchNavigation()
   const [searchOpen, setSearchOpen] = useState(false)
   
-  // Top panels (right side of nav): timeline, weather, analytics, social - only one at a time
+  // Top panels (right side of nav): intelligence, analytics, social - only one at a time
+  // Note: chat is now permanently visible on the left, not part of the panel toggle system
   const [activeTopPanel, setActiveTopPanel] = useState<NavSection | null>(null)
   
-  // Bottom panels (left side of nav): chat, intelligence, files, settings - only one at a time  
+  // Bottom panels (left side of nav): timeline, weather, files, settings - only one at a time  
   const [activeBottomPanel, setActiveBottomPanel] = useState<NavSection | null>(null)
   
   const [currentAOI, setCurrentAOI] = useState<AOI>({
@@ -53,8 +54,9 @@ function App() {
   }, [])
 
   // Define panel groups
-  // Top panels (right side of nav): chat, intelligence, analytics, social - displayed in top container
-  const topPanels: NavSection[] = ["chat", "intelligence", "analytics", "social"]
+  // Top panels (right side of nav): intelligence, analytics, social - displayed in top container
+  // Note: chat is now a permanent left sidebar, not a toggleable panel
+  const topPanels: NavSection[] = ["intelligence", "analytics", "social"]
   // Bottom panels (left side of nav): timeline, weather, files, settings - displayed in bottom container
   const bottomPanels: NavSection[] = ["timeline", "weather", "files", "settings"]
 

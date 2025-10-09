@@ -56,13 +56,7 @@ export function BottomNavBar({ activeTopPanel, activeBottomPanel, onTogglePanel 
         <div className="w-px h-8 bg-gray-300 mx-1" />
         
         {/* Right group - top panels (chat, intelligence, analytics, social) */}
-        <NavButton
-          icon={MessageSquare}
-          label="Chat"
-          active={activeTopPanel === "chat"}
-          onClick={() => onTogglePanel("chat")}
-          testId="nav-chat"
-        />
+        {/* Chat is now a permanent left sidebar, removed from navigation */}
         <NavButton
           icon={Brain}
           label="Intelligence"

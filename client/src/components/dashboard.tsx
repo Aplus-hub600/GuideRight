@@ -92,54 +92,54 @@ export function Dashboard({ className, activeTopPanel, activeBottomPanel, curren
   const riskInfo = getRiskLevel(riskScore)
 
   return (
-    <div className={cn("relative h-full w-full", className)}>
-      {/* Full viewport map - base layer */}
-      <div className="absolute inset-0 z-0" id="map-view-container">
-        <GoogleMapPanel
-          aoi={currentAOI}
-          riskScore={riskScore}
-          movementPlan={movementPlan}
-          onAOIChange={onAOIChange}
-          onMovementPlanRequest={handleMovementPlanRequest}
-          className="h-full w-full"
-        />
+    <div className={cn("relative h-full w-full flex", className)}>
+      {/* Permanent Chat Sidebar - Left Side */}
+      <div className="w-96 h-full bg-white/70 backdrop-blur-md shadow-lg flex flex-col z-30 border-r border-white/20" id="chat-sidebar-container">
+        <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+          <h2 className="text-base font-medium text-gray-800">Chat Assistant</h2>
+          <ScreenshotFAB 
+            elementId="chat-sidebar-container"
+            viewName="chat"
+            className="relative"
+          />
+        </div>
+        <div className="flex-1 overflow-hidden" data-testid="panel-chat">
+          <ChatPanel 
+            onQuerySubmit={handleQuerySubmit}
+            mediaContextIds={mediaContextIds}
+            className="h-full"
+          />
+        </div>
       </div>
 
-      {/* Map Screenshot FAB - only visible when no panels are active */}
-      {!activeTopPanel && !activeBottomPanel && (
-        <ScreenshotFAB 
-          elementId="map-view-container"
-          viewName="map"
-          className="absolute bottom-24 right-4 z-20"
-        />
-      )}
+      {/* Main content area - map and panels */}
+      <div className="flex-1 relative h-full">
+        {/* Full viewport map - base layer */}
+        <div className="absolute inset-0 z-0" id="map-view-container">
+          <GoogleMapPanel
+            aoi={currentAOI}
+            riskScore={riskScore}
+            movementPlan={movementPlan}
+            onAOIChange={onAOIChange}
+            onMovementPlanRequest={handleMovementPlanRequest}
+            className="h-full w-full"
+          />
+        </div>
 
-      {/* Top container - 80% width, 60% height, centered - for right nav items (chat, intelligence, analytics, social) */}
-      {activeTopPanel && (
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 w-[80%] h-[60%]">
-          <div className="bg-white/70 backdrop-blur-md rounded-3xl shadow-lg overflow-hidden h-full flex flex-col">
-            {/* Chat */}
-            {activeTopPanel === "chat" && (
-              <>
-                <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-                  <h2 className="text-base font-medium text-gray-800">Chat Assistant</h2>
-                </div>
-                <div className="flex-1 overflow-hidden" data-testid="panel-chat" id="chat-panel-container">
-                  <ChatPanel 
-                    onQuerySubmit={handleQuerySubmit}
-                    mediaContextIds={mediaContextIds}
-                    className="h-full"
-                  />
-                </div>
-                <ScreenshotFAB 
-                  elementId="chat-panel-container"
-                  viewName="chat"
-                  className="absolute bottom-4 right-4"
-                />
-              </>
-            )}
+        {/* Map Screenshot FAB - only visible when no panels are active */}
+        {!activeTopPanel && !activeBottomPanel && (
+          <ScreenshotFAB 
+            elementId="map-view-container"
+            viewName="map"
+            className="absolute bottom-24 right-4 z-20"
+          />
+        )}
 
-            {/* Intelligence */}
+        {/* Top container - 80% width, 60% height, centered - for right nav items (intelligence, analytics, social) */}
+        {activeTopPanel && (
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 w-[80%] h-[60%]">
+            <div className="bg-white/70 backdrop-blur-md rounded-3xl shadow-lg overflow-hidden h-full flex flex-col">
+              {/* Intelligence */}
             {activeTopPanel === "intelligence" && (
               <>
                 <div className="p-4 border-b border-gray-100 flex items-center justify-between">
@@ -202,15 +202,15 @@ export function Dashboard({ className, activeTopPanel, activeBottomPanel, curren
                 </div>
               </>
             )}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Bottom container - 80% width, 20% height, centered, above nav - for left nav items (timeline, weather, files, settings) */}
-      {activeBottomPanel && (
-        <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-20 w-[80%] h-[20%]">
-          <div className="bg-white/70 backdrop-blur-md rounded-3xl shadow-lg overflow-hidden h-full flex flex-col">
-            {/* Timeline */}
+        {/* Bottom container - 80% width, 20% height, centered, above nav - for left nav items (timeline, weather, files, settings) */}
+        {activeBottomPanel && (
+          <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-20 w-[80%] h-[20%]">
+            <div className="bg-white/70 backdrop-blur-md rounded-3xl shadow-lg overflow-hidden h-full flex flex-col">
+              {/* Timeline */}
             {activeBottomPanel === "timeline" && (
               <>
                 <div className="p-4 border-b border-gray-100 flex items-center justify-between">
@@ -257,25 +257,26 @@ export function Dashboard({ className, activeTopPanel, activeBottomPanel, curren
               </>
             )}
 
-            {/* Export & Feedback (formerly Settings) */}
-            {activeBottomPanel === "settings" && (
-              <div className="flex-1 overflow-y-auto" data-testid="panel-export">
-                <ExportPanel 
-                  currentAOI={currentAOI}
-                  activeTopPanel={activeTopPanel}
-                  activeBottomPanel={activeBottomPanel}
-                />
-              </div>
-            )}
+              {/* Export & Feedback (formerly Settings) */}
+              {activeBottomPanel === "settings" && (
+                <div className="flex-1 overflow-y-auto" data-testid="panel-export">
+                  <ExportPanel 
+                    currentAOI={currentAOI}
+                    activeTopPanel={activeTopPanel}
+                    activeBottomPanel={activeBottomPanel}
+                  />
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Analysis Panel - already floating */}
-      <AnalysisPanel 
-        isVisible={isAnalysisPanelVisible} 
-        onClose={() => setIsAnalysisPanelVisible(false)}
-      />
+        {/* Analysis Panel - already floating */}
+        <AnalysisPanel 
+          isVisible={isAnalysisPanelVisible} 
+          onClose={() => setIsAnalysisPanelVisible(false)}
+        />
+      </div>
     </div>
   )
 }
