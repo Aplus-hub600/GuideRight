@@ -9,7 +9,6 @@ import { GlobalSearch } from "./components/global-search";
 import { BottomNavBar, NavSection } from "./components/bottom-nav-bar";
 import { LocationSearchBar } from "./components/location-search-bar";
 import { AoiInfo } from "./components/aoi-info";
-import { LanguageSwitcher } from "./components/language-switcher";
 import { Filter } from "lucide-react";
 import { useSearchNavigation } from "./hooks/use-search-navigation";
 import { useState, useEffect } from "react";
@@ -105,7 +104,7 @@ function App() {
                 />
               </div>
 
-              {/* Top centered search bar, AOI info, filter button, and language switcher */}
+              {/* Top centered search bar, AOI info, and filter button */}
               <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-3">
                 <LocationSearchBar 
                   onLocationSelect={handleLocationSelect}
@@ -120,9 +119,6 @@ function App() {
                 >
                   <Filter className="h-4 w-4" />
                 </button>
-                <div className="bg-white/80 backdrop-blur-md rounded-full shadow-lg">
-                  <LanguageSwitcher />
-                </div>
               </div>
 
               {/* Bottom navigation bar */}

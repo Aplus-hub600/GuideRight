@@ -1,8 +1,9 @@
-import { Download, FileJson, TestTube } from "lucide-react";
+import { Download, FileJson, TestTube, Languages } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useMapExport } from "@/hooks/useMapExport";
 import { FeedbackForm } from "./feedback-form";
+import { LanguageSwitcher } from "./language-switcher";
 
 interface ExportPanelProps {
   currentAOI?: {
@@ -39,11 +40,26 @@ export function ExportPanel({ currentAOI, activeTopPanel, activeBottomPanel }: E
   return (
     <div className="space-y-6 p-6" data-testid="panel-export">
       <div>
-        <h2 className="text-2xl font-semibold text-gray-900 mb-2">Export Data</h2>
+        <h2 className="text-2xl font-semibold text-gray-900 mb-2">Settings & Export</h2>
         <p className="text-sm text-gray-600">
-          Download current map view and configuration as JSON
+          Configure app settings and export data
         </p>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Languages className="h-5 w-5" />
+            Language
+          </CardTitle>
+          <CardDescription>
+            Choose your preferred interface language
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <LanguageSwitcher />
+        </CardContent>
+      </Card>
 
       <div className="grid gap-4">
         <Card>
