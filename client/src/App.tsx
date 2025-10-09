@@ -9,6 +9,8 @@ import { GlobalSearch } from "./components/global-search";
 import { BottomNavBar, NavSection } from "./components/bottom-nav-bar";
 import { LocationSearchBar } from "./components/location-search-bar";
 import { AoiInfo } from "./components/aoi-info";
+import { ChatPanel } from "./components/chat-panel";
+import { ScreenshotFAB } from "./components/screenshot-fab";
 import { Filter } from "lucide-react";
 import { useSearchNavigation } from "./hooks/use-search-navigation";
 import { useState, useEffect } from "react";
@@ -38,6 +40,12 @@ function App() {
     lng: 90.4125,
     radiusKm: 5
   })
+
+  const [mediaContextIds, setMediaContextIds] = useState<string[]>([])
+
+  const handleQuerySubmit = (query: string, contextIds?: string[]) => {
+    console.log('Query submitted:', query, 'with context:', contextIds)
+  }
 
   // Keyboard shortcut for advanced search/filter (Cmd/Ctrl+K)
   useEffect(() => {
@@ -101,24 +109,47 @@ function App() {
                   activeBottomPanel={activeBottomPanel}
                   currentAOI={currentAOI}
                   onAOIChange={setCurrentAOI}
+                  onMediaContextChange={setMediaContextIds}
                 />
               </div>
 
-              {/* Top centered search bar, AOI info, and filter button */}
-              <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-3">
-                <LocationSearchBar 
-                  onLocationSelect={handleLocationSelect}
-                  currentLocation={currentAOI.name}
-                />
-                <AoiInfo aoi={currentAOI} />
-                <button 
-                  onClick={() => setSearchOpen(true)}
-                  className="bg-white/80 backdrop-blur-md rounded-full px-4 py-3 text-gray-800 text-sm hover:bg-white/90 transition-all shadow-lg flex items-center gap-2"
-                  data-testid="button-advanced-filter"
-                  title="Advanced Filters"
-                >
-                  <Filter className="h-4 w-4" />
-                </button>
+              {/* Top left: location panel and chat underneath */}
+              <div className="absolute top-4 left-4 z-20 flex flex-col gap-3">
+                {/* Location search bar, AOI info, and filter button */}
+                <div className="flex items-center gap-3">
+                  <LocationSearchBar 
+                    onLocationSelect={handleLocationSelect}
+                    currentLocation={currentAOI.name}
+                  />
+                  <AoiInfo aoi={currentAOI} />
+                  <button 
+                    onClick={() => setSearchOpen(true)}
+                    className="bg-white/80 backdrop-blur-md rounded-full px-4 py-3 text-gray-800 text-sm hover:bg-white/90 transition-all shadow-lg flex items-center gap-2"
+                    data-testid="button-advanced-filter"
+                    title="Advanced Filters"
+                  >
+                    <Filter className="h-4 w-4" />
+                  </button>
+                </div>
+
+                {/* Chat Assistant - underneath location panel */}
+                <div className="w-96 max-h-[60vh] bg-white/70 backdrop-blur-md rounded-3xl shadow-lg flex flex-col" id="chat-assistant-container">
+                  <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+                    <h2 className="text-base font-medium text-gray-800">Chat Assistant</h2>
+                    <ScreenshotFAB 
+                      elementId="chat-assistant-container"
+                      viewName="chat"
+                      className="relative"
+                    />
+                  </div>
+                  <div className="flex-1 overflow-hidden" data-testid="panel-chat">
+                    <ChatPanel 
+                      onQuerySubmit={handleQuerySubmit}
+                      mediaContextIds={mediaContextIds}
+                      className="h-full"
+                    />
+                  </div>
+                </div>
               </div>
 
               {/* Bottom navigation bar */}

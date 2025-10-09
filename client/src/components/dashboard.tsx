@@ -36,14 +36,14 @@ interface DashboardProps {
   activeBottomPanel: NavSection | null
   currentAOI: AOI
   onAOIChange: (aoi: AOI) => void
+  onMediaContextChange?: (ids: string[]) => void
 }
 
-export function Dashboard({ className, activeTopPanel, activeBottomPanel, currentAOI, onAOIChange }: DashboardProps) {
+export function Dashboard({ className, activeTopPanel, activeBottomPanel, currentAOI, onAOIChange, onMediaContextChange }: DashboardProps) {
   const { t } = useTranslation()
   const [riskScore, setRiskScore] = useState(67)
   const [riskLevel, setRiskLevel] = useState('Moderate')
   const [movementPlan, setMovementPlan] = useState<MovementPlan | undefined>()
-  const [mediaContextIds, setMediaContextIds] = useState<string[]>([])
   const [confidence, setConfidence] = useState({ belief: 0.78, disbelief: 0.12, uncertainty: 0.10 })
   const [isAnalysisPanelVisible, setIsAnalysisPanelVisible] = useState(false)
 
@@ -74,12 +74,14 @@ export function Dashboard({ className, activeTopPanel, activeBottomPanel, curren
     return () => window.removeEventListener('guideright:analysis-start', handleAnalysisStart)
   }, [])
 
-  const handleQuerySubmit = (query: string, contextIds?: string[]) => {
-    console.log('Query submitted:', query, 'with context:', contextIds)
-  }
-
   const handleFileAnalysis = (fileId: string, items: any[]) => {
     console.log('File analysis completed:', fileId, items)
+  }
+
+  const handleMediaContextChange = (ids: string[]) => {
+    if (onMediaContextChange) {
+      onMediaContextChange(ids)
+    }
   }
 
   const getRiskLevel = (score: number) => {
@@ -92,28 +94,9 @@ export function Dashboard({ className, activeTopPanel, activeBottomPanel, curren
   const riskInfo = getRiskLevel(riskScore)
 
   return (
-    <div className={cn("relative h-full w-full flex", className)}>
-      {/* Permanent Chat Sidebar - Left Side */}
-      <div className="w-96 h-full bg-white/70 backdrop-blur-md shadow-lg flex flex-col z-30 border-r border-white/20" id="chat-sidebar-container">
-        <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-          <h2 className="text-base font-medium text-gray-800">Chat Assistant</h2>
-          <ScreenshotFAB 
-            elementId="chat-sidebar-container"
-            viewName="chat"
-            className="relative"
-          />
-        </div>
-        <div className="flex-1 overflow-hidden" data-testid="panel-chat">
-          <ChatPanel 
-            onQuerySubmit={handleQuerySubmit}
-            mediaContextIds={mediaContextIds}
-            className="h-full"
-          />
-        </div>
-      </div>
-
+    <div className={cn("relative h-full w-full", className)}>
       {/* Main content area - map and panels */}
-      <div className="flex-1 relative h-full">
+      <div className="relative h-full">
         {/* Full viewport map - base layer */}
         <div className="absolute inset-0 z-0" id="map-view-container">
           <GoogleMapPanel
@@ -249,7 +232,7 @@ export function Dashboard({ className, activeTopPanel, activeBottomPanel, curren
                 <div className="flex-1 overflow-y-auto p-4" data-testid="panel-files">
                   <FileDrop 
                     onAnalysisComplete={handleFileAnalysis}
-                    onFilesChange={setMediaContextIds}
+                    onFilesChange={handleMediaContextChange}
                     maxFiles={5}
                     compact={false}
                   />
