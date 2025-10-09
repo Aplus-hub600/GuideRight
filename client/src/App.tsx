@@ -103,7 +103,7 @@ function App() {
             {/* Map-centric layout: everything is absolutely positioned over the map */}
             <div className="relative h-screen w-screen overflow-hidden bg-gray-100">
               {/* Dashboard with map and panels */}
-              <div className="absolute inset-0 z-0">
+              <div className="absolute inset-0 z-0 h-full w-full">
                 <Dashboard 
                   activeTopPanel={activeTopPanel}
                   activeBottomPanel={activeBottomPanel}

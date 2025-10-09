@@ -96,9 +96,9 @@ export function Dashboard({ className, activeTopPanel, activeBottomPanel, curren
   return (
     <div className={cn("relative h-full w-full", className)}>
       {/* Main content area - map and panels */}
-      <div className="relative h-full">
+      <div className="relative h-full w-full">
         {/* Full viewport map - base layer */}
-        <div className="absolute inset-0 z-0" id="map-view-container">
+        <div className="absolute inset-0 z-0 h-full w-full" id="map-view-container">
           <GoogleMapPanel
             aoi={currentAOI}
             riskScore={riskScore}
