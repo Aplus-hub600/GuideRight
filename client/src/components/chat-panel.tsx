@@ -223,8 +223,8 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, className }: ChatPan
     <div className={cn("flex flex-col h-full", className)}>
       <div className="flex-1 overflow-y-auto p-6 space-y-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
         {messages.length === 0 && (
-          <div className="text-center text-gray-500 py-8">
-            <p className="text-lg font-medium text-gray-800">GuideRight Tactical Assistant</p>
+          <div className="text-center text-slate-400 py-8">
+            <p className="text-lg font-semibold text-slate-100">GuideRight Tactical Assistant</p>
             <p className="text-sm mt-2">Ask about any area of interest for intelligence analysis</p>
           </div>
         )}
@@ -238,10 +238,10 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, className }: ChatPan
             )}
           >
             <div className={cn(
-              "max-w-[80%] p-4 rounded-2xl shadow-sm",
+              "max-w-[80%] p-4 rounded-2xl shadow-lg border",
               message.role === "user" 
-                ? "bg-blue-600 text-white" 
-                : "bg-white/70 backdrop-blur-md text-gray-800"
+                ? "bg-gradient-to-br from-blue-600 to-blue-700 text-white border-blue-500/30" 
+                : "bg-slate-800/90 backdrop-blur-md text-slate-100 border-slate-700/50"
             )}>
               <div className="space-y-3">
                 <p className="text-sm whitespace-pre-wrap">{message.content}</p>
@@ -268,9 +268,9 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, className }: ChatPan
         
         {isStreaming && (
           <div className="flex justify-start">
-            <div className="bg-white/70 backdrop-blur-md p-4 rounded-2xl shadow-sm">
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <Loader2 className="h-4 w-4 animate-spin" />
+            <div className="bg-slate-800/90 backdrop-blur-md p-4 rounded-2xl shadow-lg border border-slate-700/50">
+              <div className="flex items-center gap-2 text-sm text-slate-300">
+                <Loader2 className="h-4 w-4 animate-spin text-blue-400" />
                 Analyzing intelligence data...
               </div>
             </div>
@@ -280,7 +280,7 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, className }: ChatPan
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="border-t border-gray-100 bg-white/50 p-4">
+      <div className="border-t border-slate-700/50 bg-slate-900/50 backdrop-blur-md p-4">
         <form onSubmit={handleSubmit} className="flex gap-2">
           <div className="flex-1 flex gap-2">
             <textarea
@@ -289,7 +289,7 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, className }: ChatPan
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder={t('chat.placeholder') || "Ask about intelligence, threats, or request analysis..."}
-              className="flex-1 bg-gray-100 rounded-2xl px-4 py-2 text-gray-800 placeholder-gray-500 outline-none focus:ring-2 focus:ring-blue-500 resize-none min-h-[40px] max-h-[120px]"
+              className="flex-1 bg-slate-800/50 border border-slate-700/50 rounded-2xl px-4 py-3 text-slate-100 placeholder-slate-500 outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 resize-none min-h-[44px] max-h-[120px] transition-all"
               disabled={isStreaming}
               data-testid="textarea-chat-input"
             />
@@ -300,7 +300,7 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, className }: ChatPan
           <button 
             type="submit"
             disabled={!input.trim() || isStreaming}
-            className="w-10 h-10 rounded-full bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
+            className="w-11 h-11 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center transition-all shadow-lg shadow-blue-500/30"
             data-testid="button-chat-send"
           >
             {isStreaming ? (
@@ -313,9 +313,9 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, className }: ChatPan
         
         {mediaContextIds && mediaContextIds.length > 0 && (
           <div className="flex flex-wrap gap-2 mt-2">
-            <span className="text-xs text-gray-600">Context:</span>
+            <span className="text-xs text-slate-400">Context:</span>
             {mediaContextIds.map((id) => (
-              <span key={id} className="text-xs px-2 py-1 rounded-lg bg-gray-100 text-gray-700 border border-gray-200">
+              <span key={id} className="text-xs px-2 py-1 rounded-lg bg-blue-500/20 text-blue-400 border border-blue-500/30">
                 {id}
               </span>
             ))}

@@ -56,7 +56,7 @@ export function ScreenshotFAB({ elementId, viewName, className }: ScreenshotFABP
       <DropdownMenuTrigger asChild>
         <Button
           size="icon"
-          className={`rounded-full shadow-lg ${className}`}
+          className={`rounded-full bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-2xl shadow-blue-500/30 border border-blue-400/30 ${className}`}
           disabled={isCapturing}
           data-testid={`button-screenshot-${viewName}`}
         >
