@@ -11,7 +11,7 @@ interface BottomNavBarProps {
 export function BottomNavBar({ activeTopPanel, activeBottomPanel, onTogglePanel }: BottomNavBarProps) {
 
   return (
-    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-30" data-testid="bottom-nav-bar">
+    <div className="fixed bottom-0 left-1/2 -translate-x-1/2 z-30" data-testid="bottom-nav-bar">
       <div className="flex items-center gap-2 bg-white/80 backdrop-blur-md rounded-full p-2 shadow-lg">
         {/* Home button - clears all panels */}
         <NavButton

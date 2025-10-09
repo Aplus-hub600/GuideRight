@@ -114,7 +114,7 @@ export function Dashboard({ className, activeTopPanel, activeBottomPanel, curren
           <ScreenshotFAB 
             elementId="map-view-container"
             viewName="map"
-            className="absolute bottom-24 right-4 z-20"
+            className="absolute bottom-14 right-4 z-20"
           />
         )}
 
@@ -191,7 +191,7 @@ export function Dashboard({ className, activeTopPanel, activeBottomPanel, curren
 
         {/* Bottom container - 80% width, 20% height, centered, above nav - for left nav items (timeline, weather, files, settings) */}
         {activeBottomPanel && (
-          <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-20 w-[80%] h-[20%]">
+          <div className="absolute bottom-14 left-1/2 -translate-x-1/2 z-20 w-[80%] h-[20%]">
             <div className="bg-white/70 backdrop-blur-md rounded-3xl shadow-lg overflow-hidden h-full flex flex-col">
               {/* Timeline */}
               {activeBottomPanel === "timeline" && (
