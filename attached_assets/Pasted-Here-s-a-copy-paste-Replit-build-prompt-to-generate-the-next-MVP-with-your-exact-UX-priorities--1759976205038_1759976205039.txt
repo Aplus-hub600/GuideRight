@@ -1,0 +1,204 @@
+Here’s a copy-paste **Replit build prompt** to generate the next MVP with your exact UX priorities.
+
+---
+
+# 🚀 Build me this app: GuideRight UX-First MVP (Screenshots, Timeline, Map Search, Single-Language, Overlays, LLM-Forward)
+
+## TL;DR
+
+Create a **full-stack TypeScript** app that emphasizes **usability and mobile readability**, fast screenshots, a **toggleable event timeline**, **map search by place name**, **single-language UI** (English now, i18n-ready later), data **overlays** (news/social/events), optional **trend indicators** and **MGRS overlay**, a **prominent chat/LLM panel**, and **Google Maps data export** (JSON). Include a feedback loop for **export testing** and user comments.
+
+---
+
+## 0) Stack & Project Setup
+
+* **Frontend:** React 18 + Vite + TypeScript, TailwindCSS, shadcn/ui, React-Query (TanStack Query), React-Hook-Form, React-Google-Maps/API (with optional Leaflet fallback), dayjs.
+* **Backend:** Node 20 + Express + TypeScript, Zod for validation, simple SQLite (better-sqlite3) or PostgreSQL (env-switchable), pino logging.
+* **Auth (stub):** local session only (no PII).
+* **i18n:** i18next configured but **locked to English** by default; structure ready for future locales.
+* **Build/Run:** Monorepo with `frontend/` + `server/` and a root `dev` script using `concurrently`.
+
+---
+
+## 1) User-Facing Requirements (implement exactly)
+
+1. **Screenshots First UX**
+
+   * Add a “📸 Quick Screenshot” button on every major view (Dashboard, Map, Timeline, Chat).
+   * Use the **HTML canvas capture** approach (html2canvas) and a **“Copy / Download PNG”** modal with filename convention `guideright-<view>-<timestamp>.png`.
+   * Ensure controls don’t overlap content in mobile; use floating action button.
+
+2. **Responsive, Readable Dashboard**
+
+   * Mobile-first layout with breakpoints: `sm`, `md`, `lg`.
+   * Large touch targets, 14–16px base, high contrast; persistent bottom tab bar on phones: **Map • Timeline • Chat • Overlays • Exports**.
+   * Panel density toggle: Compact / Comfortable.
+
+3. **Event Timeline (Accessible & Toggleable)**
+
+   * Horizontal timeline with keyboard support (arrow keys), filters for **severity** (LOW/MED/HIGH/CRITICAL) and **type** (news/social/event/system).
+   * Quick toggles (chip filters) and a **time range slider** (e.g., last 24h, 72h, 7d).
+   * Row/stack view switch for readability on phones.
+
+4. **Map Search by Place Name**
+
+   * Search box with **type-ahead geocoding** (Google Places API) and enter-to-select.
+   * Avoid dropdown bloat: max 5 suggestions; show “Press Enter to search” after 5.
+   * Persist last 5 searches (localStorage).
+   * Fallback: if API missing, simple Nominatim request is stubbed but not required to run.
+
+5. **Single-Language Display (English) + Future Localization**
+
+   * All UI strings routed through i18next with `en` only.
+   * Language switcher hidden for now; keep i18n folders for future coalition languages.
+   * Date/number formatting locked to `en-US`.
+
+6. **Overlays for Data (News / Social / Events)**
+
+   * Layer toggles (checkbox chips) with **opacity sliders**.
+   * Legend panel with color and icon per layer.
+   * **Trend indicators**: small ▲/▼ arrows next to metric cards (e.g., “mentions”, “incidents”) computed vs previous time window.
+
+7. **MGRS Overlay (Optional Toggle)**
+
+   * Draw MGRS grid overlay toggle on the map (simplified: snap from lat/lng to 1km grid visualization; no precision conversion needed for MVP).
+   * Tooltip on hover: display cell label.
+
+8. **Prominent Chat/LLM Panel**
+
+   * Make Chat a **primary tab** and show a large, persistent input with send + mic.
+   * Streamed responses with **source chips** and **copy** button.
+   * Keep the chat area **above the fold on mobile**; map remains one tap away.
+
+9. **Leverage Google Maps Data & Export**
+
+   * Use Google Maps Places details for points of interest (POI) around the AOI radius.
+   * Provide an **“Export JSON”** action that bundles current visible features (bounds, active overlays, POIs, timeline filter state) into a single JSON file and download.
+   * Add an **“Export Test”** route on the backend (`GET /api/export/test`) returning a small mock payload for QA.
+
+10. **Feedback Capture**
+
+* In the **Exports tab**, include a small feedback form: “Did export meet your needs?” (Yes/No + optional text). POST to `/api/feedback`.
+* Store feedback in DB with timestamp + client info (UA + screen size).
+
+---
+
+## 2) API Endpoints (server)
+
+* `POST /api/aoi/search` → body `{ query: string }` → returns `{ lat, lng, name }` (Google Places or mock).
+* `POST /api/aoi/context` → body `{ lat, lng, radiusKm, overlays: string[], timeRange: {from,to} }`
+
+  * Returns `{ pois: POI[], news: Item[], social: Item[], events: Item[], metrics: {mentionsDelta:number, incidentsDelta:number} }`.
+* `POST /api/chat/query` → `{ aoi, question }` → `{ text, citations: string[], usedLayers: string[] }` (LLM can be mocked).
+* `GET  /api/export/current` → returns JSON with current **map bounds**, **active overlays**, **timeline filters**, **POIs**, **visible items**.
+* `GET  /api/export/test` → returns small static JSON for export testing.
+* `POST /api/feedback` → `{ exportResult: 'yes'|'no', notes?: string }` → `201`.
+
+**Types (Zod & TS)**
+
+```ts
+type Severity = 'LOW'|'MEDIUM'|'HIGH'|'CRITICAL';
+type Layer = 'news'|'social'|'events';
+type Item = { id:string; layer:Layer; title:string; text:string; time:string; severity:Severity; lat:number; lng:number };
+type POI  = { id:string; name:string; category:string; lat:number; lng:number; source:'google'|'mock' };
+```
+
+---
+
+## 3) Frontend Structure
+
+```
+frontend/src/
+  main.tsx
+  App.tsx
+  routes/
+    Dashboard.tsx
+  components/
+    TopNav.tsx
+    BottomTabs.tsx
+    ScreenshotFAB.tsx
+    MapView.tsx
+    Timeline.tsx
+    ChatPanel.tsx
+    OverlayToggles.tsx
+    TrendCards.tsx
+    ExportPanel.tsx
+    FeedbackForm.tsx
+  lib/
+    api.ts
+    i18n.ts
+    useScreenshots.ts     // wraps html2canvas; returns capture(viewId)
+  styles/globals.css
+```
+
+**Key UX implementations**
+
+* **MapView.tsx**
+
+  * Search input with debounced type-ahead.
+  * Overlay toggles with opacity sliders.
+  * MGRS toggle: draws grid lines in a canvas overlay layer.
+  * “Use POIs from Google” switch; show POI markers with a clusterer.
+* **Timeline.tsx**
+
+  * Keyboard accessible; filter chips; range slider; severity color legend.
+  * Tapping an event zooms the map to its coordinates.
+* **ChatPanel.tsx**
+
+  * Always prominent; large input; streaming messages; citations rendered as clickable chips.
+* **ExportPanel.tsx**
+
+  * “Export Current View (JSON)” + “Test Export” buttons; show resulting file size and preview snippet.
+
+---
+
+## 4) Data & Mocking
+
+* Provide `/server/data/mock/` with small seed files for `news.json`, `social.json`, `events.json`, and `pois.json`.
+* If `GOOGLE_MAPS_API_KEY` not set, the app uses mock geocoding + mock POIs; still fully demoable.
+
+---
+
+## 5) Environment Variables
+
+```
+GOOGLE_MAPS_API_KEY=
+DB_URL=sqlite.db             # default to local SQLite; allow POSTGRES_URL for PG
+PORT=8080
+```
+
+---
+
+## 6) Accessibility & Mobile Details
+
+* All controls reachable via keyboard; ARIA labels on toggles and sliders.
+* Minimum 44px touch targets.
+* Sticky **Screenshot FAB** on mobile; ensure it never covers map legends (use bottom-right with safe-area insets).
+* High contrast theme; supports dark mode.
+
+---
+
+## 7) Acceptance Criteria
+
+1. **Screenshots**: From Map, Timeline, and Chat, the “📸” button captures and downloads a PNG with correct timestamped naming.
+2. **Responsive**: Dashboard readable on phone and tablet; bottom tabs present on phone.
+3. **Timeline**: Users can filter by severity and type; time window toggles work; keyboard navigation works.
+4. **Map Search**: Typing a place name gives suggestions (≤5); pressing Enter searches and centers map; recent searches saved.
+5. **Single-Language**: UI is English only; i18n scaffolding exists for future localization.
+6. **Overlays & Trends**: Toggling layers updates map; opacity sliders work; trend arrows reflect change vs prior window.
+7. **MGRS Overlay**: Toggle draws grid; tooltip shows cell label.
+8. **Chat/LLM**: Chat tab is prominent; queries return streamed responses with citations and used layers.
+9. **Google Data Export**: “Export Current View” downloads a JSON containing bounds, overlays, filters, POIs, and visible items; “Test Export” returns a mock payload.
+10. **Feedback**: Submitting the export feedback form stores a record in DB; success toast appears.
+
+---
+
+## 8) Scripts
+
+* Root `dev`: run server + frontend.
+* `build`: build both.
+* `start`: serve production.
+
+---
+
+**Build it now** and ensure the UX priorities above take precedence over extra features.

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 
 declare global {
   interface Window {
-    google: typeof google
+    google: any
     initGoogleMaps?: () => void
   }
 }
@@ -10,6 +10,7 @@ declare global {
 interface UseGoogleMapsOptions {
   apiKey?: string
   libraries?: string[]
+  language?: string
 }
 
 export function useGoogleMaps(options: UseGoogleMapsOptions = {}) {
@@ -28,27 +29,45 @@ export function useGoogleMaps(options: UseGoogleMapsOptions = {}) {
         }
         
         const apiKey = config.apiKey
+        const language = options.language || 'en'
+        const libraries = options.libraries || ['geometry', 'places']
 
-        // Check if Google Maps is already loaded
-        if (window.google && window.google.maps) {
+        // Check if Google Maps script exists with current language
+        const existingScript = document.querySelector('script[src*="maps.googleapis.com"]')
+        const currentScriptSrc = existingScript?.getAttribute('src')
+        const hasCorrectLanguage = currentScriptSrc?.includes(`language=${language}`)
+
+        // If script exists with correct language and Maps is loaded, we're good
+        if (window.google && window.google.maps && hasCorrectLanguage) {
           setIsLoaded(true)
           return
         }
 
-        // Check if script is already being loaded
-        const existingScript = document.querySelector('script[src*="maps.googleapis.com"]')
-        if (existingScript) {
+        // If language changed, we need to reload the page to load Maps with new language
+        // Google Maps doesn't support dynamic language changes after loading
+        if (existingScript && !hasCorrectLanguage && window.google && window.google.maps) {
+          // Force page reload to load Maps with new language
+          console.log(`Reloading page to load Google Maps in ${language}`)
+          window.location.reload()
+          return
+        }
+
+        // Check if script is already being loaded with correct language
+        if (existingScript && hasCorrectLanguage) {
           // Wait for existing script to load
           existingScript.addEventListener('load', () => setIsLoaded(true))
           existingScript.addEventListener('error', () => setLoadError(new Error('Failed to load Google Maps')))
           return
         }
 
-        // Load Google Maps script
+        // Remove old script if it exists with wrong language
+        if (existingScript && !hasCorrectLanguage) {
+          existingScript.remove()
+        }
+
+        // Load Google Maps script with language support
         const script = document.createElement('script')
-        const libraries = options.libraries || ['geometry', 'places']
-        
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=${libraries.join(',')}`
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=${libraries.join(',')}&language=${language}`
         script.async = true
         script.defer = true
 
@@ -72,7 +91,7 @@ export function useGoogleMaps(options: UseGoogleMapsOptions = {}) {
     return () => {
       // Cleanup is complex for Google Maps, usually not needed in practice
     }
-  }, [options.apiKey, options.libraries])
+  }, [options.apiKey, options.libraries, options.language])
 
   return { isLoaded, loadError }
 }

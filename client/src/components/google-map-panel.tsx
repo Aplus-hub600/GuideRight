@@ -104,8 +104,8 @@ export function GoogleMapPanel({
   onMovementPlanRequest,
   className
 }: GoogleMapPanelProps) {
-  const { t } = useTranslation()
-  const { isLoaded, loadError } = useGoogleMaps()
+  const { t, i18n } = useTranslation()
+  const { isLoaded, loadError } = useGoogleMaps({ language: i18n.language })
   const { position: userPosition, loading: locationLoading, getCurrentPosition } = useGeolocation({ enableHighAccuracy: true })
   
   // Handle map focus events from global search
@@ -322,14 +322,14 @@ export function GoogleMapPanel({
         onAOIChange?.(newAOI)
         
         // Check if we're already analyzing this location
-        const requestKey = getCacheKey(newAOI.lat, newAOI.lng, newAOI.radiusKm)
+        const requestKey = getCacheKey(newAOI.lat, newAOI.lng, newAOI.radiusKm || 5)
         if (pendingRequestsRef.current.has(requestKey)) {
           console.log('Analysis already in progress for this location, skipping duplicate request')
           return
         }
         
         // Check cache first
-        const cachedResult = getCachedAnalysis(newAOI.lat, newAOI.lng, newAOI.radiusKm)
+        const cachedResult = getCachedAnalysis(newAOI.lat, newAOI.lng, newAOI.radiusKm || 5)
         if (cachedResult) {
           console.log('Using cached analysis result for location:', newAOI)
           setLatestAnalysis(cachedResult)
@@ -380,7 +380,7 @@ export function GoogleMapPanel({
           console.log('Intelligence analysis result:', analysisResult)
           
           // Cache the result
-          setCachedAnalysis(newAOI.lat, newAOI.lng, newAOI.radiusKm, analysisResult)
+          setCachedAnalysis(newAOI.lat, newAOI.lng, newAOI.radiusKm || 5, analysisResult)
           
           // Store analysis result for map markers
           setLatestAnalysis(analysisResult)
@@ -400,7 +400,7 @@ export function GoogleMapPanel({
           console.error('Error during intelligence analysis:', error)
           
           // Try to fallback to any cached result for nearby location
-          const fallbackResult = getCachedAnalysis(newAOI.lat, newAOI.lng, newAOI.radiusKm)
+          const fallbackResult = getCachedAnalysis(newAOI.lat, newAOI.lng, newAOI.radiusKm || 5)
           if (fallbackResult) {
             console.log('Using fallback cached result due to error')
             setLatestAnalysis(fallbackResult)
