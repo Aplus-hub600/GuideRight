@@ -24,7 +24,7 @@ export function AoiInfo({ aoi, riskScore = 67, confidence = { belief: 0.78, disb
   const riskLevel = getRiskLevel(riskScore)
 
   return (
-    <div className="bg-gradient-to-r from-slate-900/90 to-slate-800/90 backdrop-blur-xl rounded-full px-4 py-3 text-slate-100 text-sm shadow-2xl border border-slate-700/50 flex items-center gap-3" data-testid="aoi-info-display">
+    <div className="bg-gradient-to-r from-slate-900/70 to-slate-800/70 backdrop-blur-md rounded-full px-4 py-3 text-slate-100 text-sm shadow-2xl border border-slate-700/50 flex items-center gap-3" data-testid="aoi-info-display">
       <div className="flex items-center gap-2">
         <Target className="h-4 w-4 text-blue-400" />
         <span className="font-medium">{aoi.name || "Unknown Location"}</span>

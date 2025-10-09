@@ -201,7 +201,7 @@ export function LocationSearchBar({ onLocationSelect, currentLocation }: Locatio
     <div className="relative">
       <div 
         className={`
-          bg-gradient-to-r from-slate-900/90 to-slate-800/90 backdrop-blur-xl rounded-full shadow-2xl border border-slate-700/50
+          bg-gradient-to-r from-slate-900/70 to-slate-800/70 backdrop-blur-md rounded-full shadow-2xl border border-slate-700/50
           transition-all duration-300 ease-in-out
           ${isExpanded || showAdvancedSearch ? 'w-96' : 'w-72'}
         `}
