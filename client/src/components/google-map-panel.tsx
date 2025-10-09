@@ -29,7 +29,6 @@ const retryWithBackoff = async function<T>(fn: () => Promise<T>, maxRetries: num
       
       if (shouldRetry && attempt < maxRetries - 1) {
         const delay = Math.min(1000 * Math.pow(2, attempt) + Math.random() * 1000, 10000)
-        console.log(`Retrying due to ${error?.status || 'network error'} in ${Math.round(delay)}ms... (attempt ${attempt + 1}/${maxRetries})`)
         await sleep(delay)
         continue
       }
@@ -234,7 +233,6 @@ export function GoogleMapPanel({
   }
 
   const handleMovementPlan = async () => {
-    console.log('Movement plan requested')
     setIsLoading(true)
     
     // Mock movement plan generation
@@ -271,14 +269,12 @@ export function GoogleMapPanel({
         // Debounce rapid clicks
         const now = Date.now()
         if (now - lastClickTimeRef.current < CLICK_DEBOUNCE_MS) {
-          console.log('Click debounced - too rapid')
           return
         }
         lastClickTimeRef.current = now
         
         // Cancel any ongoing analysis and start new one
         if (abortControllerRef.current) {
-          console.log('Canceling previous analysis for new location')
           abortControllerRef.current.abort()
         }
         const newAOI: AOI = {
@@ -286,20 +282,17 @@ export function GoogleMapPanel({
           lng: e.latLng.lng(),
           radiusKm: currentAOI.radiusKm || 5
         }
-        console.log('New AOI selected:', newAOI)
         onAOIChange?.(newAOI)
         
         // Check if we're already analyzing this location
         const requestKey = getCacheKey(newAOI.lat, newAOI.lng, newAOI.radiusKm || 5)
         if (pendingRequestsRef.current.has(requestKey)) {
-          console.log('Analysis already in progress for this location, skipping duplicate request')
           return
         }
         
         // Check cache first
         const cachedResult = getCachedAnalysis(newAOI.lat, newAOI.lng, newAOI.radiusKm || 5)
         if (cachedResult) {
-          console.log('Using cached analysis result for location:', newAOI)
           setLatestAnalysis(cachedResult)
           window.dispatchEvent(new CustomEvent('guideright:analysis-result', {
             detail: cachedResult
@@ -309,7 +302,6 @@ export function GoogleMapPanel({
         
         // Start analysis with resilience features
         try {
-          console.log('Triggering intelligence analysis for location:', newAOI)
           pendingRequestsRef.current.add(requestKey)
           setIsAnalysisInProgress(true)
           
@@ -345,8 +337,6 @@ export function GoogleMapPanel({
             return await response.json()
           })
           
-          console.log('Intelligence analysis result:', analysisResult)
-          
           // Cache the result
           setCachedAnalysis(newAOI.lat, newAOI.lng, newAOI.radiusKm || 5, analysisResult)
           
@@ -357,20 +347,12 @@ export function GoogleMapPanel({
           window.dispatchEvent(new CustomEvent('guideright:analysis-result', {
             detail: analysisResult
           }))
-          
-          console.log('Analysis complete:', {
-            confidence: analysisResult.confidence,
-            riskLevel: analysisResult.riskLevel,
-            riskScore: analysisResult.riskScore,
-            location: analysisResult.location
-          })
         } catch (error: any) {
           console.error('Error during intelligence analysis:', error)
           
           // Try to fallback to any cached result for nearby location
           const fallbackResult = getCachedAnalysis(newAOI.lat, newAOI.lng, newAOI.radiusKm || 5)
           if (fallbackResult) {
-            console.log('Using fallback cached result due to error')
             setLatestAnalysis(fallbackResult)
             window.dispatchEvent(new CustomEvent('guideright:analysis-result', {
               detail: fallbackResult

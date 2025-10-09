@@ -38,7 +38,7 @@ function App() {
   const [mediaContextIds, setMediaContextIds] = useState<string[]>([])
 
   const handleQuerySubmit = (query: string, contextIds?: string[]) => {
-    console.log('Query submitted:', query, 'with context:', contextIds)
+    // Query submitted with context
   }
 
   // Define panel groups

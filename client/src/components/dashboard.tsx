@@ -53,7 +53,6 @@ export function Dashboard({ className, activeTopPanel, activeBottomPanel, curren
   }
 
   const handleMovementPlanRequest = () => {
-    console.log('Movement plan requested for AOI:', currentAOI)
     setMovementPlan({
       route: [
         { lat: currentAOI.lat - 0.02, lng: currentAOI.lng - 0.02 },
@@ -75,7 +74,7 @@ export function Dashboard({ className, activeTopPanel, activeBottomPanel, curren
   }, [])
 
   const handleFileAnalysis = (fileId: string, items: any[]) => {
-    console.log('File analysis completed:', fileId, items)
+    // File analysis completed
   }
 
   const handleMediaContextChange = (ids: string[]) => {
