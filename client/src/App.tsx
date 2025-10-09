@@ -94,10 +94,10 @@ function App() {
                 />
               </div>
 
-              {/* Top left: location panel and chat underneath */}
-              <div className="absolute top-4 left-4 z-30 flex flex-col gap-3">
+              {/* Top right: location panel and chat underneath */}
+              <div className="absolute top-4 right-4 z-30 flex flex-col gap-3 items-end">
                 {/* Location search bar with integrated advanced search and AOI info */}
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 flex-wrap justify-end">
                   <LocationSearchBar 
                     onLocationSelect={handleLocationSelect}
                     currentLocation={currentAOI.name}
@@ -105,24 +105,26 @@ function App() {
                   <AoiInfo aoi={currentAOI} />
                 </div>
 
-                {/* Chat Assistant - underneath location panel */}
-                <div className="w-80 max-h-[60vh] bg-gradient-to-br from-slate-900/95 via-slate-800/95 to-slate-900/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-slate-700/50 flex flex-col" id="chat-assistant-container">
-                  <div className="p-4 border-b border-slate-700/50 flex items-center justify-between">
-                    <h2 className="text-base font-semibold text-slate-100">Chat Assistant</h2>
-                    <ScreenshotFAB 
-                      elementId="chat-assistant-container"
-                      viewName="chat"
-                      className="relative"
-                    />
+                {/* Chat Assistant - underneath location panel - hidden when top panels are active */}
+                {!activeTopPanel && (
+                  <div className="w-80 max-h-[60vh] bg-gradient-to-br from-slate-900/95 via-slate-800/95 to-slate-900/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-slate-700/50 flex flex-col" id="chat-assistant-container">
+                    <div className="p-4 border-b border-slate-700/50 flex items-center justify-between">
+                      <h2 className="text-base font-semibold text-slate-100">Chat Assistant</h2>
+                      <ScreenshotFAB 
+                        elementId="chat-assistant-container"
+                        viewName="chat"
+                        className="relative"
+                      />
+                    </div>
+                    <div className="flex-1 overflow-hidden" data-testid="panel-chat">
+                      <ChatPanel 
+                        onQuerySubmit={handleQuerySubmit}
+                        mediaContextIds={mediaContextIds}
+                        className="h-full"
+                      />
+                    </div>
                   </div>
-                  <div className="flex-1 overflow-hidden" data-testid="panel-chat">
-                    <ChatPanel 
-                      onQuerySubmit={handleQuerySubmit}
-                      mediaContextIds={mediaContextIds}
-                      className="h-full"
-                    />
-                  </div>
-                </div>
+                )}
               </div>
 
               {/* Bottom navigation bar */}
