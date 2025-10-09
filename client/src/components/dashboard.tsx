@@ -211,7 +211,7 @@ export function Dashboard({ className, activeTopPanel, activeBottomPanel, curren
           <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-20 w-[80%] h-[20%]">
             <div className="bg-white/70 backdrop-blur-md rounded-3xl shadow-lg overflow-hidden h-full flex flex-col">
               {/* Timeline */}
-            {activeBottomPanel === "timeline" && (
+              {activeBottomPanel === "timeline" && (
               <>
                 <div className="p-4 border-b border-gray-100 flex items-center justify-between">
                   <h2 className="flex items-center gap-2 text-base font-medium text-gray-800">
@@ -223,10 +223,10 @@ export function Dashboard({ className, activeTopPanel, activeBottomPanel, curren
                   <Timeline />
                 </div>
               </>
-            )}
+              )}
 
-            {/* Weather */}
-            {activeBottomPanel === "weather" && (
+              {/* Weather */}
+              {activeBottomPanel === "weather" && (
               <>
                 <div className="p-4 border-b border-gray-100 flex items-center justify-between">
                   <h2 className="flex items-center gap-2 text-base font-medium text-gray-800">
@@ -238,10 +238,10 @@ export function Dashboard({ className, activeTopPanel, activeBottomPanel, curren
                   <WeatherPanel data-testid="weather-panel-main" />
                 </div>
               </>
-            )}
+              )}
 
-            {/* Files */}
-            {activeBottomPanel === "files" && (
+              {/* Files */}
+              {activeBottomPanel === "files" && (
               <>
                 <div className="p-4 border-b border-gray-100 flex items-center justify-between">
                   <h3 className="text-base font-medium text-gray-800">Media Analysis</h3>
@@ -255,7 +255,7 @@ export function Dashboard({ className, activeTopPanel, activeBottomPanel, curren
                   />
                 </div>
               </>
-            )}
+              )}
 
               {/* Export & Feedback (formerly Settings) */}
               {activeBottomPanel === "settings" && (
