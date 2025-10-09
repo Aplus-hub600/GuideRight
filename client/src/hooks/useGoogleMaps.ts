@@ -32,10 +32,10 @@ export function useGoogleMaps(options: UseGoogleMapsOptions = {}) {
         const language = options.language || 'en'
         const libraries = options.libraries || ['geometry', 'places']
 
-        // Check if Google Maps script exists with current language
+        // Check if Google Maps script exists with current language and region
         const existingScript = document.querySelector('script[src*="maps.googleapis.com"]')
         const currentScriptSrc = existingScript?.getAttribute('src')
-        const hasCorrectLanguage = currentScriptSrc?.includes(`language=${language}`)
+        const hasCorrectLanguage = currentScriptSrc?.includes(`language=${language}`) && currentScriptSrc?.includes(`region=US`)
 
         // If script exists with correct language and Maps is loaded, we're good
         if (window.google && window.google.maps && hasCorrectLanguage) {
@@ -65,9 +65,9 @@ export function useGoogleMaps(options: UseGoogleMapsOptions = {}) {
           existingScript.remove()
         }
 
-        // Load Google Maps script with language support
+        // Load Google Maps script with language support and region set to US for English-only labels
         const script = document.createElement('script')
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=${libraries.join(',')}&language=${language}`
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=${libraries.join(',')}&language=${language}&region=US`
         script.async = true
         script.defer = true
 
