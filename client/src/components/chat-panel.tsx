@@ -53,10 +53,10 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, className }: ChatPan
     scrollToBottom()
   }, [messages])
 
-  // Load chat history
+  // Load chat history - disabled for demo (starts empty until queried)
   const { data: chatHistory } = useQuery<{ messages: any[] }>({
     queryKey: ['/api/chat/history'],
-    enabled: true
+    enabled: false // Disabled for clean demo start
   })
 
   // Handle chat history data
