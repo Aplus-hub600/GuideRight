@@ -105,7 +105,7 @@ export function GoogleMapPanel({
   className
 }: GoogleMapPanelProps) {
   const { t, i18n } = useTranslation()
-  const { isLoaded, loadError } = useGoogleMaps({ language: i18n.language })
+  const { isLoaded, loadError } = useGoogleMaps({ language: 'en' })
   const { position: userPosition, loading: locationLoading, getCurrentPosition } = useGeolocation({ enableHighAccuracy: true })
   
   // Handle map focus events from global search
