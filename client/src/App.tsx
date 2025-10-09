@@ -95,7 +95,7 @@ function App() {
               </div>
 
               {/* Top left: location panel and chat underneath */}
-              <div className="absolute top-4 left-4 z-20 flex flex-col gap-3">
+              <div className="absolute top-4 left-4 z-30 flex flex-col gap-3">
                 {/* Location search bar with integrated advanced search and AOI info */}
                 <div className="flex items-center gap-3">
                   <LocationSearchBar 
@@ -106,7 +106,7 @@ function App() {
                 </div>
 
                 {/* Chat Assistant - underneath location panel */}
-                <div className="w-96 max-h-[60vh] bg-gradient-to-br from-slate-900/95 via-slate-800/95 to-slate-900/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-slate-700/50 flex flex-col" id="chat-assistant-container">
+                <div className="w-80 max-h-[60vh] bg-gradient-to-br from-slate-900/95 via-slate-800/95 to-slate-900/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-slate-700/50 flex flex-col" id="chat-assistant-container">
                   <div className="p-4 border-b border-slate-700/50 flex items-center justify-between">
                     <h2 className="text-base font-semibold text-slate-100">Chat Assistant</h2>
                     <ScreenshotFAB 
