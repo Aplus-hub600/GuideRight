@@ -35,34 +35,35 @@ export function useGoogleMaps(options: UseGoogleMapsOptions = {}) {
         // Check if Google Maps script exists with current language and region
         const existingScript = document.querySelector('script[src*="maps.googleapis.com"]')
         const currentScriptSrc = existingScript?.getAttribute('src')
-        const hasCorrectLanguage = currentScriptSrc?.includes(`language=${language}`) && currentScriptSrc?.includes(`region=US`)
+        const hasLanguage = currentScriptSrc?.includes(`language=${language}`)
+        const hasRegion = currentScriptSrc?.includes(`region=US`)
+        const hasCorrectSettings = hasLanguage && hasRegion
 
-        // If script exists with correct language and Maps is loaded, we're good
-        if (window.google && window.google.maps && hasCorrectLanguage) {
+        console.log('Google Maps script check:', {
+          scriptUrl: currentScriptSrc,
+          hasLanguage,
+          hasRegion,
+          hasCorrectSettings,
+          googleLoaded: !!window.google?.maps
+        })
+
+        // If script exists with correct settings and Maps is loaded, we're good
+        if (window.google && window.google.maps && hasCorrectSettings) {
+          console.log('Google Maps already loaded with correct settings')
           setIsLoaded(true)
           return
         }
 
-        // If language changed, we need to reload the page to load Maps with new language
-        // Google Maps doesn't support dynamic language changes after loading
-        if (existingScript && !hasCorrectLanguage && window.google && window.google.maps) {
-          // Force page reload to load Maps with new language
-          console.log(`Reloading page to load Google Maps in ${language}`)
+        // If script exists but doesn't have correct settings, force page reload
+        if (existingScript && !hasCorrectSettings) {
+          console.log('Google Maps script missing region=US, forcing reload...')
+          // Remove old script
+          existingScript.remove()
+          // Delete google object to force fresh load
+          delete (window as any).google
+          // Force page reload to load Maps with correct settings
           window.location.reload()
           return
-        }
-
-        // Check if script is already being loaded with correct language
-        if (existingScript && hasCorrectLanguage) {
-          // Wait for existing script to load
-          existingScript.addEventListener('load', () => setIsLoaded(true))
-          existingScript.addEventListener('error', () => setLoadError(new Error('Failed to load Google Maps')))
-          return
-        }
-
-        // Remove old script if it exists with wrong language
-        if (existingScript && !hasCorrectLanguage) {
-          existingScript.remove()
         }
 
         // Load Google Maps script with language support and region set to US for English-only labels
