@@ -11,7 +11,7 @@ import { SocialMediaPanel } from "./social-media-panel"
 import { ExportPanel } from "./export-panel"
 import { ScreenshotFAB } from "./screenshot-fab"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Target, TrendingUp, Shield, X, CloudRain, Share2, BarChart3, Clock, Upload } from "lucide-react"
+import { Target, TrendingUp, Shield, X, CloudRain, Share2, BarChart3, Clock, Upload, Maximize2, Minimize2 } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { cn } from "@/lib/utils"
 import { NavSection } from "./bottom-nav-bar"
@@ -46,6 +46,8 @@ export function Dashboard({ className, activeTopPanel, activeBottomPanel, curren
   const [movementPlan, setMovementPlan] = useState<MovementPlan | undefined>()
   const [confidence, setConfidence] = useState({ belief: 0.78, disbelief: 0.12, uncertainty: 0.10 })
   const [isAnalysisPanelVisible, setIsAnalysisPanelVisible] = useState(false)
+  const [isTopPanelExpanded, setIsTopPanelExpanded] = useState(false)
+  const [isBottomPanelExpanded, setIsBottomPanelExpanded] = useState(false)
 
   const handleRiskUpdate = (score: number, level: string) => {
     setRiskScore(score)
@@ -119,7 +121,12 @@ export function Dashboard({ className, activeTopPanel, activeBottomPanel, curren
 
         {/* Top container - 50% width, 60% height, centered - for right nav items (intelligence, analytics, social) */}
         {activeTopPanel && (
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 w-[50%] h-[60%] animate-in fade-in slide-in-from-top-8 zoom-in-95 duration-700">
+          <div className={cn(
+            "absolute z-20 animate-in fade-in slide-in-from-top-8 zoom-in-95 duration-700 transition-all",
+            isTopPanelExpanded 
+              ? "top-4 left-4 right-4 bottom-20 w-auto h-auto" 
+              : "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[50%] h-[60%]"
+          )}>
             <div className="rounded-3xl shadow-[0_0_60px_rgba(59,130,246,0.5)] border-2 border-blue-500/50 overflow-hidden h-full flex flex-col transition-all duration-500 hover:shadow-[0_0_80px_rgba(59,130,246,0.6)] bg-slate-950 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
               {/* Intelligence */}
               {activeTopPanel === "intelligence" && (
@@ -129,6 +136,17 @@ export function Dashboard({ className, activeTopPanel, activeBottomPanel, curren
                     <TrendingUp className="h-6 w-6 text-blue-400 drop-shadow-[0_0_8px_rgba(59,130,246,0.6)]" />
                     Intelligence Analysis
                   </h2>
+                  <button
+                    onClick={() => setIsTopPanelExpanded(!isTopPanelExpanded)}
+                    className="p-2 rounded-lg hover-elevate active-elevate-2 transition-all bg-blue-500/20 border border-blue-400/30"
+                    data-testid="button-expand-intelligence"
+                  >
+                    {isTopPanelExpanded ? (
+                      <Minimize2 className="h-5 w-5 text-blue-400" />
+                    ) : (
+                      <Maximize2 className="h-5 w-5 text-blue-400" />
+                    )}
+                  </button>
                 </div>
                 <div className="flex-1 overflow-hidden p-4" data-testid="panel-intel">
                   <Tabs defaultValue="intelligence" className="h-full flex flex-col">
@@ -163,6 +181,17 @@ export function Dashboard({ className, activeTopPanel, activeBottomPanel, curren
                     <BarChart3 className="h-6 w-6 text-blue-400 drop-shadow-[0_0_8px_rgba(59,130,246,0.6)]" />
                     Analytics Dashboard
                   </h2>
+                  <button
+                    onClick={() => setIsTopPanelExpanded(!isTopPanelExpanded)}
+                    className="p-2 rounded-lg hover-elevate active-elevate-2 transition-all bg-blue-500/20 border border-blue-400/30"
+                    data-testid="button-expand-analytics"
+                  >
+                    {isTopPanelExpanded ? (
+                      <Minimize2 className="h-5 w-5 text-blue-400" />
+                    ) : (
+                      <Maximize2 className="h-5 w-5 text-blue-400" />
+                    )}
+                  </button>
                 </div>
                 <div className="flex-1 overflow-y-auto" data-testid="panel-analytics">
                   <Analytics />
@@ -178,6 +207,17 @@ export function Dashboard({ className, activeTopPanel, activeBottomPanel, curren
                     <Share2 className="h-6 w-6 text-blue-400 drop-shadow-[0_0_8px_rgba(59,130,246,0.6)]" />
                     Social Media Intelligence
                   </h2>
+                  <button
+                    onClick={() => setIsTopPanelExpanded(!isTopPanelExpanded)}
+                    className="p-2 rounded-lg hover-elevate active-elevate-2 transition-all bg-blue-500/20 border border-blue-400/30"
+                    data-testid="button-expand-social"
+                  >
+                    {isTopPanelExpanded ? (
+                      <Minimize2 className="h-5 w-5 text-blue-400" />
+                    ) : (
+                      <Maximize2 className="h-5 w-5 text-blue-400" />
+                    )}
+                  </button>
                 </div>
                 <div className="flex-1 overflow-y-auto p-4" data-testid="panel-social">
                   <SocialMediaPanel data-testid="social-media-panel-main" />
@@ -190,7 +230,12 @@ export function Dashboard({ className, activeTopPanel, activeBottomPanel, curren
 
         {/* Bottom container - 45% width, 20% height, positioned right of chat - for left nav items (timeline, weather, files, settings) */}
         {activeBottomPanel && (
-          <div className="absolute bottom-14 left-[22rem] right-4 z-20 h-[20%] animate-in fade-in slide-in-from-bottom-8 zoom-in-95 duration-700">
+          <div className={cn(
+            "absolute z-20 animate-in fade-in slide-in-from-bottom-8 zoom-in-95 duration-700 transition-all",
+            isBottomPanelExpanded
+              ? "top-4 left-4 right-4 bottom-20 w-auto h-auto"
+              : "bottom-14 left-[22rem] right-4 h-[20%]"
+          )}>
             <div className="rounded-3xl shadow-[0_0_60px_rgba(59,130,246,0.5)] border-2 border-blue-500/50 overflow-hidden h-full flex flex-col transition-all duration-500 hover:shadow-[0_0_80px_rgba(59,130,246,0.6)] bg-slate-950 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
               {/* Timeline */}
               {activeBottomPanel === "timeline" && (
@@ -200,6 +245,17 @@ export function Dashboard({ className, activeTopPanel, activeBottomPanel, curren
                     <Clock className="h-6 w-6 text-blue-400 drop-shadow-[0_0_8px_rgba(59,130,246,0.6)]" />
                     Event Timeline
                   </h2>
+                  <button
+                    onClick={() => setIsBottomPanelExpanded(!isBottomPanelExpanded)}
+                    className="p-2 rounded-lg hover-elevate active-elevate-2 transition-all bg-blue-500/20 border border-blue-400/30"
+                    data-testid="button-expand-timeline"
+                  >
+                    {isBottomPanelExpanded ? (
+                      <Minimize2 className="h-5 w-5 text-blue-400" />
+                    ) : (
+                      <Maximize2 className="h-5 w-5 text-blue-400" />
+                    )}
+                  </button>
                 </div>
                 <div className="flex-1 overflow-y-auto" data-testid="panel-timeline">
                   <Timeline />
@@ -215,6 +271,17 @@ export function Dashboard({ className, activeTopPanel, activeBottomPanel, curren
                     <CloudRain className="h-6 w-6 text-blue-400 drop-shadow-[0_0_8px_rgba(59,130,246,0.6)]" />
                     Weather Intelligence
                   </h2>
+                  <button
+                    onClick={() => setIsBottomPanelExpanded(!isBottomPanelExpanded)}
+                    className="p-2 rounded-lg hover-elevate active-elevate-2 transition-all bg-blue-500/20 border border-blue-400/30"
+                    data-testid="button-expand-weather"
+                  >
+                    {isBottomPanelExpanded ? (
+                      <Minimize2 className="h-5 w-5 text-blue-400" />
+                    ) : (
+                      <Maximize2 className="h-5 w-5 text-blue-400" />
+                    )}
+                  </button>
                 </div>
                 <div className="flex-1 overflow-y-auto p-4" data-testid="panel-weather">
                   <WeatherPanel data-testid="weather-panel-main" />
@@ -230,6 +297,17 @@ export function Dashboard({ className, activeTopPanel, activeBottomPanel, curren
                     <Upload className="h-6 w-6 text-blue-400 drop-shadow-[0_0_8px_rgba(59,130,246,0.6)]" />
                     Media Analysis
                   </h3>
+                  <button
+                    onClick={() => setIsBottomPanelExpanded(!isBottomPanelExpanded)}
+                    className="p-2 rounded-lg hover-elevate active-elevate-2 transition-all bg-blue-500/20 border border-blue-400/30"
+                    data-testid="button-expand-files"
+                  >
+                    {isBottomPanelExpanded ? (
+                      <Minimize2 className="h-5 w-5 text-blue-400" />
+                    ) : (
+                      <Maximize2 className="h-5 w-5 text-blue-400" />
+                    )}
+                  </button>
                 </div>
                 <div className="flex-1 overflow-y-auto p-4" data-testid="panel-files">
                   <FileDrop 
@@ -244,6 +322,24 @@ export function Dashboard({ className, activeTopPanel, activeBottomPanel, curren
 
               {/* Export & Feedback (formerly Settings) */}
               {activeBottomPanel === "settings" && (
+              <>
+                <div className="p-5 border-b-2 border-blue-500/30 flex items-center justify-between bg-gradient-to-r from-blue-950/40 to-transparent">
+                  <h2 className="flex items-center gap-3 text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-blue-400">
+                    <Upload className="h-6 w-6 text-blue-400 drop-shadow-[0_0_8px_rgba(59,130,246,0.6)]" />
+                    Export & Feedback
+                  </h2>
+                  <button
+                    onClick={() => setIsBottomPanelExpanded(!isBottomPanelExpanded)}
+                    className="p-2 rounded-lg hover-elevate active-elevate-2 transition-all bg-blue-500/20 border border-blue-400/30"
+                    data-testid="button-expand-export"
+                  >
+                    {isBottomPanelExpanded ? (
+                      <Minimize2 className="h-5 w-5 text-blue-400" />
+                    ) : (
+                      <Maximize2 className="h-5 w-5 text-blue-400" />
+                    )}
+                  </button>
+                </div>
                 <div className="flex-1 overflow-y-auto" data-testid="panel-export">
                   <ExportPanel 
                     currentAOI={currentAOI}
@@ -251,6 +347,7 @@ export function Dashboard({ className, activeTopPanel, activeBottomPanel, curren
                     activeBottomPanel={activeBottomPanel}
                   />
                 </div>
+              </>
               )}
             </div>
           </div>
