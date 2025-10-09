@@ -201,14 +201,15 @@ export function LocationSearchBar({ onLocationSelect, currentLocation }: Locatio
     <div className="relative">
       <div 
         className={`
-          bg-gradient-to-r from-slate-900/70 to-slate-800/70 backdrop-blur-md rounded-full shadow-2xl border border-slate-700/50
+          bg-gradient-to-r from-blue-950/90 via-slate-900/90 to-blue-950/90 backdrop-blur-xl rounded-full shadow-[0_0_30px_rgba(59,130,246,0.3)] border-2 border-blue-500/40
           transition-all duration-300 ease-in-out
-          ${isExpanded || showAdvancedSearch ? 'w-96' : 'w-72'}
+          ${isExpanded || showAdvancedSearch ? 'w-[28rem] shadow-[0_0_40px_rgba(59,130,246,0.4)]' : 'w-80 shadow-[0_0_30px_rgba(59,130,246,0.3)]'}
+          hover:shadow-[0_0_50px_rgba(59,130,246,0.5)] hover:border-blue-400/50
         `}
         data-testid="location-search-bar"
       >
-        <div className="flex items-center gap-3 px-4 py-3">
-          <MapPin className="h-4 w-4 text-blue-400 flex-shrink-0" />
+        <div className="flex items-center gap-4 px-6 py-4">
+          <MapPin className="h-5 w-5 text-blue-400 flex-shrink-0 drop-shadow-[0_0_8px_rgba(59,130,246,0.6)]" />
           <input
             ref={inputRef}
             type="text"
@@ -217,20 +218,20 @@ export function LocationSearchBar({ onLocationSelect, currentLocation }: Locatio
             onFocus={handleFocus}
             onBlur={handleBlur}
             placeholder={showAdvancedSearch ? "Search intelligence data..." : (currentLocation || "Search location...")}
-            className="flex-1 bg-transparent border-none outline-none text-sm text-slate-100 placeholder:text-slate-400"
+            className="flex-1 bg-transparent border-none outline-none text-base font-medium text-slate-50 placeholder:text-slate-400 placeholder:font-normal"
             data-testid="input-location-search"
           />
           <button
             onClick={toggleAdvancedSearch}
-            className={`flex-shrink-0 p-1.5 rounded-full transition-colors ${
+            className={`flex-shrink-0 p-2 rounded-full transition-all duration-300 ${
               showAdvancedSearch 
-                ? 'bg-blue-500/20 text-blue-400' 
-                : 'text-slate-500 hover:text-blue-400 hover:bg-slate-700/50'
+                ? 'bg-blue-500/30 text-blue-300 shadow-[0_0_15px_rgba(59,130,246,0.5)] scale-110' 
+                : 'text-slate-400 hover:text-blue-400 hover:bg-blue-500/20 hover:shadow-[0_0_10px_rgba(59,130,246,0.3)]'
             }`}
             title={showAdvancedSearch ? "Basic location search" : "Advanced search with filters"}
             data-testid="button-toggle-advanced-search"
           >
-            {showAdvancedSearch ? <X className="h-4 w-4" /> : <Search className="h-4 w-4" />}
+            {showAdvancedSearch ? <X className="h-5 w-5" /> : <Search className="h-5 w-5" />}
           </button>
         </div>
 
@@ -325,7 +326,7 @@ export function LocationSearchBar({ onLocationSelect, currentLocation }: Locatio
 
       {/* Search Results Dropdown */}
       {showAdvancedSearch && debouncedSearch.length >= 2 && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-gradient-to-br from-slate-900/95 via-slate-800/95 to-slate-900/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-700/50 overflow-hidden max-h-96 z-50">
+        <div className="absolute top-full left-0 right-0 mt-3 bg-gradient-to-br from-slate-900/98 via-blue-950/98 to-slate-900/98 backdrop-blur-2xl rounded-2xl shadow-[0_0_40px_rgba(59,130,246,0.3)] border-2 border-blue-500/30 overflow-hidden max-h-96 z-50">
           {isLoading && (
             <div className="flex items-center justify-center p-6" data-testid="loading-search">
               <Loader2 className="h-5 w-5 animate-spin text-blue-400 mr-2" />

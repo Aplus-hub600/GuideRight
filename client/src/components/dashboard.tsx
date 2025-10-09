@@ -120,13 +120,13 @@ export function Dashboard({ className, activeTopPanel, activeBottomPanel, curren
         {/* Top container - 50% width, 60% height, centered - for right nav items (intelligence, analytics, social) */}
         {activeTopPanel && (
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 w-[50%] h-[60%] animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="bg-gradient-to-br from-slate-900/95 via-slate-800/95 to-slate-900/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-slate-700/50 overflow-hidden h-full flex flex-col">
+            <div className="bg-gradient-to-br from-blue-950/98 via-slate-900/98 to-slate-950/98 backdrop-blur-2xl rounded-3xl shadow-[0_0_50px_rgba(59,130,246,0.4)] border-2 border-blue-500/40 overflow-hidden h-full flex flex-col">
               {/* Intelligence */}
             {activeTopPanel === "intelligence" && (
               <>
-                <div className="p-4 border-b border-slate-700/50 flex items-center justify-between">
-                  <h2 className="flex items-center gap-2 text-base font-semibold text-slate-100">
-                    <TrendingUp className="h-5 w-5 text-blue-400" />
+                <div className="p-5 border-b-2 border-blue-500/30 flex items-center justify-between bg-gradient-to-r from-blue-950/40 to-transparent">
+                  <h2 className="flex items-center gap-3 text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-blue-400">
+                    <TrendingUp className="h-6 w-6 text-blue-400 drop-shadow-[0_0_8px_rgba(59,130,246,0.6)]" />
                     Intelligence Analysis
                   </h2>
                 </div>
@@ -158,9 +158,9 @@ export function Dashboard({ className, activeTopPanel, activeBottomPanel, curren
             {/* Analytics */}
             {activeTopPanel === "analytics" && (
               <>
-                <div className="p-4 border-b border-slate-700/50 flex items-center justify-between">
-                  <h2 className="flex items-center gap-2 text-base font-semibold text-slate-100">
-                    <BarChart3 className="h-5 w-5 text-blue-400" />
+                <div className="p-5 border-b-2 border-blue-500/30 flex items-center justify-between bg-gradient-to-r from-blue-950/40 to-transparent">
+                  <h2 className="flex items-center gap-3 text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-blue-400">
+                    <BarChart3 className="h-6 w-6 text-blue-400 drop-shadow-[0_0_8px_rgba(59,130,246,0.6)]" />
                     Analytics Dashboard
                   </h2>
                 </div>
@@ -173,9 +173,9 @@ export function Dashboard({ className, activeTopPanel, activeBottomPanel, curren
             {/* Social Media */}
             {activeTopPanel === "social" && (
               <>
-                <div className="p-4 border-b border-slate-700/50 flex items-center justify-between">
-                  <h2 className="flex items-center gap-2 text-base font-semibold text-slate-100">
-                    <Share2 className="h-5 w-5 text-blue-400" />
+                <div className="p-5 border-b-2 border-blue-500/30 flex items-center justify-between bg-gradient-to-r from-blue-950/40 to-transparent">
+                  <h2 className="flex items-center gap-3 text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-blue-400">
+                    <Share2 className="h-6 w-6 text-blue-400 drop-shadow-[0_0_8px_rgba(59,130,246,0.6)]" />
                     Social Media Intelligence
                   </h2>
                 </div>
@@ -191,13 +191,13 @@ export function Dashboard({ className, activeTopPanel, activeBottomPanel, curren
         {/* Bottom container - 45% width, 20% height, positioned right of chat - for left nav items (timeline, weather, files, settings) */}
         {activeBottomPanel && (
           <div className="absolute bottom-14 left-[22rem] right-4 z-20 h-[20%] animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="bg-gradient-to-br from-slate-900/95 via-slate-800/95 to-slate-900/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-slate-700/50 overflow-hidden h-full flex flex-col">
+            <div className="bg-gradient-to-br from-blue-950/98 via-slate-900/98 to-slate-950/98 backdrop-blur-2xl rounded-3xl shadow-[0_0_50px_rgba(59,130,246,0.4)] border-2 border-blue-500/40 overflow-hidden h-full flex flex-col">
               {/* Timeline */}
               {activeBottomPanel === "timeline" && (
               <>
-                <div className="p-4 border-b border-slate-700/50 flex items-center justify-between">
-                  <h2 className="flex items-center gap-2 text-base font-semibold text-slate-100">
-                    <Clock className="h-5 w-5 text-blue-400" />
+                <div className="p-5 border-b-2 border-blue-500/30 flex items-center justify-between bg-gradient-to-r from-blue-950/40 to-transparent">
+                  <h2 className="flex items-center gap-3 text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-blue-400">
+                    <Clock className="h-6 w-6 text-blue-400 drop-shadow-[0_0_8px_rgba(59,130,246,0.6)]" />
                     Event Timeline
                   </h2>
                 </div>
@@ -210,9 +210,9 @@ export function Dashboard({ className, activeTopPanel, activeBottomPanel, curren
               {/* Weather */}
               {activeBottomPanel === "weather" && (
               <>
-                <div className="p-4 border-b border-slate-700/50 flex items-center justify-between">
-                  <h2 className="flex items-center gap-2 text-base font-semibold text-slate-100">
-                    <CloudRain className="h-5 w-5 text-blue-400" />
+                <div className="p-5 border-b-2 border-blue-500/30 flex items-center justify-between bg-gradient-to-r from-blue-950/40 to-transparent">
+                  <h2 className="flex items-center gap-3 text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-blue-400">
+                    <CloudRain className="h-6 w-6 text-blue-400 drop-shadow-[0_0_8px_rgba(59,130,246,0.6)]" />
                     Weather Intelligence
                   </h2>
                 </div>
@@ -225,9 +225,9 @@ export function Dashboard({ className, activeTopPanel, activeBottomPanel, curren
               {/* Files */}
               {activeBottomPanel === "files" && (
               <>
-                <div className="p-4 border-b border-slate-700/50 flex items-center justify-between">
-                  <h3 className="flex items-center gap-2 text-base font-semibold text-slate-100">
-                    <Upload className="h-5 w-5 text-blue-400" />
+                <div className="p-5 border-b-2 border-blue-500/30 flex items-center justify-between bg-gradient-to-r from-blue-950/40 to-transparent">
+                  <h3 className="flex items-center gap-3 text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-blue-400">
+                    <Upload className="h-6 w-6 text-blue-400 drop-shadow-[0_0_8px_rgba(59,130,246,0.6)]" />
                     Media Analysis
                   </h3>
                 </div>

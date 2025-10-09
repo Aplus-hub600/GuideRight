@@ -208,6 +208,36 @@ textarea {
   animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
+@keyframes glow-pulse {
+  0%, 100% { 
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.3),
+                0 0 40px rgba(59, 130, 246, 0.2),
+                inset 0 0 20px rgba(59, 130, 246, 0.1);
+  }
+  50% { 
+    box-shadow: 0 0 30px rgba(59, 130, 246, 0.5),
+                0 0 60px rgba(59, 130, 246, 0.3),
+                inset 0 0 30px rgba(59, 130, 246, 0.2);
+  }
+}
+
+.animate-glow-pulse {
+  animation: glow-pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Tactical blue glow utility class */
+.tactical-glow {
+  box-shadow: 0 0 25px rgba(59, 130, 246, 0.4),
+              0 0 50px rgba(59, 130, 246, 0.2),
+              inset 0 0 25px rgba(59, 130, 246, 0.1);
+}
+
+.tactical-glow-strong {
+  box-shadow: 0 0 35px rgba(59, 130, 246, 0.6),
+              0 0 70px rgba(59, 130, 246, 0.4),
+              inset 0 0 35px rgba(59, 130, 246, 0.15);
+}
+
 /* Smooth panel animations */
 @keyframes slide-in-from-bottom {
   from {

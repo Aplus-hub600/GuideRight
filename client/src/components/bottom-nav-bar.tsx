@@ -11,8 +11,8 @@ interface BottomNavBarProps {
 export function BottomNavBar({ activeTopPanel, activeBottomPanel, onTogglePanel }: BottomNavBarProps) {
 
   return (
-    <div className="fixed bottom-0 left-1/2 -translate-x-1/2 z-30 pb-3" data-testid="bottom-nav-bar">
-      <div className="flex items-center gap-2 bg-gradient-to-r from-slate-900/90 via-slate-800/90 to-slate-900/90 backdrop-blur-xl rounded-full p-2.5 shadow-2xl border border-slate-700/50">
+    <div className="fixed bottom-0 left-1/2 -translate-x-1/2 z-30 pb-4" data-testid="bottom-nav-bar">
+      <div className="flex items-center gap-3 bg-gradient-to-r from-blue-950/95 via-slate-900/95 to-blue-950/95 backdrop-blur-2xl rounded-full p-3 shadow-[0_0_40px_rgba(59,130,246,0.3)] border-2 border-blue-500/30">
         {/* Home button - clears all panels */}
         <NavButton
           icon={Home}
@@ -53,7 +53,7 @@ export function BottomNavBar({ activeTopPanel, activeBottomPanel, onTogglePanel 
         />
         
         {/* Divider */}
-        <div className="w-px h-8 bg-gradient-to-b from-transparent via-slate-500/50 to-transparent mx-1" />
+        <div className="w-px h-10 bg-gradient-to-b from-transparent via-blue-400/60 to-transparent mx-1 shadow-[0_0_10px_rgba(59,130,246,0.4)]" />
         
         {/* Right group - top panels (chat, intelligence, analytics, social) */}
         {/* Chat is now a permanent left sidebar, removed from navigation */}
@@ -96,17 +96,17 @@ function NavButton({ icon: Icon, label, active, onClick, testId }: NavButtonProp
     <button
       onClick={onClick}
       className={`
-        w-12 h-12 rounded-full flex items-center justify-center
+        w-14 h-14 rounded-full flex items-center justify-center
         transition-all duration-300 ease-out
         ${active 
-          ? "bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/50 scale-105" 
-          : "bg-slate-700/50 text-slate-300 hover:bg-slate-600/70 hover:text-white hover:scale-105"
+          ? "bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-[0_0_25px_rgba(59,130,246,0.7)] border-2 border-blue-400/60 scale-110" 
+          : "bg-slate-700/60 text-slate-300 hover:bg-blue-500/30 hover:text-blue-300 hover:scale-105 hover:shadow-[0_0_20px_rgba(59,130,246,0.4)] border-2 border-transparent hover:border-blue-500/30"
         }
       `}
       title={label}
       data-testid={testId}
     >
-      <Icon className={`w-5 h-5 ${active ? 'animate-pulse-subtle' : ''}`} />
+      <Icon className={`w-6 h-6 ${active ? 'drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]' : ''}`} />
     </button>
   );
 }
