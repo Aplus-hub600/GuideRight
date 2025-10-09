@@ -120,9 +120,9 @@ export function Dashboard({ className, activeTopPanel, activeBottomPanel, curren
         {/* Top container - 50% width, 60% height, centered - for right nav items (intelligence, analytics, social) */}
         {activeTopPanel && (
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 w-[50%] h-[60%] animate-in fade-in slide-in-from-top-8 zoom-in-95 duration-700">
-            <div className="bg-gradient-to-br from-blue-950/98 via-slate-900/98 to-slate-950/98 backdrop-blur-2xl rounded-3xl shadow-[0_0_60px_rgba(59,130,246,0.5)] border-2 border-blue-500/50 overflow-hidden h-full flex flex-col transition-all duration-500 hover:shadow-[0_0_80px_rgba(59,130,246,0.6)]">
+            <div className="rounded-3xl shadow-[0_0_60px_rgba(59,130,246,0.5)] border-2 border-blue-500/50 overflow-hidden h-full flex flex-col transition-all duration-500 hover:shadow-[0_0_80px_rgba(59,130,246,0.6)] bg-slate-950 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
               {/* Intelligence */}
-            {activeTopPanel === "intelligence" && (
+              {activeTopPanel === "intelligence" && (
               <>
                 <div className="p-5 border-b-2 border-blue-500/30 flex items-center justify-between bg-gradient-to-r from-blue-950/40 to-transparent">
                   <h2 className="flex items-center gap-3 text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-blue-400">
@@ -155,8 +155,8 @@ export function Dashboard({ className, activeTopPanel, activeBottomPanel, curren
               </>
             )}
 
-            {/* Analytics */}
-            {activeTopPanel === "analytics" && (
+              {/* Analytics */}
+              {activeTopPanel === "analytics" && (
               <>
                 <div className="p-5 border-b-2 border-blue-500/30 flex items-center justify-between bg-gradient-to-r from-blue-950/40 to-transparent">
                   <h2 className="flex items-center gap-3 text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-blue-400">
@@ -170,8 +170,8 @@ export function Dashboard({ className, activeTopPanel, activeBottomPanel, curren
               </>
             )}
 
-            {/* Social Media */}
-            {activeTopPanel === "social" && (
+              {/* Social Media */}
+              {activeTopPanel === "social" && (
               <>
                 <div className="p-5 border-b-2 border-blue-500/30 flex items-center justify-between bg-gradient-to-r from-blue-950/40 to-transparent">
                   <h2 className="flex items-center gap-3 text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-blue-400">
@@ -183,7 +183,7 @@ export function Dashboard({ className, activeTopPanel, activeBottomPanel, curren
                   <SocialMediaPanel data-testid="social-media-panel-main" />
                 </div>
               </>
-            )}
+              )}
             </div>
           </div>
         )}
@@ -191,7 +191,7 @@ export function Dashboard({ className, activeTopPanel, activeBottomPanel, curren
         {/* Bottom container - 45% width, 20% height, positioned right of chat - for left nav items (timeline, weather, files, settings) */}
         {activeBottomPanel && (
           <div className="absolute bottom-14 left-[22rem] right-4 z-20 h-[20%] animate-in fade-in slide-in-from-bottom-8 zoom-in-95 duration-700">
-            <div className="bg-gradient-to-br from-blue-950/98 via-slate-900/98 to-slate-950/98 backdrop-blur-2xl rounded-3xl shadow-[0_0_60px_rgba(59,130,246,0.5)] border-2 border-blue-500/50 overflow-hidden h-full flex flex-col transition-all duration-500 hover:shadow-[0_0_80px_rgba(59,130,246,0.6)]">
+            <div className="rounded-3xl shadow-[0_0_60px_rgba(59,130,246,0.5)] border-2 border-blue-500/50 overflow-hidden h-full flex flex-col transition-all duration-500 hover:shadow-[0_0_80px_rgba(59,130,246,0.6)] bg-slate-950 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
               {/* Timeline */}
               {activeBottomPanel === "timeline" && (
               <>
