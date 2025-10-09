@@ -188,9 +188,9 @@ export function Dashboard({ className, activeTopPanel, activeBottomPanel, curren
           </div>
         )}
 
-        {/* Bottom container - 50% width, 20% height, centered, above nav - for left nav items (timeline, weather, files, settings) */}
+        {/* Bottom container - 45% width, 20% height, positioned right of chat - for left nav items (timeline, weather, files, settings) */}
         {activeBottomPanel && (
-          <div className="absolute bottom-14 left-1/2 -translate-x-1/2 z-20 w-[50%] h-[20%] animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="absolute bottom-14 left-[22rem] right-4 z-20 h-[20%] animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="bg-gradient-to-br from-slate-900/95 via-slate-800/95 to-slate-900/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-slate-700/50 overflow-hidden h-full flex flex-col">
               {/* Timeline */}
               {activeBottomPanel === "timeline" && (
