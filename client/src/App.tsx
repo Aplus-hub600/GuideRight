@@ -11,6 +11,7 @@ import { ChatPanel } from "./components/chat-panel";
 import { ScreenshotFAB } from "./components/screenshot-fab";
 import { useState } from "react";
 import i18n from "./lib/i18n";
+import { ChevronDown, ChevronUp, MessageSquare } from "lucide-react";
 
 interface AOI {
   name?: string;
@@ -26,6 +27,9 @@ function App() {
   
   // Bottom panels (left side of nav): timeline, weather, files, settings - only one at a time  
   const [activeBottomPanel, setActiveBottomPanel] = useState<NavSection | null>(null)
+  
+  // Chat panel collapse state
+  const [isChatMinimized, setIsChatMinimized] = useState(false)
   
   const [currentAOI, setCurrentAOI] = useState<AOI>({
     name: "Dhaka",
@@ -101,30 +105,49 @@ function App() {
                 />
               </div>
 
-              {/* Left side: chat assistant - positioned below map controls */}
+              {/* Left side: chat assistant - collapsible, positioned below map controls */}
               {!activeTopPanel && (
-                <div className="absolute top-[280px] left-4 z-30 w-80">
-                  <div className="bg-white/80 backdrop-blur-md rounded-2xl shadow-xl border border-gray-200 flex flex-col max-h-[calc(100vh-300px)]" id="chat-assistant-container">
-                    <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-                      <h2 className="text-sm font-semibold text-gray-800 flex items-center gap-2">
-                        <svg className="h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                        </svg>
+                <div className={`absolute top-[280px] left-4 z-30 transition-all duration-500 ${isChatMinimized ? 'w-72' : 'w-80'}`}>
+                  <div 
+                    className="bg-slate-950/95 backdrop-blur-xl rounded-2xl shadow-[0_0_40px_rgba(59,130,246,0.4)] border-2 border-blue-500/50 flex flex-col transition-all duration-500" 
+                    id="chat-assistant-container"
+                    style={{ maxHeight: isChatMinimized ? '64px' : 'calc(100vh - 300px)' }}
+                  >
+                    <div className="p-4 border-b-2 border-blue-500/30 flex items-center justify-between bg-gradient-to-r from-blue-950/40 to-transparent">
+                      <h2 className="text-base font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-blue-400 flex items-center gap-2">
+                        <MessageSquare className="h-5 w-5 text-blue-400 drop-shadow-[0_0_8px_rgba(59,130,246,0.6)]" />
                         Chat Assistant
                       </h2>
-                      <ScreenshotFAB 
-                        elementId="chat-assistant-container"
-                        viewName="chat"
-                        className="relative"
-                      />
+                      <div className="flex items-center gap-2">
+                        {!isChatMinimized && (
+                          <ScreenshotFAB 
+                            elementId="chat-assistant-container"
+                            viewName="chat"
+                            className="relative"
+                          />
+                        )}
+                        <button
+                          onClick={() => setIsChatMinimized(!isChatMinimized)}
+                          className="p-2 rounded-lg hover-elevate active-elevate-2 transition-all bg-blue-500/20 border border-blue-400/30"
+                          data-testid="button-toggle-chat"
+                        >
+                          {isChatMinimized ? (
+                            <ChevronUp className="h-4 w-4 text-blue-400" />
+                          ) : (
+                            <ChevronDown className="h-4 w-4 text-blue-400" />
+                          )}
+                        </button>
+                      </div>
                     </div>
-                    <div className="flex-1 overflow-hidden" data-testid="panel-chat">
-                      <ChatPanel 
-                        onQuerySubmit={handleQuerySubmit}
-                        mediaContextIds={mediaContextIds}
-                        className="h-full"
-                      />
-                    </div>
+                    {!isChatMinimized && (
+                      <div className="flex-1 overflow-hidden" data-testid="panel-chat">
+                        <ChatPanel 
+                          onQuerySubmit={handleQuerySubmit}
+                          mediaContextIds={mediaContextIds}
+                          className="h-full"
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
