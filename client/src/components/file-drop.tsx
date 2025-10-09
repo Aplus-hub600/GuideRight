@@ -251,7 +251,7 @@ export function FileDrop({
           )} />
           <p className={cn(
             "font-bold mb-1",
-            compact ? "text-xs" : "text-base mb-2 text-foreground"
+            compact ? "text-xs" : "text-lg mb-2 text-blue-100"
           )}>
             {isDragActive 
               ? t('fileDrop.dragActive') || "Drop files here..."
@@ -261,7 +261,7 @@ export function FileDrop({
             }
           </p>
           {!compact && (
-            <p className="text-sm font-semibold text-foreground/70">
+            <p className="text-base font-semibold text-blue-200/90">
               Supports images, text files, PDFs, and Word documents • Max {maxFiles} files • 50MB each
             </p>
           )}
@@ -276,7 +276,7 @@ export function FileDrop({
       {/* Analyzed Files List */}
       {analyzedFiles.length > 0 && (
         <div className={cn("space-y-2", compact && "space-y-1")}>
-          <h3 className={cn("font-medium", compact ? "text-xs" : "text-sm")}>
+          <h3 className={cn("font-bold text-blue-100", compact ? "text-xs" : "text-lg")}>
             {compact ? `Files (${analyzedFiles.length}/${maxFiles})` : `${t('fileDrop.uploadedFiles') || "Uploaded Files"} (${analyzedFiles.length}/${maxFiles})`}
           </h3>
           

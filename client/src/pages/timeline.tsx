@@ -120,12 +120,12 @@ export default function Timeline() {
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex items-center justify-between p-6 border-b">
+      <div className="flex items-center justify-between p-6 border-b bg-gradient-to-r from-slate-900/50 to-transparent">
         <div className="flex items-center gap-3">
-          <Clock className="h-6 w-6 text-primary" />
+          <Clock className="h-7 w-7 text-blue-400 drop-shadow-[0_0_8px_rgba(59,130,246,0.6)]" />
           <div>
-            <h1 className="text-2xl font-bold" data-testid="text-timeline-title">Event Timeline</h1>
-            <p className="text-sm text-muted-foreground">
+            <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-blue-400" data-testid="text-timeline-title">Event Timeline</h1>
+            <p className="text-base text-blue-200/90 font-medium">
               Chronological view of all tactical intelligence events
             </p>
           </div>
@@ -225,7 +225,7 @@ export default function Timeline() {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center flex-wrap gap-2">
                               <CardTitle 
-                                className="text-lg font-bold truncate"
+                                className="text-xl font-bold truncate text-blue-100"
                                 data-testid={`text-event-title-${event.id}`}
                               >
                                 {event.title}
@@ -235,7 +235,7 @@ export default function Timeline() {
                             </div>
                             
                             <p 
-                              className="text-base text-foreground/80 mt-2 line-clamp-2 font-medium"
+                              className="text-base text-gray-200 mt-2 line-clamp-2 font-medium leading-relaxed"
                               data-testid={`text-event-description-${event.id}`}
                             >
                               {event.description}
@@ -244,7 +244,7 @@ export default function Timeline() {
                         </div>
                         
                         {/* Timestamp */}
-                        <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground flex-shrink-0 ml-4">
+                        <div className="flex items-center gap-2 text-sm font-bold text-blue-300 flex-shrink-0 ml-4">
                           <Calendar className="h-4 w-4" />
                           <time dateTime={event.timestamp}>
                             {format(new Date(event.timestamp), 'MMM d, HH:mm')}
@@ -255,8 +255,8 @@ export default function Timeline() {
                     
                     {event.location && (
                       <CardContent className="pt-0">
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <MapPin className="h-3 w-3" />
+                        <div className="flex items-center gap-2 text-sm text-blue-300 font-semibold">
+                          <MapPin className="h-4 w-4" />
                           <span>
                             {event.location.lat.toFixed(4)}, {event.location.lng.toFixed(4)}
                           </span>

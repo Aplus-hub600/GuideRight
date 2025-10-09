@@ -244,7 +244,7 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, className }: ChatPan
                 : "bg-gradient-to-br from-slate-800/95 to-slate-900/95 backdrop-blur-xl text-slate-50 border-slate-600/50 shadow-[0_0_20px_rgba(100,116,139,0.3)]"
             )}>
               <div className="space-y-3">
-                <p className="text-base font-medium whitespace-pre-wrap leading-relaxed">{message.content}</p>
+                <p className="text-lg font-medium whitespace-pre-wrap leading-relaxed">{message.content}</p>
                 
                 {message.role === "assistant" && message.analysis && (
                   <div className="mt-4">

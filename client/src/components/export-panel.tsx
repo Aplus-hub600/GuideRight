@@ -40,19 +40,19 @@ export function ExportPanel({ currentAOI, activeTopPanel, activeBottomPanel }: E
   return (
     <div className="space-y-6 p-6" data-testid="panel-export">
       <div>
-        <h2 className="text-2xl font-semibold text-gray-900 mb-2">Settings & Export</h2>
-        <p className="text-sm text-gray-600">
+        <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-blue-400 mb-2">Settings & Export</h2>
+        <p className="text-base text-blue-200/90 font-medium">
           Configure app settings and export data
         </p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Languages className="h-5 w-5" />
+          <CardTitle className="flex items-center gap-2 text-xl font-bold text-blue-100">
+            <Languages className="h-6 w-6 text-blue-400" />
             Language
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-base text-gray-300 font-medium">
             Choose your preferred interface language
           </CardDescription>
         </CardHeader>
@@ -64,11 +64,11 @@ export function ExportPanel({ currentAOI, activeTopPanel, activeBottomPanel }: E
       <div className="grid gap-4">
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileJson className="h-5 w-5" />
+            <CardTitle className="flex items-center gap-2 text-xl font-bold text-blue-100">
+              <FileJson className="h-6 w-6 text-blue-400" />
               Current View Export
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-base text-gray-300 font-medium">
               Export current AOI, active panels, and filters as JSON
             </CardDescription>
           </CardHeader>
@@ -87,11 +87,11 @@ export function ExportPanel({ currentAOI, activeTopPanel, activeBottomPanel }: E
 
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TestTube className="h-5 w-5" />
+            <CardTitle className="flex items-center gap-2 text-xl font-bold text-blue-100">
+              <TestTube className="h-6 w-6 text-blue-400" />
               Test Export
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-base text-gray-300 font-medium">
               Download a test export with sample data for QA
             </CardDescription>
           </CardHeader>

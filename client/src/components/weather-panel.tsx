@@ -260,15 +260,15 @@ export function WeatherPanel({ className, currentLocation, onLocationSelect }: W
             {alerts.map((alert: WeatherAlert) => (
               <Alert key={alert.id} variant="destructive" data-testid={`alert-weather-${alert.id}`}>
                 <AlertTriangle className="h-4 w-4" />
-                <AlertTitle className="flex items-center gap-2">
+                <AlertTitle className="flex items-center gap-2 text-lg font-bold">
                   {alert.title}
-                  <Badge className={getSeverityColor(alert.severity)}>
+                  <Badge className={`${getSeverityColor(alert.severity)} font-bold text-sm`}>
                     {alert.severity}
                   </Badge>
                 </AlertTitle>
-                <AlertDescription>
+                <AlertDescription className="text-base font-medium">
                   {alert.description}
-                  <div className="text-xs text-muted-foreground mt-2">
+                  <div className="text-sm text-gray-300 mt-2 font-semibold">
                     {alert.location} • {new Date(alert.startTime).toLocaleDateString()}
                   </div>
                 </AlertDescription>
@@ -307,8 +307,8 @@ export function WeatherPanel({ className, currentLocation, onLocationSelect }: W
                       {getWeatherIcon(currentWeather.weatherCode)}
                     </div>
                     <div>
-                      <div className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">{currentWeather.temperature}°C</div>
-                      <div className="text-base font-semibold text-foreground/80 mt-1">
+                      <div className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-cyan-300 drop-shadow-[0_0_10px_rgba(59,130,246,0.5)]">{currentWeather.temperature}°C</div>
+                      <div className="text-lg font-bold text-blue-100 mt-1">
                         {getWeatherDescription(currentWeather.weatherCode)}
                       </div>
                     </div>
@@ -320,37 +320,37 @@ export function WeatherPanel({ className, currentLocation, onLocationSelect }: W
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {currentWeather.apparentTemperature && (
                     <div className="flex items-center gap-3 p-3 bg-orange-500/10 rounded-xl">
-                      <Thermometer className="h-6 w-6 text-orange-500" />
+                      <Thermometer className="h-6 w-6 text-orange-400" />
                       <div>
-                        <div className="text-sm font-bold text-foreground/70">Feels like</div>
-                        <div className="text-xl font-bold">{currentWeather.apparentTemperature}°C</div>
+                        <div className="text-sm font-bold text-orange-200">Feels like</div>
+                        <div className="text-2xl font-bold text-orange-100">{currentWeather.apparentTemperature}°C</div>
                       </div>
                     </div>
                   )}
                   {currentWeather.humidity && (
                     <div className="flex items-center gap-3 p-3 bg-blue-500/10 rounded-xl">
-                      <Droplets className="h-6 w-6 text-blue-500" />
+                      <Droplets className="h-6 w-6 text-blue-400" />
                       <div>
-                        <div className="text-sm font-bold text-foreground/70">Humidity</div>
-                        <div className="text-xl font-bold">{currentWeather.humidity}%</div>
+                        <div className="text-sm font-bold text-blue-200">Humidity</div>
+                        <div className="text-2xl font-bold text-blue-100">{currentWeather.humidity}%</div>
                       </div>
                     </div>
                   )}
                   {currentWeather.windSpeed && (
                     <div className="flex items-center gap-3 p-3 bg-gray-500/10 rounded-xl">
-                      <Wind className="h-6 w-6 text-gray-500" />
+                      <Wind className="h-6 w-6 text-gray-300" />
                       <div>
-                        <div className="text-sm font-bold text-foreground/70">Wind Speed</div>
-                        <div className="text-xl font-bold">{currentWeather.windSpeed} km/h</div>
+                        <div className="text-sm font-bold text-gray-200">Wind Speed</div>
+                        <div className="text-2xl font-bold text-gray-100">{currentWeather.windSpeed} km/h</div>
                       </div>
                     </div>
                   )}
                   {currentWeather.pressure && (
                     <div className="flex items-center gap-3 p-3 bg-purple-500/10 rounded-xl">
-                      <Activity className="h-6 w-6 text-purple-500" />
+                      <Activity className="h-6 w-6 text-purple-400" />
                       <div>
-                        <div className="text-sm font-bold text-foreground/70">Pressure</div>
-                        <div className="text-xl font-bold">{currentWeather.pressure} hPa</div>
+                        <div className="text-sm font-bold text-purple-200">Pressure</div>
+                        <div className="text-2xl font-bold text-purple-100">{currentWeather.pressure} hPa</div>
                       </div>
                     </div>
                   )}
