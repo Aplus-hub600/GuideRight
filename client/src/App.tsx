@@ -5,15 +5,12 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { I18nextProvider } from 'react-i18next';
 import { ThemeProvider } from "./components/theme-provider";
 import { Dashboard } from "./components/dashboard";
-import { GlobalSearch } from "./components/global-search";
 import { BottomNavBar, NavSection } from "./components/bottom-nav-bar";
 import { LocationSearchBar } from "./components/location-search-bar";
 import { AoiInfo } from "./components/aoi-info";
 import { ChatPanel } from "./components/chat-panel";
 import { ScreenshotFAB } from "./components/screenshot-fab";
-import { Filter } from "lucide-react";
-import { useSearchNavigation } from "./hooks/use-search-navigation";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import i18n from "./lib/i18n";
 
 interface AOI {
@@ -24,9 +21,6 @@ interface AOI {
 }
 
 function App() {
-  const { handleResultSelect } = useSearchNavigation()
-  const [searchOpen, setSearchOpen] = useState(false)
-  
   // Top panels (right side of nav): intelligence, analytics, social - only one at a time
   // Note: chat is now permanently visible on the left, not part of the panel toggle system
   const [activeTopPanel, setActiveTopPanel] = useState<NavSection | null>(null)
@@ -46,19 +40,6 @@ function App() {
   const handleQuerySubmit = (query: string, contextIds?: string[]) => {
     console.log('Query submitted:', query, 'with context:', contextIds)
   }
-
-  // Keyboard shortcut for advanced search/filter (Cmd/Ctrl+K)
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault()
-        setSearchOpen(true)
-      }
-    }
-    
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [])
 
   // Define panel groups
   // Top panels (right side of nav): intelligence, analytics, social - displayed in top container
@@ -115,21 +96,13 @@ function App() {
 
               {/* Top left: location panel and chat underneath */}
               <div className="absolute top-4 left-4 z-20 flex flex-col gap-3">
-                {/* Location search bar, AOI info, and filter button */}
+                {/* Location search bar with integrated advanced search and AOI info */}
                 <div className="flex items-center gap-3">
                   <LocationSearchBar 
                     onLocationSelect={handleLocationSelect}
                     currentLocation={currentAOI.name}
                   />
                   <AoiInfo aoi={currentAOI} />
-                  <button 
-                    onClick={() => setSearchOpen(true)}
-                    className="bg-gradient-to-br from-slate-900/90 to-slate-800/90 backdrop-blur-xl rounded-full px-4 py-3 text-slate-100 text-sm hover:from-slate-800/90 hover:to-slate-700/90 transition-all shadow-xl border border-slate-700/50 flex items-center gap-2"
-                    data-testid="button-advanced-filter"
-                    title="Advanced Filters"
-                  >
-                    <Filter className="h-4 w-4" />
-                  </button>
                 </div>
 
                 {/* Chat Assistant - underneath location panel */}
@@ -157,13 +130,6 @@ function App() {
                 activeTopPanel={activeTopPanel}
                 activeBottomPanel={activeBottomPanel}
                 onTogglePanel={togglePanel}
-              />
-
-              {/* Advanced search/filter modal */}
-              <GlobalSearch 
-                open={searchOpen} 
-                onOpenChange={setSearchOpen}
-                onSelectResult={handleResultSelect}
               />
 
               {/* Toast notifications */}
