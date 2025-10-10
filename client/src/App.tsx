@@ -105,8 +105,8 @@ function App() {
                 />
               </div>
 
-              {/* Left side: chat assistant - collapsible, positioned below map controls */}
-              {!activeTopPanel && (
+              {/* Left side: chat assistant - hidden only when bottom panels are active */}
+              {!activeBottomPanel && (
                 <div className={`absolute top-[280px] left-4 z-30 transition-all duration-500 ${isChatMinimized ? 'w-72' : 'w-80'}`}>
                   <div 
                     className="bg-slate-950/95 backdrop-blur-xl rounded-2xl shadow-[0_0_40px_rgba(59,130,246,0.4)] border-2 border-blue-500/50 flex flex-col transition-all duration-500" 
