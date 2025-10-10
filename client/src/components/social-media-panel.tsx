@@ -71,7 +71,7 @@ const getPlatformIcon = (platform: string) => {
   if (!platformData) return null
   
   const IconComponent = platformData.icon
-  return <IconComponent className="h-4 w-4" style={{ color: platformData.color }} />
+  return <IconComponent className="h-5 w-5 text-blue-400" />
 }
 
 export function SocialMediaPanel({ "data-testid": testId }: { "data-testid"?: string }) {
@@ -205,8 +205,8 @@ export function SocialMediaPanel({ "data-testid": testId }: { "data-testid"?: st
       {/* Search and Filters */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Search className="h-5 w-5" />
+          <CardTitle className="flex items-center gap-3 text-xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
+            <Search className="h-6 w-6 text-blue-400" />
             Search & Filter
           </CardTitle>
         </CardHeader>
@@ -264,7 +264,7 @@ export function SocialMediaPanel({ "data-testid": testId }: { "data-testid"?: st
               }}
               data-testid="button-clear-filters"
             >
-              <Filter className="h-4 w-4 mr-2" />
+              <Filter className="h-5 w-5 mr-2 text-blue-400" />
               Clear Filters
             </Button>
           </div>
@@ -284,56 +284,56 @@ export function SocialMediaPanel({ "data-testid": testId }: { "data-testid"?: st
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Posts</CardTitle>
-                <MessageCircle className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-lg font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Total Posts</CardTitle>
+                <MessageCircle className="h-5 w-5 text-blue-400" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold" data-testid="text-total-posts">{totalPosts.toLocaleString()}</div>
-                <p className="text-xs text-muted-foreground">From social media sources</p>
+                <div className="text-3xl font-bold text-blue-300" data-testid="text-total-posts">{totalPosts.toLocaleString()}</div>
+                <p className="text-base font-medium text-neutral-200">From social media sources</p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Platforms</CardTitle>
-                <Activity className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-lg font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Platforms</CardTitle>
+                <Activity className="h-5 w-5 text-blue-400" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold" data-testid="text-platforms-count">{Object.keys(platformStats).length}</div>
-                <p className="text-xs text-muted-foreground">Active sources</p>
+                <div className="text-3xl font-bold text-blue-300" data-testid="text-platforms-count">{Object.keys(platformStats).length}</div>
+                <p className="text-base font-medium text-neutral-200">Active sources</p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Influencers</CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-lg font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Influencers</CardTitle>
+                <Users className="h-5 w-5 text-blue-400" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold" data-testid="text-influencers-count">{influencers.length}</div>
-                <p className="text-xs text-muted-foreground">1000+ followers</p>
+                <div className="text-3xl font-bold text-blue-300" data-testid="text-influencers-count">{influencers.length}</div>
+                <p className="text-base font-medium text-neutral-200">1000+ followers</p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Top Hashtags</CardTitle>
-                <Hash className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-lg font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Top Hashtags</CardTitle>
+                <Hash className="h-5 w-5 text-blue-400" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold" data-testid="text-hashtags-count">{topHashtags.length}</div>
-                <p className="text-xs text-muted-foreground">Trending topics</p>
+                <div className="text-3xl font-bold text-blue-300" data-testid="text-hashtags-count">{topHashtags.length}</div>
+                <p className="text-base font-medium text-neutral-200">Trending topics</p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Locations</CardTitle>
-                <MapPin className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-lg font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Locations</CardTitle>
+                <MapPin className="h-5 w-5 text-blue-400" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold" data-testid="text-locations-count">{topLocations.length}</div>
-                <p className="text-xs text-muted-foreground">Geotagged posts</p>
+                <div className="text-3xl font-bold text-blue-300" data-testid="text-locations-count">{topLocations.length}</div>
+                <p className="text-base font-medium text-neutral-200">Geotagged posts</p>
               </CardContent>
             </Card>
           </div>
@@ -348,14 +348,14 @@ export function SocialMediaPanel({ "data-testid": testId }: { "data-testid"?: st
               <Card className="border-2 border-primary/30 shadow-2xl bg-gradient-to-br from-card via-card to-primary/5 relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent animate-pulse" />
                 <CardHeader className="relative z-10">
-                  <CardTitle className="flex items-center gap-2">
+                  <CardTitle className="flex items-center gap-3">
                     <motion.div
                       animate={{ rotate: [0, 360] }}
                       transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
                     >
-                      <Activity className="h-5 w-5 text-primary" />
+                      <Activity className="h-6 w-6 text-blue-400" />
                     </motion.div>
-                    <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                    <span className="text-xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
                       Sentiment Distribution
                     </span>
                     <motion.div
@@ -368,7 +368,7 @@ export function SocialMediaPanel({ "data-testid": testId }: { "data-testid"?: st
                       LIVE
                     </motion.div>
                   </CardTitle>
-                  <CardDescription>Real-time sentiment analysis • {posts.length} posts tracked</CardDescription>
+                  <CardDescription className="text-base font-medium text-neutral-300">Real-time sentiment analysis • {posts.length} posts tracked</CardDescription>
                 </CardHeader>
               <CardContent>
                 <motion.div
@@ -422,11 +422,11 @@ export function SocialMediaPanel({ "data-testid": testId }: { "data-testid"?: st
 
             <Card className="border-2 border-warning/20 shadow-lg hover:shadow-xl transition-all duration-300">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Target className="h-5 w-5 text-warning" />
+                <CardTitle className="flex items-center gap-3 text-xl font-bold bg-gradient-to-r from-orange-400 to-yellow-400 bg-clip-text text-transparent">
+                  <Target className="h-6 w-6 text-orange-400" />
                   Platform Distribution
                 </CardTitle>
-                <CardDescription>Intelligence sources across social media platforms</CardDescription>
+                <CardDescription className="text-base font-medium text-neutral-300">Intelligence sources across social media platforms</CardDescription>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
