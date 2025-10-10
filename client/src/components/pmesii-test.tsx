@@ -177,17 +177,17 @@ export function PMESIITest({ aoi, className }: PMESIITestProps) {
   }
 
   const getScoreColor = (score?: number) => {
-    if (score === undefined || score === null) return "text-muted-foreground"
-    if (score >= 0.8) return "text-green-600 dark:text-green-400"
-    if (score >= 0.6) return "text-yellow-600 dark:text-yellow-400"
-    return "text-red-600 dark:text-red-400"
+    if (score === undefined || score === null) return "text-neutral-400"
+    if (score >= 0.8) return "text-green-400"
+    if (score >= 0.6) return "text-yellow-400"
+    return "text-red-400"
   }
 
   const getScoreIcon = (score?: number) => {
-    if (score === undefined || score === null) return <XCircle className="h-4 w-4 text-muted-foreground" />
-    if (score >= 0.8) return <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
-    if (score >= 0.6) return <AlertTriangle className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
-    return <XCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
+    if (score === undefined || score === null) return <XCircle className="h-5 w-5 text-neutral-400" />
+    if (score >= 0.8) return <CheckCircle2 className="h-5 w-5 text-green-400" />
+    if (score >= 0.6) return <AlertTriangle className="h-5 w-5 text-yellow-400" />
+    return <XCircle className="h-5 w-5 text-red-400" />
   }
 
   const selectedData = testPMESIIData[selectedFactor as keyof typeof testPMESIIData]
@@ -196,15 +196,15 @@ export function PMESIITest({ aoi, className }: PMESIITestProps) {
     <div className={cn("space-y-4", className)}>
       {/* Test Mode Alert */}
       <Alert className="border-blue-200 dark:border-blue-800">
-        <TrendingUp className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-        <AlertDescription>
+        <TrendingUp className="h-5 w-5 text-blue-400" />
+        <AlertDescription className="text-base font-medium text-neutral-200">
           <strong>PMESII Test Mode:</strong> Using realistic test data for Bangladesh operations analysis
         </AlertDescription>
       </Alert>
 
       {/* Generate Button */}
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">PMESII Analysis - Test Mode</h3>
+        <h3 className="text-xl font-bold bg-gradient-to-r from-blue-300 to-blue-400 bg-clip-text text-transparent">PMESII Analysis - Test Mode</h3>
         <Button 
           onClick={handleGenerate}
           disabled={isGenerating}
@@ -232,8 +232,8 @@ export function PMESIITest({ aoi, className }: PMESIITestProps) {
               <CardContent className="p-3">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
-                    <IconComponent className="h-4 w-4" />
-                    <span className="text-sm font-medium capitalize">{factor}</span>
+                    <IconComponent className="h-5 w-5 text-blue-400" />
+                    <span className="text-base font-medium capitalize text-neutral-200">{factor}</span>
                   </div>
                   {(data.score !== undefined && data.score !== null) && (
                     <Badge variant="outline" className="text-xs">
@@ -256,12 +256,12 @@ export function PMESIITest({ aoi, className }: PMESIITestProps) {
           <div className="flex items-center gap-2">
             {(() => {
               const IconComponent = factorIcons[selectedFactor as keyof typeof factorIcons]
-              return <IconComponent className="h-5 w-5" />
+              return <IconComponent className="h-5 w-5 text-blue-400" />
             })()}
             <CardTitle className="capitalize">{selectedFactor} Analysis</CardTitle>
             <div className="flex items-center gap-1 ml-auto">
               {getScoreIcon(selectedData.score)}
-              <span className={cn("text-sm font-medium", getScoreColor(selectedData.score))}>
+              <span className={cn("text-base font-medium", getScoreColor(selectedData.score))}>
                 {selectedData.score ? Math.round(selectedData.score * 100) : 0}%
               </span>
             </div>
@@ -278,12 +278,12 @@ export function PMESIITest({ aoi, className }: PMESIITestProps) {
 
             <TabsContent value="summary" className="mt-4">
               <div className="space-y-3">
-                <p className="text-sm leading-relaxed break-words">{selectedData.summary}</p>
+                <p className="text-base font-medium leading-relaxed break-words text-neutral-200">{selectedData.summary}</p>
                 {(selectedData.score !== undefined && selectedData.score !== null) && (
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium">Stability Score</span>
-                      <span className={cn("text-sm font-medium", getScoreColor(selectedData.score))}>
+                      <span className="text-base font-medium text-neutral-200">Stability Score</span>
+                      <span className={cn("text-base font-medium", getScoreColor(selectedData.score))}>
                         {Math.round(selectedData.score * 100)}%
                       </span>
                     </div>
@@ -296,9 +296,9 @@ export function PMESIITest({ aoi, className }: PMESIITestProps) {
             <TabsContent value="keypoints" className="mt-4">
               <div className="space-y-2">
                 {selectedData.keyPoints.map((point, index) => (
-                  <div key={index} className="flex items-start gap-2 p-2 bg-muted/30 rounded-md text-sm">
-                    <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-2 flex-shrink-0" />
-                    <span className="break-words">{point}</span>
+                  <div key={index} className="flex items-start gap-2 p-2 bg-muted/30 rounded-md">
+                    <div className="w-2 h-2 bg-blue-400 rounded-full mt-2 flex-shrink-0" />
+                    <span className="text-base font-medium text-neutral-200 break-words">{point}</span>
                   </div>
                 ))}
               </div>
@@ -307,9 +307,9 @@ export function PMESIITest({ aoi, className }: PMESIITestProps) {
             <TabsContent value="threats" className="mt-4">
               <div className="space-y-2">
                 {selectedData.threats.map((threat, index) => (
-                  <div key={index} className="flex items-start gap-2 p-2 bg-red-50 dark:bg-red-950/20 rounded-md text-sm">
-                    <AlertTriangle className="h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" />
-                    <span className="break-words">{threat}</span>
+                  <div key={index} className="flex items-start gap-2 p-2 bg-red-50 dark:bg-red-950/20 rounded-md">
+                    <AlertTriangle className="h-5 w-5 text-red-400 mt-0.5 flex-shrink-0" />
+                    <span className="text-base font-medium text-neutral-200 break-words">{threat}</span>
                   </div>
                 ))}
               </div>
@@ -318,9 +318,9 @@ export function PMESIITest({ aoi, className }: PMESIITestProps) {
             <TabsContent value="capabilities" className="mt-4">
               <div className="space-y-2">
                 {selectedData.capabilities.map((capability, index) => (
-                  <div key={index} className="flex items-start gap-2 p-2 bg-green-50 dark:bg-green-950/20 rounded-md text-sm">
-                    <CheckCircle2 className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span className="break-words">{capability}</span>
+                  <div key={index} className="flex items-start gap-2 p-2 bg-green-50 dark:bg-green-950/20 rounded-md">
+                    <CheckCircle2 className="h-5 w-5 text-green-400 mt-0.5 flex-shrink-0" />
+                    <span className="text-base font-medium text-neutral-200 break-words">{capability}</span>
                   </div>
                 ))}
               </div>
