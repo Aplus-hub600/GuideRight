@@ -106,20 +106,20 @@ export function PMESIIPanels({ items = mockIntelItems, coverage, className }: PM
   }
 
   const getQualityIcon = (quality: number) => {
-    if (quality >= 0.8) return <CheckCircle2 className="h-3 w-3 text-green-500" />
-    if (quality >= 0.6) return <AlertTriangle className="h-3 w-3 text-yellow-500" />
-    return <XCircle className="h-3 w-3 text-red-500" />
+    if (quality >= 0.8) return <CheckCircle2 className="h-5 w-5 text-green-400" />
+    if (quality >= 0.6) return <AlertTriangle className="h-5 w-5 text-yellow-400" />
+    return <XCircle className="h-5 w-5 text-red-400" />
   }
 
   const getSourceBadgeColor = (source: string) => {
     const colors = {
-      "Fraym": "bg-blue-100 text-blue-800",
-      "Seerist": "bg-green-100 text-green-800",
-      "Sprinklr": "bg-purple-100 text-purple-800",
-      "News": "bg-orange-100 text-orange-800",
-      "Social": "bg-pink-100 text-pink-800",
-      "Weather": "bg-cyan-100 text-cyan-800",
-      "Infra": "bg-gray-100 text-gray-800"
+      "Fraym": "bg-blue-500/20 text-blue-300 border-blue-400/30",
+      "Seerist": "bg-green-500/20 text-green-300 border-green-400/30",
+      "Sprinklr": "bg-purple-500/20 text-purple-300 border-purple-400/30",
+      "News": "bg-orange-500/20 text-orange-300 border-orange-400/30",
+      "Social": "bg-pink-500/20 text-pink-300 border-pink-400/30",
+      "Weather": "bg-cyan-500/20 text-cyan-300 border-cyan-400/30",
+      "Infra": "bg-gray-500/20 text-gray-300 border-gray-400/30"
     }
     return colors[source as keyof typeof colors] || colors.News
   }
@@ -127,7 +127,7 @@ export function PMESIIPanels({ items = mockIntelItems, coverage, className }: PM
   return (
     <div className={cn("h-full", className)}>
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as PMESIICategory)} className="h-full flex flex-col">
-        <TabsList className="inline-flex h-10 items-center justify-center rounded-lg bg-gray-100 p-1 text-gray-600 w-full mb-4">
+        <TabsList className="inline-flex h-10 items-center justify-center rounded-lg bg-muted/50 p-1 w-full mb-4">
           {Object.entries(pmesiiConfig).map(([category, config]) => {
             const Icon = config.icon
             const categoryItems = getItemsByCategory(category as PMESIICategory)
@@ -135,15 +135,15 @@ export function PMESIIPanels({ items = mockIntelItems, coverage, className }: PM
               <TabsTrigger 
                 key={category} 
                 value={category}
-                className="relative flex flex-col gap-1 p-2 flex-1 min-w-[60px] data-[state=active]:bg-white data-[state=active]:text-gray-800 data-[state=active]:shadow-sm rounded-lg transition-all"
+                className="relative flex flex-col gap-1 p-2 flex-1 min-w-[60px] data-[state=active]:bg-card data-[state=active]:shadow-sm rounded-lg transition-all"
                 data-testid={`tab-pmesii-${category.toLowerCase()}`}
               >
-                <Icon className="h-4 w-4 mx-auto" />
-                <span className="text-xs hidden sm:inline">
+                <Icon className="h-5 w-5 mx-auto text-blue-400" />
+                <span className="text-base font-medium hidden sm:inline text-neutral-200">
                   {t(`pmesii.${category.toLowerCase()}`)}
                 </span>
                 {categoryItems.length > 0 && (
-                  <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-xs flex items-center justify-center bg-blue-600 text-white">
+                  <span className="absolute -top-1 -right-1 h-6 w-6 rounded-full p-0 text-base font-medium flex items-center justify-center bg-blue-500/20 border border-blue-400/50 text-neutral-200">
                     {categoryItems.length}
                   </span>
                 )}
@@ -160,19 +160,19 @@ export function PMESIIPanels({ items = mockIntelItems, coverage, className }: PM
             <TabsContent key={category} value={category} className="flex-1 mt-0">
               <Card className="h-full">
                 <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center gap-2">
-                    <Icon className="h-5 w-5" style={{ color: config.color }} />
+                  <CardTitle className="flex items-center gap-2 text-2xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
+                    <Icon className="h-5 w-5 text-blue-400" />
                     <span>{t(`pmesii.${category.toLowerCase()}`)}</span>
-                    <Badge variant="outline">{categoryItems.length}</Badge>
+                    <Badge variant="outline" className="text-base font-medium">{categoryItems.length}</Badge>
                   </CardTitle>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-base font-medium text-neutral-200">
                     {config.description}
                   </p>
                   
                   {coverage?.[category as PMESIICategory] !== undefined && (
                     <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span>Coverage</span>
+                      <div className="flex justify-between">
+                        <span className="text-base font-medium text-neutral-200">Coverage</span>
                       </div>
                       <Progress value={coverage[category as PMESIICategory] * 100} className="h-2" />
                     </div>
@@ -181,10 +181,10 @@ export function PMESIIPanels({ items = mockIntelItems, coverage, className }: PM
                 
                 <CardContent className="pt-0 h-[calc(100%-140px)]">
                   {categoryItems.length === 0 ? (
-                    <div className="flex items-center justify-center h-full text-muted-foreground">
+                    <div className="flex items-center justify-center h-full">
                       <div className="text-center">
-                        <Icon className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                        <p>No intelligence items in this category</p>
+                        <Icon className="h-12 w-12 mx-auto mb-2 text-blue-400/50" />
+                        <p className="text-base font-medium text-neutral-300">No intelligence items in this category</p>
                       </div>
                     </div>
                   ) : (
@@ -198,26 +198,26 @@ export function PMESIIPanels({ items = mockIntelItems, coverage, className }: PM
                                   {getQualityIcon(item.quality)}
                                   <Badge 
                                     variant="outline" 
-                                    className={cn("text-xs", getSourceBadgeColor(item.source))}
+                                    className={cn("text-base font-medium", getSourceBadgeColor(item.source))}
                                   >
                                     {t(`sources.${item.source.toLowerCase()}`)}
                                   </Badge>
                                   {item.time && (
-                                    <span className="text-xs text-muted-foreground">
+                                    <span className="text-base font-medium text-neutral-300">
                                       {item.time}
                                     </span>
                                   )}
                                 </div>
                               </div>
                               
-                              <p className="text-sm leading-relaxed break-words">
+                              <p className="text-base font-medium leading-relaxed break-words text-neutral-200">
                                 {item.text}
                               </p>
                               
                               {item.pmesii.length > 1 && (
                                 <div className="flex flex-wrap gap-1">
                                   {item.pmesii.filter(cat => cat !== category).map((cat) => (
-                                    <Badge key={cat} variant="secondary" className="text-xs">
+                                    <Badge key={cat} variant="secondary" className="text-base font-medium">
                                       {t(`pmesii.${cat.toLowerCase()}`)}
                                     </Badge>
                                   ))}

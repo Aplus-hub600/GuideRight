@@ -68,32 +68,32 @@ const pmesiiConfig = {
   political: {
     icon: Building,
     label: "Political",
-    color: "text-blue-600 dark:text-blue-400"
+    color: "text-blue-400"
   },
   military: {
     icon: Shield,
     label: "Military", 
-    color: "text-green-600 dark:text-green-400"
+    color: "text-green-400"
   },
   economic: {
     icon: TrendingUp,
     label: "Economic",
-    color: "text-yellow-600 dark:text-yellow-400"
+    color: "text-yellow-400"
   },
   social: {
     icon: Users,
     label: "Social",
-    color: "text-purple-600 dark:text-purple-400"
+    color: "text-purple-400"
   },
   information: {
     icon: Radio,
     label: "Information",
-    color: "text-orange-600 dark:text-orange-400"
+    color: "text-orange-400"
   },
   infrastructure: {
     icon: Zap,
     label: "Infrastructure",
-    color: "text-red-600 dark:text-red-400"
+    color: "text-red-400"
   }
 }
 
@@ -183,17 +183,17 @@ export function PMESIIAnalysis({ aoi, className }: PMESIIAnalysisProps) {
   const isAnalyzing = pmesiiMutation.isPending
 
   const getScoreColor = (score?: number) => {
-    if (score === undefined || score === null) return "text-muted-foreground"
-    if (score >= 0.8) return "text-green-600 dark:text-green-400"
-    if (score >= 0.6) return "text-yellow-600 dark:text-yellow-400"
-    return "text-red-600 dark:text-red-400"
+    if (score === undefined || score === null) return "text-neutral-400"
+    if (score >= 0.8) return "text-green-400"
+    if (score >= 0.6) return "text-yellow-400"
+    return "text-red-400"
   }
 
   const getScoreIcon = (score?: number) => {
-    if (score === undefined || score === null) return <XCircle className="h-4 w-4 text-muted-foreground" />
-    if (score >= 0.8) return <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
-    if (score >= 0.6) return <AlertTriangle className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
-    return <XCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
+    if (score === undefined || score === null) return <XCircle className="h-5 w-5 text-neutral-400" />
+    if (score >= 0.8) return <CheckCircle2 className="h-5 w-5 text-green-400" />
+    if (score >= 0.6) return <AlertTriangle className="h-5 w-5 text-yellow-400" />
+    return <XCircle className="h-5 w-5 text-red-400" />
   }
 
   const renderFactorContent = (factor: PMESIIFactorAnalysis, category: PMESIICategory) => {
@@ -208,15 +208,15 @@ export function PMESIIAnalysis({ aoi, className }: PMESIIAnalysisProps) {
       <div className="space-y-4">
         {/* Summary */}
         <div>
-          <h4 className="font-medium mb-2">Summary</h4>
-          <p className="text-sm text-muted-foreground break-words">{factor.summary}</p>
+          <h4 className="text-lg font-bold text-neutral-200 mb-2">Summary</h4>
+          <p className="text-base font-medium text-neutral-200 break-words">{factor.summary}</p>
         </div>
 
         {/* Score */}
         {(score !== undefined && score !== null) && (
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-sm font-medium">
+              <span className="text-base font-medium text-neutral-200">
                 {category === 'military' ? 'Readiness' :
                  category === 'information' ? 'Reliability' :
                  category === 'infrastructure' ? 'Integrity' :
@@ -231,8 +231,8 @@ export function PMESIIAnalysis({ aoi, className }: PMESIIAnalysisProps) {
         {/* Key Points/Threats/Capabilities */}
         {factor.keyPoints && factor.keyPoints.length > 0 && (
           <div>
-            <h4 className="font-medium mb-2">Key Points</h4>
-            <ul className="text-sm text-muted-foreground space-y-1">
+            <h4 className="text-lg font-bold text-neutral-200 mb-2">Key Points</h4>
+            <ul className="text-base font-medium text-neutral-200 space-y-1">
               {factor.keyPoints.map((point, index) => (
                 <li key={index} className="flex items-start gap-2">
                   <span className="text-primary">•</span>
@@ -245,11 +245,11 @@ export function PMESIIAnalysis({ aoi, className }: PMESIIAnalysisProps) {
 
         {factor.threats && factor.threats.length > 0 && (
           <div>
-            <h4 className="font-medium mb-2">Threats</h4>
-            <ul className="text-sm text-muted-foreground space-y-1">
+            <h4 className="text-lg font-bold text-neutral-200 mb-2">Threats</h4>
+            <ul className="text-base font-medium text-neutral-200 space-y-1">
               {factor.threats.map((threat, index) => (
                 <li key={index} className="flex items-start gap-2">
-                  <AlertTriangle className="h-3 w-3 text-red-500 mt-1 flex-shrink-0" />
+                  <AlertTriangle className="h-5 w-5 text-red-400 mt-1 flex-shrink-0" />
                   <span>{threat}</span>
                 </li>
               ))}
@@ -259,11 +259,11 @@ export function PMESIIAnalysis({ aoi, className }: PMESIIAnalysisProps) {
 
         {factor.capabilities && factor.capabilities.length > 0 && (
           <div>
-            <h4 className="font-medium mb-2">Capabilities</h4>
-            <ul className="text-sm text-muted-foreground space-y-1">
+            <h4 className="text-lg font-bold text-neutral-200 mb-2">Capabilities</h4>
+            <ul className="text-base font-medium text-neutral-200 space-y-1">
               {factor.capabilities.map((capability, index) => (
                 <li key={index} className="flex items-start gap-2">
-                  <CheckCircle2 className="h-3 w-3 text-green-500 mt-1 flex-shrink-0" />
+                  <CheckCircle2 className="h-5 w-5 text-green-400 mt-1 flex-shrink-0" />
                   <span>{capability}</span>
                 </li>
               ))}
@@ -274,8 +274,8 @@ export function PMESIIAnalysis({ aoi, className }: PMESIIAnalysisProps) {
         {/* Other category-specific fields */}
         {factor.indicators && factor.indicators.length > 0 && (
           <div>
-            <h4 className="font-medium mb-2">Economic Indicators</h4>
-            <ul className="text-sm text-muted-foreground space-y-1">
+            <h4 className="text-lg font-bold text-neutral-200 mb-2">Economic Indicators</h4>
+            <ul className="text-base font-medium text-neutral-200 space-y-1">
               {factor.indicators.map((indicator, index) => (
                 <li key={index} className="flex items-start gap-2">
                   <span className="text-primary">•</span>
@@ -288,8 +288,8 @@ export function PMESIIAnalysis({ aoi, className }: PMESIIAnalysisProps) {
 
         {factor.demographics && factor.demographics.length > 0 && (
           <div>
-            <h4 className="font-medium mb-2">Demographics</h4>
-            <ul className="text-sm text-muted-foreground space-y-1">
+            <h4 className="text-lg font-bold text-neutral-200 mb-2">Demographics</h4>
+            <ul className="text-base font-medium text-neutral-200 space-y-1">
               {factor.demographics.map((demo, index) => (
                 <li key={index} className="flex items-start gap-2">
                   <span className="text-primary">•</span>
@@ -302,8 +302,8 @@ export function PMESIIAnalysis({ aoi, className }: PMESIIAnalysisProps) {
 
         {factor.criticalAssets && factor.criticalAssets.length > 0 && (
           <div>
-            <h4 className="font-medium mb-2">Critical Assets</h4>
-            <ul className="text-sm text-muted-foreground space-y-1">
+            <h4 className="text-lg font-bold text-neutral-200 mb-2">Critical Assets</h4>
+            <ul className="text-base font-medium text-neutral-200 space-y-1">
               {factor.criticalAssets.map((asset, index) => (
                 <li key={index} className="flex items-start gap-2">
                   <span className="text-primary">•</span>
@@ -316,11 +316,11 @@ export function PMESIIAnalysis({ aoi, className }: PMESIIAnalysisProps) {
 
         {factor.vulnerabilities && factor.vulnerabilities.length > 0 && (
           <div>
-            <h4 className="font-medium mb-2">Vulnerabilities</h4>
-            <ul className="text-sm text-muted-foreground space-y-1">
+            <h4 className="text-lg font-bold text-neutral-200 mb-2">Vulnerabilities</h4>
+            <ul className="text-base font-medium text-neutral-200 space-y-1">
               {factor.vulnerabilities.map((vuln, index) => (
                 <li key={index} className="flex items-start gap-2">
-                  <AlertTriangle className="h-3 w-3 text-red-500 mt-1 flex-shrink-0" />
+                  <AlertTriangle className="h-5 w-5 text-red-400 mt-1 flex-shrink-0" />
                   <span>{vuln}</span>
                 </li>
               ))}
@@ -336,8 +336,8 @@ export function PMESIIAnalysis({ aoi, className }: PMESIIAnalysisProps) {
       {/* Header with analysis trigger */}
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-lg font-semibold">PMESII Analysis</h3>
-          <p className="text-sm text-muted-foreground">
+          <h3 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">PMESII Analysis</h3>
+          <p className="text-base font-medium text-neutral-200">
             {hasAnalysis ? `Analysis for ${lastAnalyzedAOI || 'region'}` : 'No analysis available'}
           </p>
         </div>
@@ -348,9 +348,9 @@ export function PMESIIAnalysis({ aoi, className }: PMESIIAnalysisProps) {
           data-testid="button-trigger-pmesii"
         >
           {isAnalyzing ? (
-            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            <Loader2 className="h-5 w-5 animate-spin mr-2" />
           ) : (
-            <RefreshCw className="h-4 w-4 mr-2" />
+            <RefreshCw className="h-5 w-5 mr-2" />
           )}
           {isAnalyzing ? 'Analyzing...' : 'Analyze AOI'}
         </Button>
@@ -360,8 +360,8 @@ export function PMESIIAnalysis({ aoi, className }: PMESIIAnalysisProps) {
       {isLoading && (
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
-            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">Loading analysis...</p>
+            <Loader2 className="h-10 w-10 animate-spin mx-auto mb-2 text-muted-foreground" />
+            <p className="text-base font-medium text-neutral-200">Loading analysis...</p>
           </div>
         </div>
       )}
@@ -369,8 +369,8 @@ export function PMESIIAnalysis({ aoi, className }: PMESIIAnalysisProps) {
       {error && (
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
-            <XCircle className="h-8 w-8 mx-auto mb-2 text-red-500" />
-            <p className="text-sm text-muted-foreground">Failed to load analysis</p>
+            <XCircle className="h-10 w-10 mx-auto mb-2 text-red-400" />
+            <p className="text-base font-medium text-neutral-200">Failed to load analysis</p>
             <Button variant="outline" size="sm" onClick={() => queryClient.invalidateQueries({ queryKey: ['/api/analysis/history', 'pmesii', aoi.name] })} className="mt-2">
               Retry
             </Button>
@@ -381,13 +381,13 @@ export function PMESIIAnalysis({ aoi, className }: PMESIIAnalysisProps) {
       {!isLoading && !error && !hasAnalysis && (
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
-            <TrendingUp className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground mb-4">No PMESII analysis available</p>
+            <TrendingUp className="h-10 w-10 mx-auto mb-2 text-blue-400" />
+            <p className="text-base font-medium text-neutral-200 mb-4">No PMESII analysis available</p>
             <Button onClick={triggerAnalysis} disabled={isAnalyzing}>
               {isAnalyzing ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                <Loader2 className="h-5 w-5 animate-spin mr-2" />
               ) : (
-                <RefreshCw className="h-4 w-4 mr-2" />
+                <RefreshCw className="h-5 w-5 mr-2" />
               )}
               Generate Analysis
             </Button>
@@ -415,8 +415,8 @@ export function PMESIIAnalysis({ aoi, className }: PMESIIAnalysisProps) {
                     className="relative flex flex-col gap-1 p-2"
                     data-testid={`tab-pmesii-${category}`}
                   >
-                    <Icon className="h-4 w-4" />
-                    <span className="text-xs hidden sm:inline">
+                    <Icon className="h-5 w-5 text-blue-400" />
+                    <span className="text-sm font-medium hidden sm:inline text-neutral-200">
                       {config.label}
                     </span>
                     {(score !== undefined && score !== null) && (
@@ -436,7 +436,7 @@ export function PMESIIAnalysis({ aoi, className }: PMESIIAnalysisProps) {
               <TabsContent key={category} value={category} className="flex-1 overflow-hidden">
                 <Card className="h-full">
                   <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center gap-2">
+                    <CardTitle className="flex items-center gap-2 text-2xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
                       <config.icon className={cn("h-5 w-5", config.color)} />
                       {config.label} Analysis
                     </CardTitle>
