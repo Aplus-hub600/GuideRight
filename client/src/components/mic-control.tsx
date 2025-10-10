@@ -111,19 +111,21 @@ export function MicControl({ onTranscription, className }: MicControlProps) {
   return (
     <Button
       onClick={handleToggle}
-      variant={isRecording ? "destructive" : "ghost"}
+      variant={isRecording ? "destructive" : "default"}
       size="icon"
       className={cn(
-        "transition-all duration-200",
-        isRecording && "animate-pulse",
+        "transition-all duration-200 w-14 h-14 rounded-full",
+        isRecording 
+          ? "animate-pulse bg-red-500 hover:bg-red-600 shadow-[0_0_20px_rgba(239,68,68,0.5)]" 
+          : "bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-[0_0_20px_rgba(59,130,246,0.4)] hover:shadow-[0_0_25px_rgba(59,130,246,0.6)]",
         className
       )}
       data-testid={isRecording ? "button-mic-stop" : "button-mic-start"}
     >
       {isRecording ? (
-        <Square className="h-4 w-4" />
+        <Square className="h-5 w-5 text-white" />
       ) : (
-        <Mic className="h-4 w-4" />
+        <Mic className="h-5 w-5 text-white" />
       )}
       <span className="sr-only">
         {isRecording ? t('chat.mic.stop') : t('chat.mic.start')}
