@@ -236,7 +236,7 @@ export function PMESIITest({ aoi, className }: PMESIITestProps) {
                     <span className="text-base font-medium capitalize text-neutral-200">{factor}</span>
                   </div>
                   {(data.score !== undefined && data.score !== null) && (
-                    <Badge variant="outline" className="text-xs">
+                    <Badge variant="outline" className="text-base font-medium">
                       {Math.round(data.score * 100)}%
                     </Badge>
                   )}
@@ -258,7 +258,7 @@ export function PMESIITest({ aoi, className }: PMESIITestProps) {
               const IconComponent = factorIcons[selectedFactor as keyof typeof factorIcons]
               return <IconComponent className="h-5 w-5 text-blue-400" />
             })()}
-            <CardTitle className="capitalize">{selectedFactor} Analysis</CardTitle>
+            <CardTitle className="capitalize text-2xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">{selectedFactor} Analysis</CardTitle>
             <div className="flex items-center gap-1 ml-auto">
               {getScoreIcon(selectedData.score)}
               <span className={cn("text-base font-medium", getScoreColor(selectedData.score))}>
