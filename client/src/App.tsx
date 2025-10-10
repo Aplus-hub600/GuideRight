@@ -107,11 +107,11 @@ function App() {
 
               {/* Left side: chat assistant - hidden only when bottom panels are active */}
               {!activeBottomPanel && (
-                <div className={`absolute top-24 left-4 z-30 transition-all duration-500 ${isChatMinimized ? 'w-72' : 'w-80'}`}>
+                <div className={`absolute bottom-14 left-4 z-30 transition-all duration-500 ${isChatMinimized ? 'w-72' : 'w-80'}`}>
                   <div 
                     className="bg-slate-950/95 backdrop-blur-xl rounded-2xl shadow-[0_0_40px_rgba(59,130,246,0.4)] border-2 border-blue-500/50 flex flex-col transition-all duration-500" 
                     id="chat-assistant-container"
-                    style={{ maxHeight: isChatMinimized ? '64px' : 'calc(100vh - 300px)' }}
+                    style={{ maxHeight: isChatMinimized ? '64px' : 'calc(100vh - 120px)' }}
                   >
                     <div className="p-4 border-b-2 border-blue-500/30 flex items-center justify-between bg-gradient-to-r from-blue-950/40 to-transparent">
                       <h2 className="text-base font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-blue-400 flex items-center gap-2">

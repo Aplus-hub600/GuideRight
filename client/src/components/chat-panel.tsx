@@ -281,22 +281,20 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, className }: ChatPan
       </div>
 
       <div className="border-t-2 border-slate-700/50 bg-gradient-to-b from-slate-900/60 to-slate-950/60 backdrop-blur-xl p-5">
-        <form onSubmit={handleSubmit} className="flex gap-3">
-          <div className="flex-1 flex gap-3">
-            <textarea
-              ref={textareaRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={t('chat.placeholder') || "Ask about intelligence, threats, or request analysis..."}
-              className="flex-1 bg-slate-800/60 border-2 border-slate-600/60 rounded-2xl px-5 py-3.5 text-base font-medium text-slate-50 placeholder-slate-400 outline-none focus:ring-2 focus:ring-blue-500/60 focus:border-blue-500/60 focus:shadow-[0_0_20px_rgba(59,130,246,0.3)] resize-none min-h-[52px] max-h-[120px] transition-all"
-              disabled={isStreaming}
-              data-testid="textarea-chat-input"
-            />
-            <MicControl 
-              onTranscription={handleTranscription}
-            />
-          </div>
+        <form onSubmit={handleSubmit} className="flex items-end gap-3">
+          <textarea
+            ref={textareaRef}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder={t('chat.placeholder') || "Ask about intelligence, threats, or request analysis..."}
+            className="flex-1 bg-slate-800/60 border-2 border-slate-600/60 rounded-2xl px-5 py-3.5 text-base font-medium text-slate-50 placeholder-slate-400 outline-none focus:ring-2 focus:ring-blue-500/60 focus:border-blue-500/60 focus:shadow-[0_0_20px_rgba(59,130,246,0.3)] resize-none min-h-[52px] max-h-[120px] transition-all"
+            disabled={isStreaming}
+            data-testid="textarea-chat-input"
+          />
+          <MicControl 
+            onTranscription={handleTranscription}
+          />
           <button 
             type="submit"
             disabled={!input.trim() || isStreaming}
