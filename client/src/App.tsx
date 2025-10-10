@@ -7,11 +7,8 @@ import { ThemeProvider } from "./components/theme-provider";
 import { Dashboard } from "./components/dashboard";
 import { BottomNavBar, NavSection } from "./components/bottom-nav-bar";
 import { LocationSearchBar } from "./components/location-search-bar";
-import { ChatPanel } from "./components/chat-panel";
-import { ScreenshotFAB } from "./components/screenshot-fab";
 import { useState } from "react";
 import i18n from "./lib/i18n";
-import { ChevronDown, ChevronUp, MessageSquare } from "lucide-react";
 
 interface AOI {
   name?: string;
@@ -28,8 +25,6 @@ function App() {
   // Bottom panels (left side of nav): timeline, weather, files, settings - only one at a time  
   const [activeBottomPanel, setActiveBottomPanel] = useState<NavSection | null>(null)
   
-  // Chat panel collapse state
-  const [isChatMinimized, setIsChatMinimized] = useState(false)
   
   const [currentAOI, setCurrentAOI] = useState<AOI>({
     name: "Dhaka",
@@ -104,53 +99,6 @@ function App() {
                   currentLocation={currentAOI.name}
                 />
               </div>
-
-              {/* Left side: chat assistant - hidden only when bottom panels are active */}
-              {!activeBottomPanel && (
-                <div className={`absolute top-[280px] left-4 z-30 transition-all duration-500 ${isChatMinimized ? 'w-72' : 'w-80'}`}>
-                  <div 
-                    className="bg-slate-950/95 backdrop-blur-xl rounded-2xl shadow-[0_0_40px_rgba(59,130,246,0.4)] border-2 border-blue-500/50 flex flex-col transition-all duration-500" 
-                    id="chat-assistant-container"
-                    style={{ maxHeight: isChatMinimized ? '64px' : 'calc(100vh - 300px)' }}
-                  >
-                    <div className="p-4 border-b-2 border-blue-500/30 flex items-center justify-between bg-gradient-to-r from-blue-950/40 to-transparent">
-                      <h2 className="text-base font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-blue-400 flex items-center gap-2">
-                        <MessageSquare className="h-5 w-5 text-blue-400 drop-shadow-[0_0_8px_rgba(59,130,246,0.6)]" />
-                        Chat Assistant
-                      </h2>
-                      <div className="flex items-center gap-2">
-                        {!isChatMinimized && (
-                          <ScreenshotFAB 
-                            elementId="chat-assistant-container"
-                            viewName="chat"
-                            className="relative"
-                          />
-                        )}
-                        <button
-                          onClick={() => setIsChatMinimized(!isChatMinimized)}
-                          className="p-2 rounded-lg hover-elevate active-elevate-2 transition-all bg-blue-500/20 border border-blue-400/30"
-                          data-testid="button-toggle-chat"
-                        >
-                          {isChatMinimized ? (
-                            <ChevronUp className="h-4 w-4 text-blue-400" />
-                          ) : (
-                            <ChevronDown className="h-4 w-4 text-blue-400" />
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                    {!isChatMinimized && (
-                      <div className="flex-1 overflow-hidden" data-testid="panel-chat">
-                        <ChatPanel 
-                          onQuerySubmit={handleQuerySubmit}
-                          mediaContextIds={mediaContextIds}
-                          className="h-full"
-                        />
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
 
               {/* Bottom navigation bar */}
               <BottomNavBar 
