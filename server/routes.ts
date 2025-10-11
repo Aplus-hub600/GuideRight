@@ -7,6 +7,12 @@ import {
   analyzeMultimodalContent,
   calculateRiskScore
 } from "./openai";
+import {
+  getODINCountriesList,
+  getODINCountryData,
+  getODINSummary,
+  parseODINContent
+} from "./odin";
 import { 
   chatQuerySchema,
   riskAssessmentRequestSchema,
@@ -1037,6 +1043,95 @@ export async function registerRoutes(app: Express): Promise<Server> {
         success: false, 
         error: (error as any).message 
       });
+    }
+  });
+
+  // ODIN Integration Routes
+  
+  // Get list of available ODIN countries
+  app.get("/api/odin/countries", async (req, res) => {
+    try {
+      const countries = await getODINCountriesList();
+      res.json({ 
+        success: true, 
+        countries 
+      });
+    } catch (error) {
+      console.error("Error fetching ODIN countries:", error);
+      res.status(500).json({ success: false, error: (error as any).message });
+    }
+  });
+
+  // Get PMESII data for a specific country
+  app.get("/api/odin/country/:name", async (req, res) => {
+    try {
+      const { name } = req.params;
+      const result = await getODINCountryData(name);
+      
+      if (!result.success) {
+        const status = result.error?.includes('not found') ? 404 : 502;
+        return res.status(status).json({ 
+          success: false, 
+          error: result.error || 'Failed to fetch ODIN data'
+        });
+      }
+      
+      // Parse HTML content to text
+      const dataSource = result.data || result.partialData || {};
+      const parsed: any = {};
+      
+      const categories = ['political', 'military', 'economic', 'social', 'information', 'infrastructure'] as const;
+      categories.forEach(category => {
+        if (dataSource[category]) {
+          parsed[category] = parseODINContent(dataSource[category]);
+        }
+      });
+      
+      res.json({ 
+        success: true, 
+        country: name,
+        data: result.data ? parsed : undefined,
+        partialData: result.partialData ? parsed : undefined,
+        partial: !!result.partialData && !result.data,
+        warnings: result.error
+      });
+    } catch (error) {
+      console.error(`Error fetching ODIN data for ${req.params.name}:`, error);
+      res.status(500).json({ success: false, error: (error as any).message });
+    }
+  });
+
+  // Get summary for a specific PMESII category
+  app.get("/api/odin/summary/:country/:category", async (req, res) => {
+    try {
+      const { country, category } = req.params;
+      
+      if (!['political', 'military', 'economic', 'social', 'information', 'infrastructure'].includes(category)) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Invalid category. Must be one of: political, military, economic, social, information, infrastructure' 
+        });
+      }
+      
+      const result = await getODINSummary(country, category as any);
+      
+      if (!result.success) {
+        const status = result.error?.includes('not found') ? 404 : 502;
+        return res.status(status).json({ 
+          success: false, 
+          error: result.error || 'Failed to fetch ODIN summary'
+        });
+      }
+      
+      res.json({ 
+        success: true, 
+        country,
+        category,
+        summary: result.summary
+      });
+    } catch (error) {
+      console.error(`Error fetching ODIN summary:`, error);
+      res.status(500).json({ success: false, error: (error as any).message });
     }
   });
 
