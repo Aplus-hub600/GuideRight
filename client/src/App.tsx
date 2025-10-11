@@ -86,7 +86,7 @@ function App() {
         <ThemeProvider>
           <TooltipProvider>
             {/* Map-centric layout: everything is absolutely positioned over the map */}
-            <div className="relative h-screen w-screen overflow-hidden bg-gray-100">
+            <div className="relative h-screen w-screen overflow-hidden bg-background">
               {/* Dashboard with map and panels */}
               <div className="absolute inset-0 z-0 h-full w-full">
                 <Dashboard 
@@ -110,15 +110,15 @@ function App() {
 
               {/* Left side: chat assistant - hidden only when bottom panels are active */}
               {!activeBottomPanel && (
-                <div className={`absolute bottom-28 left-4 z-30 transition-all duration-500 ${isChatMinimized ? 'w-72' : 'w-80'}`}>
+                <div className={`absolute bottom-20 left-4 z-30 transition-all duration-500 ${isChatMinimized ? 'w-72' : 'w-80'}`}>
                   <div 
-                    className="bg-slate-950/95 backdrop-blur-xl rounded-2xl shadow-[0_0_40px_rgba(59,130,246,0.4)] border-2 border-blue-500/50 flex flex-col transition-all duration-500" 
+                    className="bg-card/95 backdrop-blur-xl rounded-xl border flex flex-col transition-all duration-500" 
                     id="chat-assistant-container"
-                    style={{ maxHeight: isChatMinimized ? '64px' : 'calc(100vh - 140px)' }}
+                    style={{ maxHeight: isChatMinimized ? '64px' : 'calc(100vh - 120px)' }}
                   >
-                    <div className="p-4 border-b-2 border-blue-500/30 flex items-center justify-between bg-gradient-to-r from-blue-950/40 to-transparent">
-                      <h2 className="text-base font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-blue-400 flex items-center gap-2">
-                        <MessageSquare className="h-5 w-5 text-blue-400 drop-shadow-[0_0_8px_rgba(59,130,246,0.6)]" />
+                    <div className="p-3 border-b flex items-center justify-between">
+                      <h2 className="text-sm font-semibold flex items-center gap-2">
+                        <MessageSquare className="h-4 w-4" />
                         Chat Assistant
                       </h2>
                       <div className="flex items-center gap-2">
@@ -131,13 +131,13 @@ function App() {
                         )}
                         <button
                           onClick={() => setIsChatMinimized(!isChatMinimized)}
-                          className="p-2 rounded-lg hover-elevate active-elevate-2 transition-all bg-blue-500/20 border border-blue-400/30"
+                          className="p-1.5 rounded hover-elevate active-elevate-2"
                           data-testid="button-toggle-chat"
                         >
                           {isChatMinimized ? (
-                            <ChevronUp className="h-4 w-4 text-blue-400" />
+                            <ChevronUp className="h-4 w-4" />
                           ) : (
-                            <ChevronDown className="h-4 w-4 text-blue-400" />
+                            <ChevronDown className="h-4 w-4" />
                           )}
                         </button>
                       </div>
