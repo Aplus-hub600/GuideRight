@@ -225,11 +225,11 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, odinCountry, classNa
 
   return (
     <div className={cn("flex flex-col h-full", className)}>
-      <div className="flex-1 overflow-y-auto p-6 space-y-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+      <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {messages.length === 0 && (
-          <div className="text-center text-slate-400 py-12">
-            <p className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-blue-300 to-blue-400 drop-shadow-[0_0_15px_rgba(59,130,246,0.5)]">GuideRight Tactical Assistant</p>
-            <p className="text-base mt-3 font-medium text-slate-300">Ask about any area of interest for intelligence analysis</p>
+          <div className="text-center py-8">
+            <p className="text-xl font-semibold text-foreground">GuideRight Tactical Assistant</p>
+            <p className="text-sm mt-2 text-muted-foreground">Ask about any area of interest for intelligence analysis</p>
           </div>
         )}
         
@@ -242,37 +242,44 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, odinCountry, classNa
             )}
           >
             <div className={cn(
-              "max-w-[80%] p-5 rounded-2xl border-2 transition-all duration-300",
+              "max-w-[85%] px-4 py-3 rounded-lg",
               message.role === "user" 
-                ? "bg-gradient-to-br from-blue-600 to-blue-700 text-white border-blue-400/50 shadow-[0_0_25px_rgba(59,130,246,0.4)]" 
-                : "bg-gradient-to-br from-slate-800/95 to-slate-900/95 backdrop-blur-xl text-slate-50 border-slate-600/50 shadow-[0_0_20px_rgba(100,116,139,0.3)]"
+                ? "bg-primary text-primary-foreground" 
+                : "bg-card text-card-foreground border"
             )}>
-              <div className="space-y-3">
-                <p className="text-lg font-medium whitespace-pre-wrap leading-relaxed">{message.content}</p>
+              <div className="space-y-2">
+                <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.content}</p>
                 
                 {message.role === "assistant" && (message.analysis || message.odinSource) && (
-                  <div className="mt-4 flex flex-wrap items-center gap-2">
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
                     {message.analysis && (
-                      <span className={cn(
-                        "text-sm px-3 py-1.5 rounded-lg font-bold shadow-lg",
-                        message.analysis.riskLevel === 'CRITICAL' ? 'bg-red-600 text-white shadow-red-500/50' :
-                        message.analysis.riskLevel === 'HIGH' ? 'bg-orange-500 text-white shadow-orange-500/50' :
-                        message.analysis.riskLevel === 'MEDIUM' ? 'bg-yellow-500 text-white shadow-yellow-500/50' :
-                        'bg-green-500 text-white shadow-green-500/50'
-                      )}
+                      <Badge
+                        variant={
+                          message.analysis.riskLevel === 'CRITICAL' ? 'destructive' :
+                          message.analysis.riskLevel === 'HIGH' ? 'destructive' :
+                          message.analysis.riskLevel === 'MEDIUM' ? 'default' :
+                          'outline'
+                        }
+                        className={cn(
+                          "text-xs font-semibold",
+                          message.analysis.riskLevel === 'CRITICAL' && 'bg-red-600',
+                          message.analysis.riskLevel === 'HIGH' && 'bg-orange-600',
+                          message.analysis.riskLevel === 'MEDIUM' && 'bg-yellow-600',
+                          message.analysis.riskLevel === 'LOW' && 'bg-green-600 text-white'
+                        )}
                         data-testid={`badge-risk-${message.analysis.riskLevel.toLowerCase()}`}
                       >
                         {message.analysis.riskLevel} RISK
-                      </span>
+                      </Badge>
                     )}
                     {message.odinSource && (
-                      <span 
-                        className="text-sm px-3 py-1.5 rounded-lg font-bold shadow-lg bg-emerald-600 text-white shadow-emerald-500/50 flex items-center gap-1.5"
+                      <Badge 
+                        className="text-xs font-semibold bg-emerald-600 text-white flex items-center gap-1.5"
                         data-testid="badge-odin-source"
                       >
-                        <Globe className="h-4 w-4" />
+                        <Globe className="h-3 w-3" />
                         ODIN: {message.odinSource}
-                      </span>
+                      </Badge>
                     )}
                   </div>
                 )}
@@ -283,10 +290,10 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, odinCountry, classNa
         
         {isStreaming && (
           <div className="flex justify-start">
-            <div className="bg-gradient-to-br from-slate-800/95 to-slate-900/95 backdrop-blur-xl p-5 rounded-2xl shadow-[0_0_25px_rgba(59,130,246,0.3)] border-2 border-blue-500/40">
-              <div className="flex items-center gap-3 text-base font-semibold text-blue-300">
-                <Loader2 className="h-5 w-5 animate-spin text-blue-400 drop-shadow-[0_0_8px_rgba(59,130,246,0.6)]" />
-                Analyzing intelligence data...
+            <div className="bg-card border px-4 py-3 rounded-lg">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Analyzing...
               </div>
             </div>
           </div>
@@ -295,42 +302,42 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, odinCountry, classNa
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="border-t-2 border-slate-700/50 bg-gradient-to-b from-slate-900/60 to-slate-950/60 backdrop-blur-xl p-5">
-        <form onSubmit={handleSubmit} className="flex items-end gap-3">
-          <textarea
+      <div className="border-t p-4">
+        <form onSubmit={handleSubmit} className="flex items-end gap-2">
+          <Textarea
             ref={textareaRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={t('chat.placeholder') || "Ask about intelligence, threats, or request analysis..."}
-            className="flex-1 bg-slate-800/60 border-2 border-slate-600/60 rounded-2xl px-5 py-3.5 text-base font-medium text-slate-50 placeholder-slate-400 outline-none focus:ring-2 focus:ring-blue-500/60 focus:border-blue-500/60 focus:shadow-[0_0_20px_rgba(59,130,246,0.3)] resize-none min-h-[52px] max-h-[120px] transition-all"
+            className="flex-1 resize-none min-h-[52px] max-h-[120px]"
             disabled={isStreaming}
             data-testid="textarea-chat-input"
           />
           <MicControl 
             onTranscription={handleTranscription}
           />
-          <button 
+          <Button 
             type="submit"
+            size="icon"
             disabled={!input.trim() || isStreaming}
-            className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 hover:shadow-[0_0_25px_rgba(59,130,246,0.6)] hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100 flex items-center justify-center transition-all shadow-[0_0_20px_rgba(59,130,246,0.4)]"
             data-testid="button-chat-send"
           >
             {isStreaming ? (
-              <Loader2 className="h-5 w-5 animate-spin" />
+              <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              <Send className="h-5 w-5" />
+              <Send className="h-4 w-4" />
             )}
-          </button>
+          </Button>
         </form>
         
         {mediaContextIds && mediaContextIds.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-2">
-            <span className="text-xs text-slate-400">Context:</span>
+          <div className="flex flex-wrap gap-2 mt-3">
+            <span className="text-xs text-muted-foreground">Context:</span>
             {mediaContextIds.map((id) => (
-              <span key={id} className="text-xs px-2 py-1 rounded-lg bg-blue-500/20 text-blue-400 border border-blue-500/30">
+              <Badge key={id} variant="outline" className="text-xs">
                 {id}
-              </span>
+              </Badge>
             ))}
           </div>
         )}
