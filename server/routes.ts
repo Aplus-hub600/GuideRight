@@ -179,19 +179,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       assistantContent += `\n\nRisk Level: ${analysis.riskLevel}\nConfidence: ${Math.round(analysis.confidence * 100)}%`;
       
-      // Save assistant response with formatted content (consistent with display)
+      // Save assistant response with formatted content and ODIN source attribution
       const assistantMessage = await storage.createChatMessage({
         content: assistantContent,
         role: "assistant",
-        contextIds: []
+        contextIds: [],
+        odinSource: odinCountry // Persist ODIN source for data provenance
       });
       
-      // Send assistant response with analysis data
+      // Send assistant response with analysis data and ODIN source attribution
       res.write(`data: ${JSON.stringify({ 
         type: 'assistant_message', 
         data: { 
           message: assistantMessage,
-          analysis 
+          analysis,
+          odinSource: odinCountry // Include ODIN source for attribution
         }
       })}\n\n`);
       

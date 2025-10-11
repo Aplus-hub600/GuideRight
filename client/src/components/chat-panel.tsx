@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react"
-import { Send, Loader2 } from "lucide-react"
+import { Send, Loader2, Globe } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Card } from "@/components/ui/card"
@@ -17,6 +17,7 @@ interface ChatMessage {
   timestamp: Date
   contextIds?: string[]
   analysis?: TacticalAnalysis
+  odinSource?: string // ODIN scenario used for this response
 }
 
 interface TacticalAnalysis {
@@ -54,10 +55,10 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, odinCountry, classNa
     scrollToBottom()
   }, [messages])
 
-  // Load chat history - disabled for demo (starts empty until queried)
+  // Load chat history on mount
   const { data: chatHistory } = useQuery<{ messages: any[] }>({
     queryKey: ['/api/chat/history'],
-    enabled: false // Disabled for clean demo start
+    enabled: true // Enable to restore chat history after refresh
   })
 
   // Handle chat history data
@@ -152,7 +153,8 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, odinCountry, classNa
                   setMessages(prev => [...prev, {
                     ...data.data.message,
                     timestamp: new Date(data.data.message.timestamp),
-                    analysis: data.data.analysis || null
+                    analysis: data.data.analysis || null,
+                    odinSource: data.data.odinSource // Include ODIN source attribution
                   }])
                   break
                   
@@ -248,19 +250,30 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, odinCountry, classNa
               <div className="space-y-3">
                 <p className="text-lg font-medium whitespace-pre-wrap leading-relaxed">{message.content}</p>
                 
-                {message.role === "assistant" && message.analysis && (
-                  <div className="mt-4">
-                    <span className={cn(
-                      "text-sm px-3 py-1.5 rounded-lg font-bold shadow-lg",
-                      message.analysis.riskLevel === 'CRITICAL' ? 'bg-red-600 text-white shadow-red-500/50' :
-                      message.analysis.riskLevel === 'HIGH' ? 'bg-orange-500 text-white shadow-orange-500/50' :
-                      message.analysis.riskLevel === 'MEDIUM' ? 'bg-yellow-500 text-white shadow-yellow-500/50' :
-                      'bg-green-500 text-white shadow-green-500/50'
+                {message.role === "assistant" && (message.analysis || message.odinSource) && (
+                  <div className="mt-4 flex flex-wrap items-center gap-2">
+                    {message.analysis && (
+                      <span className={cn(
+                        "text-sm px-3 py-1.5 rounded-lg font-bold shadow-lg",
+                        message.analysis.riskLevel === 'CRITICAL' ? 'bg-red-600 text-white shadow-red-500/50' :
+                        message.analysis.riskLevel === 'HIGH' ? 'bg-orange-500 text-white shadow-orange-500/50' :
+                        message.analysis.riskLevel === 'MEDIUM' ? 'bg-yellow-500 text-white shadow-yellow-500/50' :
+                        'bg-green-500 text-white shadow-green-500/50'
+                      )}
+                        data-testid={`badge-risk-${message.analysis.riskLevel.toLowerCase()}`}
+                      >
+                        {message.analysis.riskLevel} RISK
+                      </span>
                     )}
-                      data-testid={`badge-risk-${message.analysis.riskLevel.toLowerCase()}`}
-                    >
-                      {message.analysis.riskLevel} RISK
-                    </span>
+                    {message.odinSource && (
+                      <span 
+                        className="text-sm px-3 py-1.5 rounded-lg font-bold shadow-lg bg-emerald-600 text-white shadow-emerald-500/50 flex items-center gap-1.5"
+                        data-testid="badge-odin-source"
+                      >
+                        <Globe className="h-4 w-4" />
+                        ODIN: {message.odinSource}
+                      </span>
+                    )}
                   </div>
                 )}
               </div>

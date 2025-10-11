@@ -15,6 +15,7 @@ export const chatMessages = pgTable("chat_messages", {
   role: text("role").notNull(), // 'user' or 'assistant'
   timestamp: timestamp("timestamp").defaultNow().notNull(),
   contextIds: jsonb("context_ids").$type<string[]>().default([]),
+  odinSource: text("odin_source"), // ODIN scenario country for data attribution
 });
 
 export const analysisResults = pgTable("analysis_results", {
