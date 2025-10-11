@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { useQuery } from "@tanstack/react-query"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -15,7 +16,9 @@ import {
   DollarSign,
   Users2,
   Radio,
-  Building
+  Building,
+  Globe,
+  Loader2
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -29,6 +32,7 @@ interface AOI {
 interface PMESIITestProps {
   aoi: AOI
   className?: string
+  odinCountry?: string
 }
 
 // Test data for PMESII analysis - simulating realistic Bangladesh intelligence
@@ -164,9 +168,76 @@ const factorIcons = {
   infrastructure: Building
 }
 
-export function PMESIITest({ aoi, className }: PMESIITestProps) {
+// Helper function to parse ODIN text into structured data
+function parseODINText(text: string): { 
+  summary: string
+  keyPoints: string[]
+  threats: string[]
+  capabilities: string[]
+  score: number
+} {
+  // Split by newlines and clean up
+  const lines = text.split('\n')
+    .map(l => l.trim())
+    .filter(l => l.length > 0)
+  
+  // Use first few lines as summary (up to 250 chars)
+  const summaryText = lines.slice(0, 3).join(' ')
+  const summary = summaryText.length > 250 ? summaryText.substring(0, 250) + '...' : summaryText
+  
+  // Extract all meaningful lines (minimum 10 chars instead of 20)
+  const meaningfulLines = lines.filter(l => l.length >= 10)
+  
+  // Distribute lines across categories
+  const keyPoints: string[] = []
+  const threats: string[] = []
+  const capabilities: string[] = []
+  
+  // Take at least 3 key points, 2 threats, 2 capabilities from available lines
+  for (let i = 0; i < Math.min(meaningfulLines.length, 10); i++) {
+    const line = meaningfulLines[i].substring(0, 120)
+    if (keyPoints.length < 3) {
+      keyPoints.push(line)
+    } else if (threats.length < 2) {
+      threats.push(line)
+    } else if (capabilities.length < 2) {
+      capabilities.push(line)
+    }
+  }
+  
+  // Ensure we have at least some content even if ODIN data is sparse
+  if (keyPoints.length === 0) {
+    keyPoints.push('ODIN intelligence data available for this region')
+  }
+  if (threats.length === 0) {
+    threats.push('Regional threat assessment data from ODIN')
+  }
+  if (capabilities.length === 0) {
+    capabilities.push('Capability analysis from ODIN training scenarios')
+  }
+  
+  // Generate a score based on content length
+  const score = Math.min(0.9, 0.6 + (meaningfulLines.length / 20))
+  
+  return { summary, keyPoints, threats, capabilities, score }
+}
+
+export function PMESIITest({ aoi, className, odinCountry }: PMESIITestProps) {
   const [selectedFactor, setSelectedFactor] = useState<string>("political")
   const [isGenerating, setIsGenerating] = useState(false)
+
+  // Fetch ODIN data when country is selected
+  const { data: odinData, isLoading: odinLoading } = useQuery<{
+    success: boolean
+    country: string
+    data?: Record<string, string>
+    partialData?: Record<string, string>
+    partial?: boolean
+    warnings?: string
+  }>({
+    queryKey: [`/api/odin/country/${odinCountry}`],
+    enabled: !!odinCountry
+  })
 
   const handleGenerate = () => {
     setIsGenerating(true)
@@ -175,6 +246,14 @@ export function PMESIITest({ aoi, className }: PMESIITestProps) {
       setIsGenerating(false)
     }, 2000)
   }
+
+  // Prepare data based on source (ODIN or test data)
+  const pmesiiData = odinCountry && odinData?.success ? 
+    Object.entries(odinData.data || odinData.partialData || {}).reduce((acc, [key, value]) => {
+      const parsed = parseODINText(value)
+      acc[key] = parsed
+      return acc
+    }, {} as Record<string, any>) : testPMESIIData
 
   const getScoreColor = (score?: number) => {
     if (score === undefined || score === null) return "text-neutral-400"
@@ -190,34 +269,54 @@ export function PMESIITest({ aoi, className }: PMESIITestProps) {
     return <XCircle className="h-5 w-5 text-red-400" />
   }
 
-  const selectedData = testPMESIIData[selectedFactor as keyof typeof testPMESIIData]
+  const selectedData = pmesiiData[selectedFactor as keyof typeof pmesiiData]
+  const isODINMode = !!odinCountry && odinData?.success
 
   return (
     <div className={cn("space-y-4", className)}>
-      {/* Test Mode Alert */}
-      <Alert className="border-blue-200 dark:border-blue-800">
-        <TrendingUp className="h-5 w-5 text-blue-400" />
-        <AlertDescription className="text-base font-medium text-neutral-200">
-          <strong>PMESII Test Mode:</strong> Using realistic test data for Bangladesh operations analysis
-        </AlertDescription>
-      </Alert>
+      {/* Data Source Alert */}
+      {odinLoading ? (
+        <Alert className="border-blue-200 dark:border-blue-800">
+          <Loader2 className="h-5 w-5 text-blue-400 animate-spin" />
+          <AlertDescription className="text-base font-medium text-neutral-200">
+            Loading ODIN intelligence data for {odinCountry}...
+          </AlertDescription>
+        </Alert>
+      ) : isODINMode ? (
+        <Alert className="border-green-200 dark:border-green-800">
+          <Globe className="h-5 w-5 text-green-400" />
+          <AlertDescription className="text-base font-medium text-neutral-200">
+            <strong>ODIN Data:</strong> Real training scenario intelligence for {odinCountry}
+            {odinData.partial && <span className="text-yellow-400"> (Partial data)</span>}
+          </AlertDescription>
+        </Alert>
+      ) : (
+        <Alert className="border-blue-200 dark:border-blue-800">
+          <TrendingUp className="h-5 w-5 text-blue-400" />
+          <AlertDescription className="text-base font-medium text-neutral-200">
+            <strong>Test Mode:</strong> Using realistic test data for Bangladesh operations analysis
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Generate Button */}
       <div className="flex items-center justify-between">
-        <h3 className="text-xl font-bold bg-gradient-to-r from-blue-300 to-blue-400 bg-clip-text text-transparent">PMESII Analysis - Test Mode</h3>
+        <h3 className="text-xl font-bold bg-gradient-to-r from-blue-300 to-blue-400 bg-clip-text text-transparent">
+          PMESII Analysis {isODINMode ? `- ${odinCountry}` : '- Test Mode'}
+        </h3>
         <Button 
           onClick={handleGenerate}
-          disabled={isGenerating}
+          disabled={isGenerating || odinLoading}
           size="sm"
           data-testid="button-generate-pmesii-test"
         >
-          {isGenerating ? 'Generating...' : 'Generate Test Analysis'}
+          {isGenerating ? 'Generating...' : isODINMode ? 'Refresh Analysis' : 'Generate Test Analysis'}
         </Button>
       </div>
 
       {/* Factor Overview Cards */}
       <div className="grid grid-cols-2 gap-2">
-        {Object.entries(testPMESIIData).map(([factor, data]) => {
+        {Object.entries(pmesiiData).map(([factor, data]) => {
           const IconComponent = factorIcons[factor as keyof typeof factorIcons]
           return (
             <Card 
@@ -295,7 +394,7 @@ export function PMESIITest({ aoi, className }: PMESIITestProps) {
 
             <TabsContent value="keypoints" className="mt-4">
               <div className="space-y-2">
-                {selectedData.keyPoints.map((point, index) => (
+                {selectedData.keyPoints?.map((point: string, index: number) => (
                   <div key={index} className="flex items-start gap-2 p-2 bg-muted/30 rounded-md">
                     <div className="w-2 h-2 bg-blue-400 rounded-full mt-2 flex-shrink-0" />
                     <span className="text-base font-medium text-neutral-200 break-words">{point}</span>
@@ -306,7 +405,7 @@ export function PMESIITest({ aoi, className }: PMESIITestProps) {
 
             <TabsContent value="threats" className="mt-4">
               <div className="space-y-2">
-                {selectedData.threats.map((threat, index) => (
+                {selectedData.threats?.map((threat: string, index: number) => (
                   <div key={index} className="flex items-start gap-2 p-2 bg-red-50 dark:bg-red-950/20 rounded-md">
                     <AlertTriangle className="h-5 w-5 text-red-400 mt-0.5 flex-shrink-0" />
                     <span className="text-base font-medium text-neutral-200 break-words">{threat}</span>
@@ -317,7 +416,7 @@ export function PMESIITest({ aoi, className }: PMESIITestProps) {
 
             <TabsContent value="capabilities" className="mt-4">
               <div className="space-y-2">
-                {selectedData.capabilities.map((capability, index) => (
+                {selectedData.capabilities?.map((capability: string, index: number) => (
                   <div key={index} className="flex items-start gap-2 p-2 bg-green-50 dark:bg-green-950/20 rounded-md">
                     <CheckCircle2 className="h-5 w-5 text-green-400 mt-0.5 flex-shrink-0" />
                     <span className="text-base font-medium text-neutral-200 break-words">{capability}</span>

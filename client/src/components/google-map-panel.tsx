@@ -92,6 +92,8 @@ interface GoogleMapPanelProps {
   movementPlan?: MovementPlan
   onAOIChange?: (aoi: AOI) => void
   onMovementPlanRequest?: () => void
+  selectedODINCountry?: string
+  onODINCountryChange?: (country: string) => void
   className?: string
 }
 
@@ -101,6 +103,8 @@ export function GoogleMapPanel({
   movementPlan,
   onAOIChange,
   onMovementPlanRequest,
+  selectedODINCountry,
+  onODINCountryChange,
   className
 }: GoogleMapPanelProps) {
   const { t, i18n } = useTranslation()
@@ -134,7 +138,6 @@ export function GoogleMapPanel({
   const [showUserLocation, setShowUserLocation] = useState(false)
   const [latestAnalysis, setLatestAnalysis] = useState<any>(null)
   const [isAnalysisInProgress, setIsAnalysisInProgress] = useState(false)
-  const [selectedScenario, setSelectedScenario] = useState<string | undefined>(undefined)
   const pendingRequestsRef = useRef(new Set<string>())
   const abortControllerRef = useRef<AbortController | null>(null)
   const lastClickTimeRef = useRef(0)
@@ -749,8 +752,8 @@ export function GoogleMapPanel({
         <Card className="p-3 bg-white/80 backdrop-blur-md border-gray-200">
           <div className="space-y-2">
             <ScenarioSelector 
-              selectedCountry={selectedScenario}
-              onScenarioChange={(country) => setSelectedScenario(country)}
+              selectedCountry={selectedODINCountry}
+              onScenarioChange={onODINCountryChange}
             />
             
             <Button

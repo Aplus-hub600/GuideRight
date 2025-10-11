@@ -48,6 +48,7 @@ export function Dashboard({ className, activeTopPanel, activeBottomPanel, curren
   const [isAnalysisPanelVisible, setIsAnalysisPanelVisible] = useState(false)
   const [isTopPanelExpanded, setIsTopPanelExpanded] = useState(false)
   const [isBottomPanelExpanded, setIsBottomPanelExpanded] = useState(false)
+  const [selectedODINCountry, setSelectedODINCountry] = useState<string | undefined>(undefined)
 
   const handleRiskUpdate = (score: number, level: string) => {
     setRiskScore(score)
@@ -106,6 +107,8 @@ export function Dashboard({ className, activeTopPanel, activeBottomPanel, curren
             movementPlan={movementPlan}
             onAOIChange={onAOIChange}
             onMovementPlanRequest={handleMovementPlanRequest}
+            selectedODINCountry={selectedODINCountry}
+            onODINCountryChange={setSelectedODINCountry}
             className="h-full w-full"
           />
         </div>
@@ -159,7 +162,7 @@ export function Dashboard({ className, activeTopPanel, activeBottomPanel, curren
                       <IntelligenceIntegration className="h-full" />
                     </TabsContent>
                     <TabsContent value="pmesii" className="flex-1 mt-4 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-                      <PMESIITest aoi={currentAOI} className="h-full" />
+                      <PMESIITest aoi={currentAOI} odinCountry={selectedODINCountry} className="h-full" />
                     </TabsContent>
                     <TabsContent value="risk" className="flex-1 mt-4 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
                       <RiskAssessment 
