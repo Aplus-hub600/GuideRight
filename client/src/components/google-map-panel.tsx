@@ -8,6 +8,7 @@ import { useQuery } from "@tanstack/react-query"
 import { cn } from "@/lib/utils"
 import { useGoogleMaps } from "@/hooks/useGoogleMaps"
 import { useGeolocation } from "@/hooks/useGeolocation"
+import { ScenarioSelector } from "./scenario-selector"
 
 // Utility functions for production resilience
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
@@ -133,6 +134,7 @@ export function GoogleMapPanel({
   const [showUserLocation, setShowUserLocation] = useState(false)
   const [latestAnalysis, setLatestAnalysis] = useState<any>(null)
   const [isAnalysisInProgress, setIsAnalysisInProgress] = useState(false)
+  const [selectedScenario, setSelectedScenario] = useState<string | undefined>(undefined)
   const pendingRequestsRef = useRef(new Set<string>())
   const abortControllerRef = useRef<AbortController | null>(null)
   const lastClickTimeRef = useRef(0)
@@ -746,6 +748,11 @@ export function GoogleMapPanel({
 
         <Card className="p-3 bg-white/80 backdrop-blur-md border-gray-200">
           <div className="space-y-2">
+            <ScenarioSelector 
+              selectedCountry={selectedScenario}
+              onScenarioChange={(country) => setSelectedScenario(country)}
+            />
+            
             <Button
               onClick={handleMovementPlan}
               disabled={isLoading}
