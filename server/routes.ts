@@ -98,7 +98,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Chat endpoint with streaming support
   app.post("/api/chat", async (req, res) => {
     try {
-      const { query, contextIds } = chatQuerySchema.parse(req.body);
+      const { query, contextIds, odinCountry } = chatQuerySchema.parse(req.body);
       
       // Set up Server-Sent Events headers
       res.setHeader('Content-Type', 'text/event-stream');
@@ -119,6 +119,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Get context from both chat messages and analysis results
       const contextStrings: string[] = [];
+      
+      // Add ODIN intelligence context if scenario is selected
+      if (odinCountry) {
+        try {
+          const odinData = await getODINCountryData(odinCountry);
+          if (odinData.success && odinData.data) {
+            // Add PMESII intelligence from ODIN as context
+            const odinContext = [
+              `ODIN Intelligence Source: ${odinCountry}`,
+              `Political: ${odinData.data.political || 'No data'}`,
+              `Military: ${odinData.data.military || 'No data'}`,
+              `Economic: ${odinData.data.economic || 'No data'}`,
+              `Social: ${odinData.data.social || 'No data'}`,
+              `Information: ${odinData.data.information || 'No data'}`,
+              `Infrastructure: ${odinData.data.infrastructure || 'No data'}`
+            ].join('\n');
+            contextStrings.push(odinContext);
+          }
+        } catch (error) {
+          console.error('ODIN data fetch error for chat:', error);
+          // Continue without ODIN context if fetch fails
+        }
+      }
       
       if (contextIds && contextIds.length > 0) {
         // Get all chat messages (not limited to 10)

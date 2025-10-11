@@ -30,10 +30,11 @@ interface TacticalAnalysis {
 interface ChatPanelProps {
   onQuerySubmit?: (query: string, mediaContextIds?: string[]) => void
   mediaContextIds?: string[]
+  odinCountry?: string
   className?: string
 }
 
-export function ChatPanel({ onQuerySubmit, mediaContextIds, className }: ChatPanelProps) {
+export function ChatPanel({ onQuerySubmit, mediaContextIds, odinCountry, className }: ChatPanelProps) {
   const { t } = useTranslation()
   const { toast } = useToast()
   const queryClient = useQueryClient()
@@ -100,7 +101,8 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, className }: ChatPan
         },
         body: JSON.stringify({
           query,
-          contextIds: mediaContextIds || []
+          contextIds: mediaContextIds || [],
+          odinCountry: odinCountry
         })
       })
 

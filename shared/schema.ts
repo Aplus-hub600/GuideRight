@@ -309,6 +309,7 @@ export type SocialMediaQuery = z.infer<typeof socialMediaQuerySchema>;
 export const chatQuerySchema = z.object({
   query: z.string().min(1),
   contextIds: z.array(z.string()).default([]),
+  odinCountry: z.string().optional(), // Selected ODIN scenario country for contextual intelligence
 });
 
 export const fileAnalysisSchema = z.object({

@@ -37,9 +37,11 @@ interface DashboardProps {
   currentAOI: AOI
   onAOIChange: (aoi: AOI) => void
   onMediaContextChange?: (ids: string[]) => void
+  selectedODINCountry?: string
+  onODINCountryChange?: (country: string) => void
 }
 
-export function Dashboard({ className, activeTopPanel, activeBottomPanel, currentAOI, onAOIChange, onMediaContextChange }: DashboardProps) {
+export function Dashboard({ className, activeTopPanel, activeBottomPanel, currentAOI, onAOIChange, onMediaContextChange, selectedODINCountry, onODINCountryChange }: DashboardProps) {
   const { t } = useTranslation()
   const [riskScore, setRiskScore] = useState(67)
   const [riskLevel, setRiskLevel] = useState('Moderate')
@@ -48,7 +50,6 @@ export function Dashboard({ className, activeTopPanel, activeBottomPanel, curren
   const [isAnalysisPanelVisible, setIsAnalysisPanelVisible] = useState(false)
   const [isTopPanelExpanded, setIsTopPanelExpanded] = useState(false)
   const [isBottomPanelExpanded, setIsBottomPanelExpanded] = useState(false)
-  const [selectedODINCountry, setSelectedODINCountry] = useState<string | undefined>(undefined)
 
   const handleRiskUpdate = (score: number, level: string) => {
     setRiskScore(score)
@@ -108,7 +109,7 @@ export function Dashboard({ className, activeTopPanel, activeBottomPanel, curren
             onAOIChange={onAOIChange}
             onMovementPlanRequest={handleMovementPlanRequest}
             selectedODINCountry={selectedODINCountry}
-            onODINCountryChange={setSelectedODINCountry}
+            onODINCountryChange={onODINCountryChange}
             className="h-full w-full"
           />
         </div>
