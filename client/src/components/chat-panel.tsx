@@ -256,17 +256,11 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, odinCountry, classNa
                       <Badge
                         variant={
                           message.analysis.riskLevel === 'CRITICAL' ? 'destructive' :
-                          message.analysis.riskLevel === 'HIGH' ? 'destructive' :
-                          message.analysis.riskLevel === 'MEDIUM' ? 'default' :
+                          message.analysis.riskLevel === 'HIGH' ? 'default' :
+                          message.analysis.riskLevel === 'MEDIUM' ? 'secondary' :
                           'outline'
                         }
-                        className={cn(
-                          "text-xs font-semibold",
-                          message.analysis.riskLevel === 'CRITICAL' && 'bg-red-600',
-                          message.analysis.riskLevel === 'HIGH' && 'bg-orange-600',
-                          message.analysis.riskLevel === 'MEDIUM' && 'bg-yellow-600',
-                          message.analysis.riskLevel === 'LOW' && 'bg-green-600 text-white'
-                        )}
+                        className="text-xs"
                         data-testid={`badge-risk-${message.analysis.riskLevel.toLowerCase()}`}
                       >
                         {message.analysis.riskLevel} RISK
@@ -274,7 +268,8 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, odinCountry, classNa
                     )}
                     {message.odinSource && (
                       <Badge 
-                        className="text-xs font-semibold bg-emerald-600 text-white flex items-center gap-1.5"
+                        variant="default"
+                        className="text-xs flex items-center gap-1.5"
                         data-testid="badge-odin-source"
                       >
                         <Globe className="h-3 w-3" />
