@@ -101,60 +101,46 @@ export function IntelligenceIntegration({ className }: IntelligenceIntegrationPr
     
   
   
-  const getSourceBadgeColor = (source: string) => {
-    const colors = {
-      "fraym": "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
-      "seerist": "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
-      "sprinklr": "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300",
-      "news": "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300",
-      "social": "bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-300",
-      "weather": "bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-300",
-      "infra": "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300"
+  const getSourceBadgeVariant = (source: string): "default" | "secondary" | "outline" => {
+    const variants: Record<string, "default" | "secondary" | "outline"> = {
+      "fraym": "default",
+      "seerist": "secondary",
+      "sprinklr": "outline",
+      "news": "default",
+      "social": "outline",
+      "weather": "secondary",
+      "infra": "secondary"
     }
-    return colors[source.toLowerCase() as keyof typeof colors] || colors.news
-  }
-
-  const getSeverityColor = (severity: number) => {
-    if (severity <= 2) return "text-red-600 dark:text-red-400"
-    if (severity <= 3) return "text-orange-600 dark:text-orange-400"
-    return "text-yellow-600 dark:text-yellow-400"
+    return variants[source.toLowerCase()] || "default"
   }
 
   const getSeverityBadge = (severity: number) => {
-    if (severity >= 7) return { label: "HIGH", variant: "destructive" as const }
-    if (severity >= 4) return { label: "MEDIUM", variant: "secondary" as const }
-    return { label: "LOW", variant: "outline" as const }
+    if (severity >= 7) return { label: `HIGH (${severity})`, variant: "destructive" as const }
+    if (severity >= 4) return { label: `MEDIUM (${severity})`, variant: "secondary" as const }
+    return { label: `LOW (${severity})`, variant: "outline" as const }
   }
 
   return (
     <div className={cn("space-y-4", className)}>
-      {/* Intelligence Alert Header */}
-      <Alert className="border-orange-200 dark:border-orange-800">
-        <AlertTriangle className="h-5 w-5 text-orange-400" />
-        <AlertDescription className="font-medium">
-          <strong>Real Intelligence Integrated:</strong> Processing live tactical intelligence from Dhaka operations
-        </AlertDescription>
-      </Alert>
-
       {/* Main Intelligence Display */}
       <Card>
-        <CardHeader>
-          <div className="flex items-start justify-between">
+        <CardHeader className="space-y-0 pb-4">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <FileText className="h-6 w-6 text-blue-400" />
-              <CardTitle className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Intelligence Report Integration</CardTitle>
+              <FileText className="h-5 w-5 text-muted-foreground" />
+              <CardTitle className="text-lg font-semibold">Intelligence Report</CardTitle>
               {currentIntelligence?.source && (
                 <Badge 
-                  variant="outline" 
-                  className={cn("text-xs ml-2", getSourceBadgeColor(currentIntelligence.source))}
+                  variant={getSourceBadgeVariant(currentIntelligence.source)}
+                  className="text-xs"
                   data-testid="badge-intelligence-source"
                 >
                   {currentIntelligence.source.toUpperCase()}
                 </Badge>
               )}
             </div>
-            <Badge {...getSeverityBadge((currentIntelligence?.results as any)?.severity || dhakaIntelligence.severity)}>
-              {getSeverityBadge((currentIntelligence?.results as any)?.severity || dhakaIntelligence.severity).label} ({(currentIntelligence?.results as any)?.severity || dhakaIntelligence.severity})
+            <Badge variant={getSeverityBadge((currentIntelligence?.results as any)?.severity || dhakaIntelligence.severity).variant}>
+              {getSeverityBadge((currentIntelligence?.results as any)?.severity || dhakaIntelligence.severity).label}
             </Badge>
           </div>
         </CardHeader>
@@ -167,83 +153,83 @@ export function IntelligenceIntegration({ className }: IntelligenceIntegrationPr
               <TabsTrigger value="risk" data-testid="tab-intel-risk">Risk Assessment</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="report" className="space-y-4 mt-6 p-4">
+            <TabsContent value="report" className="space-y-4 mt-4">
               <div className="space-y-3">
-                <h3 className="font-bold text-2xl bg-gradient-to-r from-blue-300 to-cyan-300 bg-clip-text text-transparent break-words">
+                <h3 className="font-semibold text-lg">
                   {(currentIntelligence?.results as any)?.title || dhakaIntelligence.title}
                 </h3>
                 
-                <div className="grid grid-cols-2 gap-4 text-base font-medium">
+                <div className="grid grid-cols-2 gap-3 text-sm">
                   <div className="flex items-center gap-2">
-                    <Calendar className="h-5 w-5 text-blue-400" />
-                    <span className="text-neutral-200 break-words">Occurred: {new Date(currentIntelligence?.timestamp || dhakaIntelligence.occurred).toLocaleDateString()}</span>
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                    <span>Occurred: {new Date(currentIntelligence?.timestamp || dhakaIntelligence.occurred).toLocaleDateString()}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <MapPin className="h-5 w-5 text-blue-400" />
-                    <span className="text-neutral-200 break-words">{currentIntelligence?.region || dhakaIntelligence.location}</span>
+                    <MapPin className="h-4 w-4 text-muted-foreground" />
+                    <span>{currentIntelligence?.region || dhakaIntelligence.location}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Target className="h-5 w-5 text-blue-400" />
-                    <span className="text-neutral-200 break-words">Event Type: {(currentIntelligence?.results as any)?.category || dhakaIntelligence.events}</span>
+                    <Target className="h-4 w-4 text-muted-foreground" />
+                    <span>Event Type: {(currentIntelligence?.results as any)?.category || dhakaIntelligence.events}</span>
                   </div>
                   {currentIntelligence?.source && (
                     <div className="flex items-center gap-2">
-                      <Users className="h-5 w-5 text-blue-400" />
-                      <span className="text-neutral-200 break-words">Source: {String(currentIntelligence.source).toUpperCase()}</span>
+                      <Users className="h-4 w-4 text-muted-foreground" />
+                      <span>Source: {String(currentIntelligence.source).toUpperCase()}</span>
                     </div>
                   )}
                   {currentIntelligence?.aoiData && (
                     <div className="flex items-center gap-2">
-                      <MapPin className="h-5 w-5 text-blue-400" />
-                      <span className="text-neutral-200 break-words">
-                        Coordinates: {String((currentIntelligence.aoiData as any)?.lat?.toFixed(4))}, {String((currentIntelligence.aoiData as any)?.lng?.toFixed(4))}
+                      <MapPin className="h-4 w-4 text-muted-foreground" />
+                      <span>
+                        Coordinates: {((currentIntelligence.aoiData as any)?.lat || 0).toFixed(4)}, {((currentIntelligence.aoiData as any)?.lng || 0).toFixed(4)}
                       </span>
                     </div>
                   )}
                   {!currentIntelligence && (
                     <div className="flex items-center gap-2">
-                      <Users className="h-5 w-5 text-blue-400" />
-                      <span className="text-neutral-200 break-words">Coordinates: {dhakaIntelligence.coordinates?.lat.toFixed(4)}, {dhakaIntelligence.coordinates?.lng.toFixed(4)}</span>
+                      <Users className="h-4 w-4 text-muted-foreground" />
+                      <span>Coordinates: {dhakaIntelligence.coordinates?.lat.toFixed(4)}, {dhakaIntelligence.coordinates?.lng.toFixed(4)}</span>
                     </div>
                   )}
                 </div>
 
-                <div className="bg-muted/30 p-4 rounded-md">
-                  <h4 className="font-bold text-xl bg-gradient-to-r from-blue-300 to-cyan-300 bg-clip-text text-transparent mb-3">Intelligence Summary:</h4>
-                  <p className="text-base font-medium text-neutral-200 leading-relaxed break-words">
+                <div className="bg-muted/50 p-4 rounded-md">
+                  <h4 className="font-semibold text-sm mb-2">Intelligence Summary:</h4>
+                  <p className="text-sm leading-relaxed">
                     {(currentIntelligence?.results as any)?.summary || dhakaIntelligence.summary}
                   </p>
                 </div>
               </div>
             </TabsContent>
 
-            <TabsContent value="analysis" className="space-y-4 mt-6 p-4">
+            <TabsContent value="analysis" className="space-y-4 mt-4">
               <div className="space-y-4">
                 <div>
-                  <h4 className="font-bold text-xl bg-gradient-to-r from-orange-400 to-red-400 bg-clip-text text-transparent mb-3 flex items-center gap-2">
-                    <AlertTriangle className="h-6 w-6 text-orange-400" />
+                  <h4 className="font-semibold text-sm mb-3 flex items-center gap-2">
+                    <AlertTriangle className="h-4 w-4 text-muted-foreground" />
                     Identified Threats
                   </h4>
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     {enhancedAnalysis.threats.map((threat, index) => (
-                      <div key={index} className="flex items-start gap-3 p-3 bg-red-50 dark:bg-red-950/20 rounded-md">
-                        <div className="w-2 h-2 bg-red-500 rounded-full mt-2 flex-shrink-0" />
-                        <span className="text-base font-medium text-neutral-200 break-words">{threat}</span>
+                      <div key={index} className="flex items-start gap-2 p-2 bg-muted/50 rounded-md">
+                        <div className="w-1.5 h-1.5 bg-destructive rounded-full mt-1.5 flex-shrink-0" />
+                        <span className="text-sm">{threat}</span>
                       </div>
                     ))}
                   </div>
                 </div>
 
                 <div>
-                  <h4 className="font-bold text-xl bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent mb-3 flex items-center gap-2">
-                    <Gauge className="h-6 w-6 text-blue-400" />
+                  <h4 className="font-semibold text-sm mb-3 flex items-center gap-2">
+                    <Gauge className="h-4 w-4 text-muted-foreground" />
                     Intelligence Confidence
                   </h4>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-2 gap-2">
                     {Object.entries(enhancedAnalysis.confidence).map(([key, value]) => (
-                      <div key={key} className="flex justify-between items-center p-3 bg-muted/30 rounded-md">
-                        <span className="capitalize text-base font-medium text-neutral-200">{key}:</span>
-                        <Badge variant="outline" className="text-base font-bold">
+                      <div key={key} className="flex justify-between items-center p-2 bg-muted/50 rounded-md">
+                        <span className="capitalize text-sm">{key}:</span>
+                        <Badge variant="secondary" className="text-xs">
                           {Math.round(value * 100)}%
                         </Badge>
                       </div>
@@ -253,46 +239,46 @@ export function IntelligenceIntegration({ className }: IntelligenceIntegrationPr
               </div>
             </TabsContent>
 
-            <TabsContent value="impact" className="space-y-4 mt-6 p-4">
-              <div className="space-y-4">
-                <h4 className="font-bold text-xl bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mb-3 flex items-center gap-2">
-                  <TrendingUp className="h-6 w-6 text-purple-400" />
+            <TabsContent value="impact" className="space-y-3 mt-4" data-testid="content-pmesii">
+              <div className="space-y-3">
+                <h4 className="font-semibold text-sm mb-3 flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
                   PMESII Factor Analysis
                 </h4>
                 {Object.entries(enhancedAnalysis.implications).map(([factor, implication]) => (
-                  <div key={factor} className="border-l-4 border-l-blue-500 pl-4 py-3">
-                    <h5 className="font-bold text-lg uppercase tracking-wide mb-2 text-blue-300">
+                  <div key={factor} className="border-l-2 border-l-primary pl-3 py-2">
+                    <h5 className="font-semibold text-sm uppercase tracking-wide mb-1">
                       {factor === 'information' ? 'Information' : 
                        factor === 'infrastructure' ? 'Infrastructure' : 
                        factor.charAt(0).toUpperCase() + factor.slice(1)}
                     </h5>
-                    <p className="text-base font-medium text-neutral-200 break-words">{implication}</p>
+                    <p className="text-sm text-muted-foreground">{implication}</p>
                   </div>
                 ))}
               </div>
             </TabsContent>
 
-            <TabsContent value="risk" className="space-y-4 mt-6 p-4">
-              <div className="space-y-4">
+            <TabsContent value="risk" className="space-y-4 mt-4">
+              <div className="space-y-3">
                 <div>
-                  <h4 className="font-bold text-xl bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent mb-3 flex items-center gap-2">
-                    <AlertTriangle className="h-6 w-6 text-amber-400" />
+                  <h4 className="font-semibold text-sm mb-3 flex items-center gap-2">
+                    <AlertTriangle className="h-4 w-4 text-muted-foreground" />
                     Risk Factors Assessment
                   </h4>
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     {enhancedAnalysis.riskFactors.map((factor, index) => (
-                      <div key={index} className="flex items-start gap-3 p-3 bg-amber-50 dark:bg-amber-950/20 rounded-md">
-                        <AlertTriangle className="h-5 w-5 text-amber-400 mt-0.5 flex-shrink-0" />
-                        <span className="text-base font-medium text-neutral-200 break-words">{factor}</span>
+                      <div key={index} className="flex items-start gap-2 p-2 bg-muted/50 rounded-md">
+                        <AlertTriangle className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                        <span className="text-sm">{factor}</span>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                <Alert className="border-amber-200 dark:border-amber-800 p-4">
-                  <Target className="h-6 w-6 text-amber-400" />
-                  <AlertDescription className="text-base font-medium text-neutral-200 break-words">
-                    <strong className="text-lg text-amber-300">Tactical Recommendation:</strong> Increase surveillance in Jatrabari district, 
+                <Alert>
+                  <Target className="h-4 w-4" />
+                  <AlertDescription className="text-sm">
+                    <strong>Tactical Recommendation:</strong> Increase surveillance in Jatrabari district, 
                     monitor VIP Tower residential complexes, and assess potential network expansion. 
                     Coordinate with local law enforcement for ongoing intelligence gathering.
                   </AlertDescription>
