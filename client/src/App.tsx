@@ -87,7 +87,7 @@ function App() {
         <ThemeProvider>
           <TooltipProvider>
             {/* Map-centric layout: everything is absolutely positioned over the map */}
-            <div className="relative h-screen w-screen overflow-hidden bg-slate-900">
+            <div className="relative h-screen w-screen overflow-hidden bg-background">
               {/* Dashboard with map and panels */}
               <div className="absolute inset-0 z-0 h-full w-full">
                 <Dashboard 
