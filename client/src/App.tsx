@@ -53,10 +53,11 @@ function App() {
   const bottomPanels: NavSection[] = ["timeline", "weather", "files", "settings"]
 
   const togglePanel = (section: NavSection) => {
-    // Home button clears all panels
+    // Home button clears all panels and minimizes chat
     if (section === "map") {
       setActiveTopPanel(null)
       setActiveBottomPanel(null)
+      setIsChatMinimized(true)
       return
     }
 
