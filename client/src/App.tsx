@@ -109,53 +109,51 @@ function App() {
                 />
               </div>
 
-              {/* Left side: chat assistant - hidden only when bottom panels are active */}
-              {!activeBottomPanel && (
-                <div className={`absolute bottom-20 left-4 z-30 transition-all duration-500 ${isChatMinimized ? 'w-72' : 'w-80'}`}>
-                  <div 
-                    className="bg-card/95 backdrop-blur-xl rounded-xl border flex flex-col transition-all duration-500" 
-                    id="chat-assistant-container"
-                    style={{ maxHeight: isChatMinimized ? '64px' : 'calc(100vh - 120px)' }}
-                  >
-                    <div className="p-3 border-b flex items-center justify-between">
-                      <h2 className="text-sm font-semibold flex items-center gap-2">
-                        <MessageSquare className="h-4 w-4" />
-                        Chat Assistant
-                      </h2>
-                      <div className="flex items-center gap-2">
-                        {!isChatMinimized && (
-                          <ScreenshotFAB 
-                            elementId="chat-assistant-container"
-                            viewName="chat"
-                            className="relative"
-                          />
-                        )}
-                        <button
-                          onClick={() => setIsChatMinimized(!isChatMinimized)}
-                          className="p-1.5 rounded hover-elevate active-elevate-2"
-                          data-testid="button-toggle-chat"
-                        >
-                          {isChatMinimized ? (
-                            <ChevronUp className="h-4 w-4" />
-                          ) : (
-                            <ChevronDown className="h-4 w-4" />
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                    {!isChatMinimized && (
-                      <div className="flex-1 overflow-hidden" data-testid="panel-chat">
-                        <ChatPanel 
-                          onQuerySubmit={handleQuerySubmit}
-                          mediaContextIds={mediaContextIds}
-                          odinCountry={selectedODINCountry}
-                          className="h-full"
+              {/* Left side: chat assistant - always visible */}
+              <div className={`absolute bottom-20 left-4 z-30 transition-all duration-300 ${isChatMinimized ? 'w-72' : 'w-80'}`}>
+                <div 
+                  className="bg-card/95 backdrop-blur-xl rounded-xl border flex flex-col transition-all duration-300 shadow-lg" 
+                  id="chat-assistant-container"
+                  style={{ height: isChatMinimized ? '56px' : 'calc(100vh - 140px)', maxHeight: isChatMinimized ? '56px' : 'calc(100vh - 140px)' }}
+                >
+                  <div className="p-3 border-b flex items-center justify-between shrink-0">
+                    <h2 className="text-sm font-semibold flex items-center gap-2">
+                      <MessageSquare className="h-4 w-4" />
+                      Chat Assistant
+                    </h2>
+                    <div className="flex items-center gap-2">
+                      {!isChatMinimized && (
+                        <ScreenshotFAB 
+                          elementId="chat-assistant-container"
+                          viewName="chat"
+                          className="relative"
                         />
-                      </div>
-                    )}
+                      )}
+                      <button
+                        onClick={() => setIsChatMinimized(!isChatMinimized)}
+                        className="p-1.5 rounded hover-elevate active-elevate-2"
+                        data-testid="button-toggle-chat"
+                      >
+                        {isChatMinimized ? (
+                          <ChevronUp className="h-4 w-4" />
+                        ) : (
+                          <ChevronDown className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
                   </div>
+                  {!isChatMinimized && (
+                    <div className="flex-1 overflow-hidden" data-testid="panel-chat">
+                      <ChatPanel 
+                        onQuerySubmit={handleQuerySubmit}
+                        mediaContextIds={mediaContextIds}
+                        odinCountry={selectedODINCountry}
+                        className="h-full"
+                      />
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
 
               {/* Bottom navigation bar */}
               <BottomNavBar 
