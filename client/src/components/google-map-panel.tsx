@@ -134,6 +134,7 @@ export function GoogleMapPanel({
   const userMarkerRef = useRef<any>(null)
   const searchMarkerRef = useRef<any>(null)
   const [isLoading, setIsLoading] = useState(false)
+  // Default to satellite for clean ODIN demo (no labels that could show local language)
   const [mapType, setMapType] = useState<'roadmap' | 'satellite' | 'hybrid' | 'terrain'>('satellite')
   const [showUserLocation, setShowUserLocation] = useState(false)
   const [latestAnalysis, setLatestAnalysis] = useState<any>(null)
@@ -815,22 +816,24 @@ export function GoogleMapPanel({
             </Button>
             <Button
               size="sm"
-              variant={mapType === 'hybrid' ? 'default' : 'outline'}
-              onClick={() => setMapType('hybrid')}
-              className="text-xs px-2 h-7"
-              data-testid="button-hybrid-view"
-            >
-              <Layers className="h-3 w-3 mr-1" />
-              Hybrid
-            </Button>
-            <Button
-              size="sm"
               variant={mapType === 'terrain' ? 'default' : 'outline'}
               onClick={() => setMapType('terrain')}
               className="text-xs px-2 h-7"
               data-testid="button-terrain-view"
             >
+              <Globe className="h-3 w-3 mr-1" />
               Terrain
+            </Button>
+            <Button
+              size="sm"
+              variant={mapType === 'hybrid' ? 'default' : 'outline'}
+              onClick={() => setMapType('hybrid')}
+              className="text-xs px-2 h-7"
+              data-testid="button-hybrid-view"
+              title="Satellite + labels (English-optimized)"
+            >
+              <Layers className="h-3 w-3 mr-1" />
+              Hybrid
             </Button>
           </div>
         </Card>
