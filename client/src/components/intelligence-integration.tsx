@@ -182,7 +182,7 @@ export function IntelligenceIntegration({ className }: IntelligenceIntegrationPr
                     <div className="flex items-center gap-2">
                       <MapPin className="h-4 w-4 text-muted-foreground" />
                       <span>
-                        Coordinates: {((currentIntelligence.aoiData as any)?.lat || 0).toFixed(4)}, {((currentIntelligence.aoiData as any)?.lng || 0).toFixed(4)}
+                        Coordinates: {(Number((currentIntelligence.aoiData as any)?.lat) || 0).toFixed(4)}, {(Number((currentIntelligence.aoiData as any)?.lng) || 0).toFixed(4)}
                       </span>
                     </div>
                   )}
