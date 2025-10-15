@@ -52,6 +52,12 @@ function App() {
   // Bottom panels (left side of nav): timeline, weather, files, settings - displayed in bottom container
   const bottomPanels: NavSection[] = ["timeline", "weather", "files", "settings"]
 
+  // Close panel without affecting chat state
+  const closeActivePanel = () => {
+    setActiveTopPanel(null)
+    setActiveBottomPanel(null)
+  }
+
   const togglePanel = (section: NavSection) => {
     // Home button clears all panels and minimizes chat
     if (section === "map") {
@@ -98,6 +104,8 @@ function App() {
                   onMediaContextChange={setMediaContextIds}
                   selectedODINCountry={selectedODINCountry}
                   onODINCountryChange={setSelectedODINCountry}
+                  onTogglePanel={togglePanel}
+                  onClosePanel={closeActivePanel}
                 />
               </div>
 
@@ -112,9 +120,9 @@ function App() {
               {/* Left side: chat assistant - always visible */}
               <div className={`absolute bottom-20 left-4 z-30 transition-all duration-300 ${isChatMinimized ? 'w-72' : 'w-80'}`}>
                 <div 
-                  className="bg-card/95 backdrop-blur-xl rounded-xl border flex flex-col transition-all duration-300 shadow-lg" 
+                  className="bg-card/95 backdrop-blur-xl rounded-xl border flex flex-col transition-all duration-300 shadow-lg overflow-hidden" 
                   id="chat-assistant-container"
-                  style={{ height: isChatMinimized ? '56px' : 'calc(100vh - 140px)', maxHeight: isChatMinimized ? '56px' : 'calc(100vh - 140px)' }}
+                  style={{ height: isChatMinimized ? '56px' : 'calc(100vh - 140px)' }}
                 >
                   <div className="p-3 border-b flex items-center justify-between shrink-0">
                     <h2 className="text-sm font-semibold flex items-center gap-2">
@@ -142,16 +150,18 @@ function App() {
                       </button>
                     </div>
                   </div>
-                  {!isChatMinimized && (
-                    <div className="flex-1 overflow-hidden" data-testid="panel-chat">
-                      <ChatPanel 
-                        onQuerySubmit={handleQuerySubmit}
-                        mediaContextIds={mediaContextIds}
-                        odinCountry={selectedODINCountry}
-                        className="h-full"
-                      />
-                    </div>
-                  )}
+                  <div 
+                    className={`flex-1 transition-all duration-300 ${isChatMinimized ? 'h-0 opacity-0' : 'h-full opacity-100'}`} 
+                    data-testid="panel-chat"
+                    style={{ overflow: isChatMinimized ? 'hidden' : 'auto' }}
+                  >
+                    <ChatPanel 
+                      onQuerySubmit={handleQuerySubmit}
+                      mediaContextIds={mediaContextIds}
+                      odinCountry={selectedODINCountry}
+                      className="h-full"
+                    />
+                  </div>
                 </div>
               </div>
 

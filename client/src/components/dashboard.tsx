@@ -39,9 +39,11 @@ interface DashboardProps {
   onMediaContextChange?: (ids: string[]) => void
   selectedODINCountry?: string
   onODINCountryChange?: (country: string) => void
+  onTogglePanel?: (section: NavSection) => void
+  onClosePanel?: () => void
 }
 
-export function Dashboard({ className, activeTopPanel, activeBottomPanel, currentAOI, onAOIChange, onMediaContextChange, selectedODINCountry, onODINCountryChange }: DashboardProps) {
+export function Dashboard({ className, activeTopPanel, activeBottomPanel, currentAOI, onAOIChange, onMediaContextChange, selectedODINCountry, onODINCountryChange, onTogglePanel, onClosePanel }: DashboardProps) {
   const { t } = useTranslation()
   const [riskScore, setRiskScore] = useState(67)
   const [riskLevel, setRiskLevel] = useState('Moderate')
@@ -140,17 +142,26 @@ export function Dashboard({ className, activeTopPanel, activeBottomPanel, curren
                     <TrendingUp className="h-6 w-6 text-blue-400 drop-shadow-[0_0_8px_rgba(59,130,246,0.6)]" />
                     Intelligence Analysis
                   </h2>
-                  <button
-                    onClick={() => setIsTopPanelExpanded(!isTopPanelExpanded)}
-                    className="p-2 rounded-lg hover-elevate active-elevate-2 transition-all bg-blue-500/20 border border-blue-400/30"
-                    data-testid="button-expand-intelligence"
-                  >
-                    {isTopPanelExpanded ? (
-                      <Minimize2 className="h-5 w-5 text-blue-400" />
-                    ) : (
-                      <Maximize2 className="h-5 w-5 text-blue-400" />
-                    )}
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setIsTopPanelExpanded(!isTopPanelExpanded)}
+                      className="p-2 rounded-lg hover-elevate active-elevate-2 transition-all bg-blue-500/20 border border-blue-400/30"
+                      data-testid="button-expand-intelligence"
+                    >
+                      {isTopPanelExpanded ? (
+                        <Minimize2 className="h-5 w-5 text-blue-400" />
+                      ) : (
+                        <Maximize2 className="h-5 w-5 text-blue-400" />
+                      )}
+                    </button>
+                    <button
+                      onClick={onClosePanel}
+                      className="p-2 rounded-lg hover-elevate active-elevate-2 transition-all bg-blue-500/20 border border-blue-400/30"
+                      data-testid="button-close-intelligence"
+                    >
+                      <X className="h-5 w-5 text-blue-400" />
+                    </button>
+                  </div>
                 </div>
                 <div className="flex-1 overflow-hidden p-4" data-testid="panel-intel">
                   <Tabs defaultValue="intelligence" className="h-full flex flex-col">
