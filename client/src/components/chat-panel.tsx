@@ -46,6 +46,8 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, odinCountry, classNa
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const eventSourceRef = useRef<EventSource | null>(null)
+  const abortControllerRef = useRef<AbortController | null>(null)
+  const isClearedRef = useRef(false)
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -81,6 +83,7 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, odinCountry, classNa
     setInput("")
     // Analysis will be stored per message
     setIsStreaming(true)
+    isClearedRef.current = false
     
     console.log('Chat query submitted:', query)
     console.log('Query submitted:', query, 'with context:', mediaContextIds || [])
@@ -93,6 +96,15 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, odinCountry, classNa
       eventSourceRef.current.close()
     }
 
+    // Abort any existing fetch
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+    }
+
+    // Create new abort controller for this request
+    const abortController = new AbortController()
+    abortControllerRef.current = abortController
+
     try {
       // Create FormData for the streaming request
       const response = await fetch('/api/chat', {
@@ -104,7 +116,8 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, odinCountry, classNa
           query,
           contextIds: mediaContextIds || [],
           odinCountry: odinCountry
-        })
+        }),
+        signal: abortController.signal
       })
 
       if (!response.ok) {
@@ -137,6 +150,11 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, odinCountry, classNa
             try {
               const data = JSON.parse(line.slice(6))
               
+              // Skip processing if chat was cleared
+              if (isClearedRef.current) {
+                break
+              }
+
               switch (data.type) {
                 case 'user_message':
                   setMessages(prev => [...prev, {
@@ -191,6 +209,12 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, odinCountry, classNa
       }
       
     } catch (error) {
+      // Don't show error if chat was intentionally cleared
+      if (isClearedRef.current || (error as Error).name === 'AbortError') {
+        console.log('Chat request aborted (cleared)')
+        return
+      }
+      
       console.error('Chat streaming error:', error)
       setIsStreaming(false)
       
@@ -223,8 +247,56 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, odinCountry, classNa
     }
   }
 
+  const handleClearChat = () => {
+    // Set cleared flag to prevent stream updates
+    isClearedRef.current = true
+    
+    // Abort any active fetch
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+      abortControllerRef.current = null
+    }
+    
+    // Close any active event source
+    if (eventSourceRef.current) {
+      eventSourceRef.current.close()
+      eventSourceRef.current = null
+    }
+    
+    // Clear state
+    setMessages([])
+    setInput("")
+    setIsStreaming(false)
+  }
+
   return (
     <div className={cn("flex flex-col h-full", className)}>
+      {messages.length > 0 && (
+        <div className="flex items-center justify-between px-4 pt-3 pb-1">
+          <div className="flex items-center gap-2">
+            <p className="text-xs text-muted-foreground font-mono-tactical">CHAT SESSION</p>
+            {odinCountry && (
+              <Badge 
+                variant="default"
+                className="text-xs flex items-center gap-1.5 bg-primary/20 text-primary border-primary/30"
+                data-testid="badge-chat-odin"
+              >
+                <Globe className="h-3 w-3" />
+                {odinCountry}
+              </Badge>
+            )}
+          </div>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={handleClearChat}
+            className="text-xs h-7 px-2"
+            data-testid="button-clear-chat"
+          >
+            Clear
+          </Button>
+        </div>
+      )}
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {messages.length === 0 && (
           <div className="text-center py-8">
