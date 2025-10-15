@@ -228,8 +228,19 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, odinCountry, classNa
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {messages.length === 0 && (
           <div className="text-center py-8">
-            <p className="text-xl font-semibold text-foreground">GuideRight Tactical Assistant</p>
-            <p className="text-sm mt-2 text-muted-foreground">Ask about any area of interest for intelligence analysis</p>
+            <div className="mb-4">
+              <p className="text-lg font-semibold text-foreground">GuideRight Intelligence Assistant</p>
+              <p className="text-xs mt-1 text-muted-foreground font-mono-tactical">TACTICAL ANALYSIS • ODIN INTEGRATION • PMESII FRAMEWORK</p>
+            </div>
+            <p className="text-sm text-muted-foreground max-w-[280px] mx-auto">
+              Query intelligence sources, analyze threats, or request PMESII assessments
+            </p>
+            {odinCountry && (
+              <div className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 bg-primary/10 border border-primary/20 rounded-md">
+                <Globe className="h-3.5 w-3.5 text-primary" />
+                <span className="text-xs font-medium">ODIN: {odinCountry}</span>
+              </div>
+            )}
           </div>
         )}
         
@@ -269,11 +280,11 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, odinCountry, classNa
                     {message.odinSource && (
                       <Badge 
                         variant="default"
-                        className="text-xs flex items-center gap-1.5"
+                        className="text-xs flex items-center gap-1.5 bg-primary/20 text-primary border-primary/30 hover:bg-primary/30"
                         data-testid="badge-odin-source"
                       >
                         <Globe className="h-3 w-3" />
-                        ODIN: {message.odinSource}
+                        ODIN DATE: {message.odinSource}
                       </Badge>
                     )}
                   </div>
