@@ -178,14 +178,18 @@ export function IntelligenceIntegration({ className }: IntelligenceIntegrationPr
                       <span>Source: {String(currentIntelligence.source).toUpperCase()}</span>
                     </div>
                   )}
-                  {currentIntelligence?.aoiData && (
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-muted-foreground" />
-                      <span>
-                        Coordinates: {(Number((currentIntelligence.aoiData as any)?.lat) || 0).toFixed(4)}, {(Number((currentIntelligence.aoiData as any)?.lng) || 0).toFixed(4)}
-                      </span>
-                    </div>
-                  )}
+                  {currentIntelligence?.aoiData && (() => {
+                    const lat = Number((currentIntelligence.aoiData as any)?.lat) || 0;
+                    const lng = Number((currentIntelligence.aoiData as any)?.lng) || 0;
+                    return (
+                      <div className="flex items-center gap-2">
+                        <MapPin className="h-4 w-4 text-muted-foreground" />
+                        <span>
+                          Coordinates: {lat.toFixed(4)}, {lng.toFixed(4)}
+                        </span>
+                      </div>
+                    );
+                  })()}
                   {!currentIntelligence && (
                     <div className="flex items-center gap-2">
                       <Users className="h-4 w-4 text-muted-foreground" />
