@@ -118,7 +118,7 @@ function App() {
               </div>
 
               {/* Left side: chat assistant - always visible */}
-              <div className={`absolute bottom-20 left-4 z-30 transition-all duration-300 ${isChatMinimized ? 'w-72' : 'w-80'}`}>
+              <div className={`absolute bottom-20 left-4 z-20 transition-all duration-300 ${isChatMinimized ? 'w-72' : 'w-80'}`}>
                 <div 
                   className="bg-card/95 backdrop-blur-xl rounded-xl border flex flex-col transition-all duration-300 shadow-lg overflow-hidden" 
                   id="chat-assistant-container"

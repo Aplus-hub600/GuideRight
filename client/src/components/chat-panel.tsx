@@ -55,10 +55,10 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, odinCountry, classNa
     scrollToBottom()
   }, [messages])
 
-  // Load chat history on mount
+  // Load chat history on mount (disabled - start with clean chat)
   const { data: chatHistory } = useQuery<{ messages: any[] }>({
     queryKey: ['/api/chat/history'],
-    enabled: true // Enable to restore chat history after refresh
+    enabled: false // Disabled - chat starts clean until queried
   })
 
   // Handle chat history data
@@ -316,7 +316,7 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, odinCountry, classNa
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={t('chat.placeholder') || "Ask about intelligence, threats, or request analysis..."}
-            className="flex-1 resize-none min-h-[52px] max-h-[120px]"
+            className="flex-1 resize-none min-h-[52px] max-h-[120px] text-foreground"
             disabled={isStreaming}
             data-testid="textarea-chat-input"
           />
