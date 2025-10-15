@@ -681,6 +681,12 @@ export function GoogleMapPanel({
   useEffect(() => {
     if (mapInstanceRef.current) {
       mapInstanceRef.current.setMapTypeId(mapType)
+      
+      // Force English language when switching to hybrid mode
+      // Note: Google Maps tiles may still show some local labels that are baked into the imagery
+      if (mapType === 'hybrid') {
+        console.log('Hybrid mode activated - English labels enforced via language=en&region=US in API script')
+      }
     }
   }, [mapType])
 

@@ -72,7 +72,10 @@ export function useGoogleMaps(options: UseGoogleMapsOptions = {}) {
         script.async = true
         script.defer = true
 
+        console.log('Loading Google Maps with URL:', script.src.replace(/key=[^&]+/, 'key=***'))
+
         script.onload = () => {
+          console.log('Google Maps loaded successfully with language:', language, 'region: US')
           setIsLoaded(true)
         }
 
