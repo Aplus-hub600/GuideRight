@@ -22,6 +22,7 @@ import {
 } from "./odin";
 import { 
   chatQuerySchema,
+  geminiLocationQuerySchema,
   riskAssessmentRequestSchema,
   pmesiiAnalysisRequestSchema,
   waypointRequestSchema,
@@ -34,6 +35,7 @@ import {
   socialMediaQuerySchema,
   insertSocialMediaPostSchema,
   type ChatQueryRequest,
+  type GeminiLocationQueryRequest,
   type RiskAssessmentRequest,
   type WaypointRequest,
   type GeotagRequest,
@@ -169,6 +171,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Send typing indicator
       res.write(`data: ${JSON.stringify({ type: 'typing', data: { isTyping: true } })}\n\n`);
+
+      // Detect if query is location-based (for Gemini Google Maps grounding)
+      const locationKeywords = [
+        'restaurant', 'hotel', 'hospital', 'school', 'pharmacy', 'gas station',
+        'nearby', 'near me', 'within', 'close to', 'walking distance', 
+        'places to', 'where can i', 'best', 'find', 'locate',
+        'shopping', 'dining', 'accommodation', 'medical', 'fuel',
+        'infrastructure within', 'facilities', 'amenities'
+      ];
+      
+      const isLocationQuery = locationKeywords.some(keyword => 
+        query.toLowerCase().includes(keyword)
+      );
 
       // Process the tactical query
       const analysis = await processTacticalQuery(query, contextStrings);

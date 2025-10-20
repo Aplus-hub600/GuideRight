@@ -156,6 +156,7 @@ export const insertChatMessageSchema = createInsertSchema(chatMessages).pick({
   content: true,
   role: true,
   contextIds: true,
+  odinSource: true,
 });
 
 export const insertAnalysisResultSchema = createInsertSchema(analysisResults).pick({
@@ -313,6 +314,12 @@ export const chatQuerySchema = z.object({
   odinCountry: z.string().optional(), // Selected ODIN scenario country for contextual intelligence
 });
 
+export const geminiLocationQuerySchema = z.object({
+  query: z.string().min(1),
+  latitude: z.number().optional(),
+  longitude: z.number().optional(),
+});
+
 export const fileAnalysisSchema = z.object({
   fileId: z.string(),
   analysisType: z.enum(['pmesii', 'intelligence', 'threat', 'general']),
@@ -389,6 +396,7 @@ export const locationAnalysisRequestSchema = z.object({
 });
 
 export type ChatQueryRequest = z.infer<typeof chatQuerySchema>;
+export type GeminiLocationQueryRequest = z.infer<typeof geminiLocationQuerySchema>;
 export type FileAnalysisRequest = z.infer<typeof fileAnalysisSchema>;
 export type RiskAssessmentRequest = z.infer<typeof riskAssessmentRequestSchema>;
 export type WaypointRequest = z.infer<typeof waypointRequestSchema>;
