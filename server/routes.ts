@@ -8,6 +8,13 @@ import {
   calculateRiskScore
 } from "./openai";
 import {
+  processLocationQuery,
+  processTacticalQueryGemini,
+  generatePMESIIAnalysisGemini,
+  type LocationContext,
+  type GeminiLocationResponse
+} from "./gemini";
+import {
   getODINCountriesList,
   getODINCountryData,
   getODINSummary,
@@ -1157,6 +1164,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error(`Error fetching ODIN summary:`, error);
       res.status(500).json({ success: false, error: (error as any).message });
+    }
+  });
+
+  // Gemini Integration Routes
+  
+  // Location-based intelligence query with Google Maps grounding
+  app.post("/api/gemini/location", async (req, res) => {
+    try {
+      const { query, latitude, longitude } = req.body;
+      
+      if (!query || typeof query !== 'string') {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Query is required' 
+        });
+      }
+      
+      const location: LocationContext | undefined = 
+        (latitude !== undefined && longitude !== undefined) 
+          ? { latitude, longitude }
+          : undefined;
+      
+      const result = await processLocationQuery(query, location);
+      
+      res.json({ 
+        success: true, 
+        response: result.text,
+        groundingSources: result.groundingSources,
+        hasGrounding: result.groundingSources.length > 0
+      });
+    } catch (error) {
+      console.error("Gemini location query error:", error);
+      res.status(500).json({ 
+        success: false, 
+        error: (error as any).message 
+      });
     }
   });
 
