@@ -28,6 +28,12 @@ import {
   type SearchResult,
   type TimelineEvent,
   type TimelineQuery,
+  type AssistantSession,
+  type InsertAssistantSession,
+  type AssistantMessage,
+  type InsertAssistantMessage,
+  type AssistantRun,
+  type InsertAssistantRun,
   users,
   chatMessages,
   analysisResults,
@@ -39,7 +45,10 @@ import {
   socialMediaPosts,
   uploadedSources,
   graphNodes,
-  graphEdges
+  graphEdges,
+  assistantSessions,
+  assistantMessages,
+  assistantRuns
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, like, sql, desc, asc, inArray, gte, lte, isNotNull, isNull } from "drizzle-orm";
@@ -659,5 +668,116 @@ export class DatabaseStorage implements IStorage {
   async deleteGraphEdge(id: string): Promise<boolean> {
     const result = await db.delete(graphEdges).where(eq(graphEdges.id, id)).returning();
     return result.length > 0;
+  }
+
+  // GIA Session operations
+  async getAssistantSessions(status?: string): Promise<AssistantSession[]> {
+    if (status) {
+      return await db
+        .select()
+        .from(assistantSessions)
+        .where(eq(assistantSessions.status, status))
+        .orderBy(desc(assistantSessions.updatedAt));
+    }
+    return await db
+      .select()
+      .from(assistantSessions)
+      .orderBy(desc(assistantSessions.updatedAt));
+  }
+
+  async getAssistantSessionById(id: string): Promise<AssistantSession | undefined> {
+    const [session] = await db
+      .select()
+      .from(assistantSessions)
+      .where(eq(assistantSessions.id, id));
+    return session || undefined;
+  }
+
+  async createAssistantSession(session: InsertAssistantSession): Promise<AssistantSession> {
+    const [result] = await db
+      .insert(assistantSessions)
+      .values(session)
+      .returning();
+    return result;
+  }
+
+  async updateAssistantSession(id: string, updates: Partial<InsertAssistantSession>): Promise<AssistantSession | null> {
+    const [result] = await db
+      .update(assistantSessions)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(assistantSessions.id, id))
+      .returning();
+    return result || null;
+  }
+
+  async deleteAssistantSession(id: string): Promise<boolean> {
+    // Delete related messages and runs first
+    await db.delete(assistantMessages).where(eq(assistantMessages.sessionId, id));
+    await db.delete(assistantRuns).where(eq(assistantRuns.sessionId, id));
+    // Then delete the session
+    const result = await db.delete(assistantSessions).where(eq(assistantSessions.id, id)).returning();
+    return result.length > 0;
+  }
+
+  // GIA Message operations
+  async getAssistantMessages(sessionId: string, limit: number = 50): Promise<AssistantMessage[]> {
+    return await db
+      .select()
+      .from(assistantMessages)
+      .where(eq(assistantMessages.sessionId, sessionId))
+      .orderBy(asc(assistantMessages.createdAt))
+      .limit(limit);
+  }
+
+  async createAssistantMessage(message: InsertAssistantMessage): Promise<AssistantMessage> {
+    const [result] = await db
+      .insert(assistantMessages)
+      .values(message)
+      .returning();
+    return result;
+  }
+
+  async updateAssistantMessage(id: string, updates: Partial<InsertAssistantMessage>): Promise<AssistantMessage | null> {
+    const [result] = await db
+      .update(assistantMessages)
+      .set(updates)
+      .where(eq(assistantMessages.id, id))
+      .returning();
+    return result || null;
+  }
+
+  // GIA Run operations
+  async getAssistantRuns(sessionId: string, limit: number = 10): Promise<AssistantRun[]> {
+    return await db
+      .select()
+      .from(assistantRuns)
+      .where(eq(assistantRuns.sessionId, sessionId))
+      .orderBy(desc(assistantRuns.createdAt))
+      .limit(limit);
+  }
+
+  async getAssistantRunById(id: string): Promise<AssistantRun | undefined> {
+    const [run] = await db
+      .select()
+      .from(assistantRuns)
+      .where(eq(assistantRuns.id, id));
+    return run || undefined;
+  }
+
+  async createAssistantRun(run: InsertAssistantRun): Promise<AssistantRun> {
+    const [result] = await db
+      .insert(assistantRuns)
+      .values(run)
+      .returning();
+    return result;
+  }
+
+  async updateAssistantRun(id: string, updates: Partial<InsertAssistantRun>): Promise<AssistantRun | null> {
+    const [result] = await db
+      .update(assistantRuns)
+      .set(updates)
+      .where(eq(assistantRuns.id, id))
+      .returning();
+    return result || null;
   }
 }

@@ -222,6 +222,88 @@ export const graphEdges = pgTable("graph_edges", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// ==========================================
+// GIA (GuideRight Intelligence Assistant) Tables
+// ==========================================
+
+// Assistant Sessions - tracks analysis sessions with context
+export const assistantSessions = pgTable("assistant_sessions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  
+  // AOI context
+  aoiLabel: text("aoi_label"),
+  aoiGeometry: jsonb("aoi_geometry"), // GeoJSON geometry
+  
+  // Time window
+  timeFrom: timestamp("time_from"),
+  timeTo: timestamp("time_to"),
+  
+  // Scenario settings
+  trainingCountry: text("training_country"), // ODIN training country
+  isExercise: boolean("is_exercise").default(false),
+  
+  // Default settings
+  defaultMode: text("default_mode").default("SITREP"), // PMESII, RISK_BRIEF, SITREP, GRAPH_QUERY, ARTIFACT_SUMMARY
+  sensitivityMax: text("sensitivity_max").default("Internal"), // Max sensitivity level
+  
+  // Session state
+  status: text("status").default("active"), // active, archived
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Assistant Messages - chat messages within a session
+export const assistantMessages = pgTable("assistant_messages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  sessionId: varchar("session_id").notNull(),
+  
+  role: text("role").notNull(), // 'user', 'assistant', 'system'
+  content: text("content").notNull(),
+  
+  // Mode override for this message
+  mode: text("mode"), // PMESII, RISK_BRIEF, SITREP, GRAPH_QUERY, ARTIFACT_SUMMARY, DEGRADED
+  
+  // Context overrides
+  contextOverrides: jsonb("context_overrides"), // time_window, artifact_scope, etc.
+  
+  // Status
+  status: text("status").default("queued"), // queued, processing, completed, failed
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Assistant Runs - analysis runs with structured outputs
+export const assistantRuns = pgTable("assistant_runs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  sessionId: varchar("session_id").notNull(),
+  messageId: varchar("message_id"), // Optional link to triggering message
+  
+  // Run configuration
+  mode: text("mode").notNull(), // PMESII, RISK_BRIEF, SITREP, GRAPH_QUERY, ARTIFACT_SUMMARY, DEGRADED
+  prompt: text("prompt"),
+  
+  // Context used (for audit)
+  contextSnapshot: jsonb("context_snapshot"), // AOI, time_window, artifact_ids, graph_nodes
+  
+  // Engine state
+  engineState: text("engine_state").default("AI_ONLINE"), // AI_ONLINE, DEGRADED, AI_UNAVAILABLE
+  
+  // Structured result (ModeResult schema)
+  result: jsonb("result"),
+  
+  // Audit trail
+  toolsUsed: jsonb("tools_used").$type<string[]>().default([]),
+  policyFlags: jsonb("policy_flags").$type<string[]>().default([]),
+  
+  // Status
+  status: text("status").default("pending"), // pending, running, completed, failed
+  errorMessage: text("error_message"),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  completedAt: timestamp("completed_at"),
+});
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
@@ -397,6 +479,44 @@ export const insertGraphEdgeSchema = createInsertSchema(graphEdges).pick({
   metadata: true,
 });
 
+// GIA Insert Schemas
+export const insertAssistantSessionSchema = createInsertSchema(assistantSessions).pick({
+  name: true,
+  aoiLabel: true,
+  aoiGeometry: true,
+  timeFrom: true,
+  timeTo: true,
+  trainingCountry: true,
+  isExercise: true,
+  defaultMode: true,
+  sensitivityMax: true,
+  status: true,
+});
+
+export const insertAssistantMessageSchema = createInsertSchema(assistantMessages).pick({
+  sessionId: true,
+  role: true,
+  content: true,
+  mode: true,
+  contextOverrides: true,
+  status: true,
+});
+
+export const insertAssistantRunSchema = createInsertSchema(assistantRuns).pick({
+  sessionId: true,
+  messageId: true,
+  mode: true,
+  prompt: true,
+  contextSnapshot: true,
+  engineState: true,
+  result: true,
+  toolsUsed: true,
+  policyFlags: true,
+  status: true,
+  errorMessage: true,
+  completedAt: true,
+});
+
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -422,6 +542,188 @@ export type GraphNode = typeof graphNodes.$inferSelect;
 export type InsertGraphNode = z.infer<typeof insertGraphNodeSchema>;
 export type GraphEdge = typeof graphEdges.$inferSelect;
 export type InsertGraphEdge = z.infer<typeof insertGraphEdgeSchema>;
+
+// GIA Types
+export type AssistantSession = typeof assistantSessions.$inferSelect;
+export type InsertAssistantSession = z.infer<typeof insertAssistantSessionSchema>;
+export type AssistantMessage = typeof assistantMessages.$inferSelect;
+export type InsertAssistantMessage = z.infer<typeof insertAssistantMessageSchema>;
+export type AssistantRun = typeof assistantRuns.$inferSelect;
+export type InsertAssistantRun = z.infer<typeof insertAssistantRunSchema>;
+
+// GIA Mode Constants
+export const GIA_MODES = ['PMESII', 'RISK_BRIEF', 'SITREP', 'MISSION_SUPPORT', 'GRAPH_QUERY', 'ARTIFACT_SUMMARY', 'DEGRADED'] as const;
+export const ENGINE_STATES = ['AI_ONLINE', 'DEGRADED', 'AI_UNAVAILABLE', 'QUOTA'] as const;
+export const CLAIM_TAGS = ['SUPPORTED', 'ASSUMPTION', 'UNKNOWN'] as const;
+export const RELIABILITY_GRADES = ['A', 'B', 'C', 'D', 'E'] as const;
+export const CONFIDENCE_LEVELS = ['Low', 'Med', 'High'] as const;
+
+export type GIAMode = typeof GIA_MODES[number];
+export type EngineState = typeof ENGINE_STATES[number];
+export type ClaimTag = typeof CLAIM_TAGS[number];
+export type ReliabilityGrade = typeof RELIABILITY_GRADES[number];
+export type ConfidenceLevel = typeof CONFIDENCE_LEVELS[number];
+
+// GIA Run Request Schema (for API validation)
+export const giaRunRequestSchema = z.object({
+  mode: z.enum(GIA_MODES).optional(),
+  prompt: z.string().min(1, "Prompt is required"),
+  context_overrides: z.record(z.unknown()).optional(),
+});
+export type GIARunRequest = z.infer<typeof giaRunRequestSchema>;
+
+// GIA Structured Output Schemas (per tech spec)
+
+// Evidence reference for claims
+export const evidenceReferenceSchema = z.object({
+  artifact_id: z.string().uuid(),
+  snippet_id: z.string().optional(),
+  reliability: z.enum(RELIABILITY_GRADES),
+  timestamp: z.string().datetime().optional(),
+});
+
+// Confidence object
+export const confidenceSchema = z.object({
+  level: z.enum(CONFIDENCE_LEVELS),
+  score: z.number().min(0).max(1),
+  basis: z.array(z.string()).default([]),
+});
+
+// Claim object (core building block)
+export const claimSchema = z.object({
+  id: z.string(),
+  text: z.string(),
+  tag: z.enum(CLAIM_TAGS),
+  confidence: confidenceSchema,
+  evidence: z.array(evidenceReferenceSchema).default([]),
+  related_nodes: z.array(z.string()).default([]),
+});
+
+// Citation object
+export const citationSchema = z.object({
+  id: z.string(),
+  artifact_id: z.string().uuid(),
+  snippet_id: z.string().optional(),
+  text: z.string(),
+  reliability: z.enum(RELIABILITY_GRADES),
+});
+
+// Action object (from assistant output)
+export const actionSchema = z.object({
+  type: z.enum(['create_risk', 'create_milestone', 'link_artifact', 'update_node']),
+  label: z.string(),
+  payload: z.record(z.unknown()),
+});
+
+// Audit trail
+export const auditSchema = z.object({
+  tools_used: z.array(z.string()).default([]),
+  policy_flags: z.array(z.string()).default([]),
+});
+
+// Common ModeResult envelope
+export const modeResultEnvelopeSchema = z.object({
+  schema_version: z.string().default("1.0"),
+  mode: z.enum(GIA_MODES),
+  title: z.string(),
+  time_window: z.object({
+    from: z.string().datetime(),
+    to: z.string().datetime(),
+  }).optional(),
+  confidence: confidenceSchema.optional(),
+  claims: z.array(claimSchema).default([]),
+  citations: z.array(citationSchema).default([]),
+  actions: z.array(actionSchema).default([]),
+  audit: auditSchema,
+});
+
+// PMESII mode payload
+export const pmesiiModePayloadSchema = z.object({
+  pmesii: z.object({
+    Political: z.object({ summary: z.string(), claims: z.array(z.string()) }),
+    Military: z.object({ summary: z.string(), claims: z.array(z.string()) }),
+    Economic: z.object({ summary: z.string(), claims: z.array(z.string()) }),
+    Social: z.object({ summary: z.string(), claims: z.array(z.string()) }),
+    Information: z.object({ summary: z.string(), claims: z.array(z.string()) }),
+    Infrastructure: z.object({ summary: z.string(), claims: z.array(z.string()) }),
+  }),
+  confidence_bars: z.array(z.object({
+    dimension: z.string(),
+    score: z.number().min(0).max(1),
+  })),
+});
+
+// Risk Brief mode payload
+export const riskBriefPayloadSchema = z.object({
+  risks: z.array(z.object({
+    title: z.string(),
+    severity: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']),
+    score: z.number().min(0).max(100),
+    drivers: z.array(z.string()), // Claim IDs
+    mitigations: z.array(z.string()),
+    geo: z.object({
+      applies_to_aoi: z.boolean(),
+      notes: z.string().optional(),
+    }).optional(),
+    trend: z.enum(['Improving', 'Stable', 'Worsening', 'Unknown']).optional(),
+  })),
+});
+
+// SITREP mode payload
+export const sitrepPayloadSchema = z.object({
+  sections: z.array(z.object({
+    heading: z.string(),
+    bullets: z.array(z.string()), // Can be claim IDs or strings
+  })),
+});
+
+// Graph Query mode payload
+export const graphQueryPayloadSchema = z.object({
+  question: z.string(),
+  answer: z.object({
+    summary: z.string(),
+    paths: z.array(z.object({
+      from: z.string(),
+      to: z.string(),
+      edges: z.array(z.string()),
+      explanation: z.string(),
+    })),
+  }),
+});
+
+// Artifact Summary mode payload
+export const artifactSummaryPayloadSchema = z.object({
+  artifact_id: z.string().uuid(),
+  summary: z.string(),
+  key_points: z.array(z.string()), // Claim IDs
+  reliability: z.enum(RELIABILITY_GRADES),
+  gaps: z.array(z.string()),
+});
+
+// Degraded mode payload
+export const degradedPayloadSchema = z.object({
+  degraded_reason: z.enum(['AI_UNAVAILABLE', 'QUOTA', 'POLICY']),
+  deterministic_outputs: z.object({
+    graph_findings: z.array(z.unknown()).default([]),
+    stored_pmesii_used: z.boolean().default(false),
+    risk_rules_applied: z.boolean().default(false),
+  }),
+});
+
+// Types for structured outputs
+export type EvidenceReference = z.infer<typeof evidenceReferenceSchema>;
+export type Confidence = z.infer<typeof confidenceSchema>;
+export type Claim = z.infer<typeof claimSchema>;
+export type Citation = z.infer<typeof citationSchema>;
+export type Action = z.infer<typeof actionSchema>;
+export type Audit = z.infer<typeof auditSchema>;
+export type ModeResultEnvelope = z.infer<typeof modeResultEnvelopeSchema>;
+export type PMESIIModePayload = z.infer<typeof pmesiiModePayloadSchema>;
+export type RiskBriefPayload = z.infer<typeof riskBriefPayloadSchema>;
+export type SITREPPayload = z.infer<typeof sitrepPayloadSchema>;
+export type GraphQueryPayload = z.infer<typeof graphQueryPayloadSchema>;
+export type ArtifactSummaryPayload = z.infer<typeof artifactSummaryPayloadSchema>;
+export type DegradedPayload = z.infer<typeof degradedPayloadSchema>;
 
 // Graph node type and layer constants
 export const NODE_TYPES = ['artifact', 'milestone', 'risk', 'dependency', 'decision', 'partner'] as const;

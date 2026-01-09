@@ -29,6 +29,11 @@ import {
   getODINSummary,
   parseODINContent
 } from "./odin";
+import {
+  calculateDeterministicConfidence,
+  aggregateConfidences,
+  type ConfidenceContext
+} from "./confidence-scoring";
 import { 
   chatQuerySchema,
   geminiLocationQuerySchema,
@@ -43,6 +48,10 @@ import {
   locationAnalysisRequestSchema,
   socialMediaQuerySchema,
   insertSocialMediaPostSchema,
+  insertAssistantSessionSchema,
+  insertAssistantMessageSchema,
+  giaRunRequestSchema,
+  GIA_MODES,
   type ChatQueryRequest,
   type GeminiLocationQueryRequest,
   type RiskAssessmentRequest,
@@ -54,7 +63,8 @@ import {
   type WeatherAlertRequest,
   type LocationAnalysisRequest,
   type SocialMediaQuery,
-  type InsertSocialMediaPost
+  type InsertSocialMediaPost,
+  type GIAMode
 } from "@shared/schema";
 import multer from "multer";
 // import pdfParse from "pdf-parse"; // Temporarily disabled due to initialization issues
@@ -95,6 +105,290 @@ function handleOpenAIError(error: unknown, res: any) {
     success: false, 
     error: message || "Internal server error" 
   });
+}
+
+// GIA Analysis execution helper
+async function executeGIAAnalysis(
+  mode: GIAMode, 
+  prompt: string, 
+  session: { 
+    aoiLabel: string | null; 
+    trainingCountry: string | null;
+    timeFrom: Date | null;
+    timeTo: Date | null;
+  }
+): Promise<Record<string, unknown>> {
+  const now = new Date().toISOString();
+  const contextInfo = session.aoiLabel 
+    ? `Current AOI: ${session.aoiLabel}. Training Country: ${session.trainingCountry || "Not specified"}. `
+    : "";
+
+  const timeWindow = {
+    from: session.timeFrom?.toISOString() || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+    to: session.timeTo?.toISOString() || now,
+  };
+
+  switch (mode) {
+    case "PMESII": {
+      const pmesiiResult = await generatePMESIIAnalysis(
+        `${contextInfo}${prompt}`,
+        session.trainingCountry || undefined
+      );
+      return {
+        schema_version: "1.0",
+        mode: "PMESII",
+        title: `PMESII Analysis: ${session.aoiLabel || "Current Region"}`,
+        time_window: timeWindow,
+        pmesii: pmesiiResult,
+        confidence: calculateConfidenceFromAnalysis(pmesiiResult),
+        claims: extractClaims(pmesiiResult, "PMESII"),
+        citations: [],
+        actions: [],
+        audit: { tools_used: ["generatePMESIIAnalysis"], policy_flags: [] },
+      };
+    }
+
+    case "RISK_BRIEF": {
+      const riskData = await calculateRiskScore({
+        label: session.aoiLabel || "Area of Interest",
+        query: prompt,
+      });
+      
+      // AI-generated risk assessment has no real artifact references
+      const riskConfidenceContext: ConfidenceContext = {
+        evidenceCount: 0,
+        reliabilityGrades: [],
+        hasRecentEvidence: false,
+      };
+      
+      return {
+        schema_version: "1.0",
+        mode: "RISK_BRIEF",
+        title: `Risk Brief: ${session.aoiLabel || "Current Region"}`,
+        time_window: timeWindow,
+        risks: [
+          {
+            title: "Overall Risk Assessment",
+            severity: riskData.score > 0.8 ? "CRITICAL" : 
+                     riskData.score > 0.6 ? "HIGH" :
+                     riskData.score > 0.4 ? "MEDIUM" : "LOW",
+            score: Math.round(riskData.score * 100),
+            drivers: riskData.factors || [],
+            mitigations: [],
+            trend: "Unknown",
+          }
+        ],
+        confidence: calculateDeterministicConfidence(riskConfidenceContext),
+        claims: [],
+        citations: [],
+        actions: [],
+        audit: { tools_used: ["calculateRiskScore"], policy_flags: [] },
+      };
+    }
+
+    case "SITREP": {
+      const response = await processTacticalQuery(
+        `${contextInfo}Generate a situation report (SITREP) addressing: ${prompt}`,
+        [],
+        session.trainingCountry || undefined
+      );
+      
+      // AI-generated SITREP has no real artifact references
+      const sitrepConfidenceContext: ConfidenceContext = {
+        evidenceCount: 0,
+        reliabilityGrades: [],
+        hasRecentEvidence: false,
+      };
+      
+      return {
+        schema_version: "1.0",
+        mode: "SITREP",
+        title: `Situation Report: ${session.aoiLabel || "Current Operations"}`,
+        time_window: timeWindow,
+        sections: [
+          {
+            heading: "Situation Overview",
+            bullets: response.split('\n').filter(line => line.trim()).slice(0, 5),
+          },
+          {
+            heading: "Key Developments",
+            bullets: response.split('\n').filter(line => line.trim()).slice(5, 10),
+          }
+        ],
+        confidence: calculateDeterministicConfidence(sitrepConfidenceContext),
+        claims: [],
+        citations: [],
+        actions: [],
+        audit: { tools_used: ["processTacticalQuery"], policy_flags: [] },
+      };
+    }
+
+    case "GRAPH_QUERY": {
+      const nodes = await storage.getGraphNodes({ limit: 20 });
+      const edges = await storage.getGraphEdges();
+      
+      // Graph nodes are real structured data; count as evidence but don't fabricate reliability grades
+      const graphConfidenceContext: ConfidenceContext = {
+        evidenceCount: Math.min(nodes.total, 10),
+        reliabilityGrades: [],
+        hasRecentEvidence: nodes.total > 0,
+        independentSources: Math.min(nodes.total, 5),
+      };
+      
+      return {
+        schema_version: "1.0",
+        mode: "GRAPH_QUERY",
+        title: `Graph Query: ${prompt.slice(0, 50)}...`,
+        time_window: timeWindow,
+        question: prompt,
+        answer: {
+          summary: `Found ${nodes.total} nodes and ${edges.length} edges related to your query.`,
+          nodes: nodes.nodes.slice(0, 10),
+          edges: edges.slice(0, 10),
+          paths: [],
+        },
+        confidence: calculateDeterministicConfidence(graphConfidenceContext),
+        claims: [],
+        citations: [],
+        actions: [],
+        audit: { tools_used: ["getGraphNodes", "getGraphEdges"], policy_flags: [] },
+      };
+    }
+
+    case "ARTIFACT_SUMMARY": {
+      const sources = await storage.getUploadedSources();
+      
+      // Artifacts are real uploaded files; count as evidence but don't fabricate reliability grades
+      const artifactConfidenceContext: ConfidenceContext = {
+        evidenceCount: sources.length,
+        reliabilityGrades: [],
+        hasRecentEvidence: sources.length > 0,
+        independentSources: sources.length,
+      };
+      
+      return {
+        schema_version: "1.0",
+        mode: "ARTIFACT_SUMMARY",
+        title: `Artifact Summary`,
+        time_window: timeWindow,
+        artifacts: sources.slice(0, 10).map(s => ({
+          id: s.id,
+          filename: s.filename,
+          summary: s.summary || "No summary available",
+        })),
+        confidence: calculateDeterministicConfidence(artifactConfidenceContext),
+        claims: [],
+        citations: [],
+        actions: [],
+        audit: { tools_used: ["getUploadedSources"], policy_flags: [] },
+      };
+    }
+
+    case "MISSION_SUPPORT": {
+      const response = await processTacticalQuery(
+        `${contextInfo}Provide mission support analysis for: ${prompt}`,
+        [],
+        session.trainingCountry || undefined
+      );
+      
+      // AI-generated mission support has no real artifact references
+      const missionConfidenceContext: ConfidenceContext = {
+        evidenceCount: 0,
+        reliabilityGrades: [],
+        hasRecentEvidence: false,
+      };
+      
+      return {
+        schema_version: "1.0",
+        mode: "MISSION_SUPPORT",
+        title: `Mission Support: ${prompt.slice(0, 50)}...`,
+        time_window: timeWindow,
+        analysis: response,
+        recommendations: response.split('\n').filter(line => line.trim()).slice(0, 5),
+        confidence: calculateDeterministicConfidence(missionConfidenceContext),
+        claims: [],
+        citations: [],
+        actions: [],
+        audit: { tools_used: ["processTacticalQuery"], policy_flags: [] },
+      };
+    }
+
+    case "DEGRADED":
+    default: {
+      const degradedConfidenceContext: ConfidenceContext = {
+        evidenceCount: 0,
+        reliabilityGrades: [],
+        hasRecentEvidence: false,
+      };
+      
+      return {
+        schema_version: "1.0",
+        mode: "DEGRADED",
+        title: "Degraded Mode Response",
+        time_window: timeWindow,
+        degraded_reason: "AI_UNAVAILABLE",
+        deterministic_outputs: {
+          graph_findings: [],
+          stored_pmesii_used: false,
+          risk_rules_applied: false,
+        },
+        confidence: calculateDeterministicConfidence(degradedConfidenceContext),
+        claims: [],
+        citations: [],
+        actions: [],
+        audit: { tools_used: [], policy_flags: ["degraded_mode"] },
+      };
+    }
+  }
+}
+
+// Helper to calculate confidence from PMESII analysis results
+// AI-generated summaries without real artifact references count as 0 evidence sources
+function calculateConfidenceFromAnalysis(result: Record<string, unknown>): { level: "Low" | "Med" | "High"; score: number; basis: string[] } {
+  let dimensionCount = 0;
+  
+  if (result && typeof result === "object") {
+    dimensionCount = Object.keys(result).length;
+  }
+
+  const context: ConfidenceContext = {
+    evidenceCount: 0,
+    reliabilityGrades: [],
+    hasRecentEvidence: false,
+    pmesiiDimensionsCovered: dimensionCount,
+  };
+
+  return calculateDeterministicConfidence(context);
+}
+
+// Helper to extract claims from analysis (claims without evidence are ASSUMPTION)
+function extractClaims(result: Record<string, unknown>, mode: string): Array<Record<string, unknown>> {
+  const claims: Array<Record<string, unknown>> = [];
+  let claimId = 1;
+
+  if (mode === "PMESII" && result) {
+    for (const [dimension, data] of Object.entries(result)) {
+      if (data && typeof data === "object" && "summary" in (data as Record<string, unknown>)) {
+        const claimContext: ConfidenceContext = {
+          evidenceCount: 0,
+          reliabilityGrades: [],
+          hasRecentEvidence: false,
+          claimTag: "ASSUMPTION",
+        };
+        
+        claims.push({
+          id: `claim_${claimId++}`,
+          text: (data as Record<string, unknown>).summary as string,
+          tag: "ASSUMPTION",
+          confidence: calculateDeterministicConfidence(claimContext),
+          evidence: [],
+          related_nodes: [],
+        });
+      }
+    }
+  }
+
+  return claims;
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -971,6 +1265,269 @@ Return realistic intelligence-style events based on your knowledge of the region
         return res.status(404).json({ success: false, error: "Edge not found" });
       }
       res.json({ success: true, message: "Edge deleted" });
+    } catch (error) {
+      res.status(500).json({ success: false, error: getErrorMessage(error) });
+    }
+  });
+
+  // ==========================================
+  // GIA (GuideRight Intelligence Assistant) API
+  // ==========================================
+
+  // Get all sessions
+  app.get("/api/assistant/sessions", async (req, res) => {
+    try {
+      const status = req.query.status as string | undefined;
+      const sessions = await storage.getAssistantSessions(status);
+      res.json({ success: true, sessions });
+    } catch (error) {
+      res.status(500).json({ success: false, error: getErrorMessage(error) });
+    }
+  });
+
+  // Get session by ID
+  app.get("/api/assistant/sessions/:id", async (req, res) => {
+    try {
+      const session = await storage.getAssistantSessionById(req.params.id);
+      if (!session) {
+        return res.status(404).json({ success: false, error: "Session not found" });
+      }
+      res.json({ success: true, session });
+    } catch (error) {
+      res.status(500).json({ success: false, error: getErrorMessage(error) });
+    }
+  });
+
+  // Create new session
+  app.post("/api/assistant/sessions", async (req, res) => {
+    try {
+      const sessionData = insertAssistantSessionSchema.parse(req.body);
+      const session = await storage.createAssistantSession(sessionData);
+      res.status(201).json({ success: true, session });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ success: false, error: error.errors });
+      }
+      res.status(500).json({ success: false, error: getErrorMessage(error) });
+    }
+  });
+
+  // Update session
+  app.patch("/api/assistant/sessions/:id", async (req, res) => {
+    try {
+      const session = await storage.updateAssistantSession(req.params.id, req.body);
+      if (!session) {
+        return res.status(404).json({ success: false, error: "Session not found" });
+      }
+      res.json({ success: true, session });
+    } catch (error) {
+      res.status(500).json({ success: false, error: getErrorMessage(error) });
+    }
+  });
+
+  // Delete session
+  app.delete("/api/assistant/sessions/:id", async (req, res) => {
+    try {
+      const deleted = await storage.deleteAssistantSession(req.params.id);
+      if (!deleted) {
+        return res.status(404).json({ success: false, error: "Session not found" });
+      }
+      res.json({ success: true, message: "Session deleted" });
+    } catch (error) {
+      res.status(500).json({ success: false, error: getErrorMessage(error) });
+    }
+  });
+
+  // Get messages for a session
+  app.get("/api/assistant/sessions/:id/messages", async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 50;
+      const messages = await storage.getAssistantMessages(req.params.id, limit);
+      res.json({ success: true, messages });
+    } catch (error) {
+      res.status(500).json({ success: false, error: getErrorMessage(error) });
+    }
+  });
+
+  // Add message to session
+  app.post("/api/assistant/sessions/:id/messages", async (req, res) => {
+    try {
+      const messageData = insertAssistantMessageSchema.parse({
+        ...req.body,
+        sessionId: req.params.id,
+      });
+      const message = await storage.createAssistantMessage(messageData);
+      res.status(201).json({ success: true, message });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ success: false, error: error.errors });
+      }
+      res.status(500).json({ success: false, error: getErrorMessage(error) });
+    }
+  });
+
+  // Run analysis on session (main GIA endpoint)
+  app.post("/api/assistant/sessions/:id/run", async (req, res) => {
+    try {
+      const sessionId = req.params.id;
+      const session = await storage.getAssistantSessionById(sessionId);
+      if (!session) {
+        return res.status(404).json({ success: false, error: "Session not found" });
+      }
+
+      const parseResult = giaRunRequestSchema.safeParse(req.body);
+      if (!parseResult.success) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "Invalid request body",
+          details: parseResult.error.flatten()
+        });
+      }
+
+      const { mode, prompt, context_overrides } = parseResult.data;
+
+      const effectiveMode = mode || (session.defaultMode as GIAMode) || "SITREP";
+
+      // Create user message
+      const userMessage = await storage.createAssistantMessage({
+        sessionId,
+        role: "user",
+        content: prompt,
+        mode: effectiveMode,
+        contextOverrides: context_overrides,
+        status: "completed",
+      });
+
+      // Create run record
+      const run = await storage.createAssistantRun({
+        sessionId,
+        messageId: userMessage.id,
+        mode: effectiveMode,
+        prompt,
+        contextSnapshot: {
+          aoi_label: session.aoiLabel,
+          aoi_geometry: session.aoiGeometry,
+          time_from: session.timeFrom,
+          time_to: session.timeTo,
+          training_country: session.trainingCountry,
+          ...context_overrides,
+        },
+        engineState: "AI_ONLINE",
+        status: "running",
+      });
+
+      // Execute analysis based on mode
+      try {
+        const result = await executeGIAAnalysis(effectiveMode, prompt, session);
+        
+        // Update run with result
+        await storage.updateAssistantRun(run.id, {
+          result,
+          status: "completed",
+          completedAt: new Date(),
+        });
+
+        // Create assistant response message
+        await storage.createAssistantMessage({
+          sessionId,
+          role: "assistant",
+          content: JSON.stringify(result),
+          mode: effectiveMode,
+          status: "completed",
+        });
+
+        res.json({ 
+          success: true, 
+          run_id: run.id,
+          result 
+        });
+      } catch (analysisError) {
+        // Update run with error
+        await storage.updateAssistantRun(run.id, {
+          status: "failed",
+          errorMessage: getErrorMessage(analysisError),
+          engineState: "DEGRADED",
+        });
+
+        throw analysisError;
+      }
+    } catch (error) {
+      handleOpenAIError(error, res);
+    }
+  });
+
+  // Get runs for a session
+  app.get("/api/assistant/sessions/:id/runs", async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 10;
+      const runs = await storage.getAssistantRuns(req.params.id, limit);
+      res.json({ success: true, runs });
+    } catch (error) {
+      res.status(500).json({ success: false, error: getErrorMessage(error) });
+    }
+  });
+
+  // Get specific run
+  app.get("/api/assistant/runs/:id", async (req, res) => {
+    try {
+      const run = await storage.getAssistantRunById(req.params.id);
+      if (!run) {
+        return res.status(404).json({ success: false, error: "Run not found" });
+      }
+      res.json({ success: true, run });
+    } catch (error) {
+      res.status(500).json({ success: false, error: getErrorMessage(error) });
+    }
+  });
+
+  // Context endpoints for GIA
+  app.get("/api/context/aoi/current", async (req, res) => {
+    try {
+      // Get current AOI context from recent sessions or graph nodes
+      const sessions = await storage.getAssistantSessions("active");
+      const currentSession = sessions[0];
+      
+      if (currentSession?.aoiGeometry) {
+        res.json({
+          success: true,
+          aoi: {
+            label: currentSession.aoiLabel,
+            geometry: currentSession.aoiGeometry,
+            training_country: currentSession.trainingCountry,
+          }
+        });
+      } else {
+        res.json({ success: true, aoi: null });
+      }
+    } catch (error) {
+      res.status(500).json({ success: false, error: getErrorMessage(error) });
+    }
+  });
+
+  // System status endpoint for GIA
+  app.get("/api/system/status", async (req, res) => {
+    try {
+      const openaiKey = process.env.OPENAI_API_KEY;
+      const geminiKey = process.env.GEMINI_API_KEY;
+      
+      res.json({
+        success: true,
+        status: {
+          engine_state: openaiKey ? "AI_ONLINE" : (geminiKey ? "DEGRADED" : "AI_UNAVAILABLE"),
+          ai_providers: {
+            openai: !!openaiKey,
+            gemini: !!geminiKey,
+          },
+          database: true,
+          features: {
+            pmesii: true,
+            risk_brief: true,
+            sitrep: true,
+            graph_query: true,
+            artifact_summary: true,
+          },
+        }
+      });
     } catch (error) {
       res.status(500).json({ success: false, error: getErrorMessage(error) });
     }

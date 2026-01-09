@@ -27,7 +27,13 @@ import {
   type SearchQuery,
   type SearchResult,
   type TimelineEvent,
-  type TimelineQuery
+  type TimelineQuery,
+  type AssistantSession,
+  type InsertAssistantSession,
+  type AssistantMessage,
+  type InsertAssistantMessage,
+  type AssistantRun,
+  type InsertAssistantRun
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 
@@ -105,6 +111,24 @@ export interface IStorage {
   getGraphEdges(nodeId?: string): Promise<GraphEdge[]>;
   createGraphEdge(edge: InsertGraphEdge): Promise<GraphEdge>;
   deleteGraphEdge(id: string): Promise<boolean>;
+  
+  // GIA Session operations
+  getAssistantSessions(status?: string): Promise<AssistantSession[]>;
+  getAssistantSessionById(id: string): Promise<AssistantSession | undefined>;
+  createAssistantSession(session: InsertAssistantSession): Promise<AssistantSession>;
+  updateAssistantSession(id: string, updates: Partial<InsertAssistantSession>): Promise<AssistantSession | null>;
+  deleteAssistantSession(id: string): Promise<boolean>;
+  
+  // GIA Message operations
+  getAssistantMessages(sessionId: string, limit?: number): Promise<AssistantMessage[]>;
+  createAssistantMessage(message: InsertAssistantMessage): Promise<AssistantMessage>;
+  updateAssistantMessage(id: string, updates: Partial<InsertAssistantMessage>): Promise<AssistantMessage | null>;
+  
+  // GIA Run operations
+  getAssistantRuns(sessionId: string, limit?: number): Promise<AssistantRun[]>;
+  getAssistantRunById(id: string): Promise<AssistantRun | undefined>;
+  createAssistantRun(run: InsertAssistantRun): Promise<AssistantRun>;
+  updateAssistantRun(id: string, updates: Partial<InsertAssistantRun>): Promise<AssistantRun | null>;
 }
 
 export class MemStorage implements IStorage {
@@ -120,6 +144,9 @@ export class MemStorage implements IStorage {
   private uploadedSources: UploadedSource[];
   private graphNodes: GraphNode[];
   private graphEdges: GraphEdge[];
+  private assistantSessions: AssistantSession[];
+  private assistantMessages: AssistantMessage[];
+  private assistantRuns: AssistantRun[];
 
   constructor() {
     this.users = new Map();
@@ -134,6 +161,9 @@ export class MemStorage implements IStorage {
     this.uploadedSources = [];
     this.graphNodes = [];
     this.graphEdges = [];
+    this.assistantSessions = [];
+    this.assistantMessages = [];
+    this.assistantRuns = [];
     
     // Initialize with external intelligence sources and sample weather data
     this.initializeExternalIntelligence();
@@ -1679,6 +1709,139 @@ export class MemStorage implements IStorage {
     if (index === -1) return false;
     this.graphEdges.splice(index, 1);
     return true;
+  }
+
+  // GIA Session operations
+  async getAssistantSessions(status?: string): Promise<AssistantSession[]> {
+    let sessions = [...this.assistantSessions];
+    if (status) {
+      sessions = sessions.filter(s => s.status === status);
+    }
+    return sessions.sort((a, b) => 
+      new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+    );
+  }
+
+  async getAssistantSessionById(id: string): Promise<AssistantSession | undefined> {
+    return this.assistantSessions.find(s => s.id === id);
+  }
+
+  async createAssistantSession(session: InsertAssistantSession): Promise<AssistantSession> {
+    const now = new Date();
+    const newSession: AssistantSession = {
+      id: randomUUID(),
+      name: session.name,
+      aoiLabel: session.aoiLabel ?? null,
+      aoiGeometry: session.aoiGeometry ?? null,
+      timeFrom: session.timeFrom ?? null,
+      timeTo: session.timeTo ?? null,
+      trainingCountry: session.trainingCountry ?? null,
+      isExercise: session.isExercise ?? false,
+      defaultMode: session.defaultMode ?? "SITREP",
+      sensitivityMax: session.sensitivityMax ?? "Internal",
+      status: session.status ?? "active",
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.assistantSessions.push(newSession);
+    return newSession;
+  }
+
+  async updateAssistantSession(id: string, updates: Partial<InsertAssistantSession>): Promise<AssistantSession | null> {
+    const index = this.assistantSessions.findIndex(s => s.id === id);
+    if (index === -1) return null;
+    this.assistantSessions[index] = {
+      ...this.assistantSessions[index],
+      ...updates,
+      updatedAt: new Date(),
+    };
+    return this.assistantSessions[index];
+  }
+
+  async deleteAssistantSession(id: string): Promise<boolean> {
+    const index = this.assistantSessions.findIndex(s => s.id === id);
+    if (index === -1) return false;
+    this.assistantSessions.splice(index, 1);
+    // Also delete related messages and runs
+    this.assistantMessages = this.assistantMessages.filter(m => m.sessionId !== id);
+    this.assistantRuns = this.assistantRuns.filter(r => r.sessionId !== id);
+    return true;
+  }
+
+  // GIA Message operations
+  async getAssistantMessages(sessionId: string, limit: number = 50): Promise<AssistantMessage[]> {
+    return this.assistantMessages
+      .filter(m => m.sessionId === sessionId)
+      .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+      .slice(-limit);
+  }
+
+  async createAssistantMessage(message: InsertAssistantMessage): Promise<AssistantMessage> {
+    const newMessage: AssistantMessage = {
+      id: randomUUID(),
+      sessionId: message.sessionId,
+      role: message.role,
+      content: message.content,
+      mode: message.mode ?? null,
+      contextOverrides: message.contextOverrides ?? null,
+      status: message.status ?? "queued",
+      createdAt: new Date(),
+    };
+    this.assistantMessages.push(newMessage);
+    return newMessage;
+  }
+
+  async updateAssistantMessage(id: string, updates: Partial<InsertAssistantMessage>): Promise<AssistantMessage | null> {
+    const index = this.assistantMessages.findIndex(m => m.id === id);
+    if (index === -1) return null;
+    this.assistantMessages[index] = {
+      ...this.assistantMessages[index],
+      ...updates,
+    };
+    return this.assistantMessages[index];
+  }
+
+  // GIA Run operations
+  async getAssistantRuns(sessionId: string, limit: number = 10): Promise<AssistantRun[]> {
+    return this.assistantRuns
+      .filter(r => r.sessionId === sessionId)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, limit);
+  }
+
+  async getAssistantRunById(id: string): Promise<AssistantRun | undefined> {
+    return this.assistantRuns.find(r => r.id === id);
+  }
+
+  async createAssistantRun(run: InsertAssistantRun): Promise<AssistantRun> {
+    const newRun: AssistantRun = {
+      id: randomUUID(),
+      sessionId: run.sessionId,
+      messageId: run.messageId ?? null,
+      mode: run.mode,
+      prompt: run.prompt ?? null,
+      contextSnapshot: run.contextSnapshot ?? null,
+      engineState: run.engineState ?? "AI_ONLINE",
+      result: run.result ?? null,
+      toolsUsed: run.toolsUsed ?? [],
+      policyFlags: run.policyFlags ?? [],
+      status: run.status ?? "pending",
+      errorMessage: run.errorMessage ?? null,
+      createdAt: new Date(),
+      completedAt: run.completedAt ?? null,
+    };
+    this.assistantRuns.push(newRun);
+    return newRun;
+  }
+
+  async updateAssistantRun(id: string, updates: Partial<InsertAssistantRun>): Promise<AssistantRun | null> {
+    const index = this.assistantRuns.findIndex(r => r.id === id);
+    if (index === -1) return null;
+    this.assistantRuns[index] = {
+      ...this.assistantRuns[index],
+      ...updates,
+    };
+    return this.assistantRuns[index];
   }
 
   private async initializeSampleGraphNodes() {
