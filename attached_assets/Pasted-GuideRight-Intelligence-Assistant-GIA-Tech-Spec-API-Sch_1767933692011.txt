@@ -1,0 +1,412 @@
+GuideRight Intelligence Assistant (GIA) — Tech Spec (API + Schemas + Guardrails)
+
+This is a mission-oriented, evidence-grounded assistant that produces structured outputs tied to AOI + timeframe + artifacts + intelligence graph, with degraded deterministic mode when AI is unavailable.
+
+1) System Contract
+1.1 Core principle
+
+No claim is “Supported” unless it references stored evidence (artifact IDs + snippet IDs, or graph node IDs).
+
+1.2 Required context inputs
+
+AOI: geometry + label (or “No AOI selected”)
+
+Time window: time_from, time_to
+
+Evidence scope: selected artifacts OR filtered artifacts
+
+Graph scope: program graph + node relationships
+
+1.3 Output style
+
+The Assistant does not default to free-form chat. It outputs a mode with a JSON payload the UI renders.
+
+2) API Endpoints
+2.1 Start a session
+
+POST /assistant/sessions
+
+Request
+
+{
+  "name": "GuideRight Session",
+  "aoi": {
+    "label": "AOI Alpha",
+    "geometry": { "type": "Polygon", "coordinates": [] }
+  },
+  "time_window": {
+    "from": "2026-01-01T00:00:00Z",
+    "to": "2026-01-08T23:59:59Z"
+  },
+  "scenario": {
+    "training_country": "Fictionland-07",
+    "exercise": true
+  },
+  "defaults": {
+    "mode": "SITREP",
+    "sensitivity_max": "Internal"
+  }
+}
+
+
+Response
+
+{
+  "session_id": "sess_4c2c...",
+  "created_at": "2026-01-08T03:12:11Z"
+}
+
+2.2 Add messages (chat thread)
+
+POST /assistant/sessions/{session_id}/messages
+
+Request
+
+{
+  "role": "user",
+  "content": "Generate a SITREP for the AOI covering the last 72 hours.",
+  "mode": "SITREP",
+  "context_overrides": {
+    "time_window": { "from": "2026-01-06T00:00:00Z", "to": "2026-01-08T23:59:59Z" },
+    "artifact_scope": { "strategy": "FILTER", "filters": { "tags": ["AOI-Alpha"], "types": ["meeting_note","whitepaper"] } }
+  }
+}
+
+
+Response
+
+{
+  "message_id": "msg_9a11...",
+  "status": "queued"
+}
+
+2.3 Run analysis (synchronous or streamed)
+Option A: synchronous
+
+POST /assistant/sessions/{session_id}/run
+
+Request
+
+{
+  "mode": "SITREP",
+  "prompt": "Generate a SITREP with confidence and citations.",
+  "context": {
+    "aoi": { "label": "AOI Alpha", "geometry": { "type": "Polygon", "coordinates": [] } },
+    "time_window": { "from": "2026-01-06T00:00:00Z", "to": "2026-01-08T23:59:59Z" },
+    "program_ids": ["guideright"],
+    "artifact_scope": {
+      "strategy": "SELECTED",
+      "artifact_ids": ["9a...","bc..."]
+    },
+    "graph": {
+      "program_graph": true,
+      "depth": 2
+    }
+  }
+}
+
+
+Response
+
+{
+  "run_id": "run_33f2...",
+  "mode": "SITREP",
+  "engine_state": "AI_ONLINE",
+  "result": {
+    "schema_version": "1.0",
+    "mode": "SITREP",
+    "title": "SITREP — AOI Alpha — 72h",
+    "time_window": { "from": "2026-01-06T00:00:00Z", "to": "2026-01-08T23:59:59Z" },
+    "sections": [],
+    "citations": [],
+    "audit": { "tools_used": [], "policy_flags": [] }
+  }
+}
+
+Option B: streaming (recommended for “premium” feel)
+
+POST /assistant/sessions/{session_id}/run/stream
+
+Server-Sent Events (SSE) or WebSocket
+
+Stream tokens, then stream validated final JSON as the last event:
+
+event: assistant.final
+
+2.4 Retrieve context used (for audit)
+
+GET /assistant/runs/{run_id}/context
+
+Returns:
+
+AOI/time window used
+
+artifact list + hashes + sensitivity
+
+graph nodes used
+
+tool calls made
+
+2.5 Action endpoints (one-click from assistant output)
+Create / update risk (Editor+)
+
+POST /risks
+
+{
+  "program_id": "guideright",
+  "title": "Comms outage risk in AOI Alpha",
+  "severity": "High",
+  "category": "Operational",
+  "status": "Open",
+  "drivers": ["Dependency unresolved: SATCOM access"],
+  "mitigations": ["Add fallback comms plan"],
+  "evidence": {
+    "artifact_ids": ["9a..."],
+    "snippets": [{"artifact_id":"9a...","snippet_id":"snip_11"}]
+  }
+}
+
+Link artifact to program (Editor+)
+
+POST /artifact-links
+
+{ "program_id": "guideright", "artifact_id": "9a..." }
+
+Create milestone (Editor+)
+
+POST /milestones
+
+{
+  "program_id": "guideright",
+  "title": "AOI Alpha: validate routes and waypoints",
+  "due_date": "2026-01-15",
+  "status": "Planned",
+  "evidence": { "artifact_ids": ["bc..."] }
+}
+
+3) Context Retrieval “Tool” Endpoints (internal, bounded)
+
+These are what the assistant is allowed to query:
+
+GET /context/aoi/current
+
+GET /programs/{id}/graph?depth=1|2&include=...
+
+GET /artifacts?time_from=...&time_to=...&tags=...&types=...&sensitivity_max=...
+
+GET /artifacts/{id}/preview?max_chars=3000 (returns excerpt + snippet IDs)
+
+GET /pmesii/latest?aoi_id=... (or by label)
+
+GET /risks?program_id=... (or AOI tag)
+
+GET /timeline?time_from=...&time_to=...&aoi=...
+
+GET /system/status (quota/AI availability)
+
+Hard bounds
+
+limit artifacts: e.g., 50 per run
+
+limit preview size: e.g., 3k chars each
+
+limit graph nodes: via max_nodes
+
+4) Output Modes + JSON Schemas
+
+All modes share a common envelope:
+
+4.1 Common response envelope (ModeResult)
+{
+  "schema_version": "1.0",
+  "mode": "PMESII | RISK_BRIEF | SITREP | MISSION_SUPPORT | GRAPH_QUERY | ARTIFACT_SUMMARY | DEGRADED",
+  "title": "string",
+  "time_window": { "from": "ISO", "to": "ISO" },
+  "confidence": { "level": "Low|Med|High", "score": 0.0, "basis": [] },
+  "claims": [],
+  "citations": [],
+  "actions": [],
+  "audit": { "tools_used": [], "policy_flags": [] }
+}
+
+4.2 Claim object (non-negotiable)
+{
+  "id": "clm_001",
+  "text": "string",
+  "tag": "SUPPORTED | ASSUMPTION | UNKNOWN",
+  "confidence": { "level": "Low|Med|High", "score": 0.0, "basis": [] },
+  "evidence": [
+    {
+      "artifact_id": "uuid",
+      "snippet_id": "snip_11",
+      "reliability": "A|B|C|D|E",
+      "timestamp": "ISO"
+    }
+  ],
+  "related_nodes": ["node:dependency:...","node:risk:..."]
+}
+
+Confidence scoring rule (deterministic)
+
+Start at 0.20
+
++0.20 per independent evidence item (cap +0.60)
+
++0.10 if evidence reliability A/B
+
+-0.20 if evidence is old vs time window (your definition)
+
+Map final score:
+
+<0.45 → Low
+
+0.45–0.74 → Med
+
+>=0.75 → High
+
+If tag=SUPPORTED and evidence=[] → policy violation → must downgrade to ASSUMPTION or UNKNOWN.
+
+4.3 PMESII mode schema (payload section)
+{
+  "pmesii": {
+    "Political": { "summary": "", "claims": ["clm_..."] },
+    "Military": { "summary": "", "claims": ["clm_..."] },
+    "Economic": { "summary": "", "claims": ["clm_..."] },
+    "Social": { "summary": "", "claims": ["clm_..."] },
+    "Information": { "summary": "", "claims": ["clm_..."] },
+    "Infrastructure": { "summary": "", "claims": ["clm_..."] }
+  },
+  "confidence_bars": [
+    { "dimension": "Political", "score": 0.62 },
+    { "dimension": "Military", "score": 0.74 }
+  ]
+}
+
+4.4 Risk Brief schema
+{
+  "risks": [
+    {
+      "title": "",
+      "severity": "LOW|MEDIUM|HIGH|CRITICAL",
+      "score": 0,
+      "drivers": ["clm_..."],
+      "mitigations": ["string"],
+      "geo": { "applies_to_aoi": true, "notes": "" },
+      "trend": "Improving|Stable|Worsening|Unknown"
+    }
+  ]
+}
+
+4.5 SITREP schema
+{
+  "sections": [
+    { "heading": "Overview", "bullets": ["clm_...","clm_..."] },
+    { "heading": "Threats", "bullets": ["clm_..."] },
+    { "heading": "Constraints", "bullets": ["clm_..."] },
+    { "heading": "Recommendations", "bullets": ["string"] }
+  ]
+}
+
+4.6 Graph Query schema
+{
+  "question": "string",
+  "answer": {
+    "summary": "string",
+    "paths": [
+      {
+        "from": "node:program:guideright",
+        "to": "node:dependency:...",
+        "edges": ["edge:DEPENDS_ON:..."],
+        "explanation": "string"
+      }
+    ]
+  }
+}
+
+4.7 Artifact Summary schema
+{
+  "artifact_id": "uuid",
+  "summary": "string",
+  "key_points": ["clm_...","clm_..."],
+  "reliability": "A|B|C|D|E",
+  "gaps": ["UNKNOWN: ..."]
+}
+
+4.8 Degraded mode schema (deterministic-only)
+{
+  "degraded_reason": "AI_UNAVAILABLE | QUOTA | POLICY",
+  "deterministic_outputs": {
+    "graph_findings": [],
+    "stored_pmesii_used": true,
+    "risk_rules_applied": true
+  }
+}
+
+5) Prompt + Guardrails Design (no hallucinations)
+5.1 Two-stage execution (required)
+
+Plan stage (internal): decide which tools to call and what evidence is needed
+
+Synthesize stage: produce JSON only and validate it
+
+5.2 Tool-calling policy (hard)
+
+If user requests analysis but there are no artifacts and no stored intel:
+
+output must be UNKNOWN and request uploads or specify missing feed
+
+If AOI is missing for AOI-dependent questions:
+
+ask user to select AOI (or produce “No AOI selected” warning)
+
+5.3 Output validator (server-side)
+
+Before returning final:
+
+Parse JSON
+
+For each claim:
+
+If tag=SUPPORTED and evidence empty → fail validation → auto-downgrade tag or reject
+
+Ensure citations refer to existing artifact/snippet IDs
+
+Enforce max lengths (prevents prompt injection dumping)
+
+6) Implementation Skeleton (FastAPI-first, keeps your current posture)
+
+Even if your backend is Node now, you can implement the assistant service in FastAPI as a separate service and call internal endpoints.
+
+Minimal service components
+
+assistant_service/
+
+routes.py (sessions/run)
+
+context.py (artifact/graph retrieval)
+
+schemas.py (pydantic models)
+
+validator.py (policy enforcement)
+
+engine.py (AI + deterministic fallback)
+
+Deterministic fallback engine
+
+Graph queries: pure DB traversal / API call results
+
+Risk scoring: rules-based (existing risk engine)
+
+PMESII: use stored cards if present; otherwise UNKNOWN
+
+7) UI Requirements (so it feels premium)
+
+Mode selector (PMESII / Risk / SITREP / Graph / Artifact Summary)
+
+Context chips: AOI, Time window, Evidence count, AI status
+
+“Sources” drawer: artifact → snippet → hash
+
+Action buttons bound to backend endpoints (create risk/milestone/link artifact)
+
+Degraded mode banner
