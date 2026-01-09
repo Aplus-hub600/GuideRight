@@ -129,6 +129,14 @@ export function MapLibrePanel({
     })
 
     return () => {
+      // Clean up all markers on unmount
+      if (aoiMarker.current) {
+        aoiMarker.current.remove()
+        aoiMarker.current = null
+      }
+      sigactMarkers.current.forEach(m => m.remove())
+      sigactMarkers.current = []
+      
       if (map.current) {
         map.current.remove()
         map.current = null

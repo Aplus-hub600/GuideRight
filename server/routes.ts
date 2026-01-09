@@ -308,20 +308,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      console.log(`[PMESII] Analyzing AOI: ${aoi.name} (${aoi.lat}, ${aoi.lon})`);
+      // Generate UUIDs BEFORE analysis and persistence for consistent tracking
+      const analysisId = crypto.randomUUID();
+      const sessionId = session_id || crypto.randomUUID();
+      
+      console.log(`[PMESII] Analyzing AOI: ${aoi.name} (${aoi.lat}, ${aoi.lon}) - ID: ${analysisId}`);
       
       // Generate analysis using the provider service
       const result = await generatePmesiiAnalysis(aoi, question, time_window_days);
       
-      // Generate UUIDs for response
-      const analysisId = crypto.randomUUID();
-      const sessionId = session_id || crypto.randomUUID();
-      
-      // Persist to database
+      // Persist to database with IDs included
       try {
         await storage.createAnalysisResult({
           analysisType: "pmesii_mvp",
           results: {
+            analysisId,
+            sessionId,
             pmesii: result.pmesii,
             sigacts: result.sigacts,
             confidence: result.confidence,

@@ -142,6 +142,8 @@ export interface PmesiiAnalysisResult {
     model: string;
     latencyMs: number;
     tokens: number;
+    mode: "live" | "fallback" | "cached";
+    error?: string;
   };
 }
 
@@ -244,6 +246,7 @@ Focus on actionable intelligence relevant to the location and any stated objecti
         model: "gpt-4o",
         latencyMs,
         tokens,
+        mode: "live",
       },
     };
 
@@ -256,7 +259,7 @@ Focus on actionable intelligence relevant to the location and any stated objecti
   } catch (error: any) {
     console.error("[Provider] PMESII analysis failed:", error.message);
     
-    // Return a fallback result with error indication
+    // Return a fallback result with clear error indication
     return {
       pmesii: getDefaultPmesii(),
       sigacts: [],
@@ -269,6 +272,8 @@ Focus on actionable intelligence relevant to the location and any stated objecti
         model: "gpt-4o",
         latencyMs: 0,
         tokens: 0,
+        mode: "fallback",
+        error: error.message,
       },
     };
   }
