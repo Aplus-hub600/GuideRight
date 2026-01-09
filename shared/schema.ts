@@ -166,6 +166,62 @@ export const uploadedSources = pgTable("uploaded_sources", {
   timestamp: timestamp("timestamp").defaultNow().notNull(),
 });
 
+// Intelligence Graph Nodes - unified model for filterable intelligence items
+export const graphNodes = pgTable("graph_nodes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  label: text("label").notNull(),
+  description: text("description"),
+  
+  // Node type: Artifact, Milestone, Risk, Dependency, Decision, Partner
+  nodeType: text("node_type").notNull(),
+  
+  // Intelligence layer: Evidence, Execution, Dependencies, Risk, PeopleOrgs, LegalIP
+  layer: text("layer").notNull(),
+  
+  // Status: planned, in_progress, done, open, closed, pending, applied
+  status: text("status").default("open"),
+  
+  // Severity: low, medium, high, critical
+  severity: text("severity"),
+  
+  // Sensitivity classification: internal, cui, secret, etc.
+  sensitivity: text("sensitivity").default("internal"),
+  
+  // Dates for filtering
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  dueDate: timestamp("due_date"), // For milestones
+  
+  // Location (optional)
+  lat: real("lat"),
+  lng: real("lng"),
+  locationName: text("location_name"),
+  
+  // Owner/team attribution
+  owner: text("owner"),
+  team: text("team"),
+  
+  // Linked data (e.g., reference to source file, waypoint, etc.)
+  linkedEntityType: text("linked_entity_type"), // 'waypoint', 'file', 'risk_assessment', etc.
+  linkedEntityId: text("linked_entity_id"),
+  
+  // Additional metadata
+  metadata: jsonb("metadata"),
+  tags: jsonb("tags").$type<string[]>().default([]),
+});
+
+// Graph Edges - relationships between nodes
+export const graphEdges = pgTable("graph_edges", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  sourceNodeId: varchar("source_node_id").notNull(),
+  targetNodeId: varchar("target_node_id").notNull(),
+  edgeType: text("edge_type").notNull(), // 'depends_on', 'blocks', 'related_to', 'caused_by', etc.
+  label: text("label"),
+  weight: real("weight").default(1),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
@@ -312,6 +368,35 @@ export const insertUploadedSourceSchema = createInsertSchema(uploadedSources).pi
   processingError: true,
 });
 
+export const insertGraphNodeSchema = createInsertSchema(graphNodes).pick({
+  label: true,
+  description: true,
+  nodeType: true,
+  layer: true,
+  status: true,
+  severity: true,
+  sensitivity: true,
+  dueDate: true,
+  lat: true,
+  lng: true,
+  locationName: true,
+  owner: true,
+  team: true,
+  linkedEntityType: true,
+  linkedEntityId: true,
+  metadata: true,
+  tags: true,
+});
+
+export const insertGraphEdgeSchema = createInsertSchema(graphEdges).pick({
+  sourceNodeId: true,
+  targetNodeId: true,
+  edgeType: true,
+  label: true,
+  weight: true,
+  metadata: true,
+});
+
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -333,6 +418,44 @@ export type SocialMediaPost = typeof socialMediaPosts.$inferSelect;
 export type InsertSocialMediaPost = z.infer<typeof insertSocialMediaPostSchema>;
 export type UploadedSource = typeof uploadedSources.$inferSelect;
 export type InsertUploadedSource = z.infer<typeof insertUploadedSourceSchema>;
+export type GraphNode = typeof graphNodes.$inferSelect;
+export type InsertGraphNode = z.infer<typeof insertGraphNodeSchema>;
+export type GraphEdge = typeof graphEdges.$inferSelect;
+export type InsertGraphEdge = z.infer<typeof insertGraphEdgeSchema>;
+
+// Graph node type and layer constants
+export const NODE_TYPES = ['artifact', 'milestone', 'risk', 'dependency', 'decision', 'partner'] as const;
+export const LAYERS = ['evidence', 'execution', 'dependencies', 'risk', 'people_orgs', 'legal_ip'] as const;
+export const STATUS_VALUES = ['planned', 'in_progress', 'done', 'open', 'closed', 'pending', 'applied'] as const;
+export const SEVERITY_VALUES = ['low', 'medium', 'high', 'critical'] as const;
+export const SENSITIVITY_VALUES = ['internal', 'cui', 'secret', 'top_secret'] as const;
+
+export type NodeType = typeof NODE_TYPES[number];
+export type Layer = typeof LAYERS[number];
+export type Status = typeof STATUS_VALUES[number];
+export type Severity = typeof SEVERITY_VALUES[number];
+export type Sensitivity = typeof SENSITIVITY_VALUES[number];
+
+// Graph filter query schema for API
+export const graphFilterSchema = z.object({
+  q: z.string().optional(), // Text search across labels
+  type_in: z.array(z.enum(NODE_TYPES)).optional(),
+  layer_in: z.array(z.enum(LAYERS)).optional(),
+  status_in: z.array(z.enum(STATUS_VALUES)).optional(),
+  severity_in: z.array(z.enum(SEVERITY_VALUES)).optional(),
+  sensitivity_in: z.array(z.enum(SENSITIVITY_VALUES)).optional(),
+  time_from: z.string().datetime().optional(), // ISO timestamp
+  time_to: z.string().datetime().optional(),
+  due_from: z.string().datetime().optional(), // For milestones
+  due_to: z.string().datetime().optional(),
+  owner: z.string().optional(),
+  team: z.string().optional(),
+  has_location: z.boolean().optional(),
+  limit: z.number().min(1).max(500).default(100),
+  offset: z.number().min(0).default(0),
+});
+
+export type GraphFilter = z.infer<typeof graphFilterSchema>;
 
 // Social media query schemas
 export const socialMediaQuerySchema = z.object({

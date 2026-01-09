@@ -19,6 +19,11 @@ import {
   type InsertSocialMediaPost,
   type UploadedSource,
   type InsertUploadedSource,
+  type GraphNode,
+  type InsertGraphNode,
+  type GraphEdge,
+  type InsertGraphEdge,
+  type GraphFilter,
   type SearchQuery,
   type SearchResult,
   type TimelineEvent,
@@ -32,10 +37,12 @@ import {
   weatherData,
   weatherAlerts,
   socialMediaPosts,
-  uploadedSources
+  uploadedSources,
+  graphNodes,
+  graphEdges
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, or, like, sql, desc, asc } from "drizzle-orm";
+import { eq, and, or, like, sql, desc, asc, inArray, gte, lte, isNotNull, isNull } from "drizzle-orm";
 import type { IStorage } from "./storage";
 
 export class DatabaseStorage implements IStorage {
@@ -512,5 +519,145 @@ export class DatabaseStorage implements IStorage {
       .from(uploadedSources)
       .where(eq(uploadedSources.isProcessed, true))
       .orderBy(desc(uploadedSources.timestamp));
+  }
+
+  // Graph node operations
+  async getGraphNodes(filters?: GraphFilter): Promise<{ nodes: GraphNode[]; total: number }> {
+    let query = db.select().from(graphNodes);
+    const conditions: any[] = [];
+    
+    if (filters) {
+      if (filters.q) {
+        conditions.push(
+          or(
+            like(graphNodes.label, `%${filters.q}%`),
+            like(graphNodes.description, `%${filters.q}%`)
+          )
+        );
+      }
+      if (filters.type_in?.length) {
+        conditions.push(inArray(graphNodes.nodeType, filters.type_in));
+      }
+      if (filters.layer_in?.length) {
+        conditions.push(inArray(graphNodes.layer, filters.layer_in));
+      }
+      if (filters.status_in?.length) {
+        conditions.push(inArray(graphNodes.status, filters.status_in));
+      }
+      if (filters.severity_in?.length) {
+        conditions.push(inArray(graphNodes.severity, filters.severity_in));
+      }
+      if (filters.sensitivity_in?.length) {
+        conditions.push(inArray(graphNodes.sensitivity, filters.sensitivity_in));
+      }
+      if (filters.time_from) {
+        conditions.push(gte(graphNodes.createdAt, new Date(filters.time_from)));
+      }
+      if (filters.time_to) {
+        conditions.push(lte(graphNodes.createdAt, new Date(filters.time_to)));
+      }
+      if (filters.due_from) {
+        conditions.push(gte(graphNodes.dueDate, new Date(filters.due_from)));
+      }
+      if (filters.due_to) {
+        conditions.push(lte(graphNodes.dueDate, new Date(filters.due_to)));
+      }
+      if (filters.owner) {
+        conditions.push(eq(graphNodes.owner, filters.owner));
+      }
+      if (filters.team) {
+        conditions.push(eq(graphNodes.team, filters.team));
+      }
+      if (filters.has_location === true) {
+        conditions.push(and(isNotNull(graphNodes.lat), isNotNull(graphNodes.lng)));
+      } else if (filters.has_location === false) {
+        conditions.push(or(isNull(graphNodes.lat), isNull(graphNodes.lng)));
+      }
+    }
+    
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+    
+    // Get total count
+    const [countResult] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(graphNodes)
+      .where(whereClause);
+    const total = Number(countResult?.count || 0);
+    
+    // Get paginated results
+    const offset = filters?.offset || 0;
+    const limit = filters?.limit || 100;
+    
+    const nodes = await db
+      .select()
+      .from(graphNodes)
+      .where(whereClause)
+      .orderBy(desc(graphNodes.createdAt))
+      .limit(limit)
+      .offset(offset);
+    
+    return { nodes, total };
+  }
+
+  async getGraphNodeById(id: string): Promise<GraphNode | undefined> {
+    const [node] = await db.select().from(graphNodes).where(eq(graphNodes.id, id));
+    return node || undefined;
+  }
+
+  async createGraphNode(node: InsertGraphNode): Promise<GraphNode> {
+    const [newNode] = await db
+      .insert(graphNodes)
+      .values({
+        ...node,
+        tags: (node.tags as string[]) || [],
+      })
+      .returning();
+    return newNode;
+  }
+
+  async updateGraphNode(id: string, updates: Partial<InsertGraphNode>): Promise<GraphNode | null> {
+    const [updated] = await db
+      .update(graphNodes)
+      .set({
+        ...updates,
+        updatedAt: new Date(),
+      })
+      .where(eq(graphNodes.id, id))
+      .returning();
+    return updated || null;
+  }
+
+  async deleteGraphNode(id: string): Promise<boolean> {
+    // Delete related edges first
+    await db.delete(graphEdges).where(
+      or(eq(graphEdges.sourceNodeId, id), eq(graphEdges.targetNodeId, id))
+    );
+    // Delete node
+    const result = await db.delete(graphNodes).where(eq(graphNodes.id, id)).returning();
+    return result.length > 0;
+  }
+
+  // Graph edge operations
+  async getGraphEdges(nodeId?: string): Promise<GraphEdge[]> {
+    if (nodeId) {
+      return await db
+        .select()
+        .from(graphEdges)
+        .where(or(eq(graphEdges.sourceNodeId, nodeId), eq(graphEdges.targetNodeId, nodeId)));
+    }
+    return await db.select().from(graphEdges);
+  }
+
+  async createGraphEdge(edge: InsertGraphEdge): Promise<GraphEdge> {
+    const [newEdge] = await db
+      .insert(graphEdges)
+      .values(edge)
+      .returning();
+    return newEdge;
+  }
+
+  async deleteGraphEdge(id: string): Promise<boolean> {
+    const result = await db.delete(graphEdges).where(eq(graphEdges.id, id)).returning();
+    return result.length > 0;
   }
 }

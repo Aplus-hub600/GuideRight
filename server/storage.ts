@@ -19,6 +19,11 @@ import {
   type InsertSocialMediaPost,
   type UploadedSource,
   type InsertUploadedSource,
+  type GraphNode,
+  type InsertGraphNode,
+  type GraphEdge,
+  type InsertGraphEdge,
+  type GraphFilter,
   type SearchQuery,
   type SearchResult,
   type TimelineEvent,
@@ -88,6 +93,18 @@ export interface IStorage {
   updateUploadedSource(id: string, updates: Partial<InsertUploadedSource>): Promise<UploadedSource | null>;
   deleteUploadedSource(id: string): Promise<boolean>;
   getProcessedSources(region?: string): Promise<UploadedSource[]>;
+  
+  // Graph node operations
+  getGraphNodes(filters?: GraphFilter): Promise<{ nodes: GraphNode[]; total: number }>;
+  getGraphNodeById(id: string): Promise<GraphNode | undefined>;
+  createGraphNode(node: InsertGraphNode): Promise<GraphNode>;
+  updateGraphNode(id: string, updates: Partial<InsertGraphNode>): Promise<GraphNode | null>;
+  deleteGraphNode(id: string): Promise<boolean>;
+  
+  // Graph edge operations
+  getGraphEdges(nodeId?: string): Promise<GraphEdge[]>;
+  createGraphEdge(edge: InsertGraphEdge): Promise<GraphEdge>;
+  deleteGraphEdge(id: string): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -101,6 +118,8 @@ export class MemStorage implements IStorage {
   private weatherAlerts: WeatherAlert[];
   private socialMediaPosts: SocialMediaPost[];
   private uploadedSources: UploadedSource[];
+  private graphNodes: GraphNode[];
+  private graphEdges: GraphEdge[];
 
   constructor() {
     this.users = new Map();
@@ -113,11 +132,14 @@ export class MemStorage implements IStorage {
     this.weatherAlerts = [];
     this.socialMediaPosts = [];
     this.uploadedSources = [];
+    this.graphNodes = [];
+    this.graphEdges = [];
     
     // Initialize with external intelligence sources and sample weather data
     this.initializeExternalIntelligence();
     this.initializeSampleWeatherData();
     this.initializeSampleSocialMediaData();
+    this.initializeSampleGraphNodes();
   }
 
   async getUser(id: string): Promise<User | undefined> {
@@ -1484,6 +1506,289 @@ export class MemStorage implements IStorage {
     if (severity >= 7) return 'HIGH';
     if (severity >= 4) return 'MEDIUM';
     return 'LOW';
+  }
+
+  // Graph node operations
+  async getGraphNodes(filters?: GraphFilter): Promise<{ nodes: GraphNode[]; total: number }> {
+    let results = [...this.graphNodes];
+    
+    if (filters) {
+      // Text search on labels
+      if (filters.q) {
+        const query = filters.q.toLowerCase();
+        results = results.filter(n => 
+          n.label.toLowerCase().includes(query) || 
+          n.description?.toLowerCase().includes(query)
+        );
+      }
+      
+      // Type filter
+      if (filters.type_in?.length) {
+        results = results.filter(n => filters.type_in!.includes(n.nodeType as any));
+      }
+      
+      // Layer filter
+      if (filters.layer_in?.length) {
+        results = results.filter(n => filters.layer_in!.includes(n.layer as any));
+      }
+      
+      // Status filter
+      if (filters.status_in?.length) {
+        results = results.filter(n => n.status && filters.status_in!.includes(n.status as any));
+      }
+      
+      // Severity filter
+      if (filters.severity_in?.length) {
+        results = results.filter(n => n.severity && filters.severity_in!.includes(n.severity as any));
+      }
+      
+      // Sensitivity filter
+      if (filters.sensitivity_in?.length) {
+        results = results.filter(n => n.sensitivity && filters.sensitivity_in!.includes(n.sensitivity as any));
+      }
+      
+      // Time range filter (createdAt)
+      if (filters.time_from) {
+        const from = new Date(filters.time_from);
+        results = results.filter(n => n.createdAt >= from);
+      }
+      if (filters.time_to) {
+        const to = new Date(filters.time_to);
+        results = results.filter(n => n.createdAt <= to);
+      }
+      
+      // Due date filter (for milestones)
+      if (filters.due_from) {
+        const from = new Date(filters.due_from);
+        results = results.filter(n => n.dueDate && n.dueDate >= from);
+      }
+      if (filters.due_to) {
+        const to = new Date(filters.due_to);
+        results = results.filter(n => n.dueDate && n.dueDate <= to);
+      }
+      
+      // Owner filter
+      if (filters.owner) {
+        results = results.filter(n => n.owner === filters.owner);
+      }
+      
+      // Team filter
+      if (filters.team) {
+        results = results.filter(n => n.team === filters.team);
+      }
+      
+      // Has location filter
+      if (filters.has_location !== undefined) {
+        if (filters.has_location) {
+          results = results.filter(n => n.lat != null && n.lng != null);
+        } else {
+          results = results.filter(n => n.lat == null || n.lng == null);
+        }
+      }
+    }
+    
+    const total = results.length;
+    
+    // Apply pagination
+    const offset = filters?.offset || 0;
+    const limit = filters?.limit || 100;
+    results = results.slice(offset, offset + limit);
+    
+    return { nodes: results, total };
+  }
+
+  async getGraphNodeById(id: string): Promise<GraphNode | undefined> {
+    return this.graphNodes.find(n => n.id === id);
+  }
+
+  async createGraphNode(node: InsertGraphNode): Promise<GraphNode> {
+    const now = new Date();
+    const newNode: GraphNode = {
+      id: randomUUID(),
+      label: node.label,
+      description: node.description || null,
+      nodeType: node.nodeType,
+      layer: node.layer,
+      status: node.status || "open",
+      severity: node.severity || null,
+      sensitivity: node.sensitivity || "internal",
+      createdAt: now,
+      updatedAt: now,
+      dueDate: node.dueDate ? new Date(node.dueDate as any) : null,
+      lat: node.lat || null,
+      lng: node.lng || null,
+      locationName: node.locationName || null,
+      owner: node.owner || null,
+      team: node.team || null,
+      linkedEntityType: node.linkedEntityType || null,
+      linkedEntityId: node.linkedEntityId || null,
+      metadata: node.metadata || null,
+      tags: (node.tags as string[]) || [],
+    };
+    this.graphNodes.push(newNode);
+    return newNode;
+  }
+
+  async updateGraphNode(id: string, updates: Partial<InsertGraphNode>): Promise<GraphNode | null> {
+    const index = this.graphNodes.findIndex(n => n.id === id);
+    if (index === -1) return null;
+    
+    this.graphNodes[index] = {
+      ...this.graphNodes[index],
+      ...updates,
+      updatedAt: new Date(),
+    } as GraphNode;
+    
+    return this.graphNodes[index];
+  }
+
+  async deleteGraphNode(id: string): Promise<boolean> {
+    const index = this.graphNodes.findIndex(n => n.id === id);
+    if (index === -1) return false;
+    this.graphNodes.splice(index, 1);
+    // Also delete related edges
+    this.graphEdges = this.graphEdges.filter(e => e.sourceNodeId !== id && e.targetNodeId !== id);
+    return true;
+  }
+
+  // Graph edge operations
+  async getGraphEdges(nodeId?: string): Promise<GraphEdge[]> {
+    if (nodeId) {
+      return this.graphEdges.filter(e => e.sourceNodeId === nodeId || e.targetNodeId === nodeId);
+    }
+    return [...this.graphEdges];
+  }
+
+  async createGraphEdge(edge: InsertGraphEdge): Promise<GraphEdge> {
+    const newEdge: GraphEdge = {
+      id: randomUUID(),
+      sourceNodeId: edge.sourceNodeId,
+      targetNodeId: edge.targetNodeId,
+      edgeType: edge.edgeType,
+      label: edge.label || null,
+      weight: edge.weight || 1,
+      metadata: edge.metadata || null,
+      createdAt: new Date(),
+    };
+    this.graphEdges.push(newEdge);
+    return newEdge;
+  }
+
+  async deleteGraphEdge(id: string): Promise<boolean> {
+    const index = this.graphEdges.findIndex(e => e.id === id);
+    if (index === -1) return false;
+    this.graphEdges.splice(index, 1);
+    return true;
+  }
+
+  private async initializeSampleGraphNodes() {
+    const now = new Date();
+    const dayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    
+    const sampleNodes: InsertGraphNode[] = [
+      {
+        label: "Intelligence Report: Dhaka Political Climate",
+        description: "Assessment of current political environment and stability indicators",
+        nodeType: "artifact",
+        layer: "evidence",
+        status: "done",
+        severity: "medium",
+        sensitivity: "cui",
+        owner: "Intel Team Alpha",
+        team: "SOCOM J2",
+        tags: ["political", "dhaka", "assessment"],
+      },
+      {
+        label: "Phase 2 Milestone: Partner Force Training",
+        description: "Complete initial training program for local partner forces",
+        nodeType: "milestone",
+        layer: "execution",
+        status: "in_progress",
+        severity: "high",
+        sensitivity: "internal",
+        dueDate: nextWeek as any,
+        owner: "CPT Rodriguez",
+        team: "Training Cell",
+        tags: ["training", "partner", "phase2"],
+      },
+      {
+        label: "Risk: Supply Chain Disruption",
+        description: "Port congestion may delay equipment delivery by 2-3 weeks",
+        nodeType: "risk",
+        layer: "risk",
+        status: "open",
+        severity: "high",
+        sensitivity: "internal",
+        lat: 22.3569,
+        lng: 91.7832,
+        locationName: "Chittagong Port",
+        owner: "Logistics Officer",
+        team: "S4",
+        tags: ["logistics", "port", "delay"],
+      },
+      {
+        label: "Dependency: Host Nation Approval",
+        description: "Awaiting formal approval from host nation defense ministry",
+        nodeType: "dependency",
+        layer: "dependencies",
+        status: "pending",
+        severity: "critical",
+        sensitivity: "cui",
+        owner: "LNO Team",
+        team: "Embassy",
+        tags: ["approval", "host nation", "legal"],
+      },
+      {
+        label: "Decision: Alternate Route Selection",
+        description: "Command decision on primary vs alternate movement corridor",
+        nodeType: "decision",
+        layer: "execution",
+        status: "closed",
+        severity: "medium",
+        sensitivity: "internal",
+        owner: "OIC Movement",
+        team: "Operations",
+        tags: ["movement", "routes", "decision"],
+      },
+      {
+        label: "Partner: Bangladesh Army 46th Brigade",
+        description: "Primary partner force for joint training exercises",
+        nodeType: "partner",
+        layer: "people_orgs",
+        status: "open",
+        severity: "low",
+        sensitivity: "internal",
+        lat: 23.8103,
+        lng: 90.4125,
+        locationName: "Dhaka Cantonment",
+        owner: "Partnership Officer",
+        team: "J5",
+        tags: ["partner", "bangladesh army", "training"],
+      },
+    ];
+
+    for (const node of sampleNodes) {
+      await this.createGraphNode(node);
+    }
+
+    // Create some sample edges between nodes
+    if (this.graphNodes.length >= 3) {
+      await this.createGraphEdge({
+        sourceNodeId: this.graphNodes[1].id, // Milestone
+        targetNodeId: this.graphNodes[3].id, // Dependency
+        edgeType: "depends_on",
+        label: "Requires approval before training",
+      });
+      
+      await this.createGraphEdge({
+        sourceNodeId: this.graphNodes[2].id, // Risk
+        targetNodeId: this.graphNodes[1].id, // Milestone
+        edgeType: "blocks",
+        label: "May delay milestone",
+      });
+    }
   }
 }
 

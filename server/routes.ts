@@ -829,6 +829,153 @@ Return realistic intelligence-style events based on your knowledge of the region
     });
   });
 
+  // ==========================================
+  // GRAPH INTELLIGENCE API - Filtering Support
+  // ==========================================
+
+  // Get graph nodes with advanced filtering
+  app.get("/api/graph/nodes", async (req, res) => {
+    try {
+      const filters: any = {};
+      
+      // Parse query parameters
+      if (req.query.q) filters.q = String(req.query.q);
+      if (req.query.type_in) {
+        filters.type_in = Array.isArray(req.query.type_in) 
+          ? req.query.type_in 
+          : String(req.query.type_in).split(',');
+      }
+      if (req.query.layer_in) {
+        filters.layer_in = Array.isArray(req.query.layer_in) 
+          ? req.query.layer_in 
+          : String(req.query.layer_in).split(',');
+      }
+      if (req.query.status_in) {
+        filters.status_in = Array.isArray(req.query.status_in) 
+          ? req.query.status_in 
+          : String(req.query.status_in).split(',');
+      }
+      if (req.query.severity_in) {
+        filters.severity_in = Array.isArray(req.query.severity_in) 
+          ? req.query.severity_in 
+          : String(req.query.severity_in).split(',');
+      }
+      if (req.query.sensitivity_in) {
+        filters.sensitivity_in = Array.isArray(req.query.sensitivity_in) 
+          ? req.query.sensitivity_in 
+          : String(req.query.sensitivity_in).split(',');
+      }
+      if (req.query.time_from) filters.time_from = String(req.query.time_from);
+      if (req.query.time_to) filters.time_to = String(req.query.time_to);
+      if (req.query.due_from) filters.due_from = String(req.query.due_from);
+      if (req.query.due_to) filters.due_to = String(req.query.due_to);
+      if (req.query.owner) filters.owner = String(req.query.owner);
+      if (req.query.team) filters.team = String(req.query.team);
+      if (req.query.has_location !== undefined) {
+        filters.has_location = req.query.has_location === 'true';
+      }
+      if (req.query.limit) filters.limit = parseInt(String(req.query.limit), 10);
+      if (req.query.offset) filters.offset = parseInt(String(req.query.offset), 10);
+
+      const result = await storage.getGraphNodes(filters);
+      
+      res.json({
+        success: true,
+        ...result,
+        filters: Object.keys(filters).length > 0 ? filters : undefined,
+      });
+    } catch (error) {
+      console.error("[Graph API] Error fetching nodes:", error);
+      res.status(500).json({ 
+        success: false, 
+        error: getErrorMessage(error) 
+      });
+    }
+  });
+
+  // Get single graph node
+  app.get("/api/graph/nodes/:id", async (req, res) => {
+    try {
+      const node = await storage.getGraphNodeById(req.params.id);
+      if (!node) {
+        return res.status(404).json({ success: false, error: "Node not found" });
+      }
+      res.json({ success: true, node });
+    } catch (error) {
+      res.status(500).json({ success: false, error: getErrorMessage(error) });
+    }
+  });
+
+  // Create graph node
+  app.post("/api/graph/nodes", async (req, res) => {
+    try {
+      const node = await storage.createGraphNode(req.body);
+      res.status(201).json({ success: true, node });
+    } catch (error) {
+      res.status(500).json({ success: false, error: getErrorMessage(error) });
+    }
+  });
+
+  // Update graph node
+  app.patch("/api/graph/nodes/:id", async (req, res) => {
+    try {
+      const node = await storage.updateGraphNode(req.params.id, req.body);
+      if (!node) {
+        return res.status(404).json({ success: false, error: "Node not found" });
+      }
+      res.json({ success: true, node });
+    } catch (error) {
+      res.status(500).json({ success: false, error: getErrorMessage(error) });
+    }
+  });
+
+  // Delete graph node
+  app.delete("/api/graph/nodes/:id", async (req, res) => {
+    try {
+      const deleted = await storage.deleteGraphNode(req.params.id);
+      if (!deleted) {
+        return res.status(404).json({ success: false, error: "Node not found" });
+      }
+      res.json({ success: true, message: "Node deleted" });
+    } catch (error) {
+      res.status(500).json({ success: false, error: getErrorMessage(error) });
+    }
+  });
+
+  // Get graph edges (optionally for a specific node)
+  app.get("/api/graph/edges", async (req, res) => {
+    try {
+      const nodeId = req.query.nodeId ? String(req.query.nodeId) : undefined;
+      const edges = await storage.getGraphEdges(nodeId);
+      res.json({ success: true, edges });
+    } catch (error) {
+      res.status(500).json({ success: false, error: getErrorMessage(error) });
+    }
+  });
+
+  // Create graph edge
+  app.post("/api/graph/edges", async (req, res) => {
+    try {
+      const edge = await storage.createGraphEdge(req.body);
+      res.status(201).json({ success: true, edge });
+    } catch (error) {
+      res.status(500).json({ success: false, error: getErrorMessage(error) });
+    }
+  });
+
+  // Delete graph edge
+  app.delete("/api/graph/edges/:id", async (req, res) => {
+    try {
+      const deleted = await storage.deleteGraphEdge(req.params.id);
+      if (!deleted) {
+        return res.status(404).json({ success: false, error: "Edge not found" });
+      }
+      res.json({ success: true, message: "Edge deleted" });
+    } catch (error) {
+      res.status(500).json({ success: false, error: getErrorMessage(error) });
+    }
+  });
+
   // Risk assessment endpoint
   app.post("/api/risk/assess", async (req, res) => {
     try {

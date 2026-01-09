@@ -1,0 +1,80 @@
+Right now your search is basically “find a node by label.” A serious program engine should let you filter the graph contents by metadata like date range, status, type, layer, sensitivity, owner/team, and even location (when location exists in the record).
+
+The key point
+
+This should be a filter panel (or advanced search) that controls what nodes/edges are included, not just a text search UI.
+
+What to filter (grounded in your data)
+
+These filters only work if the backend provides the fields consistently. Here’s what’s safe/realistic:
+
+Universal (works now)
+
+Type (Artifact, Milestone, Risk, Dependency, Decision, Partner)
+
+Layer (Evidence, Execution, Dependencies, Risk, PeopleOrgs, LegalIP)
+
+Status (Planned/In Progress/Done; Open/Closed; Pending/Applied)
+
+Severity (High/Med/Low)
+
+Sensitivity tag (Internal/CUI/etc, whatever you use)
+
+Date/time (very useful, easy)
+
+Uploaded_at for artifacts
+
+Created_at for decisions, inbox items, dependencies, risks
+
+Due_date for milestones
+
+So you can filter: “Show only things in the last 30 days” or “milestones due next 2 weeks.”
+
+Location (only if you truly have it)
+
+Only include location filter if your DB actually stores location on:
+
+meetings / events
+
+field notes
+
+or a location field on artifacts/notes
+
+If you don’t store location yet, don’t pretend — add it intentionally later (e.g., to meeting notes ingestion).
+
+Best implementation pattern (cleanest)
+1) Backend supports filtering in the graph API (recommended)
+
+Add optional query params:
+
+time_from, time_to (ISO timestamps)
+
+status_in
+
+severity_in
+
+sensitivity_in
+
+due_from, due_to (for milestones)
+
+q (text search across labels only)
+
+Then the backend returns a smaller graph, and the UI stays fast.
+
+2) UI filter panel + “Apply Filters” (premium)
+
+Keep the simple search bar for quick jump
+
+Add “Filters” drawer/button for advanced filters
+
+Show “Active filters chips” (e.g., Last 30 days, Severity: High, Artifacts only)
+
+Add “Reset” button
+
+What I recommend you do next
+
+Add date range filter first (most value, lowest risk).
+
+Add status + severity + sensitivity filters next.
+
+Add location only after you add a real location field and start populating it.
