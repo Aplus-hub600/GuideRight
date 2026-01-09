@@ -70,6 +70,7 @@ export function MapLibrePanel({
   
   const [mapStyle, setMapStyle] = useState<"satellite" | "streets" | "hybrid">("streets")
   const [isMapReady, setIsMapReady] = useState(false)
+  const [mapError, setMapError] = useState<string | null>(null)
   const [activeLens, setActiveLens] = useState<MapLens>("infrastructure")
   const [zoomLevel, setZoomLevel] = useState(10)
   const [selectedInfraNode, setSelectedInfraNode] = useState<InfrastructureNode | null>(null)
@@ -169,61 +170,70 @@ export function MapLibrePanel({
       ? [aoi.lng, aoi.lat] 
       : [90.4125, 23.8103] // Default: Dhaka
 
-    map.current = new maplibregl.Map({
-      container: mapContainer.current,
-      style: {
-        version: 8,
-        sources: {
-          "raster-tiles": {
-            type: "raster",
-            tiles: [tileSources[mapStyle]],
-            tileSize: 256,
-            attribution: mapStyle === "streets" 
-              ? '&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-              : '&copy; <a href="https://www.esri.com/">Esri</a>'
-          }
+    try {
+      map.current = new maplibregl.Map({
+        container: mapContainer.current,
+        style: {
+          version: 8,
+          sources: {
+            "raster-tiles": {
+              type: "raster",
+              tiles: [tileSources[mapStyle]],
+              tileSize: 256,
+              attribution: mapStyle === "streets" 
+                ? '&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                : '&copy; <a href="https://www.esri.com/">Esri</a>'
+            }
+          },
+          layers: [
+            {
+              id: "simple-tiles",
+              type: "raster",
+              source: "raster-tiles",
+              minzoom: 0,
+              maxzoom: 22
+            }
+          ]
         },
-        layers: [
-          {
-            id: "simple-tiles",
-            type: "raster",
-            source: "raster-tiles",
-            minzoom: 0,
-            maxzoom: 22
-          }
-        ]
-      },
-      center: initialCenter,
-      zoom: 10,
-      attributionControl: false
-    })
+        center: initialCenter,
+        zoom: 10,
+        attributionControl: false
+      })
 
-    // Add attribution control separately
-    map.current.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-right")
+      // Add attribution control separately
+      map.current.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-right")
 
-    // Add navigation controls
-    map.current.addControl(new maplibregl.NavigationControl(), "top-right")
+      // Add navigation controls
+      map.current.addControl(new maplibregl.NavigationControl(), "top-right")
 
-    map.current.on("load", () => {
-      setIsMapReady(true)
-    })
-    
-    map.current.on("zoom", () => {
-      if (map.current) {
-        setZoomLevel(Math.round(map.current.getZoom()))
-      }
-    })
+      map.current.on("load", () => {
+        setIsMapReady(true)
+      })
+      
+      map.current.on("error", (e) => {
+        console.warn("MapLibre error:", e)
+      })
+      
+      map.current.on("zoom", () => {
+        if (map.current) {
+          setZoomLevel(Math.round(map.current.getZoom()))
+        }
+      })
 
-    // Click to set AOI
-    map.current.on("click", (e) => {
-      if (onAOIChange) {
-        onAOIChange({
-          lat: e.lngLat.lat,
-          lng: e.lngLat.lng,
-          radiusKm: 5
-        })
-      }
-    })
+      // Click to set AOI
+      map.current.on("click", (e) => {
+        if (onAOIChange) {
+          onAOIChange({
+            lat: e.lngLat.lat,
+            lng: e.lngLat.lng,
+            radiusKm: 5
+          })
+        }
+      })
+    } catch (error) {
+      console.error("Failed to initialize map:", error)
+      setMapError("Map initialization failed. WebGL may not be available in this environment.")
+    }
 
     return () => {
       // Clean up all markers on unmount
@@ -405,6 +415,26 @@ export function MapLibrePanel({
     if (map.current && aoi) {
       map.current.flyTo({ center: [aoi.lng, aoi.lat], zoom: 12 })
     }
+  }
+
+  if (mapError) {
+    return (
+      <div className={cn("relative w-full h-full flex items-center justify-center bg-muted", className)}>
+        <div className="text-center p-8 max-w-md">
+          <div className="text-6xl mb-4 opacity-50">
+            <MapPin className="h-16 w-16 mx-auto text-muted-foreground" />
+          </div>
+          <h3 className="text-lg font-semibold mb-2">Map Unavailable</h3>
+          <p className="text-sm text-muted-foreground mb-4">
+            {mapError}
+          </p>
+          <div className="text-xs text-muted-foreground bg-background/50 rounded-md p-3 border">
+            <strong>Current AOI:</strong> {aoi?.name || selectedODINCountry || "Not selected"}<br/>
+            <strong>Coordinates:</strong> {centerLat.toFixed(4)}, {centerLng.toFixed(4)}
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
