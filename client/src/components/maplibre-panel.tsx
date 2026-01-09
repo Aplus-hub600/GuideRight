@@ -143,9 +143,9 @@ export function MapLibrePanel({
     visible: activeLens === "logistics"
   })
 
-  // OpenStreetMap tile sources (no API key needed)
+  // Map tile sources with English labels (no API key needed)
   const tileSources = {
-    streets: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+    streets: "https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png",
     satellite: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
     hybrid: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
   }
@@ -168,7 +168,7 @@ export function MapLibrePanel({
             tiles: [tileSources[mapStyle]],
             tileSize: 256,
             attribution: mapStyle === "streets" 
-              ? '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              ? '&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
               : '&copy; <a href="https://www.esri.com/">Esri</a>'
           }
         },
