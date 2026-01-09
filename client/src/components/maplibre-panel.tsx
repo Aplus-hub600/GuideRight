@@ -1,0 +1,397 @@
+import { useEffect, useRef, useState, useCallback } from "react"
+import maplibregl from "maplibre-gl"
+import "maplibre-gl/dist/maplibre-gl.css"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { Navigation, Target, Layers, MapPin, Crosshair, ZoomIn, ZoomOut } from "lucide-react"
+import { useTranslation } from "react-i18next"
+import { cn } from "@/lib/utils"
+import { ScenarioSelector } from "./scenario-selector"
+
+interface AOI {
+  name?: string
+  lat: number
+  lng: number
+  radiusKm?: number
+}
+
+interface MovementPlan {
+  route: Array<{ lat: number; lng: number }>
+  rationale: string
+}
+
+interface SigAct {
+  who: string
+  what: string
+  where: string
+  when: string
+  why: string
+  confidence: number
+  lat?: number
+  lng?: number
+}
+
+interface MapLibrePanelProps {
+  aoi?: AOI
+  riskScore?: number
+  movementPlan?: MovementPlan
+  sigacts?: SigAct[]
+  onAOIChange?: (aoi: AOI) => void
+  onMovementPlanRequest?: () => void
+  selectedODINCountry?: string
+  onODINCountryChange?: (country: string) => void
+  className?: string
+}
+
+export function MapLibrePanel({
+  aoi,
+  riskScore,
+  movementPlan,
+  sigacts = [],
+  onAOIChange,
+  onMovementPlanRequest,
+  selectedODINCountry,
+  onODINCountryChange,
+  className
+}: MapLibrePanelProps) {
+  const { t } = useTranslation()
+  const mapContainer = useRef<HTMLDivElement>(null)
+  const map = useRef<maplibregl.Map | null>(null)
+  const aoiMarker = useRef<maplibregl.Marker | null>(null)
+  const sigactMarkers = useRef<maplibregl.Marker[]>([])
+  
+  const [mapStyle, setMapStyle] = useState<"satellite" | "streets" | "hybrid">("streets")
+  const [isMapReady, setIsMapReady] = useState(false)
+
+  // OpenStreetMap tile sources (no API key needed)
+  const tileSources = {
+    streets: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+    satellite: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    hybrid: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+  }
+
+  // Initialize map
+  useEffect(() => {
+    if (!mapContainer.current || map.current) return
+
+    const initialCenter: [number, number] = aoi 
+      ? [aoi.lng, aoi.lat] 
+      : [90.4125, 23.8103] // Default: Dhaka
+
+    map.current = new maplibregl.Map({
+      container: mapContainer.current,
+      style: {
+        version: 8,
+        sources: {
+          "raster-tiles": {
+            type: "raster",
+            tiles: [tileSources[mapStyle]],
+            tileSize: 256,
+            attribution: mapStyle === "streets" 
+              ? '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              : '&copy; <a href="https://www.esri.com/">Esri</a>'
+          }
+        },
+        layers: [
+          {
+            id: "simple-tiles",
+            type: "raster",
+            source: "raster-tiles",
+            minzoom: 0,
+            maxzoom: 22
+          }
+        ]
+      },
+      center: initialCenter,
+      zoom: 10,
+      attributionControl: false
+    })
+
+    // Add attribution control separately
+    map.current.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-right")
+
+    // Add navigation controls
+    map.current.addControl(new maplibregl.NavigationControl(), "top-right")
+
+    map.current.on("load", () => {
+      setIsMapReady(true)
+    })
+
+    // Click to set AOI
+    map.current.on("click", (e) => {
+      if (onAOIChange) {
+        onAOIChange({
+          lat: e.lngLat.lat,
+          lng: e.lngLat.lng,
+          radiusKm: 5
+        })
+      }
+    })
+
+    return () => {
+      if (map.current) {
+        map.current.remove()
+        map.current = null
+      }
+    }
+  }, [])
+
+  // Update map style
+  useEffect(() => {
+    if (!map.current || !isMapReady) return
+
+    const source = map.current.getSource("raster-tiles") as maplibregl.RasterTileSource
+    if (source) {
+      source.setTiles([tileSources[mapStyle]])
+    }
+  }, [mapStyle, isMapReady])
+
+  // Update AOI marker
+  useEffect(() => {
+    if (!map.current || !isMapReady || !aoi) return
+
+    // Remove existing marker
+    if (aoiMarker.current) {
+      aoiMarker.current.remove()
+    }
+
+    // Create AOI marker element
+    const el = document.createElement("div")
+    el.className = "aoi-marker"
+    el.innerHTML = `
+      <div style="
+        width: 24px;
+        height: 24px;
+        background: #3b82f6;
+        border: 3px solid white;
+        border-radius: 50%;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        cursor: pointer;
+      "></div>
+    `
+
+    // Add popup
+    const popup = new maplibregl.Popup({ offset: 25 }).setHTML(`
+      <div style="padding: 8px; font-family: system-ui;">
+        <strong>${aoi.name || "Area of Interest"}</strong><br/>
+        <span style="color: #666; font-size: 12px;">
+          ${aoi.lat.toFixed(4)}, ${aoi.lng.toFixed(4)}
+          ${aoi.radiusKm ? ` (${aoi.radiusKm}km radius)` : ""}
+        </span>
+      </div>
+    `)
+
+    aoiMarker.current = new maplibregl.Marker({ element: el })
+      .setLngLat([aoi.lng, aoi.lat])
+      .setPopup(popup)
+      .addTo(map.current)
+
+    // Fly to new AOI
+    map.current.flyTo({
+      center: [aoi.lng, aoi.lat],
+      zoom: 12,
+      duration: 1000
+    })
+  }, [aoi, isMapReady])
+
+  // Update SIGACT markers
+  useEffect(() => {
+    if (!map.current || !isMapReady) return
+
+    // Remove existing markers
+    sigactMarkers.current.forEach(m => m.remove())
+    sigactMarkers.current = []
+
+    // Add new markers for SIGACTs with coordinates
+    sigacts.forEach((sigact, index) => {
+      if (!sigact.lat || !sigact.lng) return
+
+      const el = document.createElement("div")
+      const confidenceColor = sigact.confidence >= 0.7 ? "#22c55e" : 
+                              sigact.confidence >= 0.4 ? "#f59e0b" : "#ef4444"
+      
+      el.innerHTML = `
+        <div style="
+          width: 20px;
+          height: 20px;
+          background: ${confidenceColor};
+          border: 2px solid white;
+          border-radius: 50%;
+          box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: white;
+          font-size: 10px;
+          font-weight: bold;
+        ">${index + 1}</div>
+      `
+
+      const popup = new maplibregl.Popup({ offset: 15 }).setHTML(`
+        <div style="padding: 8px; font-family: system-ui; max-width: 250px;">
+          <strong style="color: #333;">${sigact.what}</strong><br/>
+          <span style="color: #666; font-size: 12px;">
+            <b>Who:</b> ${sigact.who}<br/>
+            <b>Where:</b> ${sigact.where}<br/>
+            <b>When:</b> ${sigact.when}<br/>
+            <b>Why:</b> ${sigact.why}<br/>
+            <b>Confidence:</b> ${Math.round(sigact.confidence * 100)}%
+          </span>
+        </div>
+      `)
+
+      const marker = new maplibregl.Marker({ element: el })
+        .setLngLat([sigact.lng, sigact.lat])
+        .setPopup(popup)
+        .addTo(map.current!)
+
+      sigactMarkers.current.push(marker)
+    })
+  }, [sigacts, isMapReady])
+
+  // Draw movement plan route
+  useEffect(() => {
+    if (!map.current || !isMapReady || !movementPlan?.route?.length) return
+
+    const sourceId = "movement-route"
+    const layerId = "movement-route-layer"
+
+    // Remove existing route
+    if (map.current.getLayer(layerId)) {
+      map.current.removeLayer(layerId)
+    }
+    if (map.current.getSource(sourceId)) {
+      map.current.removeSource(sourceId)
+    }
+
+    // Add route source
+    map.current.addSource(sourceId, {
+      type: "geojson",
+      data: {
+        type: "Feature",
+        properties: {},
+        geometry: {
+          type: "LineString",
+          coordinates: movementPlan.route.map(p => [p.lng, p.lat])
+        }
+      }
+    })
+
+    // Add route layer
+    map.current.addLayer({
+      id: layerId,
+      type: "line",
+      source: sourceId,
+      layout: {
+        "line-join": "round",
+        "line-cap": "round"
+      },
+      paint: {
+        "line-color": "#3b82f6",
+        "line-width": 4,
+        "line-dasharray": [2, 1]
+      }
+    })
+  }, [movementPlan, isMapReady])
+
+  const handleZoomIn = () => map.current?.zoomIn()
+  const handleZoomOut = () => map.current?.zoomOut()
+  const handleCenterOnAOI = () => {
+    if (map.current && aoi) {
+      map.current.flyTo({ center: [aoi.lng, aoi.lat], zoom: 12 })
+    }
+  }
+
+  return (
+    <div className={cn("relative w-full h-full", className)}>
+      {/* Map Container */}
+      <div ref={mapContainer} className="absolute inset-0" data-testid="map-container" />
+
+      {/* Map Controls Overlay */}
+      <div className="absolute top-3 left-3 z-10 flex flex-col gap-2">
+        {/* Scenario Selector */}
+        <ScenarioSelector
+          selectedCountry={selectedODINCountry}
+          onScenarioChange={onODINCountryChange}
+        />
+
+        {/* Style Selector */}
+        <div className="flex gap-1 bg-background/90 backdrop-blur rounded-md p-1 border">
+          <Button
+            size="sm"
+            variant={mapStyle === "streets" ? "default" : "ghost"}
+            onClick={() => setMapStyle("streets")}
+            data-testid="button-map-streets"
+          >
+            <Layers className="h-4 w-4 mr-1" />
+            Streets
+          </Button>
+          <Button
+            size="sm"
+            variant={mapStyle === "satellite" ? "default" : "ghost"}
+            onClick={() => setMapStyle("satellite")}
+            data-testid="button-map-satellite"
+          >
+            <Target className="h-4 w-4 mr-1" />
+            Satellite
+          </Button>
+        </div>
+      </div>
+
+      {/* Zoom Controls */}
+      <div className="absolute bottom-20 right-3 z-10 flex flex-col gap-1">
+        <Button size="icon" variant="secondary" onClick={handleZoomIn} data-testid="button-zoom-in">
+          <ZoomIn className="h-4 w-4" />
+        </Button>
+        <Button size="icon" variant="secondary" onClick={handleZoomOut} data-testid="button-zoom-out">
+          <ZoomOut className="h-4 w-4" />
+        </Button>
+        {aoi && (
+          <Button size="icon" variant="secondary" onClick={handleCenterOnAOI} data-testid="button-center-aoi">
+            <Crosshair className="h-4 w-4" />
+          </Button>
+        )}
+      </div>
+
+      {/* AOI Info Badge */}
+      {aoi && (
+        <div className="absolute bottom-3 left-3 z-10">
+          <Badge variant="secondary" className="bg-background/90 backdrop-blur">
+            <MapPin className="h-3 w-3 mr-1" />
+            {aoi.name || `${aoi.lat.toFixed(4)}, ${aoi.lng.toFixed(4)}`}
+            {aoi.radiusKm && ` (${aoi.radiusKm}km)`}
+          </Badge>
+        </div>
+      )}
+
+      {/* Risk Score Badge */}
+      {riskScore !== undefined && (
+        <div className="absolute top-3 right-3 z-10">
+          <Badge 
+            variant={riskScore >= 75 ? "destructive" : riskScore >= 50 ? "secondary" : "default"}
+            className="text-sm"
+          >
+            Risk: {riskScore}%
+          </Badge>
+        </div>
+      )}
+
+      {/* Movement Plan Button */}
+      {onMovementPlanRequest && (
+        <div className="absolute bottom-3 right-3 z-10">
+          <Button size="sm" onClick={onMovementPlanRequest} data-testid="button-movement-plan">
+            <Navigation className="h-4 w-4 mr-1" />
+            Plan Route
+          </Button>
+        </div>
+      )}
+
+      {/* Loading Overlay */}
+      {!isMapReady && (
+        <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-20">
+          <div className="text-muted-foreground">Loading map...</div>
+        </div>
+      )}
+    </div>
+  )
+}

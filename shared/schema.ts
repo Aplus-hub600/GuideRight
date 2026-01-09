@@ -456,3 +456,119 @@ export const timelineQuerySchema = z.object({
 
 export type TimelineEvent = z.infer<typeof timelineEventSchema>
 export type TimelineQuery = z.infer<typeof timelineQuerySchema>
+
+// =====================================================
+// MVP REBUILD: Sessions, Analyses, Evidence Tables
+// =====================================================
+
+export const sessions = pgTable("sessions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name"),
+  aoi: jsonb("aoi").$type<{ name: string; lat: number; lon: number; bbox?: number[] }>(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const pmesiiAnalyses = pgTable("pmesii_analyses", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  sessionId: varchar("session_id").references(() => sessions.id),
+  aoi: jsonb("aoi").$type<{ name: string; lat: number; lon: number; bbox?: number[] }>().notNull(),
+  question: text("question"),
+  timeWindowDays: real("time_window_days").default(30),
+  pmesii: jsonb("pmesii").$type<{
+    political: { assessment: string; riskLevel: string; confidence: number; considerations: string[] };
+    military: { assessment: string; riskLevel: string; confidence: number; considerations: string[] };
+    economic: { assessment: string; riskLevel: string; confidence: number; considerations: string[] };
+    social: { assessment: string; riskLevel: string; confidence: number; considerations: string[] };
+    information: { assessment: string; riskLevel: string; confidence: number; considerations: string[] };
+    infrastructure: { assessment: string; riskLevel: string; confidence: number; considerations: string[] };
+    physicalEnvironment?: { assessment: string; riskLevel: string; confidence: number; considerations: string[] };
+    time?: { assessment: string; riskLevel: string; confidence: number; considerations: string[] };
+  }>(),
+  sigacts: jsonb("sigacts").$type<Array<{
+    who: string;
+    what: string;
+    where: string;
+    when: string;
+    why: string;
+    confidence: number;
+    lat?: number;
+    lng?: number;
+  }>>(),
+  confidence: jsonb("confidence").$type<{
+    score: number;
+    rationale: string[];
+  }>(),
+  providerStatus: jsonb("provider_status").$type<{
+    model: string;
+    latencyMs: number;
+    tokens: number;
+  }>(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const evidence = pgTable("evidence", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  analysisId: varchar("analysis_id").references(() => pmesiiAnalyses.id),
+  source: text("source").notNull(), // 'news', 'social', 'osint', 'humint', etc.
+  title: text("title").notNull(),
+  url: text("url"),
+  excerpt: text("excerpt"),
+  timestamp: timestamp("timestamp"),
+  lat: real("lat"),
+  lng: real("lng"),
+  confidence: real("confidence"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Insert schemas for new tables
+export const insertSessionSchema = createInsertSchema(sessions).pick({
+  name: true,
+  aoi: true,
+});
+
+export const insertPmesiiAnalysisSchema = createInsertSchema(pmesiiAnalyses).pick({
+  sessionId: true,
+  aoi: true,
+  question: true,
+  timeWindowDays: true,
+  pmesii: true,
+  sigacts: true,
+  confidence: true,
+  providerStatus: true,
+});
+
+export const insertEvidenceSchema = createInsertSchema(evidence).pick({
+  analysisId: true,
+  source: true,
+  title: true,
+  url: true,
+  excerpt: true,
+  timestamp: true,
+  lat: true,
+  lng: true,
+  confidence: true,
+});
+
+// Types for new tables
+export type Session = typeof sessions.$inferSelect;
+export type InsertSession = z.infer<typeof insertSessionSchema>;
+export type PmesiiAnalysis = typeof pmesiiAnalyses.$inferSelect;
+export type InsertPmesiiAnalysis = z.infer<typeof insertPmesiiAnalysisSchema>;
+export type Evidence = typeof evidence.$inferSelect;
+export type InsertEvidence = z.infer<typeof insertEvidenceSchema>;
+
+// API Request schema for PMESII analysis (matches the plan)
+export const pmesiiAnalyzeRequestSchema = z.object({
+  session_id: z.string().optional(),
+  aoi: z.object({
+    name: z.string(),
+    bbox: z.array(z.number()).optional(),
+    lat: z.number(),
+    lon: z.number(),
+  }),
+  time_window_days: z.number().default(30),
+  question: z.string().optional(),
+});
+
+export type PmesiiAnalyzeRequest = z.infer<typeof pmesiiAnalyzeRequestSchema>;

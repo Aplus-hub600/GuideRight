@@ -281,6 +281,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // MVP: New PMESII Analysis endpoint with persistence (matches API contract)
+  app.post("/api/analyze/pmesii", async (req, res) => {
+    try {
+      const { pmesiiAnalyzeRequestSchema } = await import("@shared/schema");
+      const { generatePmesiiAnalysis, isProviderAvailable } = await import("./services/provider");
+      
+      // Validate request
+      const parsed = pmesiiAnalyzeRequestSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({
+          success: false,
+          error: "Invalid request format",
+          details: parsed.error.issues
+        });
+      }
+      
+      const { session_id, aoi, time_window_days, question } = parsed.data;
+      
+      // Check provider availability
+      if (!isProviderAvailable()) {
+        return res.status(503).json({
+          success: false,
+          error: "AI provider not configured. Please set OPENAI_API_KEY.",
+          code: "provider_unavailable"
+        });
+      }
+      
+      console.log(`[PMESII] Analyzing AOI: ${aoi.name} (${aoi.lat}, ${aoi.lon})`);
+      
+      // Generate analysis using the provider service
+      const result = await generatePmesiiAnalysis(aoi, question, time_window_days);
+      
+      // Generate UUIDs for response
+      const analysisId = crypto.randomUUID();
+      const sessionId = session_id || crypto.randomUUID();
+      
+      // Persist to database
+      try {
+        await storage.createAnalysisResult({
+          analysisType: "pmesii_mvp",
+          results: {
+            pmesii: result.pmesii,
+            sigacts: result.sigacts,
+            confidence: result.confidence,
+            evidence: result.evidence,
+            providerStatus: result.providerStatus
+          },
+          fileId: null,
+          region: aoi.name,
+          aoiData: aoi
+        });
+        console.log(`[PMESII] Analysis persisted: ${analysisId}`);
+      } catch (dbError) {
+        console.error("[PMESII] Failed to persist analysis:", dbError);
+        // Continue even if persistence fails
+      }
+      
+      // Return response matching the API contract
+      res.json({
+        analysis_id: analysisId,
+        session_id: sessionId,
+        pmesii: result.pmesii,
+        sigacts: result.sigacts,
+        confidence: result.confidence,
+        evidence: result.evidence,
+        provider_status: result.providerStatus
+      });
+      
+    } catch (error) {
+      console.error("[PMESII] Analysis error:", error);
+      handleOpenAIError(error, res);
+    }
+  });
+
   // File analysis endpoint
   app.post("/api/analysis/file", upload.single('file'), async (req, res) => {
     try {

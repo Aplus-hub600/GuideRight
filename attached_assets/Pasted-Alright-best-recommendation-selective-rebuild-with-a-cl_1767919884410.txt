@@ -1,0 +1,164 @@
+Alright — best recommendation = selective rebuild with a clean MVP spine:
+
+Keep your current UI (it’s your differentiator right now)
+
+Replace the backend/intelligence layer with a real, persistent, provider-stable core
+
+Switch maps to MapLibre + OpenStreetMap (kills Google billing pain immediately)
+
+MVP goal: “PMESII + Evidence + Confidence + Persistence” working end-to-end (no mocks)
+
+This aligns tightly with your white paper’s emphasis on multimodal fusion, doctrine-native outputs (PMESII/ASCOPE/CARVER), explainability, and confidence-qualified products. 
+
+GuideRight_WhitePaper_2025_12_08
+
+The build decision (what we’re doing)
+Architecture
+
+Frontend: keep your existing React/Next/Vite UI on Replit
+
+Backend: FastAPI (Python) (clean schemas, fast iteration on extraction + scoring)
+
+DB: Postgres (sessions, artifacts, evidence)
+
+Maps: MapLibre + OSM (no billing errors, reliable for demos)
+
+AI Provider (MVP): pick ONE (OpenAI or Gemini) and make it rock-solid
+
+If your OpenAI quota is currently failing, start with Gemini for MVP; if Gemini grounding is misconfigured, start with OpenAI. Either way: one provider only for v1.
+
+MVP scope (what “done” means)
+
+For any AOI + user question, backend returns:
+
+PMESII-PT profile (structured JSON)
+
+Key events / SIGACT-style 5Ws (even if from minimal sources at first)
+
+Evidence objects (source, timestamp, excerpt, url)
+
+Confidence score + rationale
+
+Saved to DB so refresh doesn’t wipe it
+
+No map intelligence? Fine. No simulations? Fine. But no mocks.
+
+Repo changes (minimal disruption)
+
+Add a new backend folder (don’t refactor the UI yet):
+
+/backend
+  /app
+    main.py
+    config.py
+    db.py
+    models.py
+    schemas.py
+    routers/
+      analyze.py
+      sessions.py
+    services/
+      provider.py
+      pmesii.py
+      evidence.py
+      confidence.py
+  requirements.txt
+
+
+Frontend continues calling /api/... as it does now—just point those routes to the new FastAPI service.
+
+API contract (your UI can depend on this)
+POST /api/analyze/pmesii
+
+Request
+
+{
+  "session_id": "optional",
+  "aoi": { "name": "Kano, Nigeria", "bbox": null, "lat": 12.002, "lon": 8.592 },
+  "time_window_days": 30,
+  "question": "What are the main drivers of unrest and likely triggers in the next 2 weeks?"
+}
+
+
+Response
+
+{
+  "analysis_id": "uuid",
+  "session_id": "uuid",
+  "pmesii": { "political": {...}, "military": {...}, "economic": {...}, "social": {...}, "information": {...}, "infrastructure": {...}, "physical_environment": {...}, "time": {...} },
+  "sigacts": [{ "who": "...", "what": "...", "where": "...", "when": "...", "why": "...", "confidence": 0.72 }],
+  "confidence": { "score": 78, "rationale": ["3 sources agree on protests", "evidence within last 10 days", "city-level geotagging"] },
+  "evidence": [{ "source": "news", "title": "...", "url": "...", "timestamp": "2026-01-05", "excerpt": "..." }],
+  "provider_status": { "model": "X", "latency_ms": 1830, "tokens": 2400 }
+}
+
+
+This immediately makes your UI “real” without redesign.
+
+Confidence scoring v1 (simple, defensible)
+
+Start with a transparent formula:
+
+Freshness (0–25)
+
+Source diversity (0–25)
+
+Geo precision (0–25)
+
+Cross-source agreement (0–25)
+
+Return score + rationale[]. That alone upgrades trust dramatically and matches your “confidence-qualified intelligence” claim. 
+
+GuideRight_WhitePaper_2025_12_08
+
+Implementation plan (execute in this order)
+Step 1 — MapLibre swap (same day)
+
+Replace Google Maps dependency
+
+Keep the same UI container + overlays pattern
+
+Render AOI markers + event pins from your backend response
+
+Step 2 — FastAPI + Postgres skeleton (same day)
+
+Add tables: sessions, analyses, evidence
+
+Add /api/analyze/pmesii endpoint returning real outputs (even if sources are minimal)
+
+Step 3 — Provider integration (same day)
+
+Implement ONE provider wrapper with:
+
+retries + timeouts
+
+error normalization
+
+caching (by AOI + question + time window)
+
+Step 4 — Replace mock panels with live calls (same day)
+
+PMESII panel → calls endpoint
+
+Risk panel can initially reuse the same response (confidence + risk notes) until CARVER v1 lands
+
+Step 5 — Minimal “real sources” (next)
+
+Start with just one:
+
+RSS/news pull or a small curated feed you control
+Goal is timestamps + URLs + excerpts.
+
+What you’ll have after this pass
+
+A prototype that is no longer “demo-only”:
+
+refresh-safe
+
+evidence-backed
+
+confidence-qualified
+
+doctrine-structured (PMESII/SIGACT-ready)
+
+extensible into ASCOPE/CARVER/ABM later (as your white paper describes) 
