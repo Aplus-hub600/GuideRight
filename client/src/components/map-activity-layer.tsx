@@ -125,90 +125,91 @@ export function useMapActivityLayer({
     if (!visible) return
     
     MOCK_ACTIVITY_ZONES.forEach((zone) => {
-      const sourceId = `activity-zone-${zone.id}`
-      const layerId = `activity-layer-${zone.id}`
-      const style = intensityStyles[zone.intensity]
-      
-      if (!map.getSource(sourceId)) {
-        const points = 32
-        const coords: [number, number][] = []
+      try {
+        const sourceId = `activity-zone-${zone.id}`
+        const layerId = `activity-layer-${zone.id}`
+        const style = intensityStyles[zone.intensity]
         
-        for (let i = 0; i <= points; i++) {
-          const angle = (i / points) * 2 * Math.PI
-          const dx = zone.radius * Math.cos(angle)
-          const dy = zone.radius * Math.sin(angle)
-          const lat = zone.lat + (dy / 111320)
-          const lng = zone.lng + (dx / (111320 * Math.cos(zone.lat * Math.PI / 180)))
-          coords.push([lng, lat])
+        if (!map.getSource(sourceId)) {
+          const points = 32
+          const coords: [number, number][] = []
+          
+          for (let i = 0; i <= points; i++) {
+            const angle = (i / points) * 2 * Math.PI
+            const dx = zone.radius * Math.cos(angle)
+            const dy = zone.radius * Math.sin(angle)
+            const lat = zone.lat + (dy / 111320)
+            const lng = zone.lng + (dx / (111320 * Math.cos(zone.lat * Math.PI / 180)))
+            coords.push([lng, lat])
+          }
+          
+          map.addSource(sourceId, {
+            type: "geojson",
+            data: {
+              type: "Feature",
+              properties: { intensity: zone.intensity, type: zone.type },
+              geometry: {
+                type: "Polygon",
+                coordinates: [coords]
+              }
+            }
+          })
+          
+          map.addLayer({
+            id: layerId,
+            type: "fill",
+            source: sourceId,
+            paint: {
+              "fill-color": style.color,
+              "fill-opacity": 1
+            }
+          })
+          
+          const dashArray = zone.type === "incident" ? [2, 2] : 
+                            zone.type === "movement" ? [6, 3] : undefined
+          
+          map.addLayer({
+            id: `${layerId}-outline`,
+            type: "line",
+            source: sourceId,
+            paint: {
+              "line-color": style.border,
+              "line-width": 2,
+              "line-opacity": 0.6,
+              ...(dashArray ? { "line-dasharray": dashArray } : {})
+            }
+          })
         }
         
-        map.addSource(sourceId, {
-          type: "geojson",
-          data: {
-            type: "Feature",
-            properties: { intensity: zone.intensity, type: zone.type },
-            geometry: {
-              type: "Polygon",
-              coordinates: [coords]
-            }
-          }
-        })
+        const el = document.createElement("div")
+        el.innerHTML = `
+          <div style="
+            width: 8px;
+            height: 8px;
+            background: ${style.border};
+            border-radius: 50%;
+            box-shadow: 0 0 8px ${style.border};
+          "></div>
+        `
         
-        map.addLayer({
-          id: layerId,
-          type: "fill",
-          source: sourceId,
-          paint: {
-            "fill-color": style.color,
-            "fill-opacity": 1
-          }
-        })
-        
-        const dashArray = zone.type === "incident" ? [2, 2] : 
-                          zone.type === "movement" ? [6, 3] : undefined
-        
-        map.addLayer({
-          id: `${layerId}-outline`,
-          type: "line",
-          source: sourceId,
-          paint: {
-            "line-color": style.border,
-            "line-width": 2,
-            "line-opacity": 0.6,
-            ...(dashArray ? { "line-dasharray": dashArray } : {})
-          }
-        })
-        
-      }
-      
-      const el = document.createElement("div")
-      el.innerHTML = `
-        <div style="
-          width: 8px;
-          height: 8px;
-          background: ${style.border};
-          border-radius: 50%;
-          box-shadow: 0 0 8px ${style.border};
-        "></div>
-      `
-      
-      const popup = new maplibregl.Popup({ offset: 15, closeButton: false }).setHTML(`
-        <div style="padding: 10px; font-family: system-ui;">
-          <strong style="color: #1a1a1a;">${zone.name}</strong>
-          <div style="font-size: 11px; color: #666; margin-top: 4px; text-transform: capitalize;">
-            ${zone.type} • ${zone.intensity} intensity
+        const popup = new maplibregl.Popup({ offset: 15, closeButton: false }).setHTML(`
+          <div style="padding: 10px; font-family: system-ui;">
+            <strong style="color: #1a1a1a;">${zone.name}</strong>
+            <div style="font-size: 11px; color: #666; margin-top: 4px; text-transform: capitalize;">
+              ${zone.type} • ${zone.intensity} intensity
+            </div>
+            ${zone.description ? `<div style="font-size: 11px; color: #888; margin-top: 6px;">${zone.description}</div>` : ""}
+            ${zone.lastReported ? `<div style="font-size: 10px; color: #999; margin-top: 6px;">Last: ${zone.lastReported}</div>` : ""}
           </div>
-          ${zone.description ? `<div style="font-size: 11px; color: #888; margin-top: 6px;">${zone.description}</div>` : ""}
-          ${zone.lastReported ? `<div style="font-size: 10px; color: #999; margin-top: 6px;">Last: ${zone.lastReported}</div>` : ""}
-        </div>
-      `)
-      
-      const marker = new maplibregl.Marker({ element: el })
-        .setLngLat([zone.lng, zone.lat])
-        .setPopup(popup)
-        .addTo(map)
-      
-      markersRef.current.push(marker)
+        `)
+        
+        const marker = new maplibregl.Marker({ element: el })
+          .setLngLat([zone.lng, zone.lat])
+          .setPopup(popup)
+          .addTo(map)
+        
+        markersRef.current.push(marker)
+      } catch {}
     })
     
     return () => {

@@ -87,100 +87,103 @@ export function useMapAccessibilityLayer({
     
     if (showTravelRings) {
       TRAVEL_RINGS.forEach((ring, idx) => {
-        const sourceId = `travel-ring-source-${idx}`
-        const layerId = `travel-ring-layer-${idx}`
-        
-        if (!map.getSource(sourceId)) {
-          const center = [centerLng, centerLat]
-          const points = 64
-          const coords: [number, number][] = []
+        try {
+          const sourceId = `travel-ring-source-${idx}`
+          const layerId = `travel-ring-layer-${idx}`
           
-          for (let i = 0; i <= points; i++) {
-            const angle = (i / points) * 2 * Math.PI
-            const dx = ring.radius * Math.cos(angle)
-            const dy = ring.radius * Math.sin(angle)
-            const lat = centerLat + (dy / 111320)
-            const lng = centerLng + (dx / (111320 * Math.cos(centerLat * Math.PI / 180)))
-            coords.push([lng, lat])
-          }
-          
-          map.addSource(sourceId, {
-            type: "geojson",
-            data: {
-              type: "Feature",
-              properties: { minutes: ring.minutes },
-              geometry: {
-                type: "Polygon",
-                coordinates: [coords]
+          if (!map.getSource(sourceId)) {
+            const points = 64
+            const coords: [number, number][] = []
+            
+            for (let i = 0; i <= points; i++) {
+              const angle = (i / points) * 2 * Math.PI
+              const dx = ring.radius * Math.cos(angle)
+              const dy = ring.radius * Math.sin(angle)
+              const lat = centerLat + (dy / 111320)
+              const lng = centerLng + (dx / (111320 * Math.cos(centerLat * Math.PI / 180)))
+              coords.push([lng, lat])
+            }
+            
+            map.addSource(sourceId, {
+              type: "geojson",
+              data: {
+                type: "Feature",
+                properties: { minutes: ring.minutes },
+                geometry: {
+                  type: "Polygon",
+                  coordinates: [coords]
+                }
               }
-            }
-          })
-          
-          map.addLayer({
-            id: layerId,
-            type: "fill",
-            source: sourceId,
-            paint: {
-              "fill-color": ring.color,
-              "fill-opacity": ring.opacity
-            }
-          })
-          
-          map.addLayer({
-            id: `${layerId}-outline`,
-            type: "line",
-            source: sourceId,
-            paint: {
-              "line-color": ring.color,
-              "line-width": 1.5,
-              "line-opacity": 0.4,
-              "line-dasharray": [4, 2]
-            }
-          })
-        }
+            })
+            
+            map.addLayer({
+              id: layerId,
+              type: "fill",
+              source: sourceId,
+              paint: {
+                "fill-color": ring.color,
+                "fill-opacity": ring.opacity
+              }
+            })
+            
+            map.addLayer({
+              id: `${layerId}-outline`,
+              type: "line",
+              source: sourceId,
+              paint: {
+                "line-color": ring.color,
+                "line-width": 1.5,
+                "line-opacity": 0.4,
+                "line-dasharray": [4, 2]
+              }
+            })
+          }
+        } catch {}
       })
     }
     
     if (visible && showDensity) {
       DENSITY_ZONES.forEach((zone) => {
-        const sourceId = `density-zone-${zone.id}`
-        const layerId = `density-layer-${zone.id}`
-        
-        if (!map.getSource(sourceId)) {
-          const points = 32
-          const coords: [number, number][] = []
+        try {
+          const sourceId = `density-zone-${zone.id}`
+          const layerId = `density-layer-${zone.id}`
           
-          for (let i = 0; i <= points; i++) {
-            const angle = (i / points) * 2 * Math.PI
-            const dx = zone.radius * Math.cos(angle)
-            const dy = zone.radius * Math.sin(angle)
-            const lat = zone.lat + (dy / 111320)
-            const lng = zone.lng + (dx / (111320 * Math.cos(zone.lat * Math.PI / 180)))
-            coords.push([lng, lat])
-          }
-          
-          map.addSource(sourceId, {
-            type: "geojson",
-            data: {
-              type: "Feature",
-              properties: { intensity: zone.intensity },
-              geometry: {
-                type: "Polygon",
-                coordinates: [coords]
+          if (!map.getSource(sourceId)) {
+            const points = 32
+            const coords: [number, number][] = []
+            
+            for (let i = 0; i <= points; i++) {
+              const angle = (i / points) * 2 * Math.PI
+              const dx = zone.radius * Math.cos(angle)
+              const dy = zone.radius * Math.sin(angle)
+              const lat = zone.lat + (dy / 111320)
+              const lng = zone.lng + (dx / (111320 * Math.cos(zone.lat * Math.PI / 180)))
+              coords.push([lng, lat])
+            }
+            
+            map.addSource(sourceId, {
+              type: "geojson",
+              data: {
+                type: "Feature",
+                properties: { intensity: zone.intensity },
+                geometry: {
+                  type: "Polygon",
+                  coordinates: [coords]
+                }
               }
-            }
-          })
-          
-          map.addLayer({
-            id: layerId,
-            type: "fill",
-            source: sourceId,
-            paint: {
-              "fill-color": intensityColors[zone.intensity],
-              "fill-opacity": 1
-            }
-          })
-        }
+            })
+            
+            map.addLayer({
+              id: layerId,
+              type: "fill",
+              source: sourceId,
+              paint: {
+                "fill-color": intensityColors[zone.intensity],
+                "fill-opacity": 1
+              }
+            })
+          }
+        } catch {}
       })
     }
     

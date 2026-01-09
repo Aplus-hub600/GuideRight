@@ -150,89 +150,93 @@ export function useMapLogisticsLayer({
     if (!visible) return
     
     MOCK_ROUTES.forEach((route) => {
-      const sourceId = `logistics-route-${route.id}`
-      const layerId = `logistics-layer-${route.id}`
-      const color = routeColors[route.status]
-      
-      if (!map.getSource(sourceId)) {
-        map.addSource(sourceId, {
-          type: "geojson",
-          data: {
-            type: "Feature",
-            properties: { status: route.status },
-            geometry: {
-              type: "LineString",
-              coordinates: route.coordinates
+      try {
+        const sourceId = `logistics-route-${route.id}`
+        const layerId = `logistics-layer-${route.id}`
+        const color = routeColors[route.status]
+        
+        if (!map.getSource(sourceId)) {
+          map.addSource(sourceId, {
+            type: "geojson",
+            data: {
+              type: "Feature",
+              properties: { status: route.status },
+              geometry: {
+                type: "LineString",
+                coordinates: route.coordinates
+              }
             }
-          }
-        })
-        
-        const dashArray = route.status === "restricted" ? [4, 4] :
-                          route.status === "blocked" ? [2, 2] : undefined
-        
-        map.addLayer({
-          id: layerId,
-          type: "line",
-          source: sourceId,
-          layout: {
-            "line-join": "round",
-            "line-cap": "round"
-          },
-          paint: {
-            "line-color": color,
-            "line-width": 4,
-            "line-opacity": 0.8,
-            ...(dashArray ? { "line-dasharray": dashArray } : {})
-          }
-        })
-      }
+          })
+          
+          const dashArray = route.status === "restricted" ? [4, 4] :
+                            route.status === "blocked" ? [2, 2] : undefined
+          
+          map.addLayer({
+            id: layerId,
+            type: "line",
+            source: sourceId,
+            layout: {
+              "line-join": "round",
+              "line-cap": "round"
+            },
+            paint: {
+              "line-color": color,
+              "line-width": 4,
+              "line-opacity": 0.8,
+              ...(dashArray ? { "line-dasharray": dashArray } : {})
+            }
+          })
+        }
+      } catch {}
     })
     
     MOCK_SUPPLY_POINTS.forEach((point) => {
-      const color = supplyColors[point.type]
-      const icon = supplyIcons[point.type]
-      const statusOpacity = point.status === "operational" ? 1 : 
-                            point.status === "limited" ? 0.7 : 0.4
-      
-      const el = document.createElement("div")
-      el.innerHTML = `
-        <div style="
-          width: 24px;
-          height: 24px;
-          background: ${color};
-          color: white;
-          border: 2px solid white;
-          border-radius: 4px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-weight: 600;
-          font-size: 11px;
-          font-family: system-ui;
-          box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-          opacity: ${statusOpacity};
-          transform: rotate(45deg);
-        ">
-          <span style="transform: rotate(-45deg);">${icon}</span>
-        </div>
-      `
-      
-      const popup = new maplibregl.Popup({ offset: 15, closeButton: false }).setHTML(`
-        <div style="padding: 10px; font-family: system-ui;">
-          <strong style="color: #1a1a1a;">${point.name}</strong>
-          <div style="font-size: 11px; color: #666; margin-top: 4px; text-transform: capitalize;">
-            ${point.type} • ${point.status}
+      try {
+        const color = supplyColors[point.type]
+        const icon = supplyIcons[point.type]
+        const statusOpacity = point.status === "operational" ? 1 : 
+                              point.status === "limited" ? 0.7 : 0.4
+        
+        const el = document.createElement("div")
+        el.innerHTML = `
+          <div style="
+            width: 24px;
+            height: 24px;
+            background: ${color};
+            color: white;
+            border: 2px solid white;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 11px;
+            font-family: system-ui;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            opacity: ${statusOpacity};
+            transform: rotate(45deg);
+          ">
+            <span style="transform: rotate(-45deg);">${icon}</span>
           </div>
-          ${point.notes ? `<div style="font-size: 11px; color: #888; margin-top: 6px;">${point.notes}</div>` : ""}
-        </div>
-      `)
-      
-      const marker = new maplibregl.Marker({ element: el })
-        .setLngLat([point.lng, point.lat])
-        .setPopup(popup)
-        .addTo(map)
-      
-      markersRef.current.push(marker)
+        `
+        
+        const popup = new maplibregl.Popup({ offset: 15, closeButton: false }).setHTML(`
+          <div style="padding: 10px; font-family: system-ui;">
+            <strong style="color: #1a1a1a;">${point.name}</strong>
+            <div style="font-size: 11px; color: #666; margin-top: 4px; text-transform: capitalize;">
+              ${point.type} • ${point.status}
+            </div>
+            ${point.notes ? `<div style="font-size: 11px; color: #888; margin-top: 6px;">${point.notes}</div>` : ""}
+          </div>
+        `)
+        
+        const marker = new maplibregl.Marker({ element: el })
+          .setLngLat([point.lng, point.lat])
+          .setPopup(popup)
+          .addTo(map)
+        
+        markersRef.current.push(marker)
+      } catch {}
     })
     
     return () => {
