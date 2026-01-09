@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge"
 import { Navigation, Target, Layers, MapPin, Crosshair, ZoomIn, ZoomOut } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { cn } from "@/lib/utils"
-import { ScenarioSelector } from "./scenario-selector"
 import { MapScopeBar, type DataCoverage } from "./map-scope-bar"
 import { MapLensSelector, LensLegend, type MapLens, LENS_CONFIGS } from "./map-lens-selector"
 import { useMapInfrastructureLayer, INFRASTRUCTURE_NODES, type InfrastructureNode } from "./map-infrastructure-layer"
@@ -46,8 +45,6 @@ interface MapLibrePanelProps {
   sigacts?: SigAct[]
   onAOIChange?: (aoi: AOI) => void
   onMovementPlanRequest?: () => void
-  selectedODINCountry?: string
-  onODINCountryChange?: (country: string) => void
   className?: string
 }
 
@@ -58,8 +55,6 @@ export function MapLibrePanel({
   sigacts = [],
   onAOIChange,
   onMovementPlanRequest,
-  selectedODINCountry,
-  onODINCountryChange,
   className
 }: MapLibrePanelProps) {
   const { t } = useTranslation()
@@ -416,7 +411,7 @@ export function MapLibrePanel({
             {mapError}
           </p>
           <div className="text-xs text-muted-foreground bg-background/50 rounded-md p-3 border">
-            <strong>Current AOI:</strong> {aoi?.name || selectedODINCountry || "Dhaka, Bangladesh"}<br/>
+            <strong>Current AOI:</strong> {aoi?.name || "Dhaka, Bangladesh"}<br/>
             <strong>Coordinates:</strong> {(aoi?.lat || 23.8103).toFixed(4)}, {(aoi?.lng || 90.4125).toFixed(4)}
           </div>
         </div>
@@ -432,23 +427,18 @@ export function MapLibrePanel({
       {/* Scope Bar - Top Left (Non-Negotiable per blueprint) */}
       <div className="absolute top-3 left-3 right-3 z-10">
         <MapScopeBar
-          aoiName={aoi?.name || selectedODINCountry}
+          aoiName={aoi?.name || "Bangladesh"}
           scope="metropolitan"
           coverage={dynamicCoverage}
           zoomLevel={zoomLevel}
         />
       </div>
 
-      {/* Left Rail: Lens Selector + Scenario + Style */}
+      {/* Left Rail: Lens Selector + Style */}
       <div className="absolute top-16 left-3 z-10 flex flex-col gap-2">
         <MapLensSelector
           activeLens={activeLens}
           onLensChange={setActiveLens}
-        />
-        
-        <ScenarioSelector
-          selectedCountry={selectedODINCountry}
-          onScenarioChange={onODINCountryChange}
         />
 
         <div className="flex flex-col gap-0.5 bg-background/95 backdrop-blur-sm rounded-md border overflow-hidden">
@@ -484,7 +474,7 @@ export function MapLibrePanel({
       <div className="absolute top-16 right-3 bottom-3 w-80 z-10">
         <div className="h-full bg-background/95 backdrop-blur-sm border rounded-md shadow-sm overflow-hidden">
           <MapContextPanel
-            aoiName={aoi?.name || selectedODINCountry || "Dhaka"}
+            aoiName={aoi?.name || "Dhaka"}
             activeLens={activeLens}
             selectedNode={selectedInfraNode}
           />

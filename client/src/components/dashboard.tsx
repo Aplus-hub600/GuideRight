@@ -37,13 +37,11 @@ interface DashboardProps {
   currentAOI: AOI
   onAOIChange: (aoi: AOI) => void
   onMediaContextChange?: (ids: string[]) => void
-  selectedODINCountry?: string
-  onODINCountryChange?: (country: string) => void
   onTogglePanel?: (section: NavSection) => void
   onClosePanel?: () => void
 }
 
-export function Dashboard({ className, activeTopPanel, activeBottomPanel, currentAOI, onAOIChange, onMediaContextChange, selectedODINCountry, onODINCountryChange, onTogglePanel, onClosePanel }: DashboardProps) {
+export function Dashboard({ className, activeTopPanel, activeBottomPanel, currentAOI, onAOIChange, onMediaContextChange, onTogglePanel, onClosePanel }: DashboardProps) {
   const { t } = useTranslation()
   const [riskScore, setRiskScore] = useState(67)
   const [riskLevel, setRiskLevel] = useState('Moderate')
@@ -110,8 +108,6 @@ export function Dashboard({ className, activeTopPanel, activeBottomPanel, curren
             movementPlan={movementPlan}
             onAOIChange={onAOIChange}
             onMovementPlanRequest={handleMovementPlanRequest}
-            selectedODINCountry={selectedODINCountry}
-            onODINCountryChange={onODINCountryChange}
             className="h-full w-full"
           />
         </div>
@@ -174,7 +170,7 @@ export function Dashboard({ className, activeTopPanel, activeBottomPanel, curren
                       <IntelligenceIntegration className="h-full" />
                     </TabsContent>
                     <TabsContent value="pmesii" className="flex-1 mt-4 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-                      <PMESIIBriefing aoi={currentAOI} odinCountry={selectedODINCountry} className="h-full" />
+                      <PMESIIBriefing aoi={currentAOI} className="h-full" />
                     </TabsContent>
                     <TabsContent value="risk" className="flex-1 mt-4 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
                       <RiskAssessment 

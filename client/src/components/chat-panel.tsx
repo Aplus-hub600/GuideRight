@@ -23,7 +23,6 @@ interface ChatMessage {
   timestamp: Date
   contextIds?: string[]
   analysis?: TacticalAnalysis
-  odinSource?: string
   isStreaming?: boolean
 }
 
@@ -38,7 +37,6 @@ interface TacticalAnalysis {
 interface ChatPanelProps {
   onQuerySubmit?: (query: string, mediaContextIds?: string[]) => void
   mediaContextIds?: string[]
-  odinCountry?: string
   className?: string
 }
 
@@ -388,7 +386,7 @@ interface InterpretedQuery {
   script: string
 }
 
-export function ChatPanel({ onQuerySubmit, mediaContextIds, odinCountry, className }: ChatPanelProps) {
+export function ChatPanel({ onQuerySubmit, mediaContextIds, className }: ChatPanelProps) {
   const { t } = useTranslation()
   const { toast } = useToast()
   const queryClient = useQueryClient()
@@ -446,8 +444,7 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, odinCountry, classNa
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           query: queryText,
-          contextIds: mediaContextIds || [],
-          odinCountry: odinCountry
+          contextIds: mediaContextIds || []
         }),
         signal: abortController.signal
       })
@@ -487,7 +484,6 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, odinCountry, classNa
                     ...data.data.message,
                     timestamp: new Date(data.data.message.timestamp),
                     analysis: data.data.analysis || null,
-                    odinSource: data.data.odinSource,
                     isStreaming: true
                   }])
                   break
@@ -589,12 +585,6 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, odinCountry, classNa
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {odinCountry && (
-            <Badge variant="secondary" className="text-xs gap-1.5 font-medium" data-testid="badge-chat-odin">
-              <Globe className="h-3 w-3" />
-              {odinCountry}
-            </Badge>
-          )}
           {messages.length > 0 && (
             <Button 
               variant="ghost" 
@@ -624,18 +614,11 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, odinCountry, classNa
                 </div>
                 <h3 className="text-lg font-bold mb-1">GuideRight Intelligence Assistant</h3>
                 <p className="text-xs text-muted-foreground font-mono tracking-wider mb-2">
-                  TACTICAL ANALYSIS • ODIN INTEGRATION • PMESII FRAMEWORK
+                  TACTICAL ANALYSIS • PMESII FRAMEWORK • BANGLADESH FOCUS
                 </p>
                 <p className="text-sm text-muted-foreground mb-6">
                   Query intelligence sources, analyze threats, or request situational assessments
                 </p>
-                
-                {odinCountry && (
-                  <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/5 border border-primary/20 rounded-lg mb-6">
-                    <Globe className="h-4 w-4 text-primary" />
-                    <span className="text-sm font-medium">Active AOI: {odinCountry}</span>
-                  </div>
-                )}
                 
                 <div className="space-y-2">
                   <p className="text-xs text-muted-foreground uppercase tracking-wide mb-3">Quick Actions</p>
@@ -688,12 +671,6 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, odinCountry, classNa
                       <span className="text-xs text-muted-foreground/60 font-mono">
                         {format(message.timestamp, "HH:mm:ss")}
                       </span>
-                      {message.odinSource && (
-                        <Badge variant="outline" className="text-xs h-5 gap-1 px-1.5">
-                          <Globe className="h-2.5 w-2.5" />
-                          {message.odinSource}
-                        </Badge>
-                      )}
                       {message.isStreaming && (
                         <Badge variant="secondary" className="text-xs h-5 gap-1 px-1.5">
                           <Loader2 className="h-2.5 w-2.5 animate-spin" />

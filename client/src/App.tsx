@@ -41,7 +41,6 @@ function App() {
   })
 
   const [mediaContextIds, setMediaContextIds] = useState<string[]>([])
-  const [selectedODINCountry, setSelectedODINCountry] = useState<string | undefined>(undefined)
 
   const handleQuerySubmit = (query: string, contextIds?: string[]) => {
     // Query submitted with context
@@ -108,8 +107,6 @@ function App() {
                   currentAOI={currentAOI}
                   onAOIChange={setCurrentAOI}
                   onMediaContextChange={setMediaContextIds}
-                  selectedODINCountry={selectedODINCountry}
-                  onODINCountryChange={setSelectedODINCountry}
                   onTogglePanel={togglePanel}
                   onClosePanel={closeActivePanel}
                 />
@@ -164,7 +161,6 @@ function App() {
                     <ChatPanel 
                       onQuerySubmit={handleQuerySubmit}
                       mediaContextIds={mediaContextIds}
-                      odinCountry={selectedODINCountry}
                       className="h-full"
                     />
                   </div>

@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -28,7 +27,6 @@ interface AOI {
 interface PMESIIBriefingProps {
   aoi: AOI;
   className?: string;
-  odinCountry?: string;
 }
 
 interface PMESIIFactor {
@@ -174,51 +172,8 @@ function FactorCard({
   );
 }
 
-export function PMESIIBriefing({ aoi, className, odinCountry }: PMESIIBriefingProps) {
+export function PMESIIBriefing({ aoi, className }: PMESIIBriefingProps) {
   const [expandedFactors, setExpandedFactors] = useState<Set<string>>(new Set(["political"]));
-  
-  // Derive country from odinCountry prop, or fall back to AOI name (which often contains country)
-  const effectiveCountry = odinCountry || aoi.name || undefined;
-  
-  const { data: odinData, isLoading, isFetching, dataUpdatedAt } = useQuery<{
-    success: boolean;
-    country: string;
-    data?: Record<string, string>;
-    partial?: boolean;
-  }>({
-    queryKey: [`/api/odin/country/${effectiveCountry}`],
-    enabled: !!effectiveCountry,
-    staleTime: 30000, // Consider data fresh for 30 seconds
-  });
-  
-  // Track previous data for stateful loading
-  const [previousData, setPreviousData] = useState<typeof odinData | null>(null);
-  if (odinData && odinData !== previousData) {
-    setPreviousData(odinData);
-  }
-
-  // Parse ODIN text into structured factor data
-  const parseOdinFactor = (text: string): PMESIIFactor => {
-    const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 10);
-    const assessment = lines.slice(0, 2).join(' ').substring(0, 300);
-    const considerations = lines.slice(2, 5).map(l => l.substring(0, 150));
-    
-    // Estimate risk based on keywords
-    const lowerText = text.toLowerCase();
-    let riskLevel: PMESIIFactor["riskLevel"] = "MEDIUM";
-    if (lowerText.includes("critical") || lowerText.includes("severe") || lowerText.includes("dangerous")) {
-      riskLevel = "CRITICAL";
-    } else if (lowerText.includes("high risk") || lowerText.includes("significant threat")) {
-      riskLevel = "HIGH";
-    } else if (lowerText.includes("stable") || lowerText.includes("secure") || lowerText.includes("low risk")) {
-      riskLevel = "LOW";
-    }
-    
-    // Confidence based on content length
-    const confidence = Math.min(0.85, 0.5 + (lines.length / 15));
-    
-    return { assessment: assessment || "Assessment data available.", riskLevel, confidence, considerations };
-  };
 
   const toggleFactor = (factor: string) => {
     setExpandedFactors(prev => {
@@ -316,23 +271,8 @@ export function PMESIIBriefing({ aoi, className, odinCountry }: PMESIIBriefingPr
     return values.reduce((a, b) => a + b, 0) / values.length;
   };
 
-  // Use ODIN data when available, otherwise fall back to mock
-  const displayData: PMESIIData = (() => {
-    if (effectiveCountry && odinData?.success && odinData.data) {
-      const odin = odinData.data;
-      return {
-        political: odin.political ? parseOdinFactor(odin.political) : mockData.political,
-        military: odin.military ? parseOdinFactor(odin.military) : mockData.military,
-        economic: odin.economic ? parseOdinFactor(odin.economic) : mockData.economic,
-        social: odin.social ? parseOdinFactor(odin.social) : mockData.social,
-        information: odin.information ? parseOdinFactor(odin.information) : mockData.information,
-        infrastructure: odin.infrastructure ? parseOdinFactor(odin.infrastructure) : mockData.infrastructure,
-      };
-    }
-    return mockData;
-  })();
-  
-  const isOdinMode = !!effectiveCountry && odinData?.success;
+  // Use Bangladesh mock data
+  const displayData: PMESIIData = mockData;
   const overallRisk = getOverallRisk(displayData);
   const avgConfidence = getAverageConfidence(displayData);
 
@@ -346,8 +286,7 @@ export function PMESIIBriefing({ aoi, className, odinCountry }: PMESIIBriefingPr
               <div>
                 <h3 className="font-semibold text-base">PMESII Assessment</h3>
                 <p className="text-xs text-neutral-500">
-                  {aoi.name || `${aoi.lat.toFixed(2)}, ${aoi.lng.toFixed(2)}`}
-                  {effectiveCountry && effectiveCountry !== aoi.name && ` • ${effectiveCountry}`}
+                  {aoi.name || `${aoi.lat.toFixed(2)}, ${aoi.lng.toFixed(2)}`} • Bangladesh
                 </p>
               </div>
             </div>
@@ -370,12 +309,6 @@ export function PMESIIBriefing({ aoi, className, odinCountry }: PMESIIBriefingPr
               <span>Overall Confidence: {Math.round(avgConfidence * 100)}%</span>
               <span className="hidden sm:inline">•</span>
               <span className="hidden sm:inline">6 Factors Analyzed</span>
-              {isOdinMode && (
-                <>
-                  <span className="hidden sm:inline">•</span>
-                  <span className="hidden sm:inline text-green-600 dark:text-green-400">ODIN Live</span>
-                </>
-              )}
             </div>
             <div className="flex gap-2">
               <button 
@@ -394,14 +327,7 @@ export function PMESIIBriefing({ aoi, className, odinCountry }: PMESIIBriefingPr
             </div>
           </div>
           
-          <div className={cn("space-y-2 relative", isFetching && "opacity-70 transition-opacity duration-150")}>
-            {isFetching && (
-              <div className="absolute inset-0 bg-background/30 flex items-center justify-center z-10 rounded">
-                <div className="text-xs text-muted-foreground bg-background/95 px-3 py-1.5 rounded border">
-                  Updating assessment...
-                </div>
-              </div>
-            )}
+          <div className="space-y-2">
             {(Object.keys(factorConfig) as Array<keyof typeof factorConfig>).map((key) => (
               <FactorCard
                 key={key}
@@ -416,14 +342,11 @@ export function PMESIIBriefing({ aoi, className, odinCountry }: PMESIIBriefingPr
           <div className="pt-2 flex items-center justify-between text-xs text-neutral-500 border-t border-neutral-800">
             <span className="flex items-center gap-1">
               <Clock className="h-3 w-3" />
-              Last updated: {dataUpdatedAt ? new Date(dataUpdatedAt).toLocaleTimeString() : new Date().toLocaleTimeString()}
+              Last updated: {new Date().toLocaleTimeString()}
             </span>
-            {effectiveCountry && (
-              <span className="flex items-center gap-1">
-                <AlertTriangle className="h-3 w-3" />
-                {isOdinMode ? "ODIN Live Data" : "ODIN Training Data"}
-              </span>
-            )}
+            <span className="flex items-center gap-1 text-green-600 dark:text-green-400">
+              Bangladesh Focus
+            </span>
           </div>
         </CardContent>
       </Card>
