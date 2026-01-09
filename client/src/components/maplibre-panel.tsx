@@ -142,9 +142,9 @@ export function MapLibrePanel({
     visible: activeLens === "logistics"
   })
 
-  // Map tile sources with English labels (no API key needed)
+  // Map tile sources - using OpenStreetMap for maximum zoom coverage
   const tileSources = {
-    streets: "https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png",
+    streets: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
     satellite: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
     hybrid: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
   }
