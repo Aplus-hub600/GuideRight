@@ -102,7 +102,7 @@ export function Dashboard({ className, activeTopPanel, activeBottomPanel, curren
     <div className={cn("relative h-full w-full", className)}>
       {/* Main content area - map and panels */}
       <div className="relative h-full w-full">
-        {/* Full viewport map - base layer (MapLibre + OSM - no billing required) */}
+        {/* Full viewport map - MapLibre with OpenStreetMap tiles */}
         <div className="absolute inset-0 z-0 h-full w-full" id="map-view-container">
           <MapLibrePanel
             aoi={currentAOI}
