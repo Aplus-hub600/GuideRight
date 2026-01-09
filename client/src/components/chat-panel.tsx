@@ -1,5 +1,9 @@
-import { useState, useRef, useEffect } from "react"
-import { Send, Loader2, Globe, Paperclip, Shield, Radio } from "lucide-react"
+import { useState, useRef, useEffect, useCallback } from "react"
+import { 
+  Send, Loader2, Globe, Paperclip, Shield, 
+  BarChart3, AlertTriangle, FileText, Briefcase, 
+  Sparkles, ChevronRight, Zap, Target
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardHeader, CardContent } from "@/components/ui/card"
@@ -7,10 +11,10 @@ import { Badge } from "@/components/ui/badge"
 import { MicControl } from "./mic-control"
 import { useTranslation } from "react-i18next"
 import { cn } from "@/lib/utils"
-import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { useQueryClient } from "@tanstack/react-query"
 import { useToast } from "@/hooks/use-toast"
-import { Separator } from "@/components/ui/separator"
 import { format } from "date-fns"
+import { motion, AnimatePresence } from "framer-motion"
 
 interface ChatMessage {
   id: string
@@ -20,6 +24,7 @@ interface ChatMessage {
   contextIds?: string[]
   analysis?: TacticalAnalysis
   odinSource?: string
+  isStreaming?: boolean
 }
 
 interface TacticalAnalysis {
@@ -37,6 +42,252 @@ interface ChatPanelProps {
   className?: string
 }
 
+const QUICK_ACTIONS = [
+  { id: "PMESII", label: "PMESII", icon: BarChart3, prompt: "Provide a comprehensive PMESII analysis for the current area of interest" },
+  { id: "RISK_BRIEF", label: "Risk Brief", icon: AlertTriangle, prompt: "Generate a tactical risk assessment briefing" },
+  { id: "SITREP", label: "SITREP", icon: FileText, prompt: "Create a situation report for current operations" },
+  { id: "MISSION", label: "Mission", icon: Briefcase, prompt: "Provide mission support analysis and recommendations" },
+]
+
+function TypewriterText({ text, messageId }: { text: string; messageId: string }) {
+  const [displayedText, setDisplayedText] = useState("")
+  const [isTyping, setIsTyping] = useState(true)
+  const hasAnimatedRef = useRef<string | null>(null)
+  
+  useEffect(() => {
+    if (hasAnimatedRef.current === messageId) {
+      setDisplayedText(text)
+      return
+    }
+    
+    hasAnimatedRef.current = messageId
+    setIsTyping(true)
+    setDisplayedText("")
+    let currentIndex = 0
+    
+    const timer = setInterval(() => {
+      currentIndex++
+      setDisplayedText(text.slice(0, currentIndex))
+      
+      if (currentIndex >= text.length) {
+        clearInterval(timer)
+        setIsTyping(false)
+      }
+    }, 8)
+    
+    return () => {
+      clearInterval(timer)
+    }
+  }, [text, messageId])
+  
+  return (
+    <span>
+      {displayedText}
+      {isTyping && displayedText.length < text.length && (
+        <motion.span
+          animate={{ opacity: [1, 0] }}
+          transition={{ duration: 0.4, repeat: Infinity }}
+          className="inline-block w-0.5 h-4 bg-primary ml-0.5 align-middle"
+        />
+      )}
+    </span>
+  )
+}
+
+function ConfidenceGauge({ value, animate = true }: { value: number; animate?: boolean }) {
+  const [displayValue, setDisplayValue] = useState(0)
+  
+  useEffect(() => {
+    if (!animate) {
+      setDisplayValue(value)
+      return
+    }
+    
+    const duration = 1000
+    const steps = 60
+    const increment = value / steps
+    let current = 0
+    
+    const interval = setInterval(() => {
+      current += increment
+      if (current >= value) {
+        setDisplayValue(value)
+        clearInterval(interval)
+      } else {
+        setDisplayValue(current)
+      }
+    }, duration / steps)
+    
+    return () => clearInterval(interval)
+  }, [value, animate])
+  
+  const getConfidenceColor = (val: number) => {
+    if (val >= 0.7) return "text-primary"
+    if (val >= 0.4) return "text-secondary-foreground"
+    return "text-destructive"
+  }
+  
+  return (
+    <div className="flex items-center gap-2">
+      <div className="relative w-12 h-12">
+        <svg className="w-12 h-12 -rotate-90" viewBox="0 0 36 36">
+          <path
+            className="text-muted stroke-current"
+            strokeWidth="3"
+            fill="none"
+            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+          />
+          <motion.path
+            className={cn("stroke-current", getConfidenceColor(displayValue))}
+            strokeWidth="3"
+            strokeLinecap="round"
+            fill="none"
+            initial={{ strokeDasharray: "0, 100" }}
+            animate={{ strokeDasharray: `${displayValue * 100}, 100` }}
+            transition={{ duration: animate ? 1 : 0, ease: "easeOut" }}
+            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+          />
+        </svg>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className={cn("text-xs font-bold", getConfidenceColor(displayValue))}>
+            {Math.round(displayValue * 100)}%
+          </span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function PulsingIndicator({ active = true }: { active?: boolean }) {
+  if (!active) return null
+  
+  return (
+    <span className="relative flex h-2 w-2">
+      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
+      <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
+    </span>
+  )
+}
+
+function IntelCard({ message }: { message: ChatMessage }) {
+  const [expanded, setExpanded] = useState(false)
+  
+  if (!message.analysis) {
+    return (
+      <div className="text-sm whitespace-pre-wrap leading-relaxed">
+        {message.role === "assistant" ? (
+          <TypewriterText text={message.content} messageId={message.id} />
+        ) : (
+          message.content
+        )}
+      </div>
+    )
+  }
+  
+  const { analysis } = message
+  
+  return (
+    <div className="space-y-3">
+      <div className="text-sm whitespace-pre-wrap leading-relaxed">
+        <TypewriterText text={message.content} messageId={message.id} />
+      </div>
+      
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+        className="border rounded-lg overflow-hidden bg-background/50"
+      >
+        <div 
+          className="flex items-center justify-between p-3 cursor-pointer hover-elevate"
+          onClick={() => setExpanded(!expanded)}
+        >
+          <div className="flex items-center gap-3">
+            <Target className="h-4 w-4 text-primary" />
+            <span className="text-sm font-medium">Intelligence Assessment</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <Badge
+              variant={
+                analysis.riskLevel === 'CRITICAL' || analysis.riskLevel === 'HIGH' 
+                  ? 'destructive' 
+                  : analysis.riskLevel === 'MEDIUM' 
+                    ? 'secondary' 
+                    : 'outline'
+              }
+            >
+              {analysis.riskLevel} RISK
+            </Badge>
+            <ConfidenceGauge value={analysis.confidence} animate={!expanded} />
+            <ChevronRight className={cn(
+              "h-4 w-4 transition-transform",
+              expanded && "rotate-90"
+            )} />
+          </div>
+        </div>
+        
+        <AnimatePresence>
+          {expanded && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="overflow-hidden"
+            >
+              <div className="p-3 pt-0 space-y-3 border-t">
+                {analysis.keyFindings.length > 0 && (
+                  <div className="space-y-1">
+                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                      Key Findings
+                    </span>
+                    <ul className="space-y-1">
+                      {analysis.keyFindings.map((finding, i) => (
+                        <motion.li 
+                          key={i}
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: i * 0.1 }}
+                          className="text-sm flex items-start gap-2"
+                        >
+                          <Zap className="h-3 w-3 mt-1 text-primary flex-shrink-0" />
+                          {finding}
+                        </motion.li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                
+                {analysis.recommendations.length > 0 && (
+                  <div className="space-y-1">
+                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                      Recommendations
+                    </span>
+                    <ul className="space-y-1">
+                      {analysis.recommendations.map((rec, i) => (
+                        <motion.li 
+                          key={i}
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.3 + i * 0.1 }}
+                          className="text-sm text-muted-foreground flex items-start gap-2"
+                        >
+                          <ChevronRight className="h-3 w-3 mt-1 flex-shrink-0" />
+                          {rec}
+                        </motion.li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
+    </div>
+  )
+}
+
 export function ChatPanel({ onQuerySubmit, mediaContextIds, odinCountry, className }: ChatPanelProps) {
   const { t } = useTranslation()
   const { toast } = useToast()
@@ -46,49 +297,29 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, odinCountry, classNa
   const [isStreaming, setIsStreaming] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const eventSourceRef = useRef<EventSource | null>(null)
   const abortControllerRef = useRef<AbortController | null>(null)
   const isClearedRef = useRef(false)
 
-  const scrollToBottom = () => {
+  const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }
+  }, [])
 
   useEffect(() => {
     scrollToBottom()
-  }, [messages])
+  }, [messages, scrollToBottom])
 
-  const { data: chatHistory } = useQuery<{ messages: any[] }>({
-    queryKey: ['/api/chat/history'],
-    enabled: false
-  })
-
-  useEffect(() => {
-    if (chatHistory?.messages && Array.isArray(chatHistory.messages)) {
-      const formattedMessages = chatHistory.messages.reverse().map((msg: any) => ({
-        ...msg,
-        timestamp: new Date(msg.timestamp)
-      }))
-      setMessages(formattedMessages)
-    }
-  }, [chatHistory])
-
-  const handleSubmit = async (e?: React.FormEvent) => {
+  const handleSubmit = async (e?: React.FormEvent, customPrompt?: string) => {
     e?.preventDefault()
     
-    if (!input.trim() || isStreaming) return
+    const queryText = customPrompt || input.trim()
+    if (!queryText || isStreaming) return
     
-    const query = input.trim()
-    setInput("")
+    if (!customPrompt) setInput("")
     setIsStreaming(true)
     isClearedRef.current = false
     
-    onQuerySubmit?.(query, mediaContextIds)
+    onQuerySubmit?.(queryText, mediaContextIds)
     
-    if (eventSourceRef.current) {
-      eventSourceRef.current.close()
-    }
-
     if (abortControllerRef.current) {
       abortControllerRef.current.abort()
     }
@@ -99,37 +330,28 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, odinCountry, classNa
     try {
       const response = await fetch('/api/chat', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          query,
+          query: queryText,
           contextIds: mediaContextIds || [],
           odinCountry: odinCountry
         }),
         signal: abortController.signal
       })
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
 
       const reader = response.body?.getReader()
       const decoder = new TextDecoder()
-
-      if (!reader) {
-        throw new Error('No response body reader available')
-      }
+      if (!reader) throw new Error('No response body reader available')
 
       let buffer = ''
 
       while (true) {
         const { done, value } = await reader.read()
-        
         if (done) break
         
         buffer += decoder.decode(value, { stream: true })
-        
         const lines = buffer.split('\n')
         buffer = lines.pop() || ''
         
@@ -137,10 +359,7 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, odinCountry, classNa
           if (line.startsWith('data: ')) {
             try {
               const data = JSON.parse(line.slice(6))
-              
-              if (isClearedRef.current) {
-                break
-              }
+              if (isClearedRef.current) break
 
               switch (data.type) {
                 case 'user_message':
@@ -150,20 +369,21 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, odinCountry, classNa
                   }])
                   break
                   
-                case 'typing':
-                  break
-                  
                 case 'assistant_message':
                   setMessages(prev => [...prev, {
                     ...data.data.message,
                     timestamp: new Date(data.data.message.timestamp),
                     analysis: data.data.analysis || null,
-                    odinSource: data.data.odinSource
+                    odinSource: data.data.odinSource,
+                    isStreaming: true
                   }])
                   break
                   
                 case 'complete':
                   setIsStreaming(false)
+                  setMessages(prev => prev.map((m, i) => 
+                    i === prev.length - 1 ? { ...m, isStreaming: false } : m
+                  ))
                   queryClient.invalidateQueries({ queryKey: ['/api/chat/history'] })
                   break
                   
@@ -174,16 +394,14 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, odinCountry, classNa
                     title: data.data.code === 'quota_exceeded' ? "API Quota Exceeded" : "Chat Error",
                     description: data.data.error
                   })
-                  
-                  const errorMessage: ChatMessage = {
+                  setMessages(prev => [...prev, {
                     id: Date.now().toString(),
                     role: "assistant",
                     content: data.data.code === 'quota_exceeded' 
                       ? "I'm currently experiencing API quota limits. Please try again later."
                       : "I encountered an error processing your request. Please try again.",
                     timestamp: new Date()
-                  }
-                  setMessages(prev => [...prev, errorMessage])
+                  }])
                   break
               }
             } catch (parseError) {
@@ -194,27 +412,26 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, odinCountry, classNa
       }
       
     } catch (error) {
-      if (isClearedRef.current || (error as Error).name === 'AbortError') {
-        return
-      }
+      if (isClearedRef.current || (error as Error).name === 'AbortError') return
       
       console.error('Chat streaming error:', error)
       setIsStreaming(false)
-      
       toast({
         variant: "destructive",
         title: "Connection Error",
-        description: "Failed to connect to the chat service. Please check your connection and try again."
+        description: "Failed to connect to the chat service."
       })
-      
-      const errorMessage: ChatMessage = {
+      setMessages(prev => [...prev, {
         id: Date.now().toString(),
         role: "assistant",
-        content: "I'm having trouble connecting to the service. Please check your connection and try again.",
+        content: "I'm having trouble connecting to the service. Please try again.",
         timestamp: new Date()
-      }
-      setMessages(prev => [...prev, errorMessage])
+      }])
     }
+  }
+
+  const handleQuickAction = (prompt: string) => {
+    handleSubmit(undefined, prompt)
   }
 
   const handleTranscription = (text: string) => {
@@ -231,48 +448,36 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, odinCountry, classNa
 
   const handleClearChat = () => {
     isClearedRef.current = true
-    
     if (abortControllerRef.current) {
       abortControllerRef.current.abort()
       abortControllerRef.current = null
     }
-    
-    if (eventSourceRef.current) {
-      eventSourceRef.current.close()
-      eventSourceRef.current = null
-    }
-    
     setMessages([])
     setInput("")
     setIsStreaming(false)
   }
 
-  const getRiskBadgeVariant = (level: string) => {
-    switch (level) {
-      case 'CRITICAL': return 'destructive'
-      case 'HIGH': return 'destructive'
-      case 'MEDIUM': return 'secondary'
-      default: return 'outline'
-    }
-  }
-
   return (
-    <Card className={cn("flex flex-col h-full overflow-hidden", className)}>
-      <CardHeader className="flex flex-row items-center justify-between gap-4 px-4 py-3 border-b bg-muted/30">
+    <Card className={cn("flex flex-col h-full overflow-hidden border-2", className)}>
+      <CardHeader className="flex flex-row items-center justify-between gap-4 px-4 py-3 border-b bg-gradient-to-r from-muted/50 to-muted/30">
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 border border-primary/20">
             <Shield className="h-4 w-4 text-primary" />
-            <span className="text-sm font-semibold tracking-wide">GIA</span>
           </div>
-          <Separator orientation="vertical" className="h-4" />
-          <Badge variant="outline" className="text-xs font-mono gap-1.5 px-2">
-            <Radio className="h-2.5 w-2.5 text-primary" />
-            ONLINE
-          </Badge>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-bold tracking-wide">GIA</span>
+              <Badge variant="outline" className="text-xs font-mono h-5 gap-1 px-1.5">
+                <PulsingIndicator />
+                <span className="text-primary">LIVE</span>
+              </Badge>
+            </div>
+            <p className="text-xs text-muted-foreground">GuideRight Intelligence Assistant</p>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           {odinCountry && (
-            <Badge variant="secondary" className="text-xs gap-1.5" data-testid="badge-chat-odin">
+            <Badge variant="secondary" className="text-xs gap-1.5 font-medium" data-testid="badge-chat-odin">
               <Globe className="h-3 w-3" />
               {odinCountry}
             </Badge>
@@ -294,90 +499,140 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, odinCountry, classNa
       <CardContent className="flex-1 overflow-hidden p-0 flex flex-col">
         <div className="flex-1 overflow-y-auto">
           {messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full p-6 text-center">
-              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                <Shield className="h-6 w-6 text-primary" />
-              </div>
-              <h3 className="text-base font-semibold mb-1">GuideRight Intelligence Assistant</h3>
-              <p className="text-xs text-muted-foreground font-mono tracking-wide mb-4">
-                TACTICAL ANALYSIS • ODIN INTEGRATION • PMESII
-              </p>
-              <p className="text-sm text-muted-foreground max-w-xs">
-                Query intelligence sources, analyze threats, or request situational assessments
-              </p>
-              {odinCountry && (
-                <div className="mt-6 flex items-center gap-2 px-3 py-2 bg-muted rounded-md border">
-                  <Globe className="h-4 w-4 text-primary" />
-                  <span className="text-xs font-medium">Active AOI: {odinCountry}</span>
+            <div className="flex flex-col items-center justify-center h-full p-6">
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.3 }}
+                className="text-center max-w-md"
+              >
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center mb-4 mx-auto border border-primary/20">
+                  <Sparkles className="h-8 w-8 text-primary" />
                 </div>
-              )}
+                <h3 className="text-lg font-bold mb-1">GuideRight Intelligence Assistant</h3>
+                <p className="text-xs text-muted-foreground font-mono tracking-wider mb-2">
+                  TACTICAL ANALYSIS • ODIN INTEGRATION • PMESII FRAMEWORK
+                </p>
+                <p className="text-sm text-muted-foreground mb-6">
+                  Query intelligence sources, analyze threats, or request situational assessments
+                </p>
+                
+                {odinCountry && (
+                  <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/5 border border-primary/20 rounded-lg mb-6">
+                    <Globe className="h-4 w-4 text-primary" />
+                    <span className="text-sm font-medium">Active AOI: {odinCountry}</span>
+                  </div>
+                )}
+                
+                <div className="space-y-2">
+                  <p className="text-xs text-muted-foreground uppercase tracking-wide mb-3">Quick Actions</p>
+                  <div className="flex flex-wrap justify-center gap-2">
+                    {QUICK_ACTIONS.map((action) => {
+                      const Icon = action.icon
+                      return (
+                        <Button
+                          key={action.id}
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleQuickAction(action.prompt)}
+                          className="gap-2"
+                        >
+                          <Icon className="h-4 w-4" />
+                          {action.label}
+                        </Button>
+                      )
+                    })}
+                  </div>
+                </div>
+              </motion.div>
             </div>
           ) : (
             <div className="p-4 space-y-4">
-              {messages.map((message) => (
-                <div key={message.id} className="group">
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <span className={cn(
-                      "text-xs font-medium",
-                      message.role === "user" ? "text-primary" : "text-muted-foreground"
-                    )}>
-                      {message.role === "user" ? "You" : "GIA"}
-                    </span>
-                    <span className="text-xs text-muted-foreground/60 font-mono">
-                      {format(message.timestamp, "HH:mm:ss")}
-                    </span>
-                    {message.odinSource && (
-                      <Badge variant="outline" className="text-xs h-5 gap-1 px-1.5">
-                        <Globe className="h-2.5 w-2.5" />
-                        {message.odinSource}
-                      </Badge>
-                    )}
-                  </div>
-                  
-                  <div className={cn(
-                    "rounded-lg px-4 py-3",
-                    message.role === "user" 
-                      ? "bg-primary/10 border border-primary/20" 
-                      : "bg-muted/50 border"
-                  )}>
-                    <p className="text-sm whitespace-pre-wrap leading-relaxed">
-                      {message.content}
-                    </p>
+              <AnimatePresence mode="popLayout">
+                {messages.map((message, index) => (
+                  <motion.div
+                    key={message.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.2 }}
+                    className="group"
+                  >
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <span className={cn(
+                        "text-xs font-semibold uppercase tracking-wide",
+                        message.role === "user" ? "text-primary" : "text-muted-foreground"
+                      )}>
+                        {message.role === "user" ? "Operator" : "GIA"}
+                      </span>
+                      <span className="text-xs text-muted-foreground/60 font-mono">
+                        {format(message.timestamp, "HH:mm:ss")}
+                      </span>
+                      {message.odinSource && (
+                        <Badge variant="outline" className="text-xs h-5 gap-1 px-1.5">
+                          <Globe className="h-2.5 w-2.5" />
+                          {message.odinSource}
+                        </Badge>
+                      )}
+                      {message.isStreaming && (
+                        <Badge variant="secondary" className="text-xs h-5 gap-1 px-1.5">
+                          <Loader2 className="h-2.5 w-2.5 animate-spin" />
+                          Processing
+                        </Badge>
+                      )}
+                    </div>
                     
-                    {message.role === "assistant" && message.analysis && (
-                      <div className="mt-3 pt-3 border-t flex flex-wrap items-center gap-2">
-                        <Badge
-                          variant={getRiskBadgeVariant(message.analysis.riskLevel)}
-                          className="text-xs"
-                          data-testid={`badge-risk-${message.analysis.riskLevel.toLowerCase()}`}
-                        >
-                          {message.analysis.riskLevel} RISK
-                        </Badge>
-                        <Badge variant="outline" className="text-xs gap-1">
-                          <span className="text-muted-foreground">Confidence:</span>
-                          {Math.round(message.analysis.confidence * 100)}%
-                        </Badge>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
+                    <div className={cn(
+                      "rounded-lg px-4 py-3 transition-all",
+                      message.role === "user" 
+                        ? "bg-primary/10 border border-primary/20" 
+                        : "bg-muted/50 border"
+                    )}>
+                      <IntelCard message={message} />
+                    </div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
               
-              {isStreaming && (
-                <div className="group">
+              {isStreaming && messages[messages.length - 1]?.role !== "assistant" && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="group"
+                >
                   <div className="flex items-center gap-2 mb-1.5">
-                    <span className="text-xs font-medium text-muted-foreground">GIA</span>
+                    <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      GIA
+                    </span>
                     <span className="text-xs text-muted-foreground/60 font-mono">
                       {format(new Date(), "HH:mm:ss")}
                     </span>
                   </div>
                   <div className="bg-muted/50 border rounded-lg px-4 py-3">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      <span>Processing intelligence request...</span>
+                    <div className="flex items-center gap-3">
+                      <div className="flex gap-1">
+                        <motion.div
+                          animate={{ scale: [1, 1.2, 1] }}
+                          transition={{ duration: 0.6, repeat: Infinity, delay: 0 }}
+                          className="w-2 h-2 rounded-full bg-primary"
+                        />
+                        <motion.div
+                          animate={{ scale: [1, 1.2, 1] }}
+                          transition={{ duration: 0.6, repeat: Infinity, delay: 0.2 }}
+                          className="w-2 h-2 rounded-full bg-primary"
+                        />
+                        <motion.div
+                          animate={{ scale: [1, 1.2, 1] }}
+                          transition={{ duration: 0.6, repeat: Infinity, delay: 0.4 }}
+                          className="w-2 h-2 rounded-full bg-primary"
+                        />
+                      </div>
+                      <span className="text-sm text-muted-foreground">
+                        Analyzing intelligence request...
+                      </span>
                     </div>
                   </div>
-                </div>
+                </motion.div>
               )}
               
               <div ref={messagesEndRef} />
@@ -385,9 +640,31 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, odinCountry, classNa
           )}
         </div>
 
-        <div className="border-t bg-muted/20">
+        <div className="border-t bg-gradient-to-r from-muted/30 to-transparent">
+          {messages.length > 0 && (
+            <div className="flex items-center gap-2 px-4 py-2 border-b overflow-x-auto">
+              <span className="text-xs text-muted-foreground whitespace-nowrap">Quick:</span>
+              {QUICK_ACTIONS.map((action) => {
+                const Icon = action.icon
+                return (
+                  <Button
+                    key={action.id}
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleQuickAction(action.prompt)}
+                    disabled={isStreaming}
+                    className="gap-1.5 text-xs whitespace-nowrap"
+                  >
+                    <Icon className="h-3 w-3" />
+                    {action.label}
+                  </Button>
+                )
+              })}
+            </div>
+          )}
+          
           {mediaContextIds && mediaContextIds.length > 0 && (
-            <div className="flex items-center gap-2 px-4 py-2 border-b bg-muted/30">
+            <div className="flex items-center gap-2 px-4 py-2 border-b bg-muted/20">
               <Paperclip className="h-3.5 w-3.5 text-muted-foreground" />
               <span className="text-xs text-muted-foreground">Attached:</span>
               <div className="flex flex-wrap gap-1.5">
@@ -408,8 +685,8 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, odinCountry, classNa
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder="Enter intelligence tasking..."
-                  className="min-h-[48px] max-h-[120px] resize-none pr-10 text-sm bg-background border-border/50 focus:border-primary/50"
+                  placeholder="Enter intelligence tasking or ask a question..."
+                  className="min-h-[52px] max-h-[120px] resize-none pr-12 text-sm bg-background border-border/50 focus:border-primary/50"
                   disabled={isStreaming}
                   data-testid="textarea-chat-input"
                 />
@@ -424,7 +701,7 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, odinCountry, classNa
                 type="submit"
                 size="lg"
                 disabled={!input.trim() || isStreaming}
-                className="gap-2"
+                className="gap-2 shadow-lg"
                 data-testid="button-chat-send"
               >
                 {isStreaming ? (
@@ -432,13 +709,13 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, odinCountry, classNa
                 ) : (
                   <>
                     <Send className="h-4 w-4" />
-                    <span className="hidden sm:inline text-sm">Send</span>
+                    <span className="hidden sm:inline">Send</span>
                   </>
                 )}
               </Button>
             </form>
             <p className="text-xs text-muted-foreground/60 mt-2 text-center">
-              Press Ctrl+Enter to send • Voice input available
+              Ctrl+Enter to send • Voice input available
             </p>
           </div>
         </div>
