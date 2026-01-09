@@ -1,12 +1,105 @@
 /**
  * AI Provider Service - Single provider (OpenAI) with retries, timeouts, and caching
  * MVP: Use ONE provider and make it rock-solid
+ * Priority #6: Schema validation with retry + degraded mode on invalid response
  */
 
 import OpenAI from "openai";
+import { z } from "zod";
 
 // Initialize OpenAI client
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+// Priority #6: Zod schemas for response validation
+const pmesiiFactorSchema = z.object({
+  assessment: z.string().min(1, "Assessment is required"),
+  riskLevel: z.enum(["LOW", "MEDIUM", "HIGH", "CRITICAL"]),
+  confidence: z.number().min(0).max(1),
+  considerations: z.array(z.string()),
+});
+
+const sigactSchema = z.object({
+  who: z.string(),
+  what: z.string(),
+  where: z.string(),
+  when: z.string(),
+  why: z.string(),
+  confidence: z.number().min(0).max(1),
+  event_type: z.string().optional(),
+  lat: z.number().optional(),
+  lon: z.number().optional(),
+});
+
+const evidenceSchema = z.object({
+  source: z.string().optional(),
+  title: z.string(),
+  excerpt: z.string(),
+  timestamp: z.string().optional(),
+  url: z.string().optional(),
+  relevance: z.number().optional(),
+});
+
+const pmesiiResponseSchema = z.object({
+  pmesii: z.object({
+    political: pmesiiFactorSchema,
+    military: pmesiiFactorSchema,
+    economic: pmesiiFactorSchema,
+    social: pmesiiFactorSchema,
+    information: pmesiiFactorSchema,
+    infrastructure: pmesiiFactorSchema,
+  }),
+  sigacts: z.array(sigactSchema).optional(),
+  confidence: z.object({
+    score: z.number().min(0).max(100).optional(),
+    rationale: z.array(z.string()).optional(),
+  }).optional(),
+  evidence: z.array(evidenceSchema).optional(),
+});
+
+// Schema validation retry configuration
+const SCHEMA_VALIDATION_RETRIES = 2;
+
+/**
+ * Validate and parse AI response against schema with retry (Priority #6)
+ */
+async function validateWithRetry<T extends z.ZodType>(
+  schema: T,
+  data: unknown,
+  operationName: string,
+  retryFn?: () => Promise<unknown>
+): Promise<{ success: true; data: z.infer<T>; retries: number } | { success: false; error: string; retries: number }> {
+  let attempts = 0;
+  let lastData = data;
+  
+  while (attempts <= SCHEMA_VALIDATION_RETRIES) {
+    const result = schema.safeParse(lastData);
+    
+    if (result.success) {
+      if (attempts > 0) {
+        console.log(`[Provider] ${operationName} validated after ${attempts} retry(ies)`);
+      }
+      return { success: true, data: result.data, retries: attempts };
+    }
+    
+    const errorMessages = result.error.errors.map(e => `${e.path.join(".")}: ${e.message}`).join("; ");
+    console.warn(`[Provider] ${operationName} validation failed (attempt ${attempts + 1}): ${errorMessages}`);
+    
+    if (!retryFn || attempts >= SCHEMA_VALIDATION_RETRIES) {
+      return { success: false, error: errorMessages, retries: attempts };
+    }
+    
+    // Retry by calling the retryFn to get new data
+    try {
+      console.log(`[Provider] Retrying ${operationName} to fix schema errors...`);
+      lastData = await retryFn();
+      attempts++;
+    } catch (e: any) {
+      return { success: false, error: `Retry failed: ${e.message}`, retries: attempts };
+    }
+  }
+  
+  return { success: false, error: "Max validation retries exceeded", retries: attempts };
+}
 
 // Cache for analysis results
 const analysisCache = new Map<string, { result: any; timestamp: number }>();
@@ -369,13 +462,57 @@ Focus on actionable intelligence relevant to the location and any stated objecti
     const responseText = completion.choices[0]?.message?.content || "{}";
     const tokens = completion.usage?.total_tokens || 0;
 
-    let analysis: any;
+    let rawAnalysis: any;
     try {
-      analysis = JSON.parse(responseText);
+      rawAnalysis = JSON.parse(responseText);
     } catch (e) {
       console.error("[Provider] Failed to parse response as JSON:", responseText.substring(0, 200));
       throw new Error("Failed to parse AI response as valid JSON");
     }
+
+    // Priority #6: Schema validation with retry
+    const validationResult = await validateWithRetry(
+      pmesiiResponseSchema,
+      rawAnalysis,
+      "PMESII Schema Validation",
+      async () => {
+        // Retry: Ask model to fix the response
+        console.log("[Provider] Asking model to fix schema errors...");
+        const fixCompletion = await openai.chat.completions.create({
+          model: "gpt-4o",
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userPrompt },
+            { role: "assistant", content: responseText },
+            { role: "user", content: `Your response had schema errors. Please provide a valid response matching the exact schema. All PMESII factors must have: assessment (non-empty string), riskLevel (LOW|MEDIUM|HIGH|CRITICAL), confidence (0-1), considerations (array of strings).` }
+          ],
+          response_format: { type: "json_object" },
+          temperature: 0.1,
+          max_tokens: 4000,
+        });
+        const fixedText = fixCompletion.choices[0]?.message?.content || "{}";
+        // Priority #6 fix: Wrap JSON.parse in try/catch to handle malformed responses
+        try {
+          return JSON.parse(fixedText);
+        } catch (parseError: any) {
+          console.error("[Provider] Failed to parse fix response:", fixedText.substring(0, 100));
+          throw new Error(`JSON parse error in fix response: ${parseError.message}`);
+        }
+      }
+    );
+
+    if (!validationResult.success) {
+      console.error("[Provider] Schema validation failed after retries:", validationResult.error);
+      // Priority #6: Return degraded mode on persistent schema errors
+      throw new ProviderError(
+        `Schema validation failed: ${validationResult.error}`,
+        "parse_error",
+        getCached(cacheKey) || undefined
+      );
+    }
+
+    const analysis = validationResult.data;
+    console.log(`[Provider] Schema validation passed${validationResult.retries > 0 ? ` after ${validationResult.retries} retry(ies)` : ""}`);
 
     // Transform evidence to proper schema
     const transformedEvidence: EvidenceItem[] = (analysis.evidence || []).map((e: any) => ({

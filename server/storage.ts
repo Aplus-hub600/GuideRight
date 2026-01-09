@@ -17,6 +17,8 @@ import {
   type InsertWeatherAlert,
   type SocialMediaPost,
   type InsertSocialMediaPost,
+  type UploadedSource,
+  type InsertUploadedSource,
   type SearchQuery,
   type SearchResult,
   type TimelineEvent,
@@ -78,6 +80,14 @@ export interface IStorage {
   getSocialMediaPostsByLocation(lat: number, lng: number, radiusKm: number): Promise<SocialMediaPost[]>;
   getSocialMediaPostsBySentiment(sentiment: string): Promise<SocialMediaPost[]>;
   getSocialMediaInfluencers(minFollowers?: number): Promise<SocialMediaPost[]>;
+  
+  // Uploaded sources operations (Priority #5: Real source feeds)
+  getUploadedSources(region?: string): Promise<UploadedSource[]>;
+  getUploadedSourceById(id: string): Promise<UploadedSource | undefined>;
+  createUploadedSource(source: InsertUploadedSource): Promise<UploadedSource>;
+  updateUploadedSource(id: string, updates: Partial<InsertUploadedSource>): Promise<UploadedSource | null>;
+  deleteUploadedSource(id: string): Promise<boolean>;
+  getProcessedSources(region?: string): Promise<UploadedSource[]>;
 }
 
 export class MemStorage implements IStorage {
@@ -90,6 +100,7 @@ export class MemStorage implements IStorage {
   private weatherData: WeatherData[];
   private weatherAlerts: WeatherAlert[];
   private socialMediaPosts: SocialMediaPost[];
+  private uploadedSources: UploadedSource[];
 
   constructor() {
     this.users = new Map();
@@ -101,6 +112,7 @@ export class MemStorage implements IStorage {
     this.weatherData = [];
     this.weatherAlerts = [];
     this.socialMediaPosts = [];
+    this.uploadedSources = [];
     
     // Initialize with external intelligence sources and sample weather data
     this.initializeExternalIntelligence();
@@ -1172,6 +1184,81 @@ export class MemStorage implements IStorage {
       .filter(post => (post.senderFollowersCount || 0) >= minFollowers)
       .sort((a, b) => (b.senderFollowersCount || 0) - (a.senderFollowersCount || 0))
       .slice(0, 50);
+  }
+
+  // Uploaded sources operations (Priority #5: Real source feeds)
+  async getUploadedSources(region?: string): Promise<UploadedSource[]> {
+    let sources = this.uploadedSources;
+    if (region) {
+      sources = sources.filter(s => s.region === region || !s.region);
+    }
+    return sources.sort((a, b) => 
+      new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    );
+  }
+
+  async getUploadedSourceById(id: string): Promise<UploadedSource | undefined> {
+    return this.uploadedSources.find(s => s.id === id);
+  }
+
+  async createUploadedSource(source: InsertUploadedSource): Promise<UploadedSource> {
+    const id = randomUUID();
+    const newSource: UploadedSource = {
+      id,
+      filename: source.filename,
+      originalFilename: source.originalFilename,
+      mimeType: source.mimeType,
+      fileSize: source.fileSize,
+      sourceType: source.sourceType,
+      extractedText: source.extractedText ?? null,
+      summary: source.summary ?? null,
+      pmesiiCategories: (source.pmesiiCategories as string[]) || [],
+      relevanceScore: source.relevanceScore ?? null,
+      lat: source.lat ?? null,
+      lng: source.lng ?? null,
+      region: source.region ?? null,
+      isProcessed: source.isProcessed ?? false,
+      processingError: source.processingError ?? null,
+      timestamp: new Date(),
+    };
+    this.uploadedSources.push(newSource);
+    console.log(`[Sources] Created uploaded source: ${source.originalFilename} (${id})`);
+    return newSource;
+  }
+
+  async updateUploadedSource(id: string, updates: Partial<InsertUploadedSource>): Promise<UploadedSource | null> {
+    const index = this.uploadedSources.findIndex(s => s.id === id);
+    if (index === -1) return null;
+    
+    const existing = this.uploadedSources[index];
+    this.uploadedSources[index] = {
+      ...existing,
+      ...updates,
+      pmesiiCategories: updates.pmesiiCategories 
+        ? (updates.pmesiiCategories as string[]) 
+        : existing.pmesiiCategories,
+    };
+    console.log(`[Sources] Updated source: ${id}`);
+    return this.uploadedSources[index];
+  }
+
+  async deleteUploadedSource(id: string): Promise<boolean> {
+    const index = this.uploadedSources.findIndex(s => s.id === id);
+    if (index === -1) return false;
+    
+    this.uploadedSources.splice(index, 1);
+    console.log(`[Sources] Deleted source: ${id}`);
+    return true;
+  }
+
+  async getProcessedSources(region?: string): Promise<UploadedSource[]> {
+    let sources = this.uploadedSources.filter(s => s.isProcessed === true);
+    if (region) {
+      sources = sources.filter(s => s.region === region || !s.region);
+    }
+    return sources.sort((a, b) => 
+      new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    );
   }
 
   private async initializeSampleSocialMediaData() {

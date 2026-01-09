@@ -146,6 +146,26 @@ export const socialMediaPosts = pgTable("social_media_posts", {
   timestamp: timestamp("timestamp").defaultNow().notNull(),
 });
 
+// User-uploaded intelligence sources (Priority #5: Real source feeds)
+export const uploadedSources = pgTable("uploaded_sources", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  filename: text("filename").notNull(),
+  originalFilename: text("original_filename").notNull(),
+  mimeType: text("mime_type").notNull(),
+  fileSize: real("file_size").notNull(), // Size in bytes
+  sourceType: text("source_type").notNull(), // 'document', 'image', 'report', 'intel_feed'
+  extractedText: text("extracted_text"), // Text extracted from document
+  summary: text("summary"), // AI-generated summary
+  pmesiiCategories: jsonb("pmesii_categories").$type<string[]>().default([]), // Relevant PMESII categories
+  relevanceScore: real("relevance_score"), // 0-1 relevance for current analysis
+  lat: real("lat"), // Optional geo-reference
+  lng: real("lng"),
+  region: text("region"), // Region/AOI this source applies to
+  isProcessed: boolean("is_processed").default(false),
+  processingError: text("processing_error"),
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
+});
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
@@ -275,6 +295,23 @@ export const insertSocialMediaPostSchema = createInsertSchema(socialMediaPosts, 
   platform: true,
 });
 
+export const insertUploadedSourceSchema = createInsertSchema(uploadedSources).pick({
+  filename: true,
+  originalFilename: true,
+  mimeType: true,
+  fileSize: true,
+  sourceType: true,
+  extractedText: true,
+  summary: true,
+  pmesiiCategories: true,
+  relevanceScore: true,
+  lat: true,
+  lng: true,
+  region: true,
+  isProcessed: true,
+  processingError: true,
+});
+
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -294,6 +331,8 @@ export type WeatherAlert = typeof weatherAlerts.$inferSelect;
 export type InsertWeatherAlert = z.infer<typeof insertWeatherAlertSchema>;
 export type SocialMediaPost = typeof socialMediaPosts.$inferSelect;
 export type InsertSocialMediaPost = z.infer<typeof insertSocialMediaPostSchema>;
+export type UploadedSource = typeof uploadedSources.$inferSelect;
+export type InsertUploadedSource = z.infer<typeof insertUploadedSourceSchema>;
 
 // Social media query schemas
 export const socialMediaQuerySchema = z.object({

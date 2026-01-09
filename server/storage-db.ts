@@ -17,6 +17,8 @@ import {
   type InsertWeatherAlert,
   type SocialMediaPost,
   type InsertSocialMediaPost,
+  type UploadedSource,
+  type InsertUploadedSource,
   type SearchQuery,
   type SearchResult,
   type TimelineEvent,
@@ -29,7 +31,8 @@ import {
   geotaggedFiles,
   weatherData,
   weatherAlerts,
-  socialMediaPosts
+  socialMediaPosts,
+  uploadedSources
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, like, sql, desc, asc } from "drizzle-orm";
@@ -429,5 +432,85 @@ export class DatabaseStorage implements IStorage {
     return events
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
       .slice(0, query.limit || 100);
+  }
+
+  // Uploaded sources operations (Priority #5: Real source feeds)
+  async getUploadedSources(region?: string): Promise<UploadedSource[]> {
+    if (region) {
+      return await db
+        .select()
+        .from(uploadedSources)
+        .where(or(eq(uploadedSources.region, region), sql`${uploadedSources.region} IS NULL`))
+        .orderBy(desc(uploadedSources.timestamp));
+    }
+    return await db
+      .select()
+      .from(uploadedSources)
+      .orderBy(desc(uploadedSources.timestamp));
+  }
+
+  async getUploadedSourceById(id: string): Promise<UploadedSource | undefined> {
+    const [source] = await db
+      .select()
+      .from(uploadedSources)
+      .where(eq(uploadedSources.id, id));
+    return source || undefined;
+  }
+
+  async createUploadedSource(source: InsertUploadedSource): Promise<UploadedSource> {
+    const [newSource] = await db
+      .insert(uploadedSources)
+      .values({
+        ...source,
+        pmesiiCategories: source.pmesiiCategories || [],
+        isProcessed: source.isProcessed ?? false
+      })
+      .returning();
+    console.log(`[Sources] Created uploaded source: ${source.originalFilename} (${newSource.id})`);
+    return newSource;
+  }
+
+  async updateUploadedSource(id: string, updates: Partial<InsertUploadedSource>): Promise<UploadedSource | null> {
+    const [updated] = await db
+      .update(uploadedSources)
+      .set(updates)
+      .where(eq(uploadedSources.id, id))
+      .returning();
+    if (updated) {
+      console.log(`[Sources] Updated source: ${id}`);
+    }
+    return updated || null;
+  }
+
+  async deleteUploadedSource(id: string): Promise<boolean> {
+    const result = await db
+      .delete(uploadedSources)
+      .where(eq(uploadedSources.id, id))
+      .returning();
+    if (result.length > 0) {
+      console.log(`[Sources] Deleted source: ${id}`);
+      return true;
+    }
+    return false;
+  }
+
+  async getProcessedSources(region?: string): Promise<UploadedSource[]> {
+    if (region) {
+      return await db
+        .select()
+        .from(uploadedSources)
+        .where(
+          and(
+            eq(uploadedSources.isProcessed, true),
+            or(eq(uploadedSources.region, region), sql`${uploadedSources.region} IS NULL`)
+          )
+        )
+        .orderBy(desc(uploadedSources.timestamp));
+    }
+    return await db
+      .select()
+      .from(uploadedSources)
+      .where(eq(uploadedSources.isProcessed, true))
+      .orderBy(desc(uploadedSources.timestamp));
   }
 }

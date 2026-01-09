@@ -603,23 +603,144 @@ Return realistic intelligence-style events based on your knowledge of the region
         });
       }
 
-      const analysis = await analyzeMultimodalContent(content, base64Image, analysisType);
+      // Determine source type based on mime type
+      const getSourceType = (mimeType: string): string => {
+        if (mimeType.startsWith('image/')) return 'image';
+        if (mimeType.includes('pdf')) return 'document';
+        if (mimeType.includes('word') || mimeType.includes('document')) return 'report';
+        if (mimeType === 'text/plain') return 'intel_feed';
+        return 'document';
+      };
+
+      let analysis: any = null;
+      let processingError: string | undefined;
+      let pmesiiCategories: string[] = [];
+      let summary: string | undefined;
+
+      try {
+        analysis = await analyzeMultimodalContent(content, base64Image, analysisType);
+        summary = analysis?.summary;
+        pmesiiCategories = analysis?.categories || [];
+      } catch (error: any) {
+        console.error('[FileUpload] AI analysis failed:', error.message);
+        processingError = error.message;
+      }
       
-      // Save analysis result
+      // Save as uploaded source (Priority #5: Real source feeds)
+      const uploadedSource = await storage.createUploadedSource({
+        filename: `${Date.now()}-${file.originalname}`,
+        originalFilename: file.originalname,
+        mimeType: file.mimetype,
+        fileSize: file.size,
+        sourceType: getSourceType(file.mimetype),
+        extractedText: content,
+        summary,
+        pmesiiCategories,
+        relevanceScore: analysis ? 0.7 : 0.5, // Default relevance, can be updated
+        isProcessed: !processingError,
+        processingError,
+      });
+
+      // Also save analysis result (legacy support)
       const result = await storage.createAnalysisResult({
         analysisType,
-        results: analysis,
+        results: analysis || { error: processingError },
         fileId: file.originalname
       });
 
       res.json({ 
         success: true, 
         fileId: result.id,
+        sourceId: uploadedSource.id,
         analysis,
-        fileName: file.originalname
+        fileName: file.originalname,
+        isProcessed: uploadedSource.isProcessed,
+        processingError: uploadedSource.processingError
       });
     } catch (error) {
       handleOpenAIError(error, res);
+    }
+  });
+
+  // List uploaded sources endpoint (Priority #5: Real source feeds)
+  app.get("/api/sources", async (req, res) => {
+    try {
+      const { region, processed } = req.query;
+      
+      let sources;
+      if (processed === 'true') {
+        sources = await storage.getProcessedSources(region as string);
+      } else {
+        sources = await storage.getUploadedSources(region as string);
+      }
+
+      res.json({
+        success: true,
+        sources: sources.map(s => ({
+          id: s.id,
+          filename: s.originalFilename,
+          sourceType: s.sourceType,
+          fileSize: s.fileSize,
+          summary: s.summary,
+          pmesiiCategories: s.pmesiiCategories,
+          relevanceScore: s.relevanceScore,
+          region: s.region,
+          isProcessed: s.isProcessed,
+          timestamp: s.timestamp,
+        })),
+        count: sources.length
+      });
+    } catch (error) {
+      console.error('[Sources] Error listing sources:', error);
+      res.status(500).json({ success: false, error: 'Failed to list sources' });
+    }
+  });
+
+  // Get single uploaded source
+  app.get("/api/sources/:id", async (req, res) => {
+    try {
+      const source = await storage.getUploadedSourceById(req.params.id);
+      if (!source) {
+        return res.status(404).json({ success: false, error: 'Source not found' });
+      }
+
+      res.json({
+        success: true,
+        source: {
+          id: source.id,
+          filename: source.originalFilename,
+          sourceType: source.sourceType,
+          fileSize: source.fileSize,
+          extractedText: source.extractedText,
+          summary: source.summary,
+          pmesiiCategories: source.pmesiiCategories,
+          relevanceScore: source.relevanceScore,
+          lat: source.lat,
+          lng: source.lng,
+          region: source.region,
+          isProcessed: source.isProcessed,
+          processingError: source.processingError,
+          timestamp: source.timestamp,
+        }
+      });
+    } catch (error) {
+      console.error('[Sources] Error getting source:', error);
+      res.status(500).json({ success: false, error: 'Failed to get source' });
+    }
+  });
+
+  // Delete uploaded source
+  app.delete("/api/sources/:id", async (req, res) => {
+    try {
+      const success = await storage.deleteUploadedSource(req.params.id);
+      if (!success) {
+        return res.status(404).json({ success: false, error: 'Source not found' });
+      }
+
+      res.json({ success: true, message: 'Source deleted' });
+    } catch (error) {
+      console.error('[Sources] Error deleting source:', error);
+      res.status(500).json({ success: false, error: 'Failed to delete source' });
     }
   });
 
