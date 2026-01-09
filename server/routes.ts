@@ -9,6 +9,14 @@ import {
   calculateRiskScore
 } from "./openai";
 import {
+  getStressConfig,
+  setStressConfig,
+  resetStressConfig,
+  getStressMetrics,
+  resetStressMetrics,
+  StressScenarios,
+} from "./services/stress-harness";
+import {
   processLocationQuery,
   processTacticalQueryGemini,
   generatePMESIIAnalysisGemini,
@@ -742,6 +750,83 @@ Return realistic intelligence-style events based on your knowledge of the region
       console.error('[Sources] Error deleting source:', error);
       res.status(500).json({ success: false, error: 'Failed to delete source' });
     }
+  });
+
+  // ============================================================
+  // STRESS TEST HARNESS ENDPOINTS (for testing degraded mode)
+  // ============================================================
+
+  // Get current stress test configuration
+  app.get("/api/stress/config", (req, res) => {
+    res.json({
+      success: true,
+      config: getStressConfig(),
+      availableScenarios: Object.keys(StressScenarios),
+    });
+  });
+
+  // Update stress test configuration
+  app.post("/api/stress/config", (req, res) => {
+    try {
+      const config = setStressConfig(req.body);
+      res.json({
+        success: true,
+        config,
+        message: config.enabled ? 'Stress testing ENABLED' : 'Stress testing disabled',
+      });
+    } catch (error) {
+      res.status(400).json({ success: false, error: 'Invalid configuration' });
+    }
+  });
+
+  // Reset stress test configuration
+  app.post("/api/stress/reset", (req, res) => {
+    const config = resetStressConfig();
+    res.json({
+      success: true,
+      config,
+      message: 'Stress testing disabled and reset to defaults',
+    });
+  });
+
+  // Apply a preset stress scenario
+  app.post("/api/stress/scenario/:name", (req, res) => {
+    const scenarioName = req.params.name as keyof typeof StressScenarios;
+    
+    if (!StressScenarios[scenarioName]) {
+      return res.status(400).json({
+        success: false,
+        error: `Unknown scenario: ${scenarioName}`,
+        availableScenarios: Object.keys(StressScenarios),
+      });
+    }
+    
+    const config = StressScenarios[scenarioName]();
+    res.json({
+      success: true,
+      scenario: scenarioName,
+      config,
+      message: scenarioName === 'disabled' 
+        ? 'Stress testing disabled' 
+        : `Stress scenario '${scenarioName}' activated`,
+    });
+  });
+
+  // Get stress test metrics
+  app.get("/api/stress/metrics", (req, res) => {
+    res.json({
+      success: true,
+      metrics: getStressMetrics(),
+    });
+  });
+
+  // Reset stress test metrics
+  app.post("/api/stress/metrics/reset", (req, res) => {
+    resetStressMetrics();
+    res.json({
+      success: true,
+      message: 'Metrics reset',
+    });
   });
 
   // Risk assessment endpoint

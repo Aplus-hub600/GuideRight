@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import { ChatPanel } from "./chat-panel"
 import { MapLibrePanel } from "./maplibre-panel"
-import { PMESIITest } from "./pmesii-test"
+import { PMESIIBriefing } from "./pmesii-briefing"
 import { RiskAssessment } from "./risk-assessment"
 import { IntelligenceIntegration } from "./intelligence-integration"
 import { AnalysisPanel } from "./analysis-panel"
@@ -174,7 +174,7 @@ export function Dashboard({ className, activeTopPanel, activeBottomPanel, curren
                       <IntelligenceIntegration className="h-full" />
                     </TabsContent>
                     <TabsContent value="pmesii" className="flex-1 mt-4 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-                      <PMESIITest aoi={currentAOI} odinCountry={selectedODINCountry} className="h-full" />
+                      <PMESIIBriefing aoi={currentAOI} odinCountry={selectedODINCountry} className="h-full" />
                     </TabsContent>
                     <TabsContent value="risk" className="flex-1 mt-4 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
                       <RiskAssessment 

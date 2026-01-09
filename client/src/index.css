@@ -164,37 +164,26 @@ html, body, #root {
   height: auto !important;
 }
 
-/* Map loading states with enhanced animation */
+/* Map loading states - calm, professional */
 .map-loading {
-  background: linear-gradient(45deg, #f3f4f6 25%, transparent 25%), 
-              linear-gradient(-45deg, #f3f4f6 25%, transparent 25%), 
-              linear-gradient(45deg, transparent 75%, #f3f4f6 75%), 
-              linear-gradient(-45deg, transparent 75%, #f3f4f6 75%);
-  background-size: 20px 20px;
-  background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
-  animation: mapLoading 2s linear infinite;
+  background: hsl(var(--muted));
   position: relative;
 }
 
 .map-loading::before {
-  content: '🗺️ Loading Interactive Map...';
+  content: 'Loading map...';
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: rgba(255, 255, 255, 0.95);
-  padding: 12px 20px;
-  border-radius: 25px;
-  font-size: 14px;
+  background: hsl(var(--background) / 0.95);
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 13px;
   font-weight: 500;
-  color: #374151;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  color: hsl(var(--muted-foreground));
+  border: 1px solid hsl(var(--border));
   z-index: 10;
-}
-
-@keyframes mapLoading {
-  0% { background-position: 0 0, 0 10px, 10px -10px, -10px 0px; }
-  100% { background-position: 20px 20px, 20px 30px, 30px 10px, 10px 20px; }
 }
 
 /* Layout constraints to prevent map overflow */
@@ -271,77 +260,35 @@ textarea {
   transform: scale(0.95);
 }
 
-/* Custom animations for demo polish */
+/* Subtle utility animations - minimal, professional */
 @keyframes pulse-subtle {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
+  50% { opacity: 0.85; }
 }
 
 .animate-pulse-subtle {
   animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-@keyframes glow-pulse {
-  0%, 100% { 
-    box-shadow: 0 0 20px rgba(59, 130, 246, 0.3),
-                0 0 40px rgba(59, 130, 246, 0.2),
-                inset 0 0 20px rgba(59, 130, 246, 0.1);
-  }
-  50% { 
-    box-shadow: 0 0 30px rgba(59, 130, 246, 0.5),
-                0 0 60px rgba(59, 130, 246, 0.3),
-                inset 0 0 30px rgba(59, 130, 246, 0.2);
-  }
-}
+/* Removed glow-pulse and tactical-glow animations for calmer UI */
 
-.animate-glow-pulse {
-  animation: glow-pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-/* Tactical blue glow utility class */
-.tactical-glow {
-  box-shadow: 0 0 25px rgba(59, 130, 246, 0.4),
-              0 0 50px rgba(59, 130, 246, 0.2),
-              inset 0 0 25px rgba(59, 130, 246, 0.1);
-}
-
-.tactical-glow-strong {
-  box-shadow: 0 0 35px rgba(59, 130, 246, 0.6),
-              0 0 70px rgba(59, 130, 246, 0.4),
-              inset 0 0 35px rgba(59, 130, 246, 0.15);
-}
-
-/* Smooth panel animations */
-@keyframes slide-in-from-bottom {
-  from {
-    transform: translateY(20px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
+/* Minimal panel animations - quick, professional */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .animate-in {
   animation-fill-mode: both;
 }
 
-.slide-in-from-bottom-4 {
-  animation-name: slide-in-from-bottom;
-}
-
 .fade-in {
-  animation-name: fadeIn;
+  animation-name: fade-in;
+  animation-duration: 100ms;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.duration-500 {
-  animation-duration: 500ms;
+.duration-150 {
+  animation-duration: 150ms;
 }
 
 @layer utilities {

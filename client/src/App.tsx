@@ -9,6 +9,8 @@ import { BottomNavBar, NavSection } from "./components/bottom-nav-bar";
 import { LocationSearchBar } from "./components/location-search-bar";
 import { ChatPanel } from "./components/chat-panel";
 import { ScreenshotFAB } from "./components/screenshot-fab";
+import { SystemStatusBanner } from "./components/system-status-banner";
+import { SystemStatusProvider } from "./lib/system-status";
 import { useState } from "react";
 import i18n from "./lib/i18n";
 import { ChevronDown, ChevronUp, MessageSquare } from "lucide-react";
@@ -91,9 +93,13 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <I18nextProvider i18n={i18n}>
         <ThemeProvider>
-          <TooltipProvider>
-            {/* Map-centric layout: everything is absolutely positioned over the map */}
-            <div className="relative h-screen w-screen overflow-hidden bg-background">
+          <SystemStatusProvider>
+            <TooltipProvider>
+              {/* System status banner - visible when in degraded/offline mode */}
+              <SystemStatusBanner />
+              
+              {/* Map-centric layout: everything is absolutely positioned over the map */}
+              <div className="relative h-screen w-screen overflow-hidden bg-background">
               {/* Dashboard with map and panels */}
               <div className="absolute inset-0 z-0 h-full w-full">
                 <Dashboard 
@@ -174,8 +180,9 @@ function App() {
 
               {/* Toast notifications */}
               <Toaster />
-            </div>
-          </TooltipProvider>
+              </div>
+            </TooltipProvider>
+          </SystemStatusProvider>
         </ThemeProvider>
       </I18nextProvider>
     </QueryClientProvider>

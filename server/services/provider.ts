@@ -2,10 +2,17 @@
  * AI Provider Service - Single provider (OpenAI) with retries, timeouts, and caching
  * MVP: Use ONE provider and make it rock-solid
  * Priority #6: Schema validation with retry + degraded mode on invalid response
+ * Stress Test: Integrated stress harness for failure injection testing
  */
 
 import OpenAI from "openai";
 import { z } from "zod";
+import { 
+  applyStressTest, 
+  shouldReturnMalformedJson, 
+  getMalformedJson,
+  StressTestError 
+} from "./stress-harness";
 
 // Initialize OpenAI client
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -156,6 +163,7 @@ function setCache(key: string, result: any): void {
 
 /**
  * Execute OpenAI request with retries and error handling
+ * Includes stress test harness integration for failure injection
  */
 async function executeWithRetry<T>(
   operation: () => Promise<T>,
@@ -163,6 +171,22 @@ async function executeWithRetry<T>(
 ): Promise<{ result: T; latencyMs: number; tokens?: number }> {
   const startTime = Date.now();
   let lastError: Error | null = null;
+  
+  // Apply stress test harness (may inject failures/latency)
+  try {
+    await applyStressTest();
+  } catch (stressError: any) {
+    if (stressError instanceof StressTestError) {
+      console.warn(`[Provider] Stress test failure injected: ${stressError.code}`);
+      // Convert stress test error to ProviderError
+      throw new ProviderError(
+        stressError.message,
+        stressError.code,
+        undefined
+      );
+    }
+    throw stressError;
+  }
   
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
     try {
