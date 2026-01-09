@@ -66,41 +66,33 @@ export function LocationSearchBar({ onLocationSelect, currentLocation }: Locatio
   const [filters, setFilters] = useState<SearchFilters>({});
   const [customDateOpen, setCustomDateOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const autocompleteRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const debouncedSearch = useDebounce(searchValue, 300);
 
-  useEffect(() => {
-    if (!inputRef.current || !(window as any).google || showAdvancedSearch) return;
+  const predefinedLocations = [
+    { name: "Dhaka", lat: 23.8103, lng: 90.4125 },
+    { name: "Chittagong", lat: 22.3569, lng: 91.7832 },
+    { name: "Sylhet", lat: 24.8949, lng: 91.8687 },
+    { name: "Khulna", lat: 22.8456, lng: 89.5403 },
+    { name: "Rajshahi", lat: 24.3745, lng: 88.6042 },
+    { name: "Dhaka Airport", lat: 23.8513, lng: 90.4089 },
+    { name: "Gulshan", lat: 23.7925, lng: 90.4078 },
+    { name: "Dhanmondi", lat: 23.7461, lng: 90.3742 },
+    { name: "Motijheel", lat: 23.7330, lng: 90.4176 },
+    { name: "Uttara", lat: 23.8759, lng: 90.3795 },
+  ];
 
-    const google = (window as any).google;
-    
-    autocompleteRef.current = new google.maps.places.Autocomplete(inputRef.current, {
-      types: ["geocode", "establishment"],
-      fields: ["name", "geometry", "formatted_address"],
-    });
+  const filteredLocations = predefinedLocations.filter(loc =>
+    loc.name.toLowerCase().includes(searchValue.toLowerCase())
+  );
 
-    autocompleteRef.current.addListener("place_changed", () => {
-      const place = autocompleteRef.current?.getPlace();
-      if (place?.geometry?.location) {
-        const lat = place.geometry.location.lat();
-        const lng = place.geometry.location.lng();
-        const name = place.name || place.formatted_address || "Unknown Location";
-        
-        onLocationSelect({ name, lat, lng });
-        setSearchValue("");
-        setIsExpanded(false);
-        setShowAdvancedSearch(false);
-        inputRef.current?.blur();
-      }
-    });
-
-    return () => {
-      if (autocompleteRef.current) {
-        google.maps.event.clearInstanceListeners(autocompleteRef.current);
-      }
-    };
-  }, [onLocationSelect, showAdvancedSearch]);
+  const handleLocationClick = (loc: { name: string; lat: number; lng: number }) => {
+    onLocationSelect(loc);
+    setSearchValue("");
+    setIsExpanded(false);
+    setShowAdvancedSearch(false);
+    inputRef.current?.blur();
+  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -154,10 +146,6 @@ export function LocationSearchBar({ onLocationSelect, currentLocation }: Locatio
     setShowAdvancedSearch(!showAdvancedSearch);
     if (!showAdvancedSearch) {
       setSearchValue("");
-      if (autocompleteRef.current) {
-        const google = (window as any).google;
-        google.maps.event.clearInstanceListeners(autocompleteRef.current);
-      }
     }
   };
 
@@ -345,6 +333,61 @@ export function LocationSearchBar({ onLocationSelect, currentLocation }: Locatio
           </div>
         )}
       </Card>
+
+      {/* Location suggestions dropdown - shown when typing in location mode */}
+      {isExpanded && !showAdvancedSearch && searchValue.length > 0 && filteredLocations.length > 0 && (
+        <Card className="absolute top-full left-0 right-0 mt-2 z-50 overflow-hidden">
+          <div className="max-h-[300px] overflow-y-auto">
+            {filteredLocations.map((loc) => (
+              <button
+                key={loc.name}
+                onClick={() => handleLocationClick(loc)}
+                className="w-full text-left p-3 hover-elevate flex items-center gap-3 transition-colors"
+                data-testid={`location-suggestion-${loc.name.toLowerCase().replace(/\s+/g, '-')}`}
+              >
+                <div className="flex items-center justify-center w-8 h-8 rounded-md bg-primary/10 text-primary flex-shrink-0">
+                  <MapPin className="h-4 w-4" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium text-foreground">{loc.name}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {loc.lat.toFixed(4)}, {loc.lng.toFixed(4)}
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {/* Show all locations when expanded but no search value */}
+      {isExpanded && !showAdvancedSearch && searchValue.length === 0 && (
+        <Card className="absolute top-full left-0 right-0 mt-2 z-50 overflow-hidden">
+          <div className="p-2 border-b">
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Quick Locations</span>
+          </div>
+          <div className="max-h-[300px] overflow-y-auto">
+            {predefinedLocations.map((loc) => (
+              <button
+                key={loc.name}
+                onClick={() => handleLocationClick(loc)}
+                className="w-full text-left p-3 hover-elevate flex items-center gap-3 transition-colors"
+                data-testid={`location-quick-${loc.name.toLowerCase().replace(/\s+/g, '-')}`}
+              >
+                <div className="flex items-center justify-center w-8 h-8 rounded-md bg-muted text-muted-foreground flex-shrink-0">
+                  <MapPin className="h-4 w-4" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium text-foreground">{loc.name}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {loc.lat.toFixed(4)}, {loc.lng.toFixed(4)}
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </Card>
+      )}
 
       {showAdvancedSearch && debouncedSearch.length >= 2 && (
         <Card className="absolute top-full left-0 right-0 mt-2 max-h-[400px] overflow-hidden z-50">

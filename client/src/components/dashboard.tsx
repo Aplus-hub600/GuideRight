@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { ChatPanel } from "./chat-panel"
-import { GoogleMapsPanel } from "./google-maps-panel"
+import { MapLibrePanel } from "./maplibre-panel"
 import { PMESIIBriefing } from "./pmesii-briefing"
 import { RiskAssessment } from "./risk-assessment"
 import { IntelligenceIntegration } from "./intelligence-integration"
@@ -102,9 +102,9 @@ export function Dashboard({ className, activeTopPanel, activeBottomPanel, curren
     <div className={cn("relative h-full w-full", className)}>
       {/* Main content area - map and panels */}
       <div className="relative h-full w-full">
-        {/* Full viewport map - Google Maps for tactical-grade quality */}
+        {/* Full viewport map - OpenStreetMap via MapLibre */}
         <div className="absolute inset-0 z-0 h-full w-full" id="map-view-container">
-          <GoogleMapsPanel
+          <MapLibrePanel
             aoi={currentAOI}
             riskScore={riskScore}
             movementPlan={movementPlan}
