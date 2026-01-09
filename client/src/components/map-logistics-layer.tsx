@@ -119,6 +119,10 @@ interface MapLogisticsLayerProps {
   visible: boolean
 }
 
+const isMapValid = (m: maplibregl.Map | null): m is maplibregl.Map => {
+  return m !== null && typeof m.getStyle === 'function' && m.getStyle() !== undefined
+}
+
 export function useMapLogisticsLayer({
   map,
   isMapReady,
@@ -133,24 +137,22 @@ export function useMapLogisticsLayer({
     markersRef.current = []
     
     const cleanupLayers = () => {
-      try {
-        MOCK_ROUTES.forEach((route) => {
-          const layerId = `logistics-layer-${route.id}`
-          const sourceId = `logistics-route-${route.id}`
-          try {
-            if (map.getLayer(layerId)) map.removeLayer(layerId)
-            if (map.getSource(sourceId)) map.removeSource(sourceId)
-          } catch {}
-        })
-      } catch {}
+      if (!isMapValid(map)) return
+      MOCK_ROUTES.forEach((route) => {
+        const layerId = `logistics-layer-${route.id}`
+        const sourceId = `logistics-route-${route.id}`
+        if (map.getLayer(layerId)) map.removeLayer(layerId)
+        if (map.getSource(sourceId)) map.removeSource(sourceId)
+      })
     }
     
     cleanupLayers()
     
     if (!visible) return
     
-    MOCK_ROUTES.forEach((route) => {
-      try {
+    if (isMapValid(map)) {
+      MOCK_ROUTES.forEach((route) => {
+        if (!isMapValid(map)) return
         const sourceId = `logistics-route-${route.id}`
         const layerId = `logistics-layer-${route.id}`
         const color = routeColors[route.status]
@@ -187,11 +189,10 @@ export function useMapLogisticsLayer({
             }
           })
         }
-      } catch {}
-    })
-    
-    MOCK_SUPPLY_POINTS.forEach((point) => {
-      try {
+      })
+      
+      MOCK_SUPPLY_POINTS.forEach((point) => {
+        if (!isMapValid(map)) return
         const color = supplyColors[point.type]
         const icon = supplyIcons[point.type]
         const statusOpacity = point.status === "operational" ? 1 : 
@@ -236,8 +237,8 @@ export function useMapLogisticsLayer({
           .addTo(map)
         
         markersRef.current.push(marker)
-      } catch {}
-    })
+      })
+    }
     
     return () => {
       markersRef.current.forEach(m => m.remove())

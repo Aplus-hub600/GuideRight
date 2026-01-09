@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react"
+import { useEffect } from "react"
 import maplibregl from "maplibre-gl"
 
 interface TravelRing {
@@ -45,6 +45,10 @@ interface MapAccessibilityLayerProps {
   showDensity: boolean
 }
 
+const isMapValid = (m: maplibregl.Map | null): m is maplibregl.Map => {
+  return m !== null && typeof m.getStyle === 'function' && m.getStyle() !== undefined
+}
+
 export function useMapAccessibilityLayer({
   map,
   isMapReady,
@@ -54,136 +58,127 @@ export function useMapAccessibilityLayer({
   showTravelRings,
   showDensity
 }: MapAccessibilityLayerProps) {
-  const sourcesAdded = useRef<Set<string>>(new Set())
-  
   useEffect(() => {
     if (!map || !isMapReady) return
     
     const cleanupLayers = () => {
-      try {
-        TRAVEL_RINGS.forEach((_, idx) => {
-          const layerId = `travel-ring-layer-${idx}`
-          const sourceId = `travel-ring-source-${idx}`
-          try {
-            if (map.getLayer(layerId)) map.removeLayer(layerId)
-            if (map.getLayer(`${layerId}-outline`)) map.removeLayer(`${layerId}-outline`)
-            if (map.getSource(sourceId)) map.removeSource(sourceId)
-          } catch {}
-        })
-        DENSITY_ZONES.forEach((zone) => {
-          const layerId = `density-layer-${zone.id}`
-          const sourceId = `density-zone-${zone.id}`
-          try {
-            if (map.getLayer(layerId)) map.removeLayer(layerId)
-            if (map.getSource(sourceId)) map.removeSource(sourceId)
-          } catch {}
-        })
-      } catch {}
+      if (!isMapValid(map)) return
+      TRAVEL_RINGS.forEach((_, idx) => {
+        const layerId = `travel-ring-layer-${idx}`
+        const sourceId = `travel-ring-source-${idx}`
+        if (map.getLayer(layerId)) map.removeLayer(layerId)
+        if (map.getLayer(`${layerId}-outline`)) map.removeLayer(`${layerId}-outline`)
+        if (map.getSource(sourceId)) map.removeSource(sourceId)
+      })
+      DENSITY_ZONES.forEach((zone) => {
+        const layerId = `density-layer-${zone.id}`
+        const sourceId = `density-zone-${zone.id}`
+        if (map.getLayer(layerId)) map.removeLayer(layerId)
+        if (map.getSource(sourceId)) map.removeSource(sourceId)
+      })
     }
     
     cleanupLayers()
     
     if (!visible) return
     
-    if (showTravelRings) {
+    if (showTravelRings && isMapValid(map)) {
       TRAVEL_RINGS.forEach((ring, idx) => {
-        try {
-          const sourceId = `travel-ring-source-${idx}`
-          const layerId = `travel-ring-layer-${idx}`
+        if (!isMapValid(map)) return
+        const sourceId = `travel-ring-source-${idx}`
+        const layerId = `travel-ring-layer-${idx}`
+        
+        if (!map.getSource(sourceId)) {
+          const points = 64
+          const coords: [number, number][] = []
           
-          if (!map.getSource(sourceId)) {
-            const points = 64
-            const coords: [number, number][] = []
-            
-            for (let i = 0; i <= points; i++) {
-              const angle = (i / points) * 2 * Math.PI
-              const dx = ring.radius * Math.cos(angle)
-              const dy = ring.radius * Math.sin(angle)
-              const lat = centerLat + (dy / 111320)
-              const lng = centerLng + (dx / (111320 * Math.cos(centerLat * Math.PI / 180)))
-              coords.push([lng, lat])
-            }
-            
-            map.addSource(sourceId, {
-              type: "geojson",
-              data: {
-                type: "Feature",
-                properties: { minutes: ring.minutes },
-                geometry: {
-                  type: "Polygon",
-                  coordinates: [coords]
-                }
-              }
-            })
-            
-            map.addLayer({
-              id: layerId,
-              type: "fill",
-              source: sourceId,
-              paint: {
-                "fill-color": ring.color,
-                "fill-opacity": ring.opacity
-              }
-            })
-            
-            map.addLayer({
-              id: `${layerId}-outline`,
-              type: "line",
-              source: sourceId,
-              paint: {
-                "line-color": ring.color,
-                "line-width": 1.5,
-                "line-opacity": 0.4,
-                "line-dasharray": [4, 2]
-              }
-            })
+          for (let i = 0; i <= points; i++) {
+            const angle = (i / points) * 2 * Math.PI
+            const dx = ring.radius * Math.cos(angle)
+            const dy = ring.radius * Math.sin(angle)
+            const lat = centerLat + (dy / 111320)
+            const lng = centerLng + (dx / (111320 * Math.cos(centerLat * Math.PI / 180)))
+            coords.push([lng, lat])
           }
-        } catch {}
+          
+          map.addSource(sourceId, {
+            type: "geojson",
+            data: {
+              type: "Feature",
+              properties: { minutes: ring.minutes },
+              geometry: {
+                type: "Polygon",
+                coordinates: [coords]
+              }
+            }
+          })
+          
+          map.addLayer({
+            id: layerId,
+            type: "fill",
+            source: sourceId,
+            paint: {
+              "fill-color": ring.color,
+              "fill-opacity": ring.opacity
+            }
+          })
+          
+          map.addLayer({
+            id: `${layerId}-outline`,
+            type: "line",
+            source: sourceId,
+            paint: {
+              "line-color": ring.color,
+              "line-width": 1.5,
+              "line-opacity": 0.4,
+              "line-dasharray": [4, 2]
+            }
+          })
+        }
       })
     }
     
-    if (visible && showDensity) {
+    if (visible && showDensity && isMapValid(map)) {
       DENSITY_ZONES.forEach((zone) => {
-        try {
-          const sourceId = `density-zone-${zone.id}`
-          const layerId = `density-layer-${zone.id}`
+        if (!isMapValid(map)) return
+        const sourceId = `density-zone-${zone.id}`
+        const layerId = `density-layer-${zone.id}`
+        
+        if (!map.getSource(sourceId)) {
+          const points = 32
+          const coords: [number, number][] = []
           
-          if (!map.getSource(sourceId)) {
-            const points = 32
-            const coords: [number, number][] = []
-            
-            for (let i = 0; i <= points; i++) {
-              const angle = (i / points) * 2 * Math.PI
-              const dx = zone.radius * Math.cos(angle)
-              const dy = zone.radius * Math.sin(angle)
-              const lat = zone.lat + (dy / 111320)
-              const lng = zone.lng + (dx / (111320 * Math.cos(zone.lat * Math.PI / 180)))
-              coords.push([lng, lat])
-            }
-            
-            map.addSource(sourceId, {
-              type: "geojson",
-              data: {
-                type: "Feature",
-                properties: { intensity: zone.intensity },
-                geometry: {
-                  type: "Polygon",
-                  coordinates: [coords]
-                }
-              }
-            })
-            
-            map.addLayer({
-              id: layerId,
-              type: "fill",
-              source: sourceId,
-              paint: {
-                "fill-color": intensityColors[zone.intensity],
-                "fill-opacity": 1
-              }
-            })
+          for (let i = 0; i <= points; i++) {
+            const angle = (i / points) * 2 * Math.PI
+            const dx = zone.radius * Math.cos(angle)
+            const dy = zone.radius * Math.sin(angle)
+            const lat = zone.lat + (dy / 111320)
+            const lng = zone.lng + (dx / (111320 * Math.cos(zone.lat * Math.PI / 180)))
+            coords.push([lng, lat])
           }
-        } catch {}
+          
+          map.addSource(sourceId, {
+            type: "geojson",
+            data: {
+              type: "Feature",
+              properties: { intensity: zone.intensity },
+              geometry: {
+                type: "Polygon",
+                coordinates: [coords]
+              }
+            }
+          })
+          
+          map.addLayer({
+            id: layerId,
+            type: "fill",
+            source: sourceId,
+            paint: {
+              "fill-color": intensityColors[zone.intensity],
+              "fill-opacity": 1
+            }
+          })
+        }
       })
     }
     

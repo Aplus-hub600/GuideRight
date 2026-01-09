@@ -92,6 +92,10 @@ interface MapActivityLayerProps {
   onZoneClick?: (zone: ActivityZone) => void
 }
 
+const isMapValid = (m: maplibregl.Map | null): m is maplibregl.Map => {
+  return m !== null && typeof m.getStyle === 'function' && m.getStyle() !== undefined
+}
+
 export function useMapActivityLayer({
   map,
   isMapReady,
@@ -107,25 +111,23 @@ export function useMapActivityLayer({
     markersRef.current = []
     
     const cleanupLayers = () => {
-      try {
-        MOCK_ACTIVITY_ZONES.forEach((zone) => {
-          const layerId = `activity-layer-${zone.id}`
-          const sourceId = `activity-zone-${zone.id}`
-          try {
-            if (map.getLayer(layerId)) map.removeLayer(layerId)
-            if (map.getLayer(`${layerId}-outline`)) map.removeLayer(`${layerId}-outline`)
-            if (map.getSource(sourceId)) map.removeSource(sourceId)
-          } catch {}
-        })
-      } catch {}
+      if (!isMapValid(map)) return
+      MOCK_ACTIVITY_ZONES.forEach((zone) => {
+        const layerId = `activity-layer-${zone.id}`
+        const sourceId = `activity-zone-${zone.id}`
+        if (map.getLayer(layerId)) map.removeLayer(layerId)
+        if (map.getLayer(`${layerId}-outline`)) map.removeLayer(`${layerId}-outline`)
+        if (map.getSource(sourceId)) map.removeSource(sourceId)
+      })
     }
     
     cleanupLayers()
     
     if (!visible) return
     
-    MOCK_ACTIVITY_ZONES.forEach((zone) => {
-      try {
+    if (isMapValid(map)) {
+      MOCK_ACTIVITY_ZONES.forEach((zone) => {
+        if (!isMapValid(map)) return
         const sourceId = `activity-zone-${zone.id}`
         const layerId = `activity-layer-${zone.id}`
         const style = intensityStyles[zone.intensity]
@@ -209,8 +211,8 @@ export function useMapActivityLayer({
           .addTo(map)
         
         markersRef.current.push(marker)
-      } catch {}
-    })
+      })
+    }
     
     return () => {
       markersRef.current.forEach(m => m.remove())

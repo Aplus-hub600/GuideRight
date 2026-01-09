@@ -81,6 +81,10 @@ interface MapRiskLayerProps {
   onZoneClick?: (zone: RiskZone) => void
 }
 
+const isMapValid = (m: maplibregl.Map | null): m is maplibregl.Map => {
+  return m !== null && typeof m.getStyle === 'function' && m.getStyle() !== undefined
+}
+
 export function useMapRiskLayer({
   map,
   isMapReady,
@@ -96,25 +100,23 @@ export function useMapRiskLayer({
     markersRef.current = []
     
     const cleanupLayers = () => {
-      try {
-        MOCK_RISK_ZONES.forEach((zone) => {
-          const layerId = `risk-layer-${zone.id}`
-          const sourceId = `risk-zone-${zone.id}`
-          try {
-            if (map.getLayer(layerId)) map.removeLayer(layerId)
-            if (map.getLayer(`${layerId}-outline`)) map.removeLayer(`${layerId}-outline`)
-            if (map.getSource(sourceId)) map.removeSource(sourceId)
-          } catch {}
-        })
-      } catch {}
+      if (!isMapValid(map)) return
+      MOCK_RISK_ZONES.forEach((zone) => {
+        const layerId = `risk-layer-${zone.id}`
+        const sourceId = `risk-zone-${zone.id}`
+        if (map.getLayer(layerId)) map.removeLayer(layerId)
+        if (map.getLayer(`${layerId}-outline`)) map.removeLayer(`${layerId}-outline`)
+        if (map.getSource(sourceId)) map.removeSource(sourceId)
+      })
     }
     
     cleanupLayers()
     
     if (!visible) return
     
-    MOCK_RISK_ZONES.forEach((zone) => {
-      try {
+    if (isMapValid(map)) {
+      MOCK_RISK_ZONES.forEach((zone) => {
+        if (!isMapValid(map)) return
         const sourceId = `risk-zone-${zone.id}`
         const layerId = `risk-layer-${zone.id}`
         const style = riskStyles[zone.riskLevel]
@@ -210,8 +212,8 @@ export function useMapRiskLayer({
           .addTo(map)
         
         markersRef.current.push(marker)
-      } catch {}
-    })
+      })
+    }
     
     return () => {
       markersRef.current.forEach(m => m.remove())
