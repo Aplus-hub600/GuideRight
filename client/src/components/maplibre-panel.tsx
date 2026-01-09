@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from "react"
+import { useEffect, useRef, useState, useCallback, useMemo } from "react"
 import maplibregl from "maplibre-gl"
 import "maplibre-gl/dist/maplibre-gl.css"
 import { Button } from "@/components/ui/button"
@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils"
 import { ScenarioSelector } from "./scenario-selector"
 import { MapScopeBar, type DataCoverage } from "./map-scope-bar"
 import { MapLensSelector, LensLegend, type MapLens, LENS_CONFIGS } from "./map-lens-selector"
-import { useMapInfrastructureLayer, MOCK_INFRASTRUCTURE_NODES, type InfrastructureNode } from "./map-infrastructure-layer"
+import { useMapInfrastructureLayer, generateInfrastructureNodes, type InfrastructureNode } from "./map-infrastructure-layer"
 import { useMapAccessibilityLayer } from "./map-accessibility-layer"
 import { useMapActivityLayer } from "./map-activity-layer"
 import { useMapRiskLayer } from "./map-risk-layer"
@@ -107,10 +107,15 @@ export function MapLibrePanel({
   
   const dynamicCoverage = getDataCoverage(zoomLevel, activeLens)
   
+  const centerLat = aoi?.lat || 23.8103
+  const centerLng = aoi?.lng || 90.4125
+  
+  const infrastructureNodes = useMemo(() => generateInfrastructureNodes(centerLat, centerLng), [centerLat, centerLng])
+  
   useMapInfrastructureLayer({
     map: map.current,
     isMapReady,
-    nodes: MOCK_INFRASTRUCTURE_NODES,
+    nodes: infrastructureNodes,
     onNodeClick: setSelectedInfraNode,
     visible: activeLens === "infrastructure"
   })
@@ -118,8 +123,8 @@ export function MapLibrePanel({
   useMapAccessibilityLayer({
     map: map.current,
     isMapReady,
-    centerLat: aoi?.lat || 23.8103,
-    centerLng: aoi?.lng || 90.4125,
+    centerLat,
+    centerLng,
     visible: activeLens === "infrastructure",
     showTravelRings: true,
     showDensity: true
@@ -128,19 +133,25 @@ export function MapLibrePanel({
   useMapActivityLayer({
     map: map.current,
     isMapReady,
-    visible: activeLens === "human-activity"
+    visible: activeLens === "human-activity",
+    centerLat,
+    centerLng
   })
   
   useMapRiskLayer({
     map: map.current,
     isMapReady,
-    visible: activeLens === "risk-stress"
+    visible: activeLens === "risk-stress",
+    centerLat,
+    centerLng
   })
   
   useMapLogisticsLayer({
     map: map.current,
     isMapReady,
-    visible: activeLens === "logistics"
+    visible: activeLens === "logistics",
+    centerLat,
+    centerLng
   })
 
   // Map tile sources with English labels (no API key needed)

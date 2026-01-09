@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useMemo } from "react"
 import maplibregl from "maplibre-gl"
 
 export type RiskLevel = "low" | "moderate" | "elevated" | "high"
@@ -14,58 +14,60 @@ export interface RiskZone {
   lastAssessed?: string
 }
 
-const MOCK_RISK_ZONES: RiskZone[] = [
-  {
-    id: "risk-1",
-    name: "Old Dhaka District",
-    lat: 23.7100,
-    lng: 90.4050,
-    radius: 2000,
-    riskLevel: "elevated",
-    factors: ["Dense population", "Narrow egress routes", "Historical incidents"],
-    lastAssessed: "Today"
-  },
-  {
-    id: "risk-2",
-    name: "Industrial Zone",
-    lat: 23.7650,
-    lng: 90.3600,
-    radius: 1800,
-    riskLevel: "moderate",
-    factors: ["Industrial hazards", "Limited emergency access"],
-    lastAssessed: "Yesterday"
-  },
-  {
-    id: "risk-3",
-    name: "Diplomatic Quarter",
-    lat: 23.7950,
-    lng: 90.4250,
-    radius: 1200,
-    riskLevel: "low",
-    factors: ["Enhanced security", "Controlled access"],
-    lastAssessed: "Today"
-  },
-  {
-    id: "risk-4",
-    name: "River Port Area",
-    lat: 23.7080,
-    lng: 90.4071,
-    radius: 1000,
-    riskLevel: "elevated",
-    factors: ["Cargo security", "Transient population"],
-    lastAssessed: "2 days ago"
-  },
-  {
-    id: "risk-5",
-    name: "University District",
-    lat: 23.7350,
-    lng: 90.3920,
-    radius: 1500,
-    riskLevel: "moderate",
-    factors: ["Protest activity", "Large gatherings"],
-    lastAssessed: "Today"
-  }
-]
+function generateRiskZones(centerLat: number, centerLng: number): RiskZone[] {
+  return [
+    {
+      id: "risk-1",
+      name: "Old Town District",
+      lat: centerLat - 0.020,
+      lng: centerLng - 0.005,
+      radius: 2000,
+      riskLevel: "elevated",
+      factors: ["Dense population", "Narrow egress routes", "Historical incidents"],
+      lastAssessed: "Today"
+    },
+    {
+      id: "risk-2",
+      name: "Industrial Zone",
+      lat: centerLat + 0.035,
+      lng: centerLng - 0.050,
+      radius: 1800,
+      riskLevel: "moderate",
+      factors: ["Industrial hazards", "Limited emergency access"],
+      lastAssessed: "Yesterday"
+    },
+    {
+      id: "risk-3",
+      name: "Diplomatic Quarter",
+      lat: centerLat + 0.065,
+      lng: centerLng + 0.015,
+      radius: 1200,
+      riskLevel: "low",
+      factors: ["Enhanced security", "Controlled access"],
+      lastAssessed: "Today"
+    },
+    {
+      id: "risk-4",
+      name: "Port Area",
+      lat: centerLat - 0.022,
+      lng: centerLng - 0.003,
+      radius: 1000,
+      riskLevel: "elevated",
+      factors: ["Cargo security", "Transient population"],
+      lastAssessed: "2 days ago"
+    },
+    {
+      id: "risk-5",
+      name: "University District",
+      lat: centerLat + 0.005,
+      lng: centerLng - 0.018,
+      radius: 1500,
+      riskLevel: "moderate",
+      factors: ["Protest activity", "Large gatherings"],
+      lastAssessed: "Today"
+    }
+  ]
+}
 
 const riskStyles: Record<RiskLevel, { fill: string; border: string }> = {
   low: { fill: "rgba(34, 197, 94, 0.15)", border: "#22c55e" },
@@ -78,6 +80,8 @@ interface MapRiskLayerProps {
   map: maplibregl.Map | null
   isMapReady: boolean
   visible: boolean
+  centerLat: number
+  centerLng: number
   onZoneClick?: (zone: RiskZone) => void
 }
 
@@ -89,9 +93,13 @@ export function useMapRiskLayer({
   map,
   isMapReady,
   visible,
+  centerLat,
+  centerLng,
   onZoneClick
 }: MapRiskLayerProps) {
   const markersRef = useRef<maplibregl.Marker[]>([])
+  
+  const riskZones = useMemo(() => generateRiskZones(centerLat, centerLng), [centerLat, centerLng])
   
   useEffect(() => {
     if (!map || !isMapReady) return
@@ -101,13 +109,13 @@ export function useMapRiskLayer({
     
     const cleanupLayers = () => {
       if (!isMapValid(map)) return
-      MOCK_RISK_ZONES.forEach((zone) => {
-        const layerId = `risk-layer-${zone.id}`
-        const sourceId = `risk-zone-${zone.id}`
+      for (let i = 1; i <= 5; i++) {
+        const layerId = `risk-layer-risk-${i}`
+        const sourceId = `risk-zone-risk-${i}`
         if (map.getLayer(layerId)) map.removeLayer(layerId)
         if (map.getLayer(`${layerId}-outline`)) map.removeLayer(`${layerId}-outline`)
         if (map.getSource(sourceId)) map.removeSource(sourceId)
-      })
+      }
     }
     
     cleanupLayers()
@@ -115,7 +123,7 @@ export function useMapRiskLayer({
     if (!visible) return
     
     if (isMapValid(map)) {
-      MOCK_RISK_ZONES.forEach((zone) => {
+      riskZones.forEach((zone) => {
         if (!isMapValid(map)) return
         const sourceId = `risk-zone-${zone.id}`
         const layerId = `risk-layer-${zone.id}`
@@ -220,5 +228,5 @@ export function useMapRiskLayer({
       markersRef.current = []
       cleanupLayers()
     }
-  }, [map, isMapReady, visible, onZoneClick])
+  }, [map, isMapReady, visible, riskZones, onZoneClick])
 }

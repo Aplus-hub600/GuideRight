@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useMemo } from "react"
 import maplibregl from "maplibre-gl"
 
 export type ActivityIntensity = "high" | "moderate" | "low"
@@ -15,63 +15,65 @@ export interface ActivityZone {
   lastReported?: string
 }
 
-const MOCK_ACTIVITY_ZONES: ActivityZone[] = [
-  {
-    id: "act-1",
-    name: "Shahbag Square",
-    lat: 23.7380,
-    lng: 90.3950,
-    radius: 800,
-    intensity: "high",
-    type: "gathering",
-    description: "Regular public gatherings, protests. University district.",
-    lastReported: "2 hours ago"
-  },
-  {
-    id: "act-2",
-    name: "Motijheel Commercial",
-    lat: 23.7300,
-    lng: 90.4180,
-    radius: 1200,
-    intensity: "moderate",
-    type: "movement",
-    description: "High foot traffic during business hours.",
-    lastReported: "1 hour ago"
-  },
-  {
-    id: "act-3",
-    name: "Gulshan Market",
-    lat: 23.7920,
-    lng: 90.4150,
-    radius: 600,
-    intensity: "moderate",
-    type: "gathering",
-    description: "Commercial activity, weekend gatherings.",
-    lastReported: "3 hours ago"
-  },
-  {
-    id: "act-4",
-    name: "Old Dhaka Markets",
-    lat: 23.7100,
-    lng: 90.4050,
-    radius: 1500,
-    intensity: "high",
-    type: "movement",
-    description: "Dense commercial activity, narrow streets.",
-    lastReported: "30 min ago"
-  },
-  {
-    id: "act-5",
-    name: "Farmgate Junction",
-    lat: 23.7580,
-    lng: 90.3880,
-    radius: 500,
-    intensity: "low",
-    type: "incident",
-    description: "Minor traffic incident reported.",
-    lastReported: "4 hours ago"
-  }
-]
+function generateActivityZones(centerLat: number, centerLng: number): ActivityZone[] {
+  return [
+    {
+      id: "act-1",
+      name: "Central Square",
+      lat: centerLat + 0.008,
+      lng: centerLng - 0.015,
+      radius: 800,
+      intensity: "high",
+      type: "gathering",
+      description: "Regular public gatherings, protests. University district.",
+      lastReported: "2 hours ago"
+    },
+    {
+      id: "act-2",
+      name: "Commercial District",
+      lat: centerLat,
+      lng: centerLng + 0.008,
+      radius: 1200,
+      intensity: "moderate",
+      type: "movement",
+      description: "High foot traffic during business hours.",
+      lastReported: "1 hour ago"
+    },
+    {
+      id: "act-3",
+      name: "Market Area",
+      lat: centerLat + 0.062,
+      lng: centerLng + 0.005,
+      radius: 600,
+      intensity: "moderate",
+      type: "gathering",
+      description: "Commercial activity, weekend gatherings.",
+      lastReported: "3 hours ago"
+    },
+    {
+      id: "act-4",
+      name: "Old Town Markets",
+      lat: centerLat - 0.020,
+      lng: centerLng - 0.005,
+      radius: 1500,
+      intensity: "high",
+      type: "movement",
+      description: "Dense commercial activity, narrow streets.",
+      lastReported: "30 min ago"
+    },
+    {
+      id: "act-5",
+      name: "Transit Junction",
+      lat: centerLat + 0.028,
+      lng: centerLng - 0.022,
+      radius: 500,
+      intensity: "low",
+      type: "incident",
+      description: "Minor traffic incident reported.",
+      lastReported: "4 hours ago"
+    }
+  ]
+}
 
 const intensityStyles = {
   high: { color: "rgba(239, 68, 68, 0.35)", border: "#ef4444" },
@@ -79,16 +81,12 @@ const intensityStyles = {
   low: { color: "rgba(34, 197, 94, 0.15)", border: "#22c55e" }
 }
 
-const typePatterns = {
-  gathering: "solid",
-  movement: "dashed",
-  incident: "dotted"
-}
-
 interface MapActivityLayerProps {
   map: maplibregl.Map | null
   isMapReady: boolean
   visible: boolean
+  centerLat: number
+  centerLng: number
   onZoneClick?: (zone: ActivityZone) => void
 }
 
@@ -100,9 +98,13 @@ export function useMapActivityLayer({
   map,
   isMapReady,
   visible,
+  centerLat,
+  centerLng,
   onZoneClick
 }: MapActivityLayerProps) {
   const markersRef = useRef<maplibregl.Marker[]>([])
+  
+  const activityZones = useMemo(() => generateActivityZones(centerLat, centerLng), [centerLat, centerLng])
   
   useEffect(() => {
     if (!map || !isMapReady) return
@@ -112,13 +114,13 @@ export function useMapActivityLayer({
     
     const cleanupLayers = () => {
       if (!isMapValid(map)) return
-      MOCK_ACTIVITY_ZONES.forEach((zone) => {
-        const layerId = `activity-layer-${zone.id}`
-        const sourceId = `activity-zone-${zone.id}`
+      for (let i = 1; i <= 5; i++) {
+        const layerId = `activity-layer-act-${i}`
+        const sourceId = `activity-zone-act-${i}`
         if (map.getLayer(layerId)) map.removeLayer(layerId)
         if (map.getLayer(`${layerId}-outline`)) map.removeLayer(`${layerId}-outline`)
         if (map.getSource(sourceId)) map.removeSource(sourceId)
-      })
+      }
     }
     
     cleanupLayers()
@@ -126,7 +128,7 @@ export function useMapActivityLayer({
     if (!visible) return
     
     if (isMapValid(map)) {
-      MOCK_ACTIVITY_ZONES.forEach((zone) => {
+      activityZones.forEach((zone) => {
         if (!isMapValid(map)) return
         const sourceId = `activity-zone-${zone.id}`
         const layerId = `activity-layer-${zone.id}`
@@ -219,5 +221,5 @@ export function useMapActivityLayer({
       markersRef.current = []
       cleanupLayers()
     }
-  }, [map, isMapReady, visible, onZoneClick])
+  }, [map, isMapReady, visible, activityZones, onZoneClick])
 }

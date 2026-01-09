@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useMemo } from "react"
 import maplibregl from "maplibre-gl"
 
 export type RouteStatus = "clear" | "congested" | "blocked" | "restricted"
@@ -22,75 +22,98 @@ export interface SupplyPoint {
   notes?: string
 }
 
-const MOCK_ROUTES: LogisticsRoute[] = [
-  {
-    id: "route-1",
-    name: "Airport Corridor",
-    status: "clear",
-    coordinates: [[90.3978, 23.8433], [90.4000, 23.8200], [90.4050, 23.7900], [90.4100, 23.7600]],
-    notes: "Primary access to Shahjalal International Airport"
-  },
-  {
-    id: "route-2",
-    name: "Chittagong Highway",
-    status: "congested",
-    coordinates: [[90.4260, 23.7326], [90.4400, 23.7100], [90.4550, 23.6850], [90.4700, 23.6600]],
-    notes: "Heavy commercial traffic during business hours"
-  },
-  {
-    id: "route-3",
-    name: "Mirpur Road",
-    status: "clear",
-    coordinates: [[90.3780, 23.7625], [90.3700, 23.7800], [90.3650, 23.8000], [90.3600, 23.8200]],
-    notes: "Alternative north-south corridor"
-  },
-  {
-    id: "route-4",
-    name: "Old Dhaka Access",
-    status: "restricted",
-    coordinates: [[90.4051, 23.7182], [90.4071, 23.7080], [90.4100, 23.7000]],
-    notes: "Narrow streets, vehicle size restrictions"
-  }
-]
+function generateRoutes(centerLat: number, centerLng: number): LogisticsRoute[] {
+  return [
+    {
+      id: "route-1",
+      name: "Airport Corridor",
+      status: "clear",
+      coordinates: [
+        [centerLng - 0.012, centerLat + 0.033],
+        [centerLng - 0.010, centerLat + 0.010],
+        [centerLng - 0.005, centerLat - 0.020],
+        [centerLng, centerLat - 0.050]
+      ],
+      notes: "Primary access to international airport"
+    },
+    {
+      id: "route-2",
+      name: "Highway South",
+      status: "congested",
+      coordinates: [
+        [centerLng + 0.016, centerLat + 0.003],
+        [centerLng + 0.030, centerLat - 0.020],
+        [centerLng + 0.045, centerLat - 0.045],
+        [centerLng + 0.060, centerLat - 0.070]
+      ],
+      notes: "Heavy commercial traffic during business hours"
+    },
+    {
+      id: "route-3",
+      name: "Western Bypass",
+      status: "clear",
+      coordinates: [
+        [centerLng - 0.032, centerLat + 0.003],
+        [centerLng - 0.040, centerLat + 0.020],
+        [centerLng - 0.045, centerLat + 0.040],
+        [centerLng - 0.050, centerLat + 0.060]
+      ],
+      notes: "Alternative north-south corridor"
+    },
+    {
+      id: "route-4",
+      name: "Old Town Access",
+      status: "restricted",
+      coordinates: [
+        [centerLng - 0.005, centerLat - 0.012],
+        [centerLng - 0.003, centerLat - 0.022],
+        [centerLng, centerLat - 0.030]
+      ],
+      notes: "Narrow streets, vehicle size restrictions"
+    }
+  ]
+}
 
-const MOCK_SUPPLY_POINTS: SupplyPoint[] = [
-  {
-    id: "supply-1",
-    name: "Bashundhara Fuel Depot",
-    type: "fuel",
-    lat: 23.8100,
-    lng: 90.4300,
-    status: "operational",
-    notes: "24/7 operation, large capacity"
-  },
-  {
-    id: "supply-2",
-    name: "Gulshan Medical Supply",
-    type: "medical",
-    lat: 23.7920,
-    lng: 90.4150,
-    status: "operational",
-    notes: "Full pharmaceutical stock"
-  },
-  {
-    id: "supply-3",
-    name: "Mohakhali Fuel Station",
-    type: "fuel",
-    lat: 23.7780,
-    lng: 90.4020,
-    status: "limited",
-    notes: "Diesel shortage reported"
-  },
-  {
-    id: "supply-4",
-    name: "Central Food Distribution",
-    type: "food",
-    lat: 23.7400,
-    lng: 90.4000,
-    status: "operational",
-    notes: "Wholesale distribution hub"
-  }
-]
+function generateSupplyPoints(centerLat: number, centerLng: number): SupplyPoint[] {
+  return [
+    {
+      id: "supply-1",
+      name: "North Fuel Depot",
+      type: "fuel",
+      lat: centerLat + 0.080,
+      lng: centerLng + 0.020,
+      status: "operational",
+      notes: "24/7 operation, large capacity"
+    },
+    {
+      id: "supply-2",
+      name: "Central Medical Supply",
+      type: "medical",
+      lat: centerLat + 0.062,
+      lng: centerLng + 0.005,
+      status: "operational",
+      notes: "Full pharmaceutical stock"
+    },
+    {
+      id: "supply-3",
+      name: "East Fuel Station",
+      type: "fuel",
+      lat: centerLat + 0.048,
+      lng: centerLng - 0.008,
+      status: "limited",
+      notes: "Diesel shortage reported"
+    },
+    {
+      id: "supply-4",
+      name: "Central Food Distribution",
+      type: "food",
+      lat: centerLat + 0.010,
+      lng: centerLng - 0.010,
+      status: "operational",
+      notes: "Wholesale distribution hub"
+    }
+  ]
+}
 
 const routeColors: Record<RouteStatus, string> = {
   clear: "#22c55e",
@@ -117,6 +140,8 @@ interface MapLogisticsLayerProps {
   map: maplibregl.Map | null
   isMapReady: boolean
   visible: boolean
+  centerLat: number
+  centerLng: number
 }
 
 const isMapValid = (m: maplibregl.Map | null): m is maplibregl.Map => {
@@ -126,9 +151,14 @@ const isMapValid = (m: maplibregl.Map | null): m is maplibregl.Map => {
 export function useMapLogisticsLayer({
   map,
   isMapReady,
-  visible
+  visible,
+  centerLat,
+  centerLng
 }: MapLogisticsLayerProps) {
   const markersRef = useRef<maplibregl.Marker[]>([])
+  
+  const routes = useMemo(() => generateRoutes(centerLat, centerLng), [centerLat, centerLng])
+  const supplyPoints = useMemo(() => generateSupplyPoints(centerLat, centerLng), [centerLat, centerLng])
   
   useEffect(() => {
     if (!map || !isMapReady) return
@@ -138,12 +168,12 @@ export function useMapLogisticsLayer({
     
     const cleanupLayers = () => {
       if (!isMapValid(map)) return
-      MOCK_ROUTES.forEach((route) => {
-        const layerId = `logistics-layer-${route.id}`
-        const sourceId = `logistics-route-${route.id}`
+      for (let i = 1; i <= 4; i++) {
+        const layerId = `logistics-layer-route-${i}`
+        const sourceId = `logistics-route-route-${i}`
         if (map.getLayer(layerId)) map.removeLayer(layerId)
         if (map.getSource(sourceId)) map.removeSource(sourceId)
-      })
+      }
     }
     
     cleanupLayers()
@@ -151,7 +181,7 @@ export function useMapLogisticsLayer({
     if (!visible) return
     
     if (isMapValid(map)) {
-      MOCK_ROUTES.forEach((route) => {
+      routes.forEach((route) => {
         if (!isMapValid(map)) return
         const sourceId = `logistics-route-${route.id}`
         const layerId = `logistics-layer-${route.id}`
@@ -191,7 +221,7 @@ export function useMapLogisticsLayer({
         }
       })
       
-      MOCK_SUPPLY_POINTS.forEach((point) => {
+      supplyPoints.forEach((point) => {
         if (!isMapValid(map)) return
         const color = supplyColors[point.type]
         const icon = supplyIcons[point.type]
@@ -245,5 +275,5 @@ export function useMapLogisticsLayer({
       markersRef.current = []
       cleanupLayers()
     }
-  }, [map, isMapReady, visible])
+  }, [map, isMapReady, visible, routes, supplyPoints])
 }
