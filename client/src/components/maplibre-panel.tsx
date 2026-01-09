@@ -7,6 +7,14 @@ import { Navigation, Target, Layers, MapPin, Crosshair, ZoomIn, ZoomOut } from "
 import { useTranslation } from "react-i18next"
 import { cn } from "@/lib/utils"
 import { ScenarioSelector } from "./scenario-selector"
+import { MapScopeBar, type DataCoverage } from "./map-scope-bar"
+import { MapLensSelector, LensLegend, type MapLens, LENS_CONFIGS } from "./map-lens-selector"
+import { useMapInfrastructureLayer, MOCK_INFRASTRUCTURE_NODES, type InfrastructureNode } from "./map-infrastructure-layer"
+import { useMapAccessibilityLayer } from "./map-accessibility-layer"
+import { useMapActivityLayer } from "./map-activity-layer"
+import { useMapRiskLayer } from "./map-risk-layer"
+import { useMapLogisticsLayer } from "./map-logistics-layer"
+import { MapContextPanel } from "./map-context-panel"
 
 interface AOI {
   name?: string
@@ -62,6 +70,78 @@ export function MapLibrePanel({
   
   const [mapStyle, setMapStyle] = useState<"satellite" | "streets" | "hybrid">("streets")
   const [isMapReady, setIsMapReady] = useState(false)
+  const [activeLens, setActiveLens] = useState<MapLens>("infrastructure")
+  const [zoomLevel, setZoomLevel] = useState(10)
+  const [selectedInfraNode, setSelectedInfraNode] = useState<InfrastructureNode | null>(null)
+  
+  const getDataCoverage = (zoom: number, lens: MapLens): DataCoverage => {
+    switch (lens) {
+      case "infrastructure":
+        return {
+          infrastructure: zoom >= 12 ? "high" : zoom >= 9 ? "medium" : "low",
+          humanActivity: "sparse",
+          temporal: zoom >= 10 ? "current" : "recent"
+        }
+      case "human-activity":
+        return {
+          infrastructure: "sparse",
+          humanActivity: zoom >= 14 ? "high" : zoom >= 11 ? "medium" : "low",
+          temporal: zoom >= 12 ? "current" : zoom >= 8 ? "recent" : "limited"
+        }
+      case "risk-stress":
+        return {
+          infrastructure: "sparse",
+          humanActivity: zoom >= 12 ? "medium" : "low",
+          temporal: zoom >= 10 ? "current" : "recent"
+        }
+      case "logistics":
+        return {
+          infrastructure: zoom >= 10 ? "medium" : "low",
+          humanActivity: "sparse",
+          temporal: zoom >= 8 ? "current" : "limited"
+        }
+      default:
+        return { infrastructure: "low", humanActivity: "low", temporal: "limited" }
+    }
+  }
+  
+  const dynamicCoverage = getDataCoverage(zoomLevel, activeLens)
+  
+  useMapInfrastructureLayer({
+    map: map.current,
+    isMapReady,
+    nodes: MOCK_INFRASTRUCTURE_NODES,
+    onNodeClick: setSelectedInfraNode,
+    visible: activeLens === "infrastructure"
+  })
+  
+  useMapAccessibilityLayer({
+    map: map.current,
+    isMapReady,
+    centerLat: aoi?.lat || 23.8103,
+    centerLng: aoi?.lng || 90.4125,
+    visible: activeLens === "infrastructure",
+    showTravelRings: true,
+    showDensity: true
+  })
+  
+  useMapActivityLayer({
+    map: map.current,
+    isMapReady,
+    visible: activeLens === "human-activity"
+  })
+  
+  useMapRiskLayer({
+    map: map.current,
+    isMapReady,
+    visible: activeLens === "risk-stress"
+  })
+  
+  useMapLogisticsLayer({
+    map: map.current,
+    isMapReady,
+    visible: activeLens === "logistics"
+  })
 
   // OpenStreetMap tile sources (no API key needed)
   const tileSources = {
@@ -115,6 +195,12 @@ export function MapLibrePanel({
 
     map.current.on("load", () => {
       setIsMapReady(true)
+    })
+    
+    map.current.on("zoom", () => {
+      if (map.current) {
+        setZoomLevel(Math.round(map.current.getZoom()))
+      }
     })
 
     // Click to set AOI
@@ -315,39 +401,70 @@ export function MapLibrePanel({
       {/* Map Container */}
       <div ref={mapContainer} className="absolute inset-0" data-testid="map-container" />
 
-      {/* Map Controls Overlay */}
-      <div className="absolute top-3 left-3 z-10 flex flex-col gap-2">
-        {/* Scenario Selector */}
+      {/* Scope Bar - Top Left (Non-Negotiable per blueprint) */}
+      <div className="absolute top-3 left-3 right-3 z-10">
+        <MapScopeBar
+          aoiName={aoi?.name || selectedODINCountry}
+          scope="metropolitan"
+          coverage={dynamicCoverage}
+          zoomLevel={zoomLevel}
+        />
+      </div>
+
+      {/* Left Rail: Lens Selector + Scenario + Style */}
+      <div className="absolute top-16 left-3 z-10 flex flex-col gap-2">
+        <MapLensSelector
+          activeLens={activeLens}
+          onLensChange={setActiveLens}
+        />
+        
         <ScenarioSelector
           selectedCountry={selectedODINCountry}
           onScenarioChange={onODINCountryChange}
         />
 
-        {/* Style Selector */}
-        <div className="flex gap-1 bg-background/90 backdrop-blur rounded-md p-1 border">
+        <div className="flex flex-col gap-0.5 bg-background/95 backdrop-blur-sm rounded-md border overflow-hidden">
           <Button
             size="sm"
             variant={mapStyle === "streets" ? "default" : "ghost"}
             onClick={() => setMapStyle("streets")}
+            className="rounded-none justify-start gap-2 h-8"
             data-testid="button-map-streets"
           >
-            <Layers className="h-4 w-4 mr-1" />
-            Streets
+            <Layers className="h-3.5 w-3.5" />
+            <span className="text-xs">Streets</span>
           </Button>
           <Button
             size="sm"
             variant={mapStyle === "satellite" ? "default" : "ghost"}
             onClick={() => setMapStyle("satellite")}
+            className="rounded-none justify-start gap-2 h-8"
             data-testid="button-map-satellite"
           >
-            <Target className="h-4 w-4 mr-1" />
-            Satellite
+            <Target className="h-3.5 w-3.5" />
+            <span className="text-xs">Satellite</span>
           </Button>
         </div>
       </div>
+      
+      {/* Legend - Bottom Left */}
+      <div className="absolute bottom-16 left-3 z-10">
+        <LensLegend activeLens={activeLens} />
+      </div>
+      
+      {/* Context Panel - Right Side */}
+      <div className="absolute top-16 right-3 bottom-3 w-80 z-10">
+        <div className="h-full bg-background/95 backdrop-blur-sm border rounded-md shadow-sm overflow-hidden">
+          <MapContextPanel
+            aoiName={aoi?.name || selectedODINCountry || "Dhaka"}
+            activeLens={activeLens}
+            selectedNode={selectedInfraNode}
+          />
+        </div>
+      </div>
 
-      {/* Zoom Controls */}
-      <div className="absolute bottom-20 right-3 z-10 flex flex-col gap-1">
+      {/* Zoom Controls - positioned left of context panel */}
+      <div className="absolute bottom-20 right-[22rem] z-10 flex flex-col gap-1">
         <Button size="icon" variant="secondary" onClick={handleZoomIn} data-testid="button-zoom-in">
           <ZoomIn className="h-4 w-4" />
         </Button>
@@ -361,32 +478,9 @@ export function MapLibrePanel({
         )}
       </div>
 
-      {/* AOI Info Badge */}
-      {aoi && (
-        <div className="absolute bottom-3 left-3 z-10">
-          <Badge variant="secondary" className="bg-background/90 backdrop-blur">
-            <MapPin className="h-3 w-3 mr-1" />
-            {aoi.name || `${aoi.lat.toFixed(4)}, ${aoi.lng.toFixed(4)}`}
-            {aoi.radiusKm && ` (${aoi.radiusKm}km)`}
-          </Badge>
-        </div>
-      )}
-
-      {/* Risk Score Badge */}
-      {riskScore !== undefined && (
-        <div className="absolute top-3 right-3 z-10">
-          <Badge 
-            variant={riskScore >= 75 ? "destructive" : riskScore >= 50 ? "secondary" : "default"}
-            className="text-sm"
-          >
-            Risk: {riskScore}%
-          </Badge>
-        </div>
-      )}
-
-      {/* Movement Plan Button */}
+      {/* Movement Plan Button - positioned left of context panel */}
       {onMovementPlanRequest && (
-        <div className="absolute bottom-3 right-3 z-10">
+        <div className="absolute bottom-3 right-[22rem] z-10">
           <Button size="sm" onClick={onMovementPlanRequest} data-testid="button-movement-plan">
             <Navigation className="h-4 w-4 mr-1" />
             Plan Route

@@ -1,0 +1,233 @@
+Final Design Decision (Locked)
+
+Adopt: Lens-Driven, Scope-Aware Intelligence Map
+Visual Style: Command-grade, subdued, analytical (3rd image)
+
+4
+
+This style communicates:
+
+seriousness
+
+restraint
+
+trust
+
+analytical depth
+—not consumer mapping or encyclopedic AI.
+
+GuideRight Map UX — Final Blueprint
+1️⃣ Persistent Scope Bar (Top-Left, Non-Negotiable)
+
+This is the single most important upgrade.
+
+Always visible:
+
+AOI: Dhaka
+Scope: Metropolitan Area
+Data Coverage: High (Infrastructure) | Medium (Human Activity)
+
+
+Behavior:
+
+Scope auto-updates with zoom
+
+Coverage colors update live
+
+Tooltip explains limitations (quietly)
+
+This solves Angul and Dhaka issues instantly.
+
+2️⃣ Map Lenses (Primary Interaction Model)
+
+Instead of “layers everywhere”, GuideRight uses one active Lens at a time.
+
+Lens Selector (Left rail or top-right)
+
+Infrastructure
+
+Human Activity
+
+Risk & Stress
+
+Logistics & Mobility
+
+Each Lens:
+
+Controls visible layers
+
+Changes legend
+
+Alters confidence logic
+
+Rewrites suggested questions
+
+This is what separates analysis platforms from map apps.
+
+3️⃣ Infrastructure Lens (Dhaka shines here)
+
+This is where Gemini was strong — GuideRight must be stronger visually.
+
+What appears on the map
+
+Hospitals (classified icons)
+
+Public / Private / Specialized
+
+Transport nodes
+
+Rail hubs
+
+Expressways
+
+Metro lines
+
+Utilities
+
+Power
+
+Water facilities
+
+Visual language
+
+Muted base map
+
+Infrastructure nodes = crisp, restrained icons
+
+No bright colors unless alerting
+
+Confidence encoding
+
+Solid icon → multi-source verified
+
+Hollow icon → single source
+
+Faded icon → inferred / aging
+
+Hover ≠ story
+Click = Context Panel update
+
+4️⃣ Context Panel (Right Side — Not Chat)
+
+This replaces encyclopedic text dumps.
+
+Structure (fixed, calm):
+
+Context Summary (6–8 lines, frozen)
+
+Infrastructure Observations
+
+Coverage & Gaps
+
+Evidence Sources
+
+Confidence Indicator
+
+No streaming. No emojis. No fluff.
+This makes outputs feel authored, not generated.
+
+5️⃣ Density & Accessibility (Instead of Lists)
+
+For hospitals in Dhaka:
+
+Density heat shading
+
+15 / 30 / 60 min travel rings
+
+Population stress indicator (qualitative is fine)
+
+Now the system answers:
+
+“How resilient is healthcare access?”
+
+—not:
+
+“Here is a list.”
+
+This is premium analytical UX.
+
+6️⃣ Human Activity Lens (Fixes riot/protest questions)
+
+This lens avoids false precision.
+
+Replace “counts” with:
+
+Activity intensity bands
+
+Temporal clustering
+
+Evidence-linked events
+
+Visual rules:
+
+Dotted overlays = inferred
+
+Solid markers = reported
+
+Muted palette = uncertainty
+
+Tooltip:
+
+“Sparse reporting at ward level”
+
+This makes honesty feel intentional, not apologetic.
+
+7️⃣ Guided Questions (Map-Aware Prompts)
+
+When Dhaka + Infrastructure Lens is active:
+
+“Show healthcare access gaps”
+
+“Identify transport chokepoints”
+
+“Which wards are under-served?”
+
+When Human Activity Lens is active:
+
+“Types of public disorder observed”
+
+“Primary protest drivers”
+
+“Comparison to adjacent districts”
+
+This prevents bad questions without restricting exploration.
+
+8️⃣ Motion & Feel (Critical for Premium)
+
+Match the 3rd image’s restraint:
+
+No bouncy animations
+
+Transitions <150ms
+
+Fade > slide
+
+Map never flashes blank
+
+Previous state stays visible during updates
+
+Calm = authority.
+
+What This Solves (Explicitly)
+Problem	Solved By
+Angul confusion	Scope + Coverage UI
+Hyper-local failure	Zoom-aware confidence scaling
+Dhaka text overload	Spatialized infrastructure
+Riot count question	Intensity bands + evidence
+“Feels like Gemini”	Lens-driven examination model
+“Not premium”	Restrained, authored UI
+Implementation Order (Realistic, High Impact)
+
+Add Scope + Coverage bar
+
+Implement Lens selector (Infrastructure first)
+
+Move hospitals + transport to map nodes
+
+Redesign right panel as Context (no chat)
+
+Add density + accessibility overlays
+
+Tune colors + remove visual noise
+
+After step 3 alone, the system will already feel different.
