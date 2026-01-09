@@ -1,6 +1,9 @@
 import { useEffect } from "react"
 import maplibregl from "maplibre-gl"
 
+const DHAKA_LAT = 23.8103
+const DHAKA_LNG = 90.4125
+
 interface TravelRing {
   minutes: number
   radius: number
@@ -38,8 +41,6 @@ const intensityColors = {
 interface MapAccessibilityLayerProps {
   map: maplibregl.Map | null
   isMapReady: boolean
-  centerLat: number
-  centerLng: number
   visible: boolean
   showTravelRings: boolean
   showDensity: boolean
@@ -52,8 +53,6 @@ const isMapValid = (m: maplibregl.Map | null): m is maplibregl.Map => {
 export function useMapAccessibilityLayer({
   map,
   isMapReady,
-  centerLat,
-  centerLng,
   visible,
   showTravelRings,
   showDensity
@@ -96,8 +95,8 @@ export function useMapAccessibilityLayer({
             const angle = (i / points) * 2 * Math.PI
             const dx = ring.radius * Math.cos(angle)
             const dy = ring.radius * Math.sin(angle)
-            const lat = centerLat + (dy / 111320)
-            const lng = centerLng + (dx / (111320 * Math.cos(centerLat * Math.PI / 180)))
+            const lat = DHAKA_LAT + (dy / 111320)
+            const lng = DHAKA_LNG + (dx / (111320 * Math.cos(DHAKA_LAT * Math.PI / 180)))
             coords.push([lng, lat])
           }
           
@@ -131,14 +130,14 @@ export function useMapAccessibilityLayer({
               "line-color": ring.color,
               "line-width": 1.5,
               "line-opacity": 0.4,
-              "line-dasharray": [4, 2]
+              "line-dasharray": [4, 4]
             }
           })
         }
       })
     }
     
-    if (visible && showDensity && isMapValid(map)) {
+    if (showDensity && isMapValid(map)) {
       DENSITY_ZONES.forEach((zone) => {
         if (!isMapValid(map)) return
         const sourceId = `density-zone-${zone.id}`
@@ -182,6 +181,8 @@ export function useMapAccessibilityLayer({
       })
     }
     
-    return () => cleanupLayers()
-  }, [map, isMapReady, centerLat, centerLng, visible, showTravelRings, showDensity])
+    return () => {
+      cleanupLayers()
+    }
+  }, [map, isMapReady, visible, showTravelRings, showDensity])
 }

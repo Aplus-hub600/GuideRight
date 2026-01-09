@@ -1,4 +1,4 @@
-import { useEffect, useRef, useMemo } from "react"
+import { useEffect, useRef } from "react"
 import maplibregl from "maplibre-gl"
 
 export type RiskLevel = "low" | "moderate" | "elevated" | "high"
@@ -14,60 +14,61 @@ export interface RiskZone {
   lastAssessed?: string
 }
 
-function generateRiskZones(centerLat: number, centerLng: number): RiskZone[] {
-  return [
-    {
-      id: "risk-1",
-      name: "Old Town District",
-      lat: centerLat - 0.020,
-      lng: centerLng - 0.005,
-      radius: 2000,
-      riskLevel: "elevated",
-      factors: ["Dense population", "Narrow egress routes", "Historical incidents"],
-      lastAssessed: "Today"
-    },
-    {
-      id: "risk-2",
-      name: "Industrial Zone",
-      lat: centerLat + 0.035,
-      lng: centerLng - 0.050,
-      radius: 1800,
-      riskLevel: "moderate",
-      factors: ["Industrial hazards", "Limited emergency access"],
-      lastAssessed: "Yesterday"
-    },
-    {
-      id: "risk-3",
-      name: "Diplomatic Quarter",
-      lat: centerLat + 0.065,
-      lng: centerLng + 0.015,
-      radius: 1200,
-      riskLevel: "low",
-      factors: ["Enhanced security", "Controlled access"],
-      lastAssessed: "Today"
-    },
-    {
-      id: "risk-4",
-      name: "Port Area",
-      lat: centerLat - 0.022,
-      lng: centerLng - 0.003,
-      radius: 1000,
-      riskLevel: "elevated",
-      factors: ["Cargo security", "Transient population"],
-      lastAssessed: "2 days ago"
-    },
-    {
-      id: "risk-5",
-      name: "University District",
-      lat: centerLat + 0.005,
-      lng: centerLng - 0.018,
-      radius: 1500,
-      riskLevel: "moderate",
-      factors: ["Protest activity", "Large gatherings"],
-      lastAssessed: "Today"
-    }
-  ]
-}
+const DHAKA_LAT = 23.8103
+const DHAKA_LNG = 90.4125
+
+const RISK_ZONES: RiskZone[] = [
+  {
+    id: "risk-1",
+    name: "Old Dhaka District",
+    lat: DHAKA_LAT - 0.020,
+    lng: DHAKA_LNG - 0.005,
+    radius: 2000,
+    riskLevel: "elevated",
+    factors: ["Dense population", "Narrow egress routes", "Historical incidents"],
+    lastAssessed: "Today"
+  },
+  {
+    id: "risk-2",
+    name: "Tejgaon Industrial Zone",
+    lat: DHAKA_LAT + 0.035,
+    lng: DHAKA_LNG - 0.050,
+    radius: 1800,
+    riskLevel: "moderate",
+    factors: ["Industrial hazards", "Limited emergency access"],
+    lastAssessed: "Yesterday"
+  },
+  {
+    id: "risk-3",
+    name: "Gulshan Diplomatic Quarter",
+    lat: DHAKA_LAT + 0.065,
+    lng: DHAKA_LNG + 0.015,
+    radius: 1200,
+    riskLevel: "low",
+    factors: ["Enhanced security", "Controlled access"],
+    lastAssessed: "Today"
+  },
+  {
+    id: "risk-4",
+    name: "Sadarghat Port Area",
+    lat: DHAKA_LAT - 0.022,
+    lng: DHAKA_LNG - 0.003,
+    radius: 1000,
+    riskLevel: "elevated",
+    factors: ["Cargo security", "Transient population"],
+    lastAssessed: "2 days ago"
+  },
+  {
+    id: "risk-5",
+    name: "Dhaka University District",
+    lat: DHAKA_LAT + 0.005,
+    lng: DHAKA_LNG - 0.018,
+    radius: 1500,
+    riskLevel: "moderate",
+    factors: ["Protest activity", "Large gatherings"],
+    lastAssessed: "Today"
+  }
+]
 
 const riskStyles: Record<RiskLevel, { fill: string; border: string }> = {
   low: { fill: "rgba(34, 197, 94, 0.15)", border: "#22c55e" },
@@ -80,8 +81,6 @@ interface MapRiskLayerProps {
   map: maplibregl.Map | null
   isMapReady: boolean
   visible: boolean
-  centerLat: number
-  centerLng: number
   onZoneClick?: (zone: RiskZone) => void
 }
 
@@ -93,13 +92,9 @@ export function useMapRiskLayer({
   map,
   isMapReady,
   visible,
-  centerLat,
-  centerLng,
   onZoneClick
 }: MapRiskLayerProps) {
   const markersRef = useRef<maplibregl.Marker[]>([])
-  
-  const riskZones = useMemo(() => generateRiskZones(centerLat, centerLng), [centerLat, centerLng])
   
   useEffect(() => {
     if (!map || !isMapReady) return
@@ -123,7 +118,7 @@ export function useMapRiskLayer({
     if (!visible) return
     
     if (isMapValid(map)) {
-      riskZones.forEach((zone) => {
+      RISK_ZONES.forEach((zone) => {
         if (!isMapValid(map)) return
         const sourceId = `risk-zone-${zone.id}`
         const layerId = `risk-layer-${zone.id}`
@@ -171,7 +166,7 @@ export function useMapRiskLayer({
             paint: {
               "line-color": style.border,
               "line-width": 2,
-              "line-opacity": 0.5
+              "line-opacity": 0.6
             }
           })
         }
@@ -179,38 +174,24 @@ export function useMapRiskLayer({
         const el = document.createElement("div")
         el.innerHTML = `
           <div style="
-            padding: 2px 6px;
+            width: 10px;
+            height: 10px;
             background: ${style.border};
-            color: white;
-            font-size: 9px;
-            font-weight: 600;
-            border-radius: 3px;
-            text-transform: uppercase;
-            font-family: system-ui;
-          ">${zone.riskLevel}</div>
+            border-radius: 50%;
+            box-shadow: 0 0 6px ${style.border};
+          "></div>
         `
         
         const popup = new maplibregl.Popup({ offset: 15, closeButton: false }).setHTML(`
           <div style="padding: 10px; font-family: system-ui;">
             <strong style="color: #1a1a1a;">${zone.name}</strong>
-            <div style="
-              display: inline-block;
-              margin-left: 8px;
-              padding: 2px 6px;
-              background: ${style.border};
-              color: white;
-              font-size: 9px;
-              font-weight: 600;
-              border-radius: 3px;
-              text-transform: uppercase;
-            ">${zone.riskLevel}</div>
-            <div style="font-size: 11px; color: #666; margin-top: 8px;">
-              <strong>Risk Factors:</strong>
-              <ul style="margin: 4px 0 0 16px; padding: 0;">
-                ${zone.factors.map(f => `<li>${f}</li>`).join("")}
-              </ul>
+            <div style="font-size: 11px; color: ${style.border}; margin-top: 4px; text-transform: uppercase;">
+              ${zone.riskLevel} RISK
             </div>
-            ${zone.lastAssessed ? `<div style="font-size: 10px; color: #999; margin-top: 8px;">Assessed: ${zone.lastAssessed}</div>` : ""}
+            <div style="font-size: 11px; color: #666; margin-top: 6px;">
+              ${zone.factors.join(" • ")}
+            </div>
+            ${zone.lastAssessed ? `<div style="font-size: 10px; color: #999; margin-top: 6px;">Assessed: ${zone.lastAssessed}</div>` : ""}
           </div>
         `)
         
@@ -228,5 +209,5 @@ export function useMapRiskLayer({
       markersRef.current = []
       cleanupLayers()
     }
-  }, [map, isMapReady, visible, riskZones, onZoneClick])
+  }, [map, isMapReady, visible, onZoneClick])
 }
