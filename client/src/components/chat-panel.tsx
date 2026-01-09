@@ -1,14 +1,16 @@
 import { useState, useRef, useEffect } from "react"
-import { Send, Loader2, Globe } from "lucide-react"
+import { Send, Loader2, Globe, Paperclip, Shield, Radio } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { Card } from "@/components/ui/card"
+import { Card, CardHeader, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { MicControl } from "./mic-control"
 import { useTranslation } from "react-i18next"
 import { cn } from "@/lib/utils"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useToast } from "@/hooks/use-toast"
+import { Separator } from "@/components/ui/separator"
+import { format } from "date-fns"
 
 interface ChatMessage {
   id: string
@@ -17,7 +19,7 @@ interface ChatMessage {
   timestamp: Date
   contextIds?: string[]
   analysis?: TacticalAnalysis
-  odinSource?: string // ODIN scenario used for this response
+  odinSource?: string
 }
 
 interface TacticalAnalysis {
@@ -42,7 +44,6 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, odinCountry, classNa
   const [input, setInput] = useState("")
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [isStreaming, setIsStreaming] = useState(false)
-  // Analysis is now stored per message instead of global state
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const eventSourceRef = useRef<EventSource | null>(null)
@@ -57,13 +58,11 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, odinCountry, classNa
     scrollToBottom()
   }, [messages])
 
-  // Load chat history on mount (disabled - start with clean chat)
   const { data: chatHistory } = useQuery<{ messages: any[] }>({
     queryKey: ['/api/chat/history'],
-    enabled: false // Disabled - chat starts clean until queried
+    enabled: false
   })
 
-  // Handle chat history data
   useEffect(() => {
     if (chatHistory?.messages && Array.isArray(chatHistory.messages)) {
       const formattedMessages = chatHistory.messages.reverse().map((msg: any) => ({
@@ -81,32 +80,23 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, odinCountry, classNa
     
     const query = input.trim()
     setInput("")
-    // Analysis will be stored per message
     setIsStreaming(true)
     isClearedRef.current = false
     
-    console.log('Chat query submitted:', query)
-    console.log('Query submitted:', query, 'with context:', mediaContextIds || [])
-    
-    // Call the onQuerySubmit callback for parent components
     onQuerySubmit?.(query, mediaContextIds)
     
-    // Close any existing event source
     if (eventSourceRef.current) {
       eventSourceRef.current.close()
     }
 
-    // Abort any existing fetch
     if (abortControllerRef.current) {
       abortControllerRef.current.abort()
     }
 
-    // Create new abort controller for this request
     const abortController = new AbortController()
     abortControllerRef.current = abortController
 
     try {
-      // Create FormData for the streaming request
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
@@ -124,7 +114,6 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, odinCountry, classNa
         throw new Error(`HTTP error! status: ${response.status}`)
       }
 
-      // Handle streaming response
       const reader = response.body?.getReader()
       const decoder = new TextDecoder()
 
@@ -141,16 +130,14 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, odinCountry, classNa
         
         buffer += decoder.decode(value, { stream: true })
         
-        // Process complete lines
         const lines = buffer.split('\n')
-        buffer = lines.pop() || '' // Keep incomplete line in buffer
+        buffer = lines.pop() || ''
         
         for (const line of lines) {
           if (line.startsWith('data: ')) {
             try {
               const data = JSON.parse(line.slice(6))
               
-              // Skip processing if chat was cleared
               if (isClearedRef.current) {
                 break
               }
@@ -164,7 +151,6 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, odinCountry, classNa
                   break
                   
                 case 'typing':
-                  // Typing indicator handled by isStreaming state
                   break
                   
                 case 'assistant_message':
@@ -172,7 +158,7 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, odinCountry, classNa
                     ...data.data.message,
                     timestamp: new Date(data.data.message.timestamp),
                     analysis: data.data.analysis || null,
-                    odinSource: data.data.odinSource // Include ODIN source attribution
+                    odinSource: data.data.odinSource
                   }])
                   break
                   
@@ -189,7 +175,6 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, odinCountry, classNa
                     description: data.data.error
                   })
                   
-                  // Add error message to chat
                   const errorMessage: ChatMessage = {
                     id: Date.now().toString(),
                     role: "assistant",
@@ -209,9 +194,7 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, odinCountry, classNa
       }
       
     } catch (error) {
-      // Don't show error if chat was intentionally cleared
       if (isClearedRef.current || (error as Error).name === 'AbortError') {
-        console.log('Chat request aborted (cleared)')
         return
       }
       
@@ -224,7 +207,6 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, odinCountry, classNa
         description: "Failed to connect to the chat service. Please check your connection and try again."
       })
       
-      // Add error message to chat
       const errorMessage: ChatMessage = {
         id: Date.now().toString(),
         role: "assistant",
@@ -248,178 +230,219 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, odinCountry, classNa
   }
 
   const handleClearChat = () => {
-    // Set cleared flag to prevent stream updates
     isClearedRef.current = true
     
-    // Abort any active fetch
     if (abortControllerRef.current) {
       abortControllerRef.current.abort()
       abortControllerRef.current = null
     }
     
-    // Close any active event source
     if (eventSourceRef.current) {
       eventSourceRef.current.close()
       eventSourceRef.current = null
     }
     
-    // Clear state
     setMessages([])
     setInput("")
     setIsStreaming(false)
   }
 
+  const getRiskBadgeVariant = (level: string) => {
+    switch (level) {
+      case 'CRITICAL': return 'destructive'
+      case 'HIGH': return 'destructive'
+      case 'MEDIUM': return 'secondary'
+      default: return 'outline'
+    }
+  }
+
   return (
-    <div className={cn("flex flex-col h-full", className)}>
-      {messages.length > 0 && (
-        <div className="flex items-center justify-between px-4 pt-3 pb-1">
+    <Card className={cn("flex flex-col h-full overflow-hidden", className)}>
+      <CardHeader className="flex flex-row items-center justify-between gap-4 px-4 py-3 border-b bg-muted/30">
+        <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
-            <p className="text-xs text-muted-foreground font-mono-tactical">CHAT SESSION</p>
-            {odinCountry && (
-              <Badge 
-                variant="default"
-                className="text-xs flex items-center gap-1.5 bg-primary/20 text-primary border-primary/30"
-                data-testid="badge-chat-odin"
-              >
-                <Globe className="h-3 w-3" />
-                {odinCountry}
-              </Badge>
-            )}
+            <Shield className="h-4 w-4 text-primary" />
+            <span className="text-sm font-semibold tracking-wide">GIA</span>
           </div>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={handleClearChat}
-            className="text-xs h-7 px-2"
-            data-testid="button-clear-chat"
-          >
-            Clear
-          </Button>
+          <Separator orientation="vertical" className="h-4" />
+          <Badge variant="outline" className="text-xs font-mono gap-1.5 px-2">
+            <Radio className="h-2.5 w-2.5 text-primary" />
+            ONLINE
+          </Badge>
         </div>
-      )}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3">
-        {messages.length === 0 && (
-          <div className="text-center py-8">
-            <div className="mb-4">
-              <p className="text-lg font-semibold text-foreground">GuideRight Intelligence Assistant</p>
-              <p className="text-xs mt-1 text-muted-foreground font-mono-tactical">TACTICAL ANALYSIS • ODIN INTEGRATION • PMESII FRAMEWORK</p>
-            </div>
-            <p className="text-sm text-muted-foreground max-w-[280px] mx-auto">
-              Query intelligence sources, analyze threats, or request PMESII assessments
-            </p>
-            {odinCountry && (
-              <div className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 bg-primary/10 border border-primary/20 rounded-md">
-                <Globe className="h-3.5 w-3.5 text-primary" />
-                <span className="text-xs font-medium">ODIN: {odinCountry}</span>
+        <div className="flex items-center gap-2">
+          {odinCountry && (
+            <Badge variant="secondary" className="text-xs gap-1.5" data-testid="badge-chat-odin">
+              <Globe className="h-3 w-3" />
+              {odinCountry}
+            </Badge>
+          )}
+          {messages.length > 0 && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={handleClearChat}
+              className="text-xs text-muted-foreground"
+              data-testid="button-clear-chat"
+            >
+              Clear
+            </Button>
+          )}
+        </div>
+      </CardHeader>
+
+      <CardContent className="flex-1 overflow-hidden p-0 flex flex-col">
+        <div className="flex-1 overflow-y-auto">
+          {messages.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full p-6 text-center">
+              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                <Shield className="h-6 w-6 text-primary" />
               </div>
-            )}
-          </div>
-        )}
-        
-        {messages.map((message) => (
-          <div
-            key={message.id}
-            className={cn(
-              "flex",
-              message.role === "user" ? "justify-end" : "justify-start"
-            )}
-          >
-            <div className={cn(
-              "max-w-[85%] px-4 py-3 rounded-lg",
-              message.role === "user" 
-                ? "bg-primary text-primary-foreground" 
-                : "bg-card text-card-foreground border"
-            )}>
-              <div className="space-y-2">
-                <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.content}</p>
-                
-                {message.role === "assistant" && (message.analysis || message.odinSource) && (
-                  <div className="mt-3 flex flex-wrap items-center gap-2">
-                    {message.analysis && (
-                      <Badge
-                        variant={
-                          message.analysis.riskLevel === 'CRITICAL' ? 'destructive' :
-                          message.analysis.riskLevel === 'HIGH' ? 'default' :
-                          message.analysis.riskLevel === 'MEDIUM' ? 'secondary' :
-                          'outline'
-                        }
-                        className="text-xs"
-                        data-testid={`badge-risk-${message.analysis.riskLevel.toLowerCase()}`}
-                      >
-                        {message.analysis.riskLevel} RISK
-                      </Badge>
-                    )}
+              <h3 className="text-base font-semibold mb-1">GuideRight Intelligence Assistant</h3>
+              <p className="text-xs text-muted-foreground font-mono tracking-wide mb-4">
+                TACTICAL ANALYSIS • ODIN INTEGRATION • PMESII
+              </p>
+              <p className="text-sm text-muted-foreground max-w-xs">
+                Query intelligence sources, analyze threats, or request situational assessments
+              </p>
+              {odinCountry && (
+                <div className="mt-6 flex items-center gap-2 px-3 py-2 bg-muted rounded-md border">
+                  <Globe className="h-4 w-4 text-primary" />
+                  <span className="text-xs font-medium">Active AOI: {odinCountry}</span>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="p-4 space-y-4">
+              {messages.map((message) => (
+                <div key={message.id} className="group">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className={cn(
+                      "text-xs font-medium",
+                      message.role === "user" ? "text-primary" : "text-muted-foreground"
+                    )}>
+                      {message.role === "user" ? "You" : "GIA"}
+                    </span>
+                    <span className="text-xs text-muted-foreground/60 font-mono">
+                      {format(message.timestamp, "HH:mm:ss")}
+                    </span>
                     {message.odinSource && (
-                      <Badge 
-                        variant="default"
-                        className="text-xs flex items-center gap-1.5 bg-primary/20 text-primary border-primary/30 hover:bg-primary/30"
-                        data-testid="badge-odin-source"
-                      >
-                        <Globe className="h-3 w-3" />
-                        ODIN DATE: {message.odinSource}
+                      <Badge variant="outline" className="text-xs h-5 gap-1 px-1.5">
+                        <Globe className="h-2.5 w-2.5" />
+                        {message.odinSource}
                       </Badge>
                     )}
                   </div>
-                )}
-              </div>
+                  
+                  <div className={cn(
+                    "rounded-lg px-4 py-3",
+                    message.role === "user" 
+                      ? "bg-primary/10 border border-primary/20" 
+                      : "bg-muted/50 border"
+                  )}>
+                    <p className="text-sm whitespace-pre-wrap leading-relaxed">
+                      {message.content}
+                    </p>
+                    
+                    {message.role === "assistant" && message.analysis && (
+                      <div className="mt-3 pt-3 border-t flex flex-wrap items-center gap-2">
+                        <Badge
+                          variant={getRiskBadgeVariant(message.analysis.riskLevel)}
+                          className="text-xs"
+                          data-testid={`badge-risk-${message.analysis.riskLevel.toLowerCase()}`}
+                        >
+                          {message.analysis.riskLevel} RISK
+                        </Badge>
+                        <Badge variant="outline" className="text-xs gap-1">
+                          <span className="text-muted-foreground">Confidence:</span>
+                          {Math.round(message.analysis.confidence * 100)}%
+                        </Badge>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+              
+              {isStreaming && (
+                <div className="group">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className="text-xs font-medium text-muted-foreground">GIA</span>
+                    <span className="text-xs text-muted-foreground/60 font-mono">
+                      {format(new Date(), "HH:mm:ss")}
+                    </span>
+                  </div>
+                  <div className="bg-muted/50 border rounded-lg px-4 py-3">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>Processing intelligence request...</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              <div ref={messagesEndRef} />
             </div>
-          </div>
-        ))}
-        
-        {isStreaming && (
-          <div className="flex justify-start">
-            <div className="bg-card border px-4 py-3 rounded-lg">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Analyzing...
-              </div>
-            </div>
-          </div>
-        )}
-        
-        <div ref={messagesEndRef} />
-      </div>
+          )}
+        </div>
 
-      <div className="border-t p-4">
-        <form onSubmit={handleSubmit} className="flex items-end gap-2">
-          <Textarea
-            ref={textareaRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder={t('chat.placeholder') || "Ask about intelligence, threats, or request analysis..."}
-            className="flex-1 resize-none min-h-[52px] max-h-[120px] text-foreground"
-            disabled={isStreaming}
-            data-testid="textarea-chat-input"
-          />
-          <MicControl 
-            onTranscription={handleTranscription}
-          />
-          <Button 
-            type="submit"
-            size="icon"
-            disabled={!input.trim() || isStreaming}
-            data-testid="button-chat-send"
-          >
-            {isStreaming ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Send className="h-4 w-4" />
-            )}
-          </Button>
-        </form>
-        
-        {mediaContextIds && mediaContextIds.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-3">
-            <span className="text-xs text-muted-foreground">Context:</span>
-            {mediaContextIds.map((id) => (
-              <Badge key={id} variant="outline" className="text-xs">
-                {id}
-              </Badge>
-            ))}
+        <div className="border-t bg-muted/20">
+          {mediaContextIds && mediaContextIds.length > 0 && (
+            <div className="flex items-center gap-2 px-4 py-2 border-b bg-muted/30">
+              <Paperclip className="h-3.5 w-3.5 text-muted-foreground" />
+              <span className="text-xs text-muted-foreground">Attached:</span>
+              <div className="flex flex-wrap gap-1.5">
+                {mediaContextIds.map((id) => (
+                  <Badge key={id} variant="secondary" className="text-xs h-5 px-1.5">
+                    {id}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          <div className="p-3">
+            <form onSubmit={handleSubmit} className="flex items-end gap-2">
+              <div className="flex-1 relative">
+                <Textarea
+                  ref={textareaRef}
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Enter intelligence tasking..."
+                  className="min-h-[48px] max-h-[120px] resize-none pr-10 text-sm bg-background border-border/50 focus:border-primary/50"
+                  disabled={isStreaming}
+                  data-testid="textarea-chat-input"
+                />
+                <div className="absolute right-2 bottom-2">
+                  <MicControl 
+                    onTranscription={handleTranscription}
+                    compact
+                  />
+                </div>
+              </div>
+              <Button 
+                type="submit"
+                size="lg"
+                disabled={!input.trim() || isStreaming}
+                className="gap-2"
+                data-testid="button-chat-send"
+              >
+                {isStreaming ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <>
+                    <Send className="h-4 w-4" />
+                    <span className="hidden sm:inline text-sm">Send</span>
+                  </>
+                )}
+              </Button>
+            </form>
+            <p className="text-xs text-muted-foreground/60 mt-2 text-center">
+              Press Ctrl+Enter to send • Voice input available
+            </p>
           </div>
-        )}
-      </div>
-    </div>
+        </div>
+      </CardContent>
+    </Card>
   )
 }

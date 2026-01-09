@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button"
 import { useTranslation } from "react-i18next"
 import { cn } from "@/lib/utils"
 
-// Add type declarations for Speech Recognition API
 declare global {
   interface Window {
     SpeechRecognition: any
@@ -23,20 +22,18 @@ interface SpeechRecognitionErrorEvent extends Event {
 interface MicControlProps {
   onTranscription: (text: string) => void
   className?: string
+  compact?: boolean
 }
 
-export function MicControl({ onTranscription, className }: MicControlProps) {
+export function MicControl({ onTranscription, className, compact = false }: MicControlProps) {
   const { t } = useTranslation()
   const [isRecording, setIsRecording] = useState(false)
   const [isSupported, setIsSupported] = useState(true)
   const recognitionRef = useRef<any>(null)
 
   const startRecording = async () => {
-    console.log('Speech recording started')
-    
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
       setIsSupported(false)
-      console.log('Speech recognition not supported')
       return
     }
 
@@ -50,12 +47,10 @@ export function MicControl({ onTranscription, className }: MicControlProps) {
       
       recognition.onstart = () => {
         setIsRecording(true)
-        console.log('Speech recognition started')
       }
       
       recognition.onresult = (event: SpeechRecognitionEvent) => {
         const transcript = event.results[0][0].transcript
-        console.log('Speech transcribed:', transcript)
         onTranscription(transcript)
       }
       
@@ -66,7 +61,6 @@ export function MicControl({ onTranscription, className }: MicControlProps) {
       
       recognition.onend = () => {
         setIsRecording(false)
-        console.log('Speech recognition ended')
       }
       
       recognitionRef.current = recognition
@@ -79,7 +73,6 @@ export function MicControl({ onTranscription, className }: MicControlProps) {
   }
 
   const stopRecording = () => {
-    console.log('Speech recording stopped')
     if (recognitionRef.current) {
       recognitionRef.current.stop()
     }
@@ -108,24 +101,49 @@ export function MicControl({ onTranscription, className }: MicControlProps) {
     )
   }
 
+  if (compact) {
+    return (
+      <Button
+        type="button"
+        onClick={handleToggle}
+        variant={isRecording ? "destructive" : "ghost"}
+        size="icon"
+        className={cn(
+          "transition-colors",
+          isRecording && "animate-pulse",
+          className
+        )}
+        data-testid={isRecording ? "button-mic-stop" : "button-mic-start"}
+      >
+        {isRecording ? (
+          <Square className="h-4 w-4" />
+        ) : (
+          <Mic className="h-4 w-4" />
+        )}
+        <span className="sr-only">
+          {isRecording ? t('chat.mic.stop') : t('chat.mic.start')}
+        </span>
+      </Button>
+    )
+  }
+
   return (
     <Button
+      type="button"
       onClick={handleToggle}
       variant={isRecording ? "destructive" : "default"}
       size="icon"
       className={cn(
-        "transition-all duration-200 w-14 h-14 rounded-full",
-        isRecording 
-          ? "animate-pulse bg-red-500 hover:bg-red-600 shadow-[0_0_20px_rgba(239,68,68,0.5)]" 
-          : "bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-[0_0_20px_rgba(59,130,246,0.4)] hover:shadow-[0_0_25px_rgba(59,130,246,0.6)]",
+        "transition-colors",
+        isRecording && "animate-pulse",
         className
       )}
       data-testid={isRecording ? "button-mic-stop" : "button-mic-start"}
     >
       {isRecording ? (
-        <Square className="h-5 w-5 text-white" />
+        <Square className="h-4 w-4" />
       ) : (
-        <Mic className="h-5 w-5 text-white" />
+        <Mic className="h-4 w-4" />
       )}
       <span className="sr-only">
         {isRecording ? t('chat.mic.stop') : t('chat.mic.start')}
