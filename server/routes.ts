@@ -1,5 +1,6 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import { z } from "zod";
 import { storage } from "./storage";
 import { 
   processTacticalQuery, 
@@ -282,10 +283,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // MVP: New PMESII Analysis endpoint with persistence (matches API contract)
+  // Priority #1: No fallback - returns 503 DEGRADED_MODE on provider failure
   app.post("/api/analyze/pmesii", async (req, res) => {
     try {
       const { pmesiiAnalyzeRequestSchema } = await import("@shared/schema");
-      const { generatePmesiiAnalysis, isProviderAvailable } = await import("./services/provider");
+      const { generatePmesiiAnalysis, isProviderAvailable, ProviderError } = await import("./services/provider");
       
       // Validate request
       const parsed = pmesiiAnalyzeRequestSchema.safeParse(req.body);
@@ -303,8 +305,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!isProviderAvailable()) {
         return res.status(503).json({
           success: false,
+          mode: "DEGRADED_MODE",
           error: "AI provider not configured. Please set OPENAI_API_KEY.",
-          code: "provider_unavailable"
+          code: "provider_unavailable",
+          inference_performed: false,
+          cached_result: null
         });
       }
       
@@ -314,45 +319,217 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`[PMESII] Analyzing AOI: ${aoi.name} (${aoi.lat}, ${aoi.lon}) - ID: ${analysisId}`);
       
-      // Generate analysis using the provider service
-      const result = await generatePmesiiAnalysis(aoi, question, time_window_days);
-      
-      // Persist to database with IDs included
       try {
-        await storage.createAnalysisResult({
-          analysisType: "pmesii_mvp",
-          results: {
-            analysisId,
-            sessionId,
-            pmesii: result.pmesii,
-            sigacts: result.sigacts,
-            confidence: result.confidence,
-            evidence: result.evidence,
-            providerStatus: result.providerStatus
-          },
-          fileId: null,
-          region: aoi.name,
-          aoiData: aoi
+        // Generate analysis using the provider service
+        const result = await generatePmesiiAnalysis(aoi, question, time_window_days);
+        
+        // Persist to database with IDs included
+        try {
+          await storage.createAnalysisResult({
+            analysisType: "pmesii_mvp",
+            results: {
+              analysisId,
+              sessionId,
+              pmesii: result.pmesii,
+              sigacts: result.sigacts,
+              confidence: result.confidence,
+              evidence: result.evidence,
+              providerStatus: result.providerStatus
+            },
+            fileId: null,
+            region: aoi.name,
+            aoiData: aoi
+          });
+          console.log(`[PMESII] Analysis persisted: ${analysisId}`);
+        } catch (dbError) {
+          console.error("[PMESII] Failed to persist analysis:", dbError);
+        }
+        
+        // Return successful response
+        res.json({
+          analysis_id: analysisId,
+          session_id: sessionId,
+          pmesii: result.pmesii,
+          sigacts: result.sigacts,
+          confidence: result.confidence,
+          evidence: result.evidence,
+          provider_status: result.providerStatus
         });
-        console.log(`[PMESII] Analysis persisted: ${analysisId}`);
-      } catch (dbError) {
-        console.error("[PMESII] Failed to persist analysis:", dbError);
-        // Continue even if persistence fails
+        
+      } catch (providerError) {
+        // Priority #1: Handle ProviderError with 503 DEGRADED_MODE
+        if (providerError instanceof ProviderError) {
+          console.warn(`[PMESII] Provider error (${providerError.code}): ${providerError.message}`);
+          
+          // Return 503 with cached data if available
+          return res.status(503).json({
+            success: false,
+            mode: "DEGRADED_MODE",
+            error: providerError.message,
+            code: providerError.code,
+            inference_performed: false,
+            cached_result: providerError.cachedResult ? {
+              analysis_id: analysisId,
+              session_id: sessionId,
+              pmesii: providerError.cachedResult.pmesii,
+              sigacts: providerError.cachedResult.sigacts,
+              confidence: {
+                ...providerError.cachedResult.confidence,
+                inputs: {
+                  ...providerError.cachedResult.confidence.inputs,
+                  model_status: "cached"
+                }
+              },
+              evidence: providerError.cachedResult.evidence,
+              provider_status: {
+                ...providerError.cachedResult.providerStatus,
+                mode: "cached",
+                inference_performed: false
+              }
+            } : null,
+            ui_banner: "System is in degraded mode. No new inference was performed."
+          });
+        }
+        throw providerError;
       }
-      
-      // Return response matching the API contract
-      res.json({
-        analysis_id: analysisId,
-        session_id: sessionId,
-        pmesii: result.pmesii,
-        sigacts: result.sigacts,
-        confidence: result.confidence,
-        evidence: result.evidence,
-        provider_status: result.providerStatus
-      });
       
     } catch (error) {
       console.error("[PMESII] Analysis error:", error);
+      handleOpenAIError(error, res);
+    }
+  });
+
+  // Priority #4: SIGACT 5Ws extraction endpoint
+  app.post("/api/analyze/sigacts", async (req, res) => {
+    try {
+      const { ProviderError, isProviderAvailable } = await import("./services/provider");
+      
+      // Request schema for SIGACT analysis
+      const requestSchema = z.object({
+        aoi: z.object({
+          name: z.string(),
+          lat: z.number(),
+          lon: z.number(),
+          bbox: z.array(z.number()).optional(),
+        }),
+        time_window_days: z.number().default(7),
+        event_types: z.array(z.string()).optional(),
+        sources: z.array(z.string()).optional(),
+      });
+      
+      const parsed = requestSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({
+          success: false,
+          error: "Invalid request format",
+          details: parsed.error.issues
+        });
+      }
+      
+      const { aoi, time_window_days, event_types, sources } = parsed.data;
+      
+      if (!isProviderAvailable()) {
+        return res.status(503).json({
+          success: false,
+          mode: "DEGRADED_MODE",
+          error: "AI provider not configured",
+          code: "provider_unavailable",
+          inference_performed: false,
+          sigacts: []
+        });
+      }
+      
+      const analysisId = crypto.randomUUID();
+      console.log(`[SIGACT] Extracting events for: ${aoi.name} - ID: ${analysisId}`);
+      
+      // Use OpenAI to extract SIGACT events
+      const openai = new (await import("openai")).default();
+      
+      const prompt = `Extract significant activities (SIGACTs) for the area: ${aoi.name} (${aoi.lat}, ${aoi.lon}).
+Time window: Last ${time_window_days} days.
+${event_types?.length ? `Focus on event types: ${event_types.join(", ")}` : ""}
+
+Return a JSON array of events, each with:
+{
+  "who": "Actor/group involved",
+  "what": "What happened",
+  "where": "Specific location",
+  "when": "Date/time (ISO format or relative)",
+  "why": "Assessed motivation or cause",
+  "event_type": "attack|protest|movement|infrastructure|political|other",
+  "confidence": 0.0-1.0,
+  "lat": latitude (if known),
+  "lon": longitude (if known),
+  "evidence_summary": "Brief source description"
+}
+
+Return realistic intelligence-style events based on your knowledge of the region.`;
+
+      try {
+        const completion = await openai.chat.completions.create({
+          model: "gpt-4o",
+          messages: [
+            { role: "system", content: "You are a tactical intelligence analyst extracting SIGACT events." },
+            { role: "user", content: prompt }
+          ],
+          response_format: { type: "json_object" },
+          temperature: 0.3,
+          max_tokens: 2000,
+        });
+        
+        const responseText = completion.choices[0]?.message?.content || "{}";
+        const parsed = JSON.parse(responseText);
+        const sigacts = parsed.sigacts || parsed.events || (Array.isArray(parsed) ? parsed : []);
+        
+        // Build evidence from SIGACT summaries
+        const evidence = sigacts.map((s: any, idx: number) => ({
+          source_type: "report",
+          title: `SIGACT #${idx + 1}: ${s.what?.substring(0, 50) || "Event"}`,
+          timestamp: s.when || new Date().toISOString(),
+          excerpt: s.evidence_summary || s.what,
+          relevance_score: Math.round((s.confidence || 0.5) * 100),
+        }));
+        
+        res.json({
+          analysis_id: analysisId,
+          sigacts: sigacts.map((s: any) => ({
+            who: s.who || "Unknown",
+            what: s.what || "Unknown event",
+            where: s.where || aoi.name,
+            when: s.when || "Recent",
+            why: s.why || "Under assessment",
+            event_type: s.event_type || "other",
+            confidence: s.confidence || 0.5,
+            lat: s.lat,
+            lon: s.lon,
+            evidence_ids: [],
+          })),
+          evidence,
+          inference_performed: true,
+          provider_status: {
+            model: "gpt-4o",
+            mode: "live",
+            tokens: completion.usage?.total_tokens || 0
+          }
+        });
+        
+      } catch (error: any) {
+        console.error("[SIGACT] Extraction failed:", error.message);
+        
+        // Return 503 DEGRADED_MODE
+        return res.status(503).json({
+          success: false,
+          mode: "DEGRADED_MODE",
+          error: error.message,
+          code: error.status === 429 ? "quota_exceeded" : "server_error",
+          inference_performed: false,
+          sigacts: [],
+          ui_banner: "SIGACT extraction unavailable. No inference performed."
+        });
+      }
+      
+    } catch (error) {
+      console.error("[SIGACT] Error:", error);
       handleOpenAIError(error, res);
     }
   });

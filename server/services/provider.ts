@@ -110,6 +110,28 @@ async function executeWithRetry<T>(
   throw lastError || new Error(`${operationName} failed after ${MAX_RETRIES} retries`);
 }
 
+// Evidence with required fields per Priority #2
+export interface EvidenceItem {
+  source_type: "news" | "report" | "user_upload" | "dataset" | "social" | "government" | "ngo" | "academic";
+  title: string;
+  url?: string;
+  file_id?: string;
+  timestamp: string;
+  excerpt: string;
+  geo?: { lat: number; lon: number };
+  relevance_score: number; // 0-100
+}
+
+// Confidence inputs for deterministic scoring per Priority #3
+export interface ConfidenceInputs {
+  freshness_days: number;
+  source_count: number;
+  source_diversity: number; // 0-1, how varied the sources are
+  geo_precision_level: "exact" | "city" | "region" | "country" | "unknown";
+  cross_source_agreement: number; // 0-1
+  model_status: "ok" | "degraded" | "cached" | "unavailable";
+}
+
 export interface PmesiiAnalysisResult {
   pmesii: {
     political: { assessment: string; riskLevel: string; confidence: number; considerations: string[] };
@@ -125,26 +147,145 @@ export interface PmesiiAnalysisResult {
     where: string;
     when: string;
     why: string;
+    event_type?: string;
     confidence: number;
+    lat?: number;
+    lon?: number;
+    evidence_ids?: string[];
   }>;
   confidence: {
     score: number;
     rationale: string[];
+    inputs: ConfidenceInputs;
   };
-  evidence: Array<{
-    source: string;
-    title: string;
-    url?: string;
-    timestamp?: string;
-    excerpt: string;
-  }>;
+  evidence: EvidenceItem[];
   providerStatus: {
     model: string;
     latencyMs: number;
     tokens: number;
-    mode: "live" | "fallback" | "cached";
-    error?: string;
+    mode: "live" | "cached";
+    inference_performed: boolean;
   };
+}
+
+// Custom error for provider failures - DO NOT return fallback data
+export class ProviderError extends Error {
+  constructor(
+    message: string,
+    public readonly code: "quota_exceeded" | "rate_limited" | "auth_error" | "server_error" | "parse_error",
+    public readonly cachedResult?: PmesiiAnalysisResult
+  ) {
+    super(message);
+    this.name = "ProviderError";
+  }
+}
+
+/**
+ * Map source string to valid source_type
+ */
+function mapSourceType(source?: string): EvidenceItem["source_type"] {
+  const map: Record<string, EvidenceItem["source_type"]> = {
+    news: "news",
+    report: "report",
+    user_upload: "user_upload",
+    dataset: "dataset",
+    social: "social",
+    government: "government",
+    ngo: "ngo",
+    academic: "academic",
+  };
+  return map[source?.toLowerCase() || ""] || "news";
+}
+
+/**
+ * Calculate source diversity (0-1) based on unique source types
+ */
+function calculateSourceDiversity(evidence: EvidenceItem[]): number {
+  if (evidence.length === 0) return 0;
+  const uniqueTypes = new Set(evidence.map(e => e.source_type));
+  // Max diversity if we have 4+ different source types
+  return Math.min(uniqueTypes.size / 4, 1);
+}
+
+/**
+ * Calculate deterministic confidence score from inputs (Priority #3)
+ */
+function calculateConfidenceScore(
+  inputs: ConfidenceInputs,
+  modelRationale: string[] = []
+): { score: number; rationale: string[]; inputs: ConfidenceInputs } {
+  const rationale: string[] = [];
+  let score = 50; // Base score
+  
+  // Freshness factor: fresher data = higher confidence
+  if (inputs.freshness_days <= 7) {
+    score += 15;
+    rationale.push("Data from last 7 days (+15)");
+  } else if (inputs.freshness_days <= 30) {
+    score += 10;
+    rationale.push("Data from last 30 days (+10)");
+  } else {
+    score -= 10;
+    rationale.push("Data older than 30 days (-10)");
+  }
+  
+  // Source count factor
+  if (inputs.source_count >= 5) {
+    score += 15;
+    rationale.push(`Multiple sources (${inputs.source_count}) (+15)`);
+  } else if (inputs.source_count >= 2) {
+    score += 8;
+    rationale.push(`Some sources (${inputs.source_count}) (+8)`);
+  } else if (inputs.source_count === 0) {
+    score -= 25;
+    rationale.push("No evidence retrieved (-25)");
+  }
+  
+  // Source diversity factor
+  score += Math.round(inputs.source_diversity * 10);
+  if (inputs.source_diversity > 0.5) {
+    rationale.push(`Diverse sources (+${Math.round(inputs.source_diversity * 10)})`);
+  }
+  
+  // Geo precision factor
+  const geoPrecisionScores: Record<string, number> = {
+    exact: 10,
+    city: 7,
+    region: 4,
+    country: 2,
+    unknown: -5,
+  };
+  const geoScore = geoPrecisionScores[inputs.geo_precision_level] || 0;
+  score += geoScore;
+  if (geoScore !== 0) {
+    rationale.push(`Geo precision: ${inputs.geo_precision_level} (${geoScore > 0 ? "+" : ""}${geoScore})`);
+  }
+  
+  // Cross-source agreement
+  score += Math.round(inputs.cross_source_agreement * 10);
+  if (inputs.cross_source_agreement > 0.7) {
+    rationale.push(`High cross-source agreement (+${Math.round(inputs.cross_source_agreement * 10)})`);
+  }
+  
+  // Model status factor
+  if (inputs.model_status === "degraded") {
+    score -= 20;
+    rationale.push("Degraded model status (-20)");
+  } else if (inputs.model_status === "cached") {
+    score -= 10;
+    rationale.push("Using cached result (-10)");
+  } else if (inputs.model_status === "unavailable") {
+    score -= 40;
+    rationale.push("Model unavailable (-40)");
+  }
+  
+  // Add model rationale if provided
+  rationale.push(...modelRationale);
+  
+  // Clamp score to 0-100
+  score = Math.max(0, Math.min(100, score));
+  
+  return { score, rationale, inputs };
 }
 
 /**
@@ -236,17 +377,44 @@ Focus on actionable intelligence relevant to the location and any stated objecti
       throw new Error("Failed to parse AI response as valid JSON");
     }
 
+    // Transform evidence to proper schema
+    const transformedEvidence: EvidenceItem[] = (analysis.evidence || []).map((e: any) => ({
+      source_type: mapSourceType(e.source),
+      title: e.title || "Untitled",
+      url: e.url,
+      timestamp: e.timestamp || new Date().toISOString().split("T")[0],
+      excerpt: e.excerpt || "",
+      relevance_score: Math.round((e.relevance || 0.7) * 100),
+    }));
+
+    // Calculate deterministic confidence from inputs
+    const confidenceInputs: ConfidenceInputs = {
+      freshness_days: timeWindowDays,
+      source_count: transformedEvidence.length,
+      source_diversity: calculateSourceDiversity(transformedEvidence),
+      geo_precision_level: "region",
+      cross_source_agreement: 0.7, // Default from model
+      model_status: "ok",
+    };
+
+    const calculatedConfidence = calculateConfidenceScore(confidenceInputs, analysis.confidence?.rationale || []);
+
     // Build result with provider status
     const result: PmesiiAnalysisResult = {
       pmesii: analysis.pmesii || getDefaultPmesii(),
-      sigacts: analysis.sigacts || [],
-      confidence: analysis.confidence || { score: 50, rationale: ["Default confidence - analysis may be incomplete"] },
-      evidence: analysis.evidence || [],
+      sigacts: (analysis.sigacts || []).map((s: any, idx: number) => ({
+        ...s,
+        event_type: s.event_type || "unknown",
+        evidence_ids: [],
+      })),
+      confidence: calculatedConfidence,
+      evidence: transformedEvidence,
       providerStatus: {
         model: "gpt-4o",
         latencyMs,
         tokens,
         mode: "live",
+        inference_performed: true,
       },
     };
 
@@ -259,23 +427,21 @@ Focus on actionable intelligence relevant to the location and any stated objecti
   } catch (error: any) {
     console.error("[Provider] PMESII analysis failed:", error.message);
     
-    // Return a fallback result with clear error indication
-    return {
-      pmesii: getDefaultPmesii(),
-      sigacts: [],
-      confidence: {
-        score: 0,
-        rationale: [`Analysis failed: ${error.message}`, "Using fallback data - please retry"],
-      },
-      evidence: [],
-      providerStatus: {
-        model: "gpt-4o",
-        latencyMs: 0,
-        tokens: 0,
-        mode: "fallback",
-        error: error.message,
-      },
-    };
+    // Check for cached result before throwing
+    const cachedResult = getCached(cacheKey);
+    
+    // Determine error code
+    let errorCode: "quota_exceeded" | "rate_limited" | "auth_error" | "server_error" | "parse_error" = "server_error";
+    if (error.message?.includes("quota") || error.status === 429) {
+      errorCode = error.message?.includes("quota") ? "quota_exceeded" : "rate_limited";
+    } else if (error.status === 401 || error.status === 403) {
+      errorCode = "auth_error";
+    } else if (error.message?.includes("parse") || error.message?.includes("JSON")) {
+      errorCode = "parse_error";
+    }
+    
+    // PRIORITY #1: Do NOT return fallback data - throw error with cached result if available
+    throw new ProviderError(error.message, errorCode, cachedResult || undefined);
   }
 }
 

@@ -1,0 +1,123 @@
+Next Priority #1: Kill “fallback intelligence” as a default behavior
+
+Right now, quota exceeded ⇒ fallback responses. That’s dangerous because it looks like intelligence but isn’t.
+
+Change behavior:
+
+If provider fails, return HTTP 503 (or a clear “DEGRADED_MODE”) with:
+
+partial cached results (if any)
+
+“no new inference performed” flag
+
+UI banner that clearly indicates degraded mode
+
+Why: This preserves trust and prevents accidental decisioning off fabricated outputs.
+
+Next Priority #2: Evidence objects must be real and first-class
+
+Your endpoint should always output an evidence[] array with required fields—even if it’s empty.
+
+Minimum evidence schema
+
+source_type (news, report, user_upload, dataset)
+
+title
+
+url (or file_id)
+
+timestamp
+
+excerpt
+
+geo (optional)
+
+relevance_score
+
+UI rule: If evidence is empty → show “No evidence retrieved” and reduce confidence automatically.
+
+This directly supports your “transparent, explainable, confidence-qualified intelligence products.” 
+
+GuideRight_WhitePaper_2025_12_08
+
+Next Priority #3: Make Confidence scoring deterministic and auditable
+
+Add a confidence_inputs block and compute score from it (not vibes).
+
+Confidence v1 inputs
+
+freshness_days
+
+source_count
+
+source_diversity
+
+geo_precision_level
+
+cross_source_agreement
+
+model_status (ok / degraded / cached)
+
+Return:
+
+confidence.score 0–100
+
+confidence.rationale[]
+
+confidence.inputs{...}
+
+This keeps you aligned to “multi-level fused confidence metric” even before you implement the more advanced fusion later. 
+
+GuideRight_WhitePaper_2025_12_08
+
+Next Priority #4: Add “SIGACT 5Ws” extraction as a separate endpoint
+
+You already have PMESII. Now add the second “proof feature” from the white paper: SIGACT-style event extraction/linking. 
+
+GuideRight_WhitePaper_2025_12_08
+
+Endpoint
+
+POST /api/analyze/sigacts
+
+Output: list of events with who/what/where/when/why, event_type, confidence, and linked evidence
+
+Even with minimal sources, this will make the system feel operational rather than academic.
+
+Next Priority #5: Introduce one real source feed (start tiny)
+
+Don’t integrate 8 sources. Integrate one real feed and do it cleanly.
+
+Options for v1:
+
+RSS feeds + basic parser
+
+A single OSINT source you can legally use with URLs and timestamps
+
+User-provided documents (docx/pdf) as “source_type=user_upload”
+
+Goal: timestamps + URLs + excerpts in the evidence panel.
+
+Next Priority #6: Add schema validation + “no freeform JSON”
+
+If you’re using OpenAI structured outputs or JSON mode, enforce a strict schema.
+
+Validate response against Pydantic
+
+If invalid → retry once with “repair” prompt
+
+If still invalid → fail with degraded mode
+
+This stabilizes the system and prevents UI breakage.
+
+What to ask Replit to do right now (copy/paste)
+
+Change fallback behavior: no more “fake PMESII.” If quota exceeded, return degraded mode + cached-only.
+
+Implement evidence schema end-to-end (DB + API + UI panel).
+
+Implement deterministic confidence with inputs + rationale.
+
+Add SIGACT endpoint and wire it to map pins.
+
+Add one real source ingestion path (RSS or uploads) to populate evidence.
