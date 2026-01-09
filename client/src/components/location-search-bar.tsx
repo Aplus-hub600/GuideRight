@@ -1,11 +1,13 @@
 import { useState, useRef, useEffect } from "react";
-import { Search, MapPin, Filter, X, Clock, Target, FileImage, Brain, Shield, Calendar, Loader2 } from "lucide-react";
+import { Search, MapPin, Filter, X, Clock, Target, FileImage, Brain, Shield, Calendar, Loader2, ChevronDown } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useDebounce } from "@/hooks/use-debounce";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { format } from "date-fns";
@@ -40,47 +42,44 @@ const typeLabels = {
 };
 
 const locationOptions = [
-  { value: "dhaka", label: "Dhaka, Bangladesh" },
-  { value: "chittagong", label: "Chittagong, Bangladesh" },
-  { value: "sylhet", label: "Sylhet, Bangladesh" },
-  { value: "khulna", label: "Khulna, Bangladesh" },
-  { value: "rajshahi", label: "Rajshahi, Bangladesh" },
+  { value: "dhaka", label: "Dhaka" },
+  { value: "chittagong", label: "Chittagong" },
+  { value: "sylhet", label: "Sylhet" },
+  { value: "khulna", label: "Khulna" },
+  { value: "rajshahi", label: "Rajshahi" },
   { value: "bangladesh", label: "All Bangladesh" },
 ];
 
 const timeRangeOptions = [
-  { value: "1h", label: "Last Hour" },
-  { value: "24h", label: "Last 24 Hours" },
-  { value: "7d", label: "Last 7 Days" },
-  { value: "30d", label: "Last 30 Days" },
-  { value: "90d", label: "Last 3 Months" },
-  { value: "custom", label: "Custom Range" },
+  { value: "1h", label: "1 hour" },
+  { value: "24h", label: "24 hours" },
+  { value: "7d", label: "7 days" },
+  { value: "30d", label: "30 days" },
+  { value: "90d", label: "3 months" },
+  { value: "custom", label: "Custom" },
 ];
 
 export function LocationSearchBar({ onLocationSelect, currentLocation }: LocationSearchBarProps) {
   const [searchValue, setSearchValue] = useState("");
   const [isExpanded, setIsExpanded] = useState(false);
   const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
-  const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<SearchFilters>({});
   const [customDateOpen, setCustomDateOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const autocompleteRef = useRef<any>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const debouncedSearch = useDebounce(searchValue, 300);
 
-  // Google Places Autocomplete for location search
   useEffect(() => {
     if (!inputRef.current || !(window as any).google || showAdvancedSearch) return;
 
     const google = (window as any).google;
     
-    // Initialize Google Places Autocomplete
     autocompleteRef.current = new google.maps.places.Autocomplete(inputRef.current, {
       types: ["geocode", "establishment"],
       fields: ["name", "geometry", "formatted_address"],
     });
 
-    // Listen for place selection
     autocompleteRef.current.addListener("place_changed", () => {
       const place = autocompleteRef.current?.getPlace();
       if (place?.geometry?.location) {
@@ -103,7 +102,17 @@ export function LocationSearchBar({ onLocationSelect, currentLocation }: Locatio
     };
   }, [onLocationSelect, showAdvancedSearch]);
 
-  // Advanced search query
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsExpanded(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const { data: searchResults, isLoading } = useQuery<{
     success: boolean;
     results: SearchResult[];
@@ -141,14 +150,6 @@ export function LocationSearchBar({ onLocationSelect, currentLocation }: Locatio
     setIsExpanded(true);
   };
 
-  const handleBlur = () => {
-    setTimeout(() => {
-      if (!searchValue && !showAdvancedSearch) {
-        setIsExpanded(false);
-      }
-    }, 200);
-  };
-
   const toggleAdvancedSearch = () => {
     setShowAdvancedSearch(!showAdvancedSearch);
     if (!showAdvancedSearch) {
@@ -177,7 +178,6 @@ export function LocationSearchBar({ onLocationSelect, currentLocation }: Locatio
 
   const clearFilters = () => {
     setFilters({});
-    setShowFilters(false);
   };
 
   const handleSelectResult = (result: SearchResult) => {
@@ -196,179 +196,217 @@ export function LocationSearchBar({ onLocationSelect, currentLocation }: Locatio
   const hasActiveFilters = !!(filters.location || filters.timeRange);
   const groupedResults = searchResults?.grouped || {};
   const hasResults = Object.keys(groupedResults).length > 0;
+  const totalResults = searchResults?.total || 0;
 
   return (
-    <div className="relative">
-      <div 
+    <div className="relative" ref={containerRef}>
+      <Card 
         className={`
-          bg-gradient-to-r from-blue-950/90 via-slate-900/90 to-blue-950/90 backdrop-blur-xl rounded-full shadow-[0_0_30px_rgba(59,130,246,0.3)] border-2 border-blue-500/40
-          transition-all duration-300 ease-in-out
-          ${isExpanded || showAdvancedSearch ? 'w-[28rem] shadow-[0_0_40px_rgba(59,130,246,0.4)]' : 'w-80 shadow-[0_0_30px_rgba(59,130,246,0.3)]'}
-          hover:shadow-[0_0_50px_rgba(59,130,246,0.5)] hover:border-blue-400/50
+          transition-all duration-200 ease-out overflow-hidden
+          w-full max-w-[320px] sm:max-w-[480px]
+          ${isExpanded || showAdvancedSearch ? 'sm:max-w-[480px]' : 'max-w-[320px]'}
         `}
         data-testid="location-search-bar"
       >
-        <div className="flex items-center gap-4 px-6 py-4">
-          <MapPin className="h-5 w-5 text-blue-400 flex-shrink-0 drop-shadow-[0_0_8px_rgba(59,130,246,0.6)]" />
+        <div className="flex items-center gap-3 p-3">
+          <div className="flex items-center justify-center w-9 h-9 rounded-md bg-primary/10 text-primary flex-shrink-0">
+            {showAdvancedSearch ? <Search className="h-4 w-4" /> : <MapPin className="h-4 w-4" />}
+          </div>
+          
           <input
             ref={inputRef}
             type="text"
             value={searchValue}
             onChange={(e) => setSearchValue(e.target.value)}
             onFocus={handleFocus}
-            onBlur={handleBlur}
             placeholder={showAdvancedSearch ? "Search intelligence data..." : (currentLocation || "Search location...")}
-            className="flex-1 bg-transparent border-none outline-none text-base font-medium text-slate-50 placeholder:text-slate-400 placeholder:font-normal"
+            className="flex-1 bg-transparent border-none outline-none text-sm text-foreground placeholder:text-muted-foreground"
             data-testid="input-location-search"
           />
-          <button
-            onClick={toggleAdvancedSearch}
-            className={`flex-shrink-0 p-2 rounded-full transition-all duration-300 ${
-              showAdvancedSearch 
-                ? 'bg-blue-500/30 text-blue-300 shadow-[0_0_15px_rgba(59,130,246,0.5)] scale-110' 
-                : 'text-slate-400 hover:text-blue-400 hover:bg-blue-500/20 hover:shadow-[0_0_10px_rgba(59,130,246,0.3)]'
-            }`}
-            title={showAdvancedSearch ? "Basic location search" : "Advanced search with filters"}
-            data-testid="button-toggle-advanced-search"
-          >
-            {showAdvancedSearch ? <X className="h-5 w-5" /> : <Search className="h-5 w-5" />}
-          </button>
+
+          <div className="flex items-center gap-1">
+            <Button
+              variant={showAdvancedSearch ? "default" : "ghost"}
+              size="icon"
+              onClick={toggleAdvancedSearch}
+              title={showAdvancedSearch ? "Location search" : "Intelligence search"}
+              data-testid="button-toggle-advanced-search"
+            >
+              {showAdvancedSearch ? <X className="h-4 w-4" /> : <Search className="h-4 w-4" />}
+            </Button>
+          </div>
         </div>
 
-        {/* Advanced Search Filters */}
         {showAdvancedSearch && (
-          <div className="border-t border-slate-700/50 px-4 py-3">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs text-slate-400 font-medium">Advanced Filters</span>
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-                className={`text-xs px-2 py-1 rounded-md transition-colors ${
-                  showFilters || hasActiveFilters
-                    ? 'bg-blue-500/20 text-blue-400'
-                    : 'text-slate-400 hover:text-slate-300'
-                }`}
-                data-testid="button-toggle-filters"
-              >
-                <Filter className="h-3 w-3 inline mr-1" />
-                {hasActiveFilters && <span className="w-1.5 h-1.5 bg-blue-400 rounded-full inline-block ml-1" />}
-              </button>
+          <div className="border-t px-3 py-2 bg-muted/30">
+            <div className="flex items-center gap-2">
+              <Select value={filters.location || "all"} onValueChange={handleLocationChange}>
+                <SelectTrigger className="h-8 text-xs bg-background border-border w-[130px]">
+                  <MapPin className="h-3 w-3 mr-1.5 text-muted-foreground" />
+                  <SelectValue placeholder="Location" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Any location</SelectItem>
+                  {locationOptions.map(option => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={filters.timeRange || "all"} onValueChange={handleTimeRangeChange}>
+                <SelectTrigger className="h-8 text-xs bg-background border-border w-[120px]">
+                  <Clock className="h-3 w-3 mr-1.5 text-muted-foreground" />
+                  <SelectValue placeholder="Time" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Any time</SelectItem>
+                  {timeRangeOptions.map(option => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {hasActiveFilters && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearFilters}
+                  className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground"
+                  data-testid="button-clear-filters"
+                >
+                  <X className="h-3 w-3 mr-1" />
+                  Clear
+                </Button>
+              )}
+
+              <div className="flex-1" />
+
+              {debouncedSearch.length >= 2 && !isLoading && (
+                <Badge variant="secondary" className="text-xs font-mono">
+                  {totalResults} results
+                </Badge>
+              )}
             </div>
 
-            {showFilters && (
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <MapPin className="h-3 w-3 text-slate-400 flex-shrink-0" />
-                  <Select value={filters.location || "all"} onValueChange={handleLocationChange}>
-                    <SelectTrigger className="flex-1 h-8 text-xs bg-slate-800/50 border-slate-700/50">
-                      <SelectValue placeholder="Any location" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Any location</SelectItem>
-                      {locationOptions.map(option => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <Clock className="h-3 w-3 text-slate-400 flex-shrink-0" />
-                  <Select value={filters.timeRange || "all"} onValueChange={handleTimeRangeChange}>
-                    <SelectTrigger className="flex-1 h-8 text-xs bg-slate-800/50 border-slate-700/50">
-                      <SelectValue placeholder="Any time" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Any time</SelectItem>
-                      {timeRangeOptions.map(option => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {hasActiveFilters && (
-                  <div className="flex items-center justify-between pt-1">
-                    <div className="flex flex-wrap gap-1">
-                      {filters.location && (
-                        <Badge variant="secondary" className="text-xs h-5">
-                          {locationOptions.find(l => l.value === filters.location)?.label}
-                        </Badge>
-                      )}
-                      {filters.timeRange && (
-                        <Badge variant="secondary" className="text-xs h-5">
-                          {filters.timeRange === "custom" && filters.dateFrom && filters.dateTo
-                            ? `${format(filters.dateFrom, "MMM d")} - ${format(filters.dateTo, "MMM d")}`
-                            : timeRangeOptions.find(t => t.value === filters.timeRange)?.label
-                          }
-                        </Badge>
-                      )}
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={clearFilters}
-                      className="h-6 px-2 text-xs text-slate-400"
-                      data-testid="button-clear-filters"
+            {hasActiveFilters && (
+              <div className="flex items-center gap-1.5 mt-2">
+                {filters.location && (
+                  <Badge variant="outline" className="text-xs gap-1 pr-1">
+                    <MapPin className="h-3 w-3" />
+                    {locationOptions.find(l => l.value === filters.location)?.label}
+                    <button
+                      onClick={() => setFilters(prev => ({ ...prev, location: undefined }))}
+                      className="ml-1 p-0.5 rounded hover:bg-muted"
                     >
                       <X className="h-3 w-3" />
-                    </Button>
-                  </div>
+                    </button>
+                  </Badge>
+                )}
+                {filters.timeRange && filters.timeRange !== "custom" && (
+                  <Badge variant="outline" className="text-xs gap-1 pr-1">
+                    <Clock className="h-3 w-3" />
+                    {timeRangeOptions.find(t => t.value === filters.timeRange)?.label}
+                    <button
+                      onClick={() => setFilters(prev => ({ ...prev, timeRange: undefined, dateFrom: undefined, dateTo: undefined }))}
+                      className="ml-1 p-0.5 rounded hover:bg-muted"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                )}
+                {filters.timeRange === "custom" && (
+                  <Badge 
+                    variant="outline" 
+                    className="text-xs gap-1 pr-1 cursor-pointer"
+                    onClick={() => setCustomDateOpen(true)}
+                  >
+                    <Calendar className="h-3 w-3" />
+                    {filters.dateFrom && filters.dateTo
+                      ? `${format(filters.dateFrom, "MMM d")} - ${format(filters.dateTo, "MMM d")}`
+                      : "Set dates..."
+                    }
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setFilters(prev => ({ ...prev, timeRange: undefined, dateFrom: undefined, dateTo: undefined }));
+                      }}
+                      className="ml-1 p-0.5 rounded hover:bg-muted"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
                 )}
               </div>
             )}
           </div>
         )}
-      </div>
+      </Card>
 
-      {/* Search Results Dropdown */}
       {showAdvancedSearch && debouncedSearch.length >= 2 && (
-        <div className="absolute top-full left-0 right-0 mt-3 bg-gradient-to-br from-slate-900/98 via-blue-950/98 to-slate-900/98 backdrop-blur-2xl rounded-2xl shadow-[0_0_40px_rgba(59,130,246,0.3)] border-2 border-blue-500/30 overflow-hidden max-h-96 z-50">
+        <Card className="absolute top-full left-0 right-0 mt-2 max-h-[400px] overflow-hidden z-50">
           {isLoading && (
-            <div className="flex items-center justify-center p-6" data-testid="loading-search">
-              <Loader2 className="h-5 w-5 animate-spin text-blue-400 mr-2" />
-              <span className="text-sm text-slate-300">Searching...</span>
+            <div className="flex items-center justify-center p-8" data-testid="loading-search">
+              <Loader2 className="h-5 w-5 animate-spin text-primary mr-3" />
+              <span className="text-sm text-muted-foreground">Searching intelligence data...</span>
             </div>
           )}
 
           {!isLoading && !hasResults && (
-            <div className="text-center p-6" data-testid="empty-search-results">
-              <Search className="h-10 w-10 mx-auto mb-3 text-slate-500" />
-              <h3 className="text-sm font-medium text-slate-200">No results found</h3>
-              <p className="text-xs text-slate-400 mt-1">Try adjusting your search terms or filters</p>
+            <div className="text-center p-8" data-testid="empty-search-results">
+              <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center mx-auto mb-3">
+                <Search className="h-6 w-6 text-muted-foreground" />
+              </div>
+              <h3 className="text-sm font-medium text-foreground">No results found</h3>
+              <p className="text-xs text-muted-foreground mt-1 max-w-[200px] mx-auto">
+                Try different search terms or adjust your filters
+              </p>
             </div>
           )}
 
           {!isLoading && hasResults && (
-            <div className="max-h-96 overflow-y-auto">
+            <div className="max-h-[400px] overflow-y-auto">
               {Object.entries(groupedResults).map(([type, results], index) => {
                 const Icon = typeIcons[type as keyof typeof typeIcons] || Search;
                 const label = typeLabels[type as keyof typeof typeLabels] || type.charAt(0).toUpperCase() + type.slice(1);
                 
                 return (
                   <div key={type}>
-                    {index > 0 && <Separator className="bg-slate-700/50" />}
-                    <div className="px-3 py-2">
-                      <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-slate-400 mb-2">
-                        <Icon className="h-3 w-3" />
-                        {label}
+                    {index > 0 && <Separator />}
+                    <div className="p-3">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="flex items-center justify-center w-6 h-6 rounded bg-muted">
+                          <Icon className="h-3.5 w-3.5 text-muted-foreground" />
+                        </div>
+                        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                          {label}
+                        </span>
+                        <Badge variant="secondary" className="text-xs ml-auto">
+                          {results.length}
+                        </Badge>
                       </div>
                       <div className="space-y-1">
                         {results.map((result: SearchResult) => (
                           <button
                             key={result.id}
                             onClick={() => handleSelectResult(result)}
-                            className="w-full text-left p-2 rounded-lg hover:bg-slate-700/50 transition-colors"
+                            className="w-full text-left p-3 rounded-md hover-elevate bg-muted/30 transition-colors"
                             data-testid={`search-result-${result.type}-${result.id}`}
                           >
-                            <div className="flex items-start justify-between gap-2">
+                            <div className="flex items-start justify-between gap-3">
                               <div className="flex-1 min-w-0">
-                                <h4 className="text-sm font-medium text-slate-100 truncate">{result.title}</h4>
-                                <p className="text-xs text-slate-400 mt-1 line-clamp-1">{result.snippet}</p>
-                                <div className="flex items-center gap-3 mt-1 text-xs text-slate-500">
+                                <h4 className="text-sm font-medium text-foreground truncate">
+                                  {result.title}
+                                </h4>
+                                {result.snippet && (
+                                  <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                                    {result.snippet}
+                                  </p>
+                                )}
+                                <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
                                   <span className="flex items-center gap-1">
                                     <Calendar className="h-3 w-3" />
                                     {new Date(result.timestamp).toLocaleDateString()}
@@ -376,11 +414,17 @@ export function LocationSearchBar({ onLocationSelect, currentLocation }: Locatio
                                   {result.location && (
                                     <span className="flex items-center gap-1">
                                       <MapPin className="h-3 w-3" />
+                                      <span className="truncate max-w-[100px]">
+                                        {result.location.lat.toFixed(2)}, {result.location.lng.toFixed(2)}
+                                      </span>
                                     </span>
                                   )}
                                 </div>
                               </div>
-                              <Badge variant="outline" className="text-xs flex-shrink-0 border-blue-500/30 text-blue-400">
+                              <Badge 
+                                variant={result.score >= 0.8 ? "default" : result.score >= 0.5 ? "secondary" : "outline"}
+                                className="text-xs flex-shrink-0 font-mono"
+                              >
                                 {Math.round(result.score * 100)}%
                               </Badge>
                             </div>
@@ -393,50 +437,45 @@ export function LocationSearchBar({ onLocationSelect, currentLocation }: Locatio
               })}
             </div>
           )}
-        </div>
+        </Card>
       )}
 
-      {/* Custom Date Range Popover */}
-      {filters.timeRange === "custom" && (
-        <Popover open={customDateOpen} onOpenChange={setCustomDateOpen}>
-          <PopoverTrigger asChild>
-            <div />
-          </PopoverTrigger>
-          <PopoverContent className="w-80 p-0 bg-slate-800 border-slate-700" align="start">
-            <div className="p-4">
-              <h4 className="font-medium text-slate-100 mb-3">Select Date Range</h4>
-              <div className="space-y-3">
-                <div>
-                  <label className="text-sm font-medium text-slate-300">From Date</label>
-                  <CalendarComponent
-                    mode="single"
-                    selected={filters.dateFrom}
-                    onSelect={(date) => setFilters(prev => ({ ...prev, dateFrom: date }))}
-                    className="w-full"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-slate-300">To Date</label>
-                  <CalendarComponent
-                    mode="single"
-                    selected={filters.dateTo}
-                    onSelect={(date) => setFilters(prev => ({ ...prev, dateTo: date }))}
-                    className="w-full"
-                  />
-                </div>
-                <Button
-                  onClick={() => setCustomDateOpen(false)}
-                  className="w-full"
-                  size="sm"
-                  data-testid="button-apply-date-range"
-                >
-                  Apply Range
-                </Button>
-              </div>
+      <Popover open={customDateOpen} onOpenChange={setCustomDateOpen}>
+        <PopoverTrigger asChild>
+          <span className="sr-only">Custom date range</span>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-4" align="start" sideOffset={8}>
+          <h4 className="font-medium text-sm mb-3">Select Date Range</h4>
+          <div className="space-y-4">
+            <div>
+              <label className="text-xs text-muted-foreground mb-1 block">From</label>
+              <CalendarComponent
+                mode="single"
+                selected={filters.dateFrom}
+                onSelect={(date) => setFilters(prev => ({ ...prev, dateFrom: date }))}
+                className="rounded-md border"
+              />
             </div>
-          </PopoverContent>
-        </Popover>
-      )}
+            <div>
+              <label className="text-xs text-muted-foreground mb-1 block">To</label>
+              <CalendarComponent
+                mode="single"
+                selected={filters.dateTo}
+                onSelect={(date) => setFilters(prev => ({ ...prev, dateTo: date }))}
+                className="rounded-md border"
+              />
+            </div>
+            <Button
+              onClick={() => setCustomDateOpen(false)}
+              className="w-full"
+              size="sm"
+              data-testid="button-apply-date-range"
+            >
+              Apply Range
+            </Button>
+          </div>
+        </PopoverContent>
+      </Popover>
     </div>
   );
 }
