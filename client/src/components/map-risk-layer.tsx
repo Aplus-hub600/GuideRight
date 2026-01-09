@@ -96,13 +96,17 @@ export function useMapRiskLayer({
     markersRef.current = []
     
     const cleanupLayers = () => {
-      MOCK_RISK_ZONES.forEach((zone) => {
-        const layerId = `risk-layer-${zone.id}`
-        const sourceId = `risk-zone-${zone.id}`
-        if (map.getLayer(layerId)) map.removeLayer(layerId)
-        if (map.getLayer(`${layerId}-outline`)) map.removeLayer(`${layerId}-outline`)
-        if (map.getSource(sourceId)) map.removeSource(sourceId)
-      })
+      try {
+        MOCK_RISK_ZONES.forEach((zone) => {
+          const layerId = `risk-layer-${zone.id}`
+          const sourceId = `risk-zone-${zone.id}`
+          try {
+            if (map.getLayer(layerId)) map.removeLayer(layerId)
+            if (map.getLayer(`${layerId}-outline`)) map.removeLayer(`${layerId}-outline`)
+            if (map.getSource(sourceId)) map.removeSource(sourceId)
+          } catch {}
+        })
+      } catch {}
     }
     
     cleanupLayers()

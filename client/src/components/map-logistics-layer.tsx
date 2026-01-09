@@ -133,12 +133,16 @@ export function useMapLogisticsLayer({
     markersRef.current = []
     
     const cleanupLayers = () => {
-      MOCK_ROUTES.forEach((route) => {
-        const layerId = `logistics-layer-${route.id}`
-        const sourceId = `logistics-route-${route.id}`
-        if (map.getLayer(layerId)) map.removeLayer(layerId)
-        if (map.getSource(sourceId)) map.removeSource(sourceId)
-      })
+      try {
+        MOCK_ROUTES.forEach((route) => {
+          const layerId = `logistics-layer-${route.id}`
+          const sourceId = `logistics-route-${route.id}`
+          try {
+            if (map.getLayer(layerId)) map.removeLayer(layerId)
+            if (map.getSource(sourceId)) map.removeSource(sourceId)
+          } catch {}
+        })
+      } catch {}
     }
     
     cleanupLayers()

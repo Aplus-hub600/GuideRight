@@ -60,19 +60,25 @@ export function useMapAccessibilityLayer({
     if (!map || !isMapReady) return
     
     const cleanupLayers = () => {
-      TRAVEL_RINGS.forEach((_, idx) => {
-        const layerId = `travel-ring-layer-${idx}`
-        const sourceId = `travel-ring-source-${idx}`
-        if (map.getLayer(layerId)) map.removeLayer(layerId)
-        if (map.getLayer(`${layerId}-outline`)) map.removeLayer(`${layerId}-outline`)
-        if (map.getSource(sourceId)) map.removeSource(sourceId)
-      })
-      DENSITY_ZONES.forEach((zone) => {
-        const layerId = `density-layer-${zone.id}`
-        const sourceId = `density-zone-${zone.id}`
-        if (map.getLayer(layerId)) map.removeLayer(layerId)
-        if (map.getSource(sourceId)) map.removeSource(sourceId)
-      })
+      try {
+        TRAVEL_RINGS.forEach((_, idx) => {
+          const layerId = `travel-ring-layer-${idx}`
+          const sourceId = `travel-ring-source-${idx}`
+          try {
+            if (map.getLayer(layerId)) map.removeLayer(layerId)
+            if (map.getLayer(`${layerId}-outline`)) map.removeLayer(`${layerId}-outline`)
+            if (map.getSource(sourceId)) map.removeSource(sourceId)
+          } catch {}
+        })
+        DENSITY_ZONES.forEach((zone) => {
+          const layerId = `density-layer-${zone.id}`
+          const sourceId = `density-zone-${zone.id}`
+          try {
+            if (map.getLayer(layerId)) map.removeLayer(layerId)
+            if (map.getSource(sourceId)) map.removeSource(sourceId)
+          } catch {}
+        })
+      } catch {}
     }
     
     cleanupLayers()
