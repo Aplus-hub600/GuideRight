@@ -1,9 +1,8 @@
-import { Download, FileJson, TestTube, Languages } from "lucide-react";
+import { Download, FileJson, TestTube } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useMapExport } from "@/hooks/useMapExport";
 import { FeedbackForm } from "./feedback-form";
-import { LanguageSwitcher } from "./language-switcher";
 
 interface ExportPanelProps {
   currentAOI?: {
@@ -45,21 +44,6 @@ export function ExportPanel({ currentAOI, activeTopPanel, activeBottomPanel }: E
           Configure app settings and export data
         </p>
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-xl font-bold text-blue-100">
-            <Languages className="h-6 w-6 text-blue-400" />
-            Language
-          </CardTitle>
-          <CardDescription className="text-base text-gray-300 font-medium">
-            Choose your preferred interface language
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <LanguageSwitcher />
-        </CardContent>
-      </Card>
 
       <div className="grid gap-4">
         <Card>

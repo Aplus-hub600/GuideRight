@@ -1,8 +1,8 @@
-import { useState, useRef, useEffect, useCallback } from "react"
+import { useState, useRef, useEffect, useCallback, useMemo } from "react"
 import { 
   Send, Loader2, Globe, Paperclip, Shield, 
   BarChart3, AlertTriangle, FileText, Briefcase, 
-  Sparkles, ChevronRight, Zap, Target
+  Sparkles, ChevronRight, Zap, Target, Languages
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
@@ -48,6 +48,100 @@ const QUICK_ACTIONS = [
   { id: "SITREP", label: "SITREP", icon: FileText, prompt: "Create a situation report for current operations" },
   { id: "MISSION", label: "Mission", icon: Briefcase, prompt: "Provide mission support analysis and recommendations" },
 ]
+
+function detectNonEnglish(text: string): { isNonEnglish: boolean; detectedScript: string } {
+  const banglaRegex = /[\u0980-\u09FF]/
+  const hindiRegex = /[\u0900-\u097F]/
+  const russianRegex = /[\u0400-\u04FF]/
+  const chineseRegex = /[\u4E00-\u9FFF]/
+  const arabicRange = /[\u0600-\u06FF]/
+  
+  const urduExclusive = /[\u0679\u0688\u0691\u06BA\u06BE\u06C1\u06D2\u06D3]/
+  
+  if (banglaRegex.test(text)) return { isNonEnglish: true, detectedScript: "Bangla" }
+  if (hindiRegex.test(text)) return { isNonEnglish: true, detectedScript: "Hindi" }
+  if (russianRegex.test(text)) return { isNonEnglish: true, detectedScript: "Russian" }
+  if (chineseRegex.test(text)) return { isNonEnglish: true, detectedScript: "Chinese" }
+  
+  if (arabicRange.test(text)) {
+    if (urduExclusive.test(text)) return { isNonEnglish: true, detectedScript: "Urdu" }
+    return { isNonEnglish: true, detectedScript: "Arabic/Perso-Arabic" }
+  }
+  
+  return { isNonEnglish: false, detectedScript: "English" }
+}
+
+function QueryInterpretationDisplay({ 
+  originalQuery, 
+  interpretedQuery,
+  detectedScript 
+}: { 
+  originalQuery: string
+  interpretedQuery: string
+  detectedScript: string
+}) {
+  return (
+    <div className="mx-4 mb-2 p-3 bg-amber-500/5 border border-amber-500/20 rounded-md">
+      <div className="flex items-center gap-2 mb-2">
+        <Languages className="h-4 w-4 text-amber-500" />
+        <span className="text-xs font-medium text-amber-600 dark:text-amber-400 uppercase tracking-wide">
+          Query Interpreted
+        </span>
+        <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-amber-600 dark:text-amber-400 border-amber-500/50">
+          {detectedScript}
+        </Badge>
+      </div>
+      <div className="space-y-2 text-xs">
+        <div>
+          <span className="text-muted-foreground">Original:</span>
+          <p className="mt-0.5 text-foreground/80">{originalQuery}</p>
+        </div>
+        <div>
+          <span className="text-primary">Interpreted (EN):</span>
+          <p className="mt-0.5 font-medium">{interpretedQuery}</p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function generateInterpretation(text: string, script: string): string {
+  const interpretations: Record<string, Record<string, string>> = {
+    "Bangla": {
+      "ঢাকায় হাসপাতাল কোথায়": "Where are hospitals located in Dhaka?",
+      "নিরাপত্তা পরিস্থিতি কি": "What is the security situation?",
+      "পরিবহন রুট দেখান": "Show transport routes",
+      "ঝুঁকি মূল্যায়ন করুন": "Conduct risk assessment"
+    },
+    "Arabic": {
+      "أين المستشفيات": "Where are the hospitals?",
+      "تقييم المخاطر": "Risk assessment",
+      "الوضع الأمني": "Security situation"
+    },
+    "Russian": {
+      "анализ угроз": "Threat analysis",
+      "оценка рисков": "Risk assessment"
+    }
+  }
+  
+  const scriptInterps = interpretations[script] || {}
+  for (const [key, value] of Object.entries(scriptInterps)) {
+    if (text.includes(key)) return value
+  }
+  
+  const queryPatterns = [
+    { pattern: /hospital|হাসপাতাল|مستشف/i, interpretation: "Query about healthcare facilities in the area" },
+    { pattern: /risk|ঝুঁকি|خطر/i, interpretation: "Request for risk assessment" },
+    { pattern: /security|নিরাপত্তা|أمن/i, interpretation: "Query about security situation" },
+    { pattern: /transport|পরিবহন|نقل/i, interpretation: "Query about transportation infrastructure" }
+  ]
+  
+  for (const { pattern, interpretation } of queryPatterns) {
+    if (pattern.test(text)) return interpretation
+  }
+  
+  return `Intelligence query (${script} input detected)`
+}
 
 function TypewriterText({ text, messageId }: { text: string; messageId: string }) {
   const [displayedText, setDisplayedText] = useState("")
@@ -288,6 +382,12 @@ function IntelCard({ message }: { message: ChatMessage }) {
   )
 }
 
+interface InterpretedQuery {
+  original: string
+  interpreted: string
+  script: string
+}
+
 export function ChatPanel({ onQuerySubmit, mediaContextIds, odinCountry, className }: ChatPanelProps) {
   const { t } = useTranslation()
   const { toast } = useToast()
@@ -295,6 +395,7 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, odinCountry, classNa
   const [input, setInput] = useState("")
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [isStreaming, setIsStreaming] = useState(false)
+  const [lastInterpretedQuery, setLastInterpretedQuery] = useState<InterpretedQuery | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const abortControllerRef = useRef<AbortController | null>(null)
@@ -317,6 +418,18 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, odinCountry, classNa
     if (!customPrompt) setInput("")
     setIsStreaming(true)
     isClearedRef.current = false
+    
+    const languageCheck = detectNonEnglish(queryText)
+    if (languageCheck.isNonEnglish) {
+      const interpretedQuery = generateInterpretation(queryText, languageCheck.detectedScript)
+      setLastInterpretedQuery({
+        original: queryText,
+        interpreted: interpretedQuery,
+        script: languageCheck.detectedScript
+      })
+    } else {
+      setLastInterpretedQuery(null)
+    }
     
     onQuerySubmit?.(queryText, mediaContextIds)
     
@@ -548,6 +661,13 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, odinCountry, classNa
             </div>
           ) : (
             <div className="p-4 space-y-4">
+              {lastInterpretedQuery && (
+                <QueryInterpretationDisplay
+                  originalQuery={lastInterpretedQuery.original}
+                  interpretedQuery={lastInterpretedQuery.interpreted}
+                  detectedScript={lastInterpretedQuery.script}
+                />
+              )}
               <AnimatePresence mode="popLayout">
                 {messages.map((message, index) => (
                   <motion.div

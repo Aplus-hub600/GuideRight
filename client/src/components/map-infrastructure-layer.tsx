@@ -7,6 +7,7 @@ export type InfraCategory = "hospital" | "transport" | "utility" | "government" 
 export interface InfrastructureNode {
   id: string
   name: string
+  nameLocal?: string
   category: InfraCategory
   subCategory?: string
   lat: number
@@ -123,7 +124,10 @@ export function useMapInfrastructureLayer({
               font-size: 11px;
               font-weight: 600;
             ">${icon}</div>
-            <strong style="color: #1a1a1a; font-size: 13px;">${node.name}</strong>
+            <div>
+              <strong style="color: #1a1a1a; font-size: 13px;">${node.name}</strong>
+              ${node.nameLocal ? `<div style="font-size: 11px; color: #666; margin-top: 2px;">${node.nameLocal}</div>` : ""}
+            </div>
           </div>
           ${node.subCategory ? `<div style="color: #666; font-size: 11px; margin-bottom: 6px; text-transform: capitalize;">${node.subCategory}</div>` : ""}
           <div style="display: flex; flex-wrap: wrap; gap: 6px; font-size: 10px; color: #666;">
@@ -162,6 +166,7 @@ export const MOCK_INFRASTRUCTURE_NODES: InfrastructureNode[] = [
   {
     id: "hosp-1",
     name: "Dhaka Medical College Hospital",
+    nameLocal: "ঢাকা মেডিকেল কলেজ হাসপাতাল",
     category: "hospital",
     subCategory: "public teaching hospital",
     lat: 23.7260,
@@ -173,6 +178,7 @@ export const MOCK_INFRASTRUCTURE_NODES: InfrastructureNode[] = [
   {
     id: "hosp-2",
     name: "National Institute of Cardiovascular Diseases",
+    nameLocal: "জাতীয় হৃদরোগ ইনস্টিটিউট",
     category: "hospital",
     subCategory: "specialized cardiac care",
     lat: 23.7385,
@@ -184,6 +190,7 @@ export const MOCK_INFRASTRUCTURE_NODES: InfrastructureNode[] = [
   {
     id: "hosp-3",
     name: "Apollo Hospitals Dhaka",
+    nameLocal: "এপোলো হাসপাতাল ঢাকা",
     category: "hospital",
     subCategory: "private multispecialty",
     lat: 23.7959,
@@ -195,6 +202,7 @@ export const MOCK_INFRASTRUCTURE_NODES: InfrastructureNode[] = [
   {
     id: "hosp-4",
     name: "Sir Salimullah Medical College",
+    nameLocal: "স্যার সলিমুল্লাহ মেডিকেল কলেজ",
     category: "hospital",
     subCategory: "public teaching hospital",
     lat: 23.7182,
@@ -205,6 +213,7 @@ export const MOCK_INFRASTRUCTURE_NODES: InfrastructureNode[] = [
   {
     id: "trans-1",
     name: "Kamalapur Railway Station",
+    nameLocal: "কমলাপুর রেলওয়ে স্টেশন",
     category: "transport",
     subCategory: "rail hub",
     lat: 23.7326,
@@ -216,6 +225,7 @@ export const MOCK_INFRASTRUCTURE_NODES: InfrastructureNode[] = [
   {
     id: "trans-2",
     name: "Shahjalal International Airport",
+    nameLocal: "শাহজালাল আন্তর্জাতিক বিমানবন্দর",
     category: "transport",
     subCategory: "international airport",
     lat: 23.8433,
@@ -227,6 +237,7 @@ export const MOCK_INFRASTRUCTURE_NODES: InfrastructureNode[] = [
   {
     id: "trans-3",
     name: "Sadarghat River Terminal",
+    nameLocal: "সদরঘাট নৌ টার্মিনাল",
     category: "transport",
     subCategory: "water transport",
     lat: 23.7080,
@@ -238,6 +249,7 @@ export const MOCK_INFRASTRUCTURE_NODES: InfrastructureNode[] = [
   {
     id: "util-1",
     name: "Haripur Power Plant",
+    nameLocal: "হরিপুর বিদ্যুৎ কেন্দ্র",
     category: "utility",
     subCategory: "power generation",
     lat: 23.7500,
@@ -249,6 +261,7 @@ export const MOCK_INFRASTRUCTURE_NODES: InfrastructureNode[] = [
   {
     id: "util-2",
     name: "Saidabad Water Treatment Plant",
+    nameLocal: "সায়েদাবাদ পানি শোধনাগার",
     category: "utility",
     subCategory: "water treatment",
     lat: 23.6951,
@@ -260,6 +273,7 @@ export const MOCK_INFRASTRUCTURE_NODES: InfrastructureNode[] = [
   {
     id: "gov-1",
     name: "National Parliament House",
+    nameLocal: "জাতীয় সংসদ ভবন",
     category: "government",
     subCategory: "legislative",
     lat: 23.7625,
@@ -271,6 +285,7 @@ export const MOCK_INFRASTRUCTURE_NODES: InfrastructureNode[] = [
   {
     id: "gov-2",
     name: "Bangladesh Secretariat",
+    nameLocal: "বাংলাদেশ সচিবালয়",
     category: "government",
     subCategory: "administrative",
     lat: 23.7300,

@@ -1,0 +1,238 @@
+Final Language Strategy (Recommended & Defensible)
+English is the authoritative operational language
+
+Always. Everywhere. By default.
+
+Why:
+
+English is the common operational language across:
+
+IC
+
+SOCOM
+
+JSOC
+
+NATO / coalition partners
+
+Intelligence products must be reviewable, shareable, and auditable
+
+PMESII, ASCOPE, CARVER are doctrinally English
+
+🔒 Rule:
+The map, system UI, legends, lenses, confidence labels, and primary outputs remain in English at all times.
+
+This avoids:
+
+ambiguity
+
+mistranslation risk
+
+briefing friction
+
+legal / audit issues
+
+But: Multilingual capability is still critical — just not where people usually put it
+❌ What you should NOT do
+
+Full UI language switching
+
+Map labels flipping languages
+
+Legends changing language mid-brief
+
+Analysts seeing different UI languages
+
+That’s consumer-grade behavior and signals immaturity.
+
+✅ The Correct Model: English UI + Multilingual Intelligence Layers
+Think in three language layers
+1️⃣ Layer 1 — System Language (Fixed: English)
+
+Never changes
+
+Includes:
+
+Map UI
+
+Lenses
+
+Legends
+
+Confidence indicators
+
+Buttons
+
+System messages
+
+PMESII / ASCOPE labels
+
+This is your authoritative layer.
+
+2️⃣ Layer 2 — Source Language (Preserved, Not Translated)
+
+Always preserved in original language
+
+Examples:
+
+Local news in Bangla
+
+Social media in Arabic
+
+Reports in Urdu, French, Russian
+
+UI behavior:
+
+Evidence panel shows:
+
+Original-language excerpt
+
+Language tag (e.g., BN, AR)
+
+Timestamp + source
+
+No silent translation
+
+This is critical for analyst trust.
+
+3️⃣ Layer 3 — Analyst Translation Overlay (On Demand)
+
+This is where multilingual power lives
+
+How it works (premium pattern)
+
+Toggle per panel or per evidence item:
+
+Translate → English
+Translate → Local Language
+
+Translation is:
+
+clearly marked
+
+reversible
+
+never replaces original text
+
+Display example:
+
+Original (BN):
+[Bangla text here]
+
+Translated (EN) — Machine Translation:
+[English translation here]
+
+
+This is exactly how IC-grade tools behave.
+
+Map-Specific Language Behavior (Very Important)
+Place Names
+
+Primary label: English transliteration
+Dhaka
+
+Secondary (hover / tooltip): Local script
+ঢাকা
+
+Never switch map labels wholesale.
+
+This:
+
+preserves geographic accuracy
+
+avoids confusion in briefings
+
+feels premium and intentional
+
+Map Queries & Questions
+
+Allow input in any language, but:
+
+Internally normalize to English
+
+Show the interpreted English query transparently
+
+Example:
+
+User types (Bangla):
+“ঢাকায় হাসপাতাল কোথায়?”
+
+UI shows:
+
+Interpreted Query (EN):
+“Where are hospitals located in Dhaka?”
+
+This builds confidence and avoids silent reinterpretation.
+
+Outputs & Briefing Products
+
+All generated products:
+
+PMESII summaries
+
+Context panels
+
+SITEMPs
+
+CUB inputs
+
+→ Produced in English only
+
+Optional:
+
+Side-by-side translated copy for local engagement, civil affairs, or partner forces
+
+But English remains canonical.
+
+Why this is the right choice for SOCOM / JSOC
+✔ Operationally credible
+
+Mirrors how analysts already work
+
+Aligns with briefing norms
+
+Avoids translation-induced errors
+
+✔ Coalition-ready
+
+English primary, local language available
+
+No confusion across partners
+
+✔ Audit-safe
+
+One authoritative language
+
+Translations clearly marked as derived
+
+✔ Scales to denied / edge environments
+
+English artifacts cached
+
+Translation optional when connectivity allows
+
+How this fits your current system (cleanly)
+
+You already have:
+
+i18next
+
+multilingual chat input
+
+evidence panels
+
+What to change:
+
+Lock UI language to English
+
+Add translation toggles at:
+
+Evidence item level
+
+Context panel paragraph level
+
+Preserve original-language text always
+
+Add language tags visibly (BN, AR, RU, etc.)
+
+This is mostly UX logic, not a heavy backend lift.

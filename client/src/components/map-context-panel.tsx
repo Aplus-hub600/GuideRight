@@ -15,11 +15,13 @@ import {
   Database,
   Building2,
   Sparkles,
-  ArrowRight
+  ArrowRight,
+  Languages
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { MapLens } from "./map-lens-selector"
 import type { InfrastructureNode } from "./map-infrastructure-layer"
+import { TranslatableText } from "./translatable-text"
 
 interface ContextSection {
   title: string
@@ -34,6 +36,73 @@ interface MapContextPanelProps {
   selectedNode?: InfrastructureNode | null
   onQuerySelect?: (query: string) => void
   className?: string
+}
+
+interface EvidenceItem {
+  id: string
+  originalText: string
+  originalLanguage: string
+  translatedText?: string
+  source: string
+  timestamp: string
+}
+
+const lensEvidence: Record<MapLens, EvidenceItem[]> = {
+  infrastructure: [
+    {
+      id: "ev-1",
+      originalText: "ঢাকা মেডিকেল কলেজ হাসপাতালে বিদ্যুৎ সংযোগ স্থাপনের কাজ সম্পন্ন হয়েছে।",
+      originalLanguage: "bn",
+      translatedText: "Electrical connection work at Dhaka Medical College Hospital has been completed.",
+      source: "Prothom Alo",
+      timestamp: "2025-01-09 08:42"
+    },
+    {
+      id: "ev-2",
+      originalText: "Construction of new water treatment facility in Mirpur sector 10 reached 78% completion according to WASA officials.",
+      originalLanguage: "en",
+      source: "Daily Star",
+      timestamp: "2025-01-08 14:15"
+    }
+  ],
+  "human-activity": [
+    {
+      id: "ev-3",
+      originalText: "طلاب الجامعة يخططون لاحتجاج سلمي يوم الخميس",
+      originalLanguage: "ar",
+      translatedText: "University students planning peaceful protest on Thursday",
+      source: "Social Media",
+      timestamp: "2025-01-09 06:30"
+    },
+    {
+      id: "ev-4",
+      originalText: "শাহবাগ এলাকায় যানজট তীব্র, সাধারণ যাত্রীদের চরম দুর্ভোগ",
+      originalLanguage: "bn",
+      translatedText: "Severe traffic congestion in Shahbag area, extreme suffering for regular commuters",
+      source: "BDNews24",
+      timestamp: "2025-01-09 09:12"
+    }
+  ],
+  "risk-stress": [
+    {
+      id: "ev-5",
+      originalText: "Внимание: повышенный уровень угрозы в северных районах",
+      originalLanguage: "ru",
+      translatedText: "Attention: elevated threat level in northern districts",
+      source: "Intel Report",
+      timestamp: "2025-01-09 03:00"
+    }
+  ],
+  logistics: [
+    {
+      id: "ev-6",
+      originalText: "پل کی مرمت کے باعث راستہ بند",
+      originalLanguage: "ur",
+      translatedText: "Route closed due to bridge repair",
+      source: "Local Report",
+      timestamp: "2025-01-08 22:45"
+    }
+  ]
 }
 
 const lensGuidedQuestions: Record<MapLens, string[]> = {
@@ -286,6 +355,7 @@ export function MapContextPanel({
 }: MapContextPanelProps) {
   const contextData = lensContextData[activeLens]
   const guidedQuestions = lensGuidedQuestions[activeLens]
+  const evidence = lensEvidence[activeLens] || []
   
   return (
     <div className={cn("flex flex-col h-full bg-background", className)}>
@@ -350,6 +420,33 @@ export function MapContextPanel({
               />
             ))}
           </div>
+          
+          {evidence.length > 0 && (
+            <>
+              <Separator />
+              
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <Languages className="h-4 w-4 text-primary" />
+                  <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                    Source Evidence
+                  </h3>
+                </div>
+                <div className="space-y-3">
+                  {evidence.map((item) => (
+                    <TranslatableText
+                      key={item.id}
+                      originalText={item.originalText}
+                      originalLanguage={item.originalLanguage}
+                      translatedText={item.translatedText}
+                      source={item.source}
+                      timestamp={item.timestamp}
+                    />
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
           
           <Separator />
           
