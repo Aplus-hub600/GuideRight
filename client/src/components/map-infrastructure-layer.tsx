@@ -171,12 +171,27 @@ const categoryColors: Record<InfraCategory, string> = {
   education: "#10b981"
 }
 
-const categoryIcons: Record<InfraCategory, string> = {
-  hospital: "H",
-  transport: "T",
-  utility: "U",
-  government: "G",
-  education: "E"
+const categoryIcons: Record<InfraCategory, { svg: string; label: string }> = {
+  hospital: { 
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6v12"/><path d="M4 10h16"/><path d="M16 6v12"/></svg>`,
+    label: "Healthcare"
+  },
+  transport: { 
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3h4"/><path d="M12 21V3"/><path d="m4 15 8 6 8-6"/></svg>`,
+    label: "Transport"
+  },
+  utility: { 
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>`,
+    label: "Utility"
+  },
+  government: { 
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/><path d="M9 9v.01"/><path d="M9 12v.01"/><path d="M9 15v.01"/><path d="M9 18v.01"/></svg>`,
+    label: "Government"
+  },
+  education: { 
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>`,
+    label: "Education"
+  }
 }
 
 function getConfidenceStyle(confidence: InfraConfidence): { opacity: number; border: string; fill: boolean } {
@@ -211,37 +226,27 @@ export function useMapInfrastructureLayer({
     
     nodes.forEach((node) => {
       const color = categoryColors[node.category]
-      const icon = categoryIcons[node.category]
+      const iconData = categoryIcons[node.category]
       const style = getConfidenceStyle(node.confidence)
       
       const el = document.createElement("div")
       el.className = "infrastructure-marker"
       el.style.cssText = `
-        width: 28px;
-        height: 28px;
+        width: 32px;
+        height: 32px;
         border-radius: 50%;
-        background: ${style.fill ? color : "transparent"};
+        background: ${style.fill ? color : "rgba(0,0,0,0.7)"};
         color: ${style.fill ? "white" : color};
         border: ${style.border};
         display: flex;
         align-items: center;
         justify-content: center;
-        font-weight: 700;
-        font-size: 12px;
-        font-family: system-ui, -apple-system, sans-serif;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.4);
         cursor: pointer;
         opacity: ${style.opacity};
-        transition: transform 0.2s;
+        pointer-events: auto;
       `
-      el.innerHTML = icon
-      
-      el.addEventListener("mouseenter", () => {
-        el.style.transform = "scale(1.1)"
-      })
-      el.addEventListener("mouseleave", () => {
-        el.style.transform = "scale(1)"
-      })
+      el.innerHTML = iconData.svg
       
       const confidenceLabel = node.confidence === "verified" 
         ? "Verified" 
@@ -250,27 +255,25 @@ export function useMapInfrastructureLayer({
           : "Inferred"
       
       const popup = new maplibregl.Popup({ offset: 25, closeButton: false }).setHTML(`
-        <div style="padding: 12px; font-family: system-ui; min-width: 200px;">
+        <div style="padding: 12px; font-family: system-ui; min-width: 220px;">
           <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
             <div style="
-              width: 24px;
-              height: 24px;
+              width: 28px;
+              height: 28px;
               border-radius: 50%;
               background: ${color};
               color: white;
               display: flex;
               align-items: center;
               justify-content: center;
-              font-weight: 700;
-              font-size: 11px;
-            ">${icon}</div>
+            ">${iconData.svg}</div>
             <div>
               <strong style="color: #1a1a1a; font-size: 13px;">${node.name}</strong>
               ${node.nameLocal ? `<div style="font-size: 11px; color: #666;">${node.nameLocal}</div>` : ""}
             </div>
           </div>
           <div style="font-size: 11px; color: #888; text-transform: capitalize; margin-bottom: 8px;">
-            ${node.category}${node.subCategory ? ` • ${node.subCategory}` : ""}
+            ${iconData.label}${node.subCategory ? ` • ${node.subCategory}` : ""}
           </div>
           <div style="display: flex; gap: 6px; flex-wrap: wrap;">
             <span style="

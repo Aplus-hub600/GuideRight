@@ -353,27 +353,48 @@ export function MapContextPanel({
   onQuerySelect,
   className 
 }: MapContextPanelProps) {
+  const [isExpanded, setIsExpanded] = useState(true)
   const contextData = lensContextData[activeLens]
   const guidedQuestions = lensGuidedQuestions[activeLens]
   const evidence = lensEvidence[activeLens] || []
   
   return (
-    <div className={cn("flex flex-col h-full bg-background", className)}>
-      <div className="px-4 py-3 border-b">
+    <div className={cn("flex flex-col bg-background transition-all duration-300", isExpanded ? "h-full" : "h-auto", className)}>
+      <button 
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="px-4 py-3 border-b hover-elevate cursor-pointer w-full"
+      >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <MapPin className="h-4 w-4 text-primary" />
             <span className="font-semibold text-sm">{aoiName}</span>
+            <Badge variant="outline" className="text-xs">
+              <Clock className="h-3 w-3 mr-1" />
+              Live
+            </Badge>
           </div>
-          <Badge variant="outline" className="text-xs">
-            <Clock className="h-3 w-3 mr-1" />
-            Live
-          </Badge>
+          <div className="flex items-center gap-2">
+            {!isExpanded && (
+              <span className="text-xs text-muted-foreground">Click to expand</span>
+            )}
+            {isExpanded ? (
+              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            ) : (
+              <ChevronUp className="h-4 w-4 text-muted-foreground" />
+            )}
+          </div>
         </div>
-      </div>
+      </button>
       
-      <ScrollArea className="flex-1">
-        <div className="p-4 space-y-4">
+      {!isExpanded && (
+        <div className="px-4 py-2 text-xs text-muted-foreground border-b">
+          <span className="line-clamp-2">{contextData.summary.substring(0, 100)}...</span>
+        </div>
+      )}
+      
+      {isExpanded && (
+        <ScrollArea className="flex-1">
+          <div className="p-4 space-y-4">
           <div>
             <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
               Context Summary
@@ -470,17 +491,20 @@ export function MapContextPanel({
               ))}
             </div>
           </div>
-        </div>
-      </ScrollArea>
+          </div>
+        </ScrollArea>
+      )}
       
-      <div className="px-4 py-3 border-t bg-muted/30">
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span>Last updated: 2 min ago</span>
-          <Button variant="ghost" size="sm" className="h-7 text-xs">
-            Refresh
-          </Button>
+      {isExpanded && (
+        <div className="px-4 py-3 border-t bg-muted/30">
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <span>Last updated: 2 min ago</span>
+            <Button variant="ghost" size="sm" className="h-7 text-xs">
+              Refresh
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }

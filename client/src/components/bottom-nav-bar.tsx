@@ -1,4 +1,6 @@
-import { Home, MessageSquare, Brain, Upload, TrendingUp, CloudRain, Share2, Clock, Settings } from "lucide-react";
+import { Home, Brain, TrendingUp, Upload, CloudRain, Clock, Settings, Share2, Layers, Target } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 
 export type NavSection = "map" | "chat" | "intelligence" | "files" | "settings" | "timeline" | "weather" | "analytics" | "social";
 
@@ -9,75 +11,92 @@ interface BottomNavBarProps {
 }
 
 export function BottomNavBar({ activeTopPanel, activeBottomPanel, onTogglePanel }: BottomNavBarProps) {
-
   return (
     <div className="fixed bottom-0 left-1/2 -translate-x-1/2 z-30 pb-4" data-testid="bottom-nav-bar">
-      <div className="flex items-center gap-3 bg-gradient-to-r from-blue-950/95 via-slate-900/95 to-blue-950/95 backdrop-blur-2xl rounded-full p-3 shadow-[0_0_40px_rgba(59,130,246,0.3)] border-2 border-blue-500/30">
-        {/* Home button - clears all panels */}
+      <div className="flex items-center gap-1 bg-slate-900/95 backdrop-blur-xl rounded-2xl p-2 shadow-2xl border border-slate-700/50">
+        
+        {/* Primary Action - Map/Home */}
         <NavButton
           icon={Home}
-          label="Map"
+          label="Map View"
+          description="Return to map focus"
           active={activeTopPanel === null && activeBottomPanel === null}
           onClick={() => onTogglePanel("map")}
           testId="nav-map"
-        />
-        
-        {/* Left group - bottom panels (timeline, weather, files, settings) */}
-        <NavButton
-          icon={Clock}
-          label="Timeline"
-          active={activeBottomPanel === "timeline"}
-          onClick={() => onTogglePanel("timeline")}
-          testId="nav-timeline"
-        />
-        <NavButton
-          icon={CloudRain}
-          label="Weather"
-          active={activeBottomPanel === "weather"}
-          onClick={() => onTogglePanel("weather")}
-          testId="nav-weather"
-        />
-        <NavButton
-          icon={Upload}
-          label="Files"
-          active={activeBottomPanel === "files"}
-          onClick={() => onTogglePanel("files")}
-          testId="nav-files"
-        />
-        <NavButton
-          icon={Settings}
-          label="Export"
-          active={activeBottomPanel === "settings"}
-          onClick={() => onTogglePanel("settings")}
-          testId="nav-export"
+          variant="primary"
         />
         
         {/* Divider */}
-        <div className="w-px h-10 bg-gradient-to-b from-transparent via-blue-400/60 to-transparent mx-1 shadow-[0_0_10px_rgba(59,130,246,0.4)]" />
+        <div className="w-px h-8 bg-slate-700/50 mx-1" />
         
-        {/* Right group - top panels (chat, intelligence, analytics, social) */}
-        {/* Chat is now a permanent left sidebar, removed from navigation */}
-        <NavButton
-          icon={Brain}
-          label="Intelligence"
-          active={activeTopPanel === "intelligence"}
-          onClick={() => onTogglePanel("intelligence")}
-          testId="nav-intelligence"
-        />
-        <NavButton
-          icon={TrendingUp}
-          label="Analytics"
-          active={activeTopPanel === "analytics"}
-          onClick={() => onTogglePanel("analytics")}
-          testId="nav-analytics"
-        />
-        <NavButton
-          icon={Share2}
-          label="Social"
-          active={activeTopPanel === "social"}
-          onClick={() => onTogglePanel("social")}
-          testId="nav-social"
-        />
+        {/* Mission Tools Group */}
+        <div className="flex items-center gap-1 px-1">
+          <span className="text-[10px] text-slate-500 uppercase tracking-wider font-medium mr-1 hidden sm:block">Intel</span>
+          <NavButton
+            icon={Brain}
+            label="Intelligence"
+            description="PMESII analysis & risk assessment"
+            active={activeTopPanel === "intelligence"}
+            onClick={() => onTogglePanel("intelligence")}
+            testId="nav-intelligence"
+          />
+          <NavButton
+            icon={TrendingUp}
+            label="Analytics"
+            description="Data trends & patterns"
+            active={activeTopPanel === "analytics"}
+            onClick={() => onTogglePanel("analytics")}
+            testId="nav-analytics"
+          />
+          <NavButton
+            icon={Share2}
+            label="Social"
+            description="Social media monitoring"
+            active={activeTopPanel === "social"}
+            onClick={() => onTogglePanel("social")}
+            testId="nav-social"
+          />
+        </div>
+        
+        {/* Divider */}
+        <div className="w-px h-8 bg-slate-700/50 mx-1" />
+        
+        {/* Utility Tools Group */}
+        <div className="flex items-center gap-1 px-1">
+          <span className="text-[10px] text-slate-500 uppercase tracking-wider font-medium mr-1 hidden sm:block">Tools</span>
+          <NavButton
+            icon={Clock}
+            label="Timeline"
+            description="Event chronology"
+            active={activeBottomPanel === "timeline"}
+            onClick={() => onTogglePanel("timeline")}
+            testId="nav-timeline"
+          />
+          <NavButton
+            icon={CloudRain}
+            label="Weather"
+            description="Environmental conditions"
+            active={activeBottomPanel === "weather"}
+            onClick={() => onTogglePanel("weather")}
+            testId="nav-weather"
+          />
+          <NavButton
+            icon={Upload}
+            label="Files"
+            description="Upload & analyze media"
+            active={activeBottomPanel === "files"}
+            onClick={() => onTogglePanel("files")}
+            testId="nav-files"
+          />
+          <NavButton
+            icon={Settings}
+            label="Export"
+            description="Export & settings"
+            active={activeBottomPanel === "settings"}
+            onClick={() => onTogglePanel("settings")}
+            testId="nav-export"
+          />
+        </div>
       </div>
     </div>
   );
@@ -86,27 +105,43 @@ export function BottomNavBar({ activeTopPanel, activeBottomPanel, onTogglePanel 
 interface NavButtonProps {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
+  description: string;
   active: boolean;
   onClick: () => void;
   testId: string;
+  variant?: "primary" | "default";
 }
 
-function NavButton({ icon: Icon, label, active, onClick, testId }: NavButtonProps) {
+function NavButton({ icon: Icon, label, description, active, onClick, testId, variant = "default" }: NavButtonProps) {
+  const isPrimary = variant === "primary";
+  
   return (
-    <button
-      onClick={onClick}
-      className={`
-        w-14 h-14 rounded-full flex items-center justify-center
-        transition-all duration-300 ease-out
-        ${active 
-          ? "bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-[0_0_25px_rgba(59,130,246,0.7)] border-2 border-blue-400/60 scale-110" 
-          : "bg-slate-700/60 text-slate-300 hover:bg-blue-500/30 hover:text-blue-300 hover:scale-105 hover:shadow-[0_0_20px_rgba(59,130,246,0.4)] border-2 border-transparent hover:border-blue-500/30"
-        }
-      `}
-      title={label}
-      data-testid={testId}
-    >
-      <Icon className={`w-6 h-6 ${active ? 'drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]' : ''}`} />
-    </button>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          onClick={onClick}
+          className={cn(
+            "rounded-xl flex items-center justify-center transition-all duration-200",
+            isPrimary ? "w-12 h-12" : "w-10 h-10",
+            active 
+              ? isPrimary
+                ? "bg-blue-500 text-white shadow-lg shadow-blue-500/30"
+                : "bg-blue-500/20 text-blue-400 ring-1 ring-blue-500/50"
+              : isPrimary
+                ? "bg-slate-700 text-slate-300 hover:bg-slate-600 hover:text-white"
+                : "text-slate-400 hover:bg-slate-700/50 hover:text-slate-200"
+          )}
+          data-testid={testId}
+        >
+          <Icon className={cn("transition-all", isPrimary ? "w-5 h-5" : "w-4 h-4")} />
+        </button>
+      </TooltipTrigger>
+      <TooltipContent side="top" className="bg-slate-800 border-slate-700">
+        <div className="text-center">
+          <p className="font-medium text-sm">{label}</p>
+          <p className="text-xs text-slate-400">{description}</p>
+        </div>
+      </TooltipContent>
+    </Tooltip>
   );
 }
