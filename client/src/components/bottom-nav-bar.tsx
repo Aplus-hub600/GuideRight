@@ -12,8 +12,8 @@ interface BottomNavBarProps {
 
 export function BottomNavBar({ activeTopPanel, activeBottomPanel, onTogglePanel }: BottomNavBarProps) {
   return (
-    <div className="fixed bottom-0 left-1/2 -translate-x-1/2 z-30 pb-4" data-testid="bottom-nav-bar">
-      <div className="flex items-center gap-1 bg-slate-900/95 backdrop-blur-xl rounded-2xl p-2 shadow-2xl border border-slate-700/50">
+    <div className="flex items-center" data-testid="bottom-nav-bar">
+      <div className="flex items-center gap-1 bg-slate-900/95 backdrop-blur-xl rounded-xl p-1.5 border border-slate-700/50">
         
         {/* Primary Action - Map/Home */}
         <NavButton
@@ -101,6 +101,8 @@ export function BottomNavBar({ activeTopPanel, activeBottomPanel, onTogglePanel 
     </div>
   );
 }
+
+export default BottomNavBar;
 
 interface NavButtonProps {
   icon: React.ComponentType<{ className?: string }>;

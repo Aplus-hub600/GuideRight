@@ -13,7 +13,6 @@ import { useMapAccessibilityLayer } from "./map-accessibility-layer"
 import { useMapActivityLayer } from "./map-activity-layer"
 import { useMapRiskLayer } from "./map-risk-layer"
 import { useMapLogisticsLayer } from "./map-logistics-layer"
-import { MapContextPanel } from "./map-context-panel"
 
 interface AOI {
   name?: string
@@ -45,6 +44,8 @@ interface MapLibrePanelProps {
   sigacts?: SigAct[]
   onAOIChange?: (aoi: AOI) => void
   onMovementPlanRequest?: () => void
+  activeLens?: MapLens
+  hideLensSelector?: boolean
   className?: string
 }
 
@@ -55,6 +56,8 @@ export function MapLibrePanel({
   sigacts = [],
   onAOIChange,
   onMovementPlanRequest,
+  activeLens: externalLens,
+  hideLensSelector = false,
   className
 }: MapLibrePanelProps) {
   const { t } = useTranslation()
@@ -66,9 +69,12 @@ export function MapLibrePanel({
   const [mapStyle, setMapStyle] = useState<"satellite" | "streets" | "hybrid">("streets")
   const [isMapReady, setIsMapReady] = useState(false)
   const [mapError, setMapError] = useState<string | null>(null)
-  const [activeLens, setActiveLens] = useState<MapLens>("infrastructure")
+  const [internalLens, setInternalLens] = useState<MapLens>("infrastructure")
   const [zoomLevel, setZoomLevel] = useState(10)
   const [selectedInfraNode, setSelectedInfraNode] = useState<InfrastructureNode | null>(null)
+  
+  const activeLens = externalLens ?? internalLens
+  const setActiveLens = (lens: MapLens) => setInternalLens(lens)
   
   const getDataCoverage = (zoom: number, lens: MapLens): DataCoverage => {
     switch (lens) {
@@ -434,55 +440,74 @@ export function MapLibrePanel({
         />
       </div>
 
-      {/* Left Rail: Lens Selector + Style */}
-      <div className="absolute top-16 left-3 z-10 flex flex-col gap-2">
-        <MapLensSelector
-          activeLens={activeLens}
-          onLensChange={setActiveLens}
-        />
-
-        <div className="flex flex-col gap-0.5 bg-background/95 backdrop-blur-sm rounded-md border overflow-hidden">
-          <Button
-            size="sm"
-            variant={mapStyle === "streets" ? "default" : "ghost"}
-            onClick={() => setMapStyle("streets")}
-            className="rounded-none justify-start gap-2 h-8"
-            data-testid="button-map-streets"
-          >
-            <Layers className="h-3.5 w-3.5" />
-            <span className="text-xs">Streets</span>
-          </Button>
-          <Button
-            size="sm"
-            variant={mapStyle === "satellite" ? "default" : "ghost"}
-            onClick={() => setMapStyle("satellite")}
-            className="rounded-none justify-start gap-2 h-8"
-            data-testid="button-map-satellite"
-          >
-            <Target className="h-3.5 w-3.5" />
-            <span className="text-xs">Satellite</span>
-          </Button>
-        </div>
-      </div>
-      
-      {/* Legend - Bottom Left */}
-      <div className="absolute bottom-16 left-3 z-10">
-        <LensLegend activeLens={activeLens} />
-      </div>
-      
-      {/* Context Panel - Right Side */}
-      <div className="absolute top-16 right-3 bottom-3 w-80 z-10">
-        <div className="h-full bg-background/95 backdrop-blur-sm border rounded-md shadow-sm overflow-hidden">
-          <MapContextPanel
-            aoiName={aoi?.name || "Dhaka"}
+      {/* Left Rail: Lens Selector + Style - only show if not hidden */}
+      {!hideLensSelector && (
+        <div className="absolute top-16 left-3 z-10 flex flex-col gap-2">
+          <MapLensSelector
             activeLens={activeLens}
-            selectedNode={selectedInfraNode}
+            onLensChange={setActiveLens}
           />
-        </div>
-      </div>
 
-      {/* Zoom Controls - positioned left of context panel */}
-      <div className="absolute bottom-20 right-[22rem] z-10 flex flex-col gap-1">
+          <div className="flex flex-col gap-0.5 bg-background/95 backdrop-blur-sm rounded-md border overflow-hidden">
+            <Button
+              size="sm"
+              variant={mapStyle === "streets" ? "default" : "ghost"}
+              onClick={() => setMapStyle("streets")}
+              className="rounded-none justify-start gap-2 h-8"
+              data-testid="button-map-streets"
+            >
+              <Layers className="h-3.5 w-3.5" />
+              <span className="text-xs">Streets</span>
+            </Button>
+            <Button
+              size="sm"
+              variant={mapStyle === "satellite" ? "default" : "ghost"}
+              onClick={() => setMapStyle("satellite")}
+              className="rounded-none justify-start gap-2 h-8"
+              data-testid="button-map-satellite"
+            >
+              <Target className="h-3.5 w-3.5" />
+              <span className="text-xs">Satellite</span>
+            </Button>
+          </div>
+        </div>
+      )}
+      
+      {/* Minimal map style toggle when lens selector is hidden */}
+      {hideLensSelector && (
+        <div className="absolute top-16 left-3 z-10">
+          <div className="flex gap-1 bg-background/95 backdrop-blur-sm rounded-md border p-1">
+            <Button
+              size="icon"
+              variant={mapStyle === "streets" ? "default" : "ghost"}
+              onClick={() => setMapStyle("streets")}
+              className="h-8 w-8"
+              data-testid="button-map-streets"
+            >
+              <Layers className="h-4 w-4" />
+            </Button>
+            <Button
+              size="icon"
+              variant={mapStyle === "satellite" ? "default" : "ghost"}
+              onClick={() => setMapStyle("satellite")}
+              className="h-8 w-8"
+              data-testid="button-map-satellite"
+            >
+              <Target className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
+      
+      {/* Legend - Bottom Left (only show if lens selector not hidden) */}
+      {!hideLensSelector && (
+        <div className="absolute bottom-4 left-3 z-10">
+          <LensLegend activeLens={activeLens} />
+        </div>
+      )}
+
+      {/* Zoom Controls - Bottom Right */}
+      <div className="absolute bottom-4 right-3 z-10 flex flex-col gap-1">
         <Button size="icon" variant="secondary" onClick={handleZoomIn} data-testid="button-zoom-in">
           <ZoomIn className="h-4 w-4" />
         </Button>
@@ -494,17 +519,12 @@ export function MapLibrePanel({
             <Crosshair className="h-4 w-4" />
           </Button>
         )}
-      </div>
-
-      {/* Movement Plan Button - positioned left of context panel */}
-      {onMovementPlanRequest && (
-        <div className="absolute bottom-3 right-[22rem] z-10">
-          <Button size="sm" onClick={onMovementPlanRequest} data-testid="button-movement-plan">
-            <Navigation className="h-4 w-4 mr-1" />
-            Plan Route
+        {onMovementPlanRequest && (
+          <Button size="icon" variant="secondary" onClick={onMovementPlanRequest} data-testid="button-movement-plan">
+            <Navigation className="h-4 w-4" />
           </Button>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Loading Overlay */}
       {!isMapReady && (

@@ -1,0 +1,158 @@
+Eliminate visual ambiguity, overlap, and cognitive friction so the system looks calm, intentional, and analyst-grade within seconds.
+
+If this phase is done correctly:
+
+Reviewers stop commenting on UI
+
+Attention shifts to analysis and data
+
+Demo feels controlled and professional
+
+1️⃣ Lock the Desktop Layout (Non-Negotiable)
+✅ Target Layout
+
+Fixed split layout (desktop):
+
+Left 60%: Map (dominant, never covered)
+
+Right 40%: Intelligence Panel (stacked content)
+
+No floating panels. No overlays. No pop-ups on top of the map.
+
+Implementation guidance
+
+Use a CSS grid or flex layout at the root level
+
+The map container should be position: relative
+
+Intelligence panel should be a sibling, not a child overlay
+
+Disable drag/float behavior for demo builds
+
+Acceptance check
+
+You can resize the window
+
+Nothing overlaps
+
+The map is always fully visible
+
+2️⃣ Eliminate Panel Overlap & Hidden Menus
+🔴 Current problem
+
+Dropdowns render behind panels
+
+Menus disappear when opened
+
+Analysts lose trust immediately
+
+✅ Fix
+
+All dropdowns, selects, and menus must:
+
+Render via portals
+
+Have a guaranteed top z-index
+
+No dropdown should ever open “inside” another panel
+
+Acceptance check
+
+Open every menu while the intel panel is visible
+
+Nothing is clipped or hidden
+
+3️⃣ Remove or Dock the Floating Chat Box
+🔴 Current problem
+
+Black chat rectangle blocks timeline/map
+
+Feels unfinished and accidental
+
+✅ Approved options (pick ONE)
+
+Option A (Recommended for demo):
+
+Hide chat entirely in demo mode
+
+Option B:
+
+Dock chat to the bottom bar
+
+Collapsed by default
+
+Expand only when explicitly opened
+
+🚫 Do NOT leave it floating in the map area
+
+Acceptance check
+
+No opaque UI element sits on top of the map by default
+
+4️⃣ Clarify Panel Hierarchy (Visual Order Matters)
+🔴 Current problem
+
+Everything competes for attention
+
+Analysts don’t know “where to look first”
+
+✅ Required panel order (top → bottom)
+
+Risk Level + Confidence (will be implemented next phase)
+
+Context Summary (short)
+
+Key Findings
+
+Recommendations
+
+Evidence / Sources
+
+Timeline / Details (collapsed by default)
+
+For this phase, just ensure:
+
+The panel supports this order
+
+Sections are clearly separated
+
+Nothing auto-expands unexpectedly
+
+5️⃣ Fix the “Tiny Menu” Problem (Infra / Activity / Risk / Logistics)
+🔴 Current problem
+
+Labels are too small
+
+Meaning is unclear
+
+Looks like a dev artifact
+
+✅ Temporary fix (fast + safe)
+
+Replace the tiny inline menu with:
+
+A vertical Lens selector (icons + text), or
+
+A clear segmented control with readable labels
+
+You do not need full lens logic yet — just clarity.
+
+Acceptance check
+
+A first-time user can tell what each option does without explanation
+
+6️⃣ Mobile vs Desktop Rule (Set Expectations Now)
+
+You do not need to solve mobile today.
+
+For now:
+
+Desktop = primary (demo, analysts)
+
+Mobile = toggle view
+
+Either Map or Intel Panel
+
+Never both at once
+
+This avoids half-broken responsiveness.
