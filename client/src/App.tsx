@@ -5,10 +5,10 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { I18nextProvider } from 'react-i18next';
 import { ThemeProvider } from "./components/theme-provider";
 import { BottomNavBar, NavSection } from "./components/bottom-nav-bar";
-import { LocationSearchBar } from "./components/location-search-bar";
+import { UnifiedSearchBar, ParsedQuery } from "./components/unified-search-bar";
 import { SystemStatusBanner } from "./components/system-status-banner";
 import { SystemStatusProvider } from "./lib/system-status";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import i18n from "./lib/i18n";
 import { Map } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -38,9 +38,52 @@ function App() {
   })
 
   const [mediaContextIds, setMediaContextIds] = useState<string[]>([])
+  const [activeSearchFilters, setActiveSearchFilters] = useState<ParsedQuery | null>(null)
 
   const handleQuerySubmit = (query: string, contextIds?: string[]) => {
   }
+
+  const handleSearchQuery = useCallback((parsed: ParsedQuery) => {
+    // Update location if parsed
+    if (parsed.location) {
+      setCurrentAOI({
+        name: parsed.location.name,
+        lat: parsed.location.lat,
+        lng: parsed.location.lng,
+        radiusKm: 5
+      });
+    }
+    
+    // Update lens based on infrastructure focus
+    if (parsed.infrastructure?.length) {
+      const infraFocus = parsed.infrastructure[0];
+      if (["hospitals", "power", "rail", "water", "airports", "ports", "roads", "bridges"].includes(infraFocus)) {
+        setActiveLens("infrastructure");
+      }
+    }
+    
+    // Update lens based on event type
+    if (parsed.events?.length) {
+      setActiveLens("risk-stress");
+    }
+    
+    // Store active filters for display
+    setActiveSearchFilters(parsed);
+  }, []);
+
+  const clearSearchFilters = useCallback(() => {
+    // Reset filters
+    setActiveSearchFilters(null);
+    // Reset to default AOI (Dhaka)
+    setCurrentAOI({
+      name: "Dhaka",
+      lat: 23.8103,
+      lng: 90.4125,
+      radiusKm: 5
+    });
+    // Reset to default lens
+    setActiveLens("infrastructure");
+  }, []);
 
   const topPanels: NavSection[] = ["intelligence", "analytics", "social"]
   const bottomPanels: NavSection[] = ["timeline", "weather", "files", "settings"]
@@ -104,11 +147,13 @@ function App() {
                     {/* Map Header - Compact, docked, solid background */}
                     <div className="flex-shrink-0 bg-background border-b p-2">
                       <div className="flex items-center gap-2">
-                        {/* Search Bar - fills available space */}
+                        {/* Unified Search Bar - handles location, time, events, infrastructure */}
                         <div className="flex-1 min-w-0">
-                          <LocationSearchBar 
-                            onLocationSelect={handleLocationSelect}
+                          <UnifiedSearchBar 
+                            onQueryParsed={handleSearchQuery}
                             currentLocation={currentAOI.name}
+                            activeFilters={activeSearchFilters || undefined}
+                            onClearFilters={clearSearchFilters}
                           />
                         </div>
                         {/* Mobile toggle */}
@@ -165,6 +210,7 @@ function App() {
                       onToggleChat={() => setIsChatOpen(!isChatOpen)}
                       onQuerySubmit={handleQuerySubmit}
                       mediaContextIds={mediaContextIds}
+                      activeSearchFilters={activeSearchFilters || undefined}
                       className="flex-1 min-h-0"
                     />
                   </div>

@@ -1,0 +1,235 @@
+Design Principle
+
+One search bar. Multiple interpretable intents. Zero modal friction.
+
+The search bar is not just a geocoder. It is the primary analytic entry point.
+
+1️⃣ Search Must Support These Core Query Types
+A. Location Search (Foundational)
+
+Must support:
+
+City (e.g., “Dhaka”)
+
+District / neighborhood (where available)
+
+Coordinates (lat/long)
+
+Named infrastructure (e.g., “Kamalapur Railway Station”)
+
+Behavior
+
+Centers map
+
+Updates AOI
+
+Triggers context summary refresh
+
+Synchronizes with intelligence panel
+
+✅ This already partially exists — ensure it’s first-class.
+
+B. Time & Timeline Search (Critical for Demo)
+
+Search must accept:
+
+Relative time:
+
+“last 7 days”
+
+“past 30 days”
+
+“since December”
+
+Absolute ranges:
+
+2024-12-01 to 2025-01-10
+
+Single anchors:
+
+“December 12”
+
+“mid-December”
+
+Behavior
+
+Updates global time window
+
+Filters all intelligence layers
+
+Recomputes risk & summaries
+
+Reflected visibly (no hidden state)
+
+📌 Important: Time selection must never be implicit or invisible.
+
+C. Event / Situation Search (Demo-Ready)
+
+Search should accept descriptive terms, not just entities:
+
+“protests”
+
+“political unrest”
+
+“transport disruption”
+
+“infrastructure outage”
+
+“healthcare access”
+
+Behavior
+
+Interpreted as filters, not facts
+
+Narrows visible data
+
+Feeds intelligence assistant context
+
+Does not assert ground truth
+
+This aligns with how analysts actually think.
+
+D. Infrastructure / Functional Search
+
+Examples:
+
+“hospitals”
+
+“power grid”
+
+“rail hubs”
+
+“bridges”
+
+“water treatment”
+
+Behavior
+
+Switches or reinforces analysis lens
+
+Highlights relevant map layers
+
+Updates context summary focus
+
+This supports your infrastructure-first framing.
+
+2️⃣ How the System Should Interpret Search (Safely)
+
+The search bar should:
+
+Parse intent, not assume correctness
+
+Route queries to:
+
+Location resolver
+
+Time filter
+
+Event category
+
+Lens selector
+
+But:
+
+❌ It must not invent events
+
+❌ It must not claim causality
+
+❌ It must not override analyst judgment
+
+Think: query router, not oracle.
+
+3️⃣ UI Behavior (Non-Negotiable)
+Visual Requirements
+
+Search bar is:
+
+docked
+
+always visible
+
+never overlapped
+
+Active filters are explicitly shown
+
+Location
+
+Time window
+
+Event keyword(s)
+
+Interaction Rules
+
+Pressing Enter:
+
+Executes search
+
+Updates map + intel panel
+
+Search suggestions:
+
+Helpful but not required for demo
+
+Clear button:
+
+Resets filters
+
+Returns to default AOI/time
+
+4️⃣ Intelligence Panel Coupling (Important)
+
+After a search:
+
+Context summary must reflect:
+
+selected time window
+
+selected location
+
+event focus (if any)
+
+Risk score must update or explicitly state:
+
+“Risk reflects current filter set”
+
+No silent mismatch between search and analysis.
+
+5️⃣ What This Does NOT Require (Good News)
+
+You do not need:
+
+NLP-heavy freeform search
+
+Real-time event extraction
+
+New data sources
+
+Production-grade ranking
+
+For demo + funding:
+
+Interpretable parsing is enough
+
+Transparent assumptions matter more than precision
+
+6️⃣ Demo-Safe Example (Use This Verbally)
+
+“An analyst can search by location, timeframe, or situation — for example ‘Dhaka, last 30 days, protests’ — and GuideRight updates the map, filters the data, and regenerates an explainable risk summary.”
+
+That statement is accurate given this spec.
+
+7️⃣ Acceptance Checklist (Run Before Friday)
+
+Search bar must:
+
+ Accept location + time in one query
+
+ Update map + intel together
+
+ Show active filters visibly
+
+ Never disappear or be covered
+
+ Never claim certainty
+
+If all five pass, you’re solid

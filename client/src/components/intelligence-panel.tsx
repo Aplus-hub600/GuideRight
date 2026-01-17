@@ -18,7 +18,10 @@ import {
   X,
   MessageSquare,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  MapPin,
+  Zap,
+  Filter
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { MapContextPanel } from "./map-context-panel"
@@ -34,6 +37,7 @@ import Timeline from "@/pages/timeline"
 import Analytics from "@/pages/analytics"
 import type { NavSection } from "./bottom-nav-bar"
 import type { MapLens } from "./map-lens-selector"
+import type { ParsedQuery } from "./unified-search-bar"
 
 interface AOI {
   name?: string
@@ -93,6 +97,7 @@ interface IntelligencePanelProps {
   onToggleChat: () => void
   onQuerySubmit: (query: string, contextIds?: string[]) => void
   mediaContextIds: string[]
+  activeSearchFilters?: ParsedQuery
   className?: string
 }
 
@@ -108,6 +113,7 @@ export function IntelligencePanel({
   onToggleChat,
   onQuerySubmit,
   mediaContextIds,
+  activeSearchFilters,
   className
 }: IntelligencePanelProps) {
   const [riskScore, setRiskScore] = useState(67)
@@ -138,15 +144,44 @@ export function IntelligencePanel({
               {currentAOI.lat.toFixed(4)}, {currentAOI.lng.toFixed(4)}
             </p>
           </div>
-          <Badge 
-            variant={riskScore >= 70 ? "destructive" : riskScore >= 40 ? "secondary" : "outline"}
-            className="flex-shrink-0"
-          >
-            Risk: {riskScore}%
-          </Badge>
+          <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
+            <Badge 
+              variant={riskScore >= 70 ? "destructive" : riskScore >= 40 ? "secondary" : "outline"}
+            >
+              Risk: {riskScore}%
+            </Badge>
+            {activeSearchFilters && (activeSearchFilters.timeRange || activeSearchFilters.events?.length) && (
+              <span className="text-[10px] text-muted-foreground">reflects current filter set</span>
+            )}
+          </div>
         </div>
+
+        {/* Row 2: Active Filters Indicator - shows when search filters are active */}
+        {activeSearchFilters && (activeSearchFilters.timeRange || activeSearchFilters.events?.length || activeSearchFilters.infrastructure?.length) && (
+          <div className="flex items-center gap-1.5 flex-wrap p-2 bg-muted/40 rounded-md">
+            <Filter className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+            {activeSearchFilters.timeRange && (
+              <Badge variant="secondary" className="gap-1 text-xs">
+                <Clock className="h-3 w-3" />
+                {activeSearchFilters.timeRange.label}
+              </Badge>
+            )}
+            {activeSearchFilters.events?.map(event => (
+              <Badge key={event} variant="outline" className="gap-1 text-xs border-amber-500/50 text-amber-600 dark:text-amber-400">
+                <Zap className="h-3 w-3" />
+                {event}
+              </Badge>
+            ))}
+            {activeSearchFilters.infrastructure?.map(infra => (
+              <Badge key={infra} variant="outline" className="gap-1 text-xs">
+                <Building2 className="h-3 w-3" />
+                {infra}
+              </Badge>
+            ))}
+          </div>
+        )}
         
-        {/* Row 2: Lens Selector - 2x2 grid */}
+        {/* Row 3: Lens Selector - 2x2 grid */}
         <div>
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Analysis Lens</p>
           <div className="grid grid-cols-2 gap-1.5">
