@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Search, MapPin, Clock, X, Zap, Building2, AlertTriangle, History, Sparkles, ArrowRight, FileText, TrendingUp, ChevronRight, Droplets, Activity, Train, Plane, Anchor, Hospital, Filter } from "lucide-react";
+import { Search, MapPin, Clock, X, Zap, Building2, AlertTriangle, History, Sparkles, ArrowRight, FileText, TrendingUp, ChevronRight, Droplets, Activity, Train, Plane, Anchor, Hospital, Filter, Copy, Check, Bookmark, BookmarkCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { formatMgrsShort } from "@/lib/mgrs";
 
 const FILTER_CATEGORIES = {
   locations: {
@@ -80,16 +81,28 @@ interface UnifiedSearchBarProps {
   className?: string;
 }
 
+type SourceReliability = "A" | "B" | "C" | "D" | "E" | "F";
+
 interface IntelligenceResult {
   id: string;
   title: string;
   summary: string;
   source: string;
+  sourceReliability: SourceReliability;
   timestamp: string;
   type: "report" | "event" | "threat" | "infrastructure";
   relevance: number;
   location?: string;
 }
+
+const RELIABILITY_LABELS: Record<SourceReliability, { label: string; color: string }> = {
+  A: { label: "Reliable", color: "bg-green-500/10 text-green-600 border-green-500/30" },
+  B: { label: "Usually Reliable", color: "bg-emerald-500/10 text-emerald-600 border-emerald-500/30" },
+  C: { label: "Fairly Reliable", color: "bg-yellow-500/10 text-yellow-600 border-yellow-500/30" },
+  D: { label: "Not Usually Reliable", color: "bg-orange-500/10 text-orange-600 border-orange-500/30" },
+  E: { label: "Unreliable", color: "bg-red-500/10 text-red-600 border-red-500/30" },
+  F: { label: "Cannot Be Judged", color: "bg-gray-500/10 text-gray-600 border-gray-500/30" }
+};
 
 const LOCATIONS = [
   // Major cities
@@ -134,6 +147,7 @@ const MOCK_INTELLIGENCE: IntelligenceResult[] = [
     title: "Elevated protest activity in Shahbag",
     summary: "University students organizing peaceful demonstrations near Dhaka University. Low escalation risk assessed.",
     source: "Field Report",
+    sourceReliability: "A",
     timestamp: "2h ago",
     type: "event",
     relevance: 0.95,
@@ -144,6 +158,7 @@ const MOCK_INTELLIGENCE: IntelligenceResult[] = [
     title: "Power grid maintenance in Gulshan",
     summary: "DPDC announces scheduled maintenance affecting Gulshan and Banani sectors. Expected duration 4 hours.",
     source: "Official Notice",
+    sourceReliability: "A",
     timestamp: "1h ago",
     type: "infrastructure",
     relevance: 0.92,
@@ -154,6 +169,7 @@ const MOCK_INTELLIGENCE: IntelligenceResult[] = [
     title: "Transport disruption at Kamalapur",
     summary: "Train delays reported due to track maintenance. Alternative routes recommended via Mirpur.",
     source: "Local Report",
+    sourceReliability: "B",
     timestamp: "3h ago",
     type: "infrastructure",
     relevance: 0.85,
@@ -164,6 +180,7 @@ const MOCK_INTELLIGENCE: IntelligenceResult[] = [
     title: "Water supply issue in Mirpur",
     summary: "WASA reports low pressure in Mirpur-10 and Mirpur-11 sectors. Tanker deployment authorized.",
     source: "Utility Report",
+    sourceReliability: "B",
     timestamp: "45m ago",
     type: "infrastructure",
     relevance: 0.88,
@@ -174,6 +191,7 @@ const MOCK_INTELLIGENCE: IntelligenceResult[] = [
     title: "Healthcare facility capacity update",
     summary: "Dhaka Medical College operating at 78% capacity. No critical shortages reported.",
     source: "Health Ministry",
+    sourceReliability: "A",
     timestamp: "6h ago",
     type: "report",
     relevance: 0.75,
@@ -184,6 +202,7 @@ const MOCK_INTELLIGENCE: IntelligenceResult[] = [
     title: "Political rally announced for Chittagong",
     summary: "Opposition party scheduled rally at Agrabad for next week. Enhanced monitoring recommended.",
     source: "Open Source",
+    sourceReliability: "C",
     timestamp: "1d ago",
     type: "event",
     relevance: 0.71,
@@ -194,6 +213,7 @@ const MOCK_INTELLIGENCE: IntelligenceResult[] = [
     title: "Traffic congestion Dhanmondi",
     summary: "Heavy traffic reported on Satmasjid Road due to construction. Delays of 30-45 minutes expected.",
     source: "Traffic Control",
+    sourceReliability: "B",
     timestamp: "30m ago",
     type: "event",
     relevance: 0.82,
@@ -204,6 +224,7 @@ const MOCK_INTELLIGENCE: IntelligenceResult[] = [
     title: "Port operations normal at Chittagong",
     summary: "All berths operational. Cargo throughput at seasonal average levels.",
     source: "Port Authority",
+    sourceReliability: "A",
     timestamp: "3h ago",
     type: "infrastructure",
     relevance: 0.68,
@@ -332,6 +353,7 @@ function searchIntelligence(query: string): IntelligenceResult[] {
 }
 
 const SEARCH_HISTORY_KEY = "guideright_search_history";
+const SAVED_SEARCHES_KEY = "guideright_saved_searches";
 
 function getSearchHistory(): string[] {
   try {
@@ -348,6 +370,37 @@ function addToSearchHistory(query: string) {
     history.unshift(query);
     localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(history.slice(0, 5)));
   } catch {}
+}
+
+function getSavedSearches(): string[] {
+  try {
+    const stored = localStorage.getItem(SAVED_SEARCHES_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+}
+
+function toggleSavedSearch(query: string): boolean {
+  try {
+    const saved = getSavedSearches();
+    const isCurrentlySaved = saved.includes(query);
+    if (isCurrentlySaved) {
+      const filtered = saved.filter(q => q !== query);
+      localStorage.setItem(SAVED_SEARCHES_KEY, JSON.stringify(filtered));
+      return false;
+    } else {
+      saved.unshift(query);
+      localStorage.setItem(SAVED_SEARCHES_KEY, JSON.stringify(saved.slice(0, 10)));
+      return true;
+    }
+  } catch {
+    return false;
+  }
+}
+
+function copyToClipboard(text: string): Promise<void> {
+  return navigator.clipboard.writeText(text);
 }
 
 const typeIcons = {
@@ -371,7 +424,10 @@ export function UnifiedSearchBar({
   const [preview, setPreview] = useState<ParsedQuery | null>(null);
   const [searchResults, setSearchResults] = useState<IntelligenceResult[]>([]);
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
+  const [savedSearches, setSavedSearches] = useState<string[]>([]);
   const [filterView, setFilterView] = useState<FilterView>("main");
+  const [selectedIndex, setSelectedIndex] = useState(-1);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -382,6 +438,7 @@ export function UnifiedSearchBar({
 
   useEffect(() => {
     setSearchHistory(getSearchHistory());
+    setSavedSearches(getSavedSearches());
   }, []);
 
   useEffect(() => {
@@ -422,16 +479,53 @@ export function UnifiedSearchBar({
   }, [searchValue, executeSearch]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") handleSubmit();
-    if (e.key === "Escape") {
+    // Only enable keyboard navigation when there are search results
+    if (searchResults.length > 0) {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setSelectedIndex(prev => Math.min(prev + 1, searchResults.length - 1));
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setSelectedIndex(prev => Math.max(prev - 1, -1));
+      } else if (e.key === "Enter" && selectedIndex >= 0 && searchResults[selectedIndex]) {
+        e.preventDefault();
+        executeSearch(searchResults[selectedIndex].title);
+        setSelectedIndex(-1);
+        return;
+      }
+    }
+    
+    if (e.key === "Enter") {
+      handleSubmit();
+    } else if (e.key === "Escape") {
       setIsExpanded(false);
+      setSelectedIndex(-1);
       inputRef.current?.blur();
     }
   };
 
+  // Reset selection when results change
+  useEffect(() => {
+    setSelectedIndex(-1);
+  }, [searchResults]);
+
   const handleSuggestionClick = (query: string) => {
     setSearchValue(query);
     executeSearch(query);
+  };
+
+  const handleCopyResult = async (item: IntelligenceResult, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const text = `${item.title}\n${item.summary}\nSource: ${item.source} (${item.sourceReliability})\nTime: ${item.timestamp}\nLocation: ${item.location || "N/A"}`;
+    await copyToClipboard(text);
+    setCopiedId(item.id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const handleSaveSearch = (query: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    toggleSavedSearch(query);
+    setSavedSearches(getSavedSearches());
   };
 
   const handleLocationClick = (loc: typeof LOCATIONS[0]) => {
@@ -588,15 +682,21 @@ export function UnifiedSearchBar({
                   <FileText className="h-3.5 w-3.5 text-muted-foreground" />
                   <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Intelligence Matches</span>
                   <Badge variant="secondary" className="text-[10px] h-4 px-1.5">{searchResults.length}</Badge>
+                  <span className="text-[10px] text-muted-foreground ml-auto">↑↓ to navigate</span>
                 </div>
                 <div className="pb-1">
-                  {searchResults.map((item) => {
+                  {searchResults.map((item, idx) => {
                     const Icon = typeIcons[item.type];
+                    const reliability = RELIABILITY_LABELS[item.sourceReliability];
+                    const isSelected = selectedIndex === idx;
                     return (
-                      <button
+                      <div
                         key={item.id}
                         onClick={() => handleSuggestionClick(item.title)}
-                        className="w-full text-left px-3 py-2 hover-elevate flex items-start gap-3"
+                        className={cn(
+                          "w-full text-left px-3 py-2 hover-elevate flex items-start gap-3 cursor-pointer",
+                          isSelected && "bg-accent"
+                        )}
                       >
                         <div className={cn(
                           "flex items-center justify-center w-7 h-7 rounded-md flex-shrink-0 mt-0.5",
@@ -609,7 +709,10 @@ export function UnifiedSearchBar({
                         <div className="flex-1 min-w-0">
                           <div className="text-sm font-medium truncate">{item.title}</div>
                           <div className="text-xs text-muted-foreground line-clamp-1">{item.summary}</div>
-                          <div className="flex items-center gap-2 mt-1">
+                          <div className="flex items-center gap-2 mt-1 flex-wrap">
+                            <Badge variant="outline" className={cn("text-[10px] h-4 px-1 border", reliability.color)}>
+                              {item.sourceReliability}
+                            </Badge>
                             <span className="text-[10px] text-muted-foreground">{item.source}</span>
                             <span className="text-[10px] text-muted-foreground">{item.timestamp}</span>
                             {item.location && (
@@ -617,10 +720,21 @@ export function UnifiedSearchBar({
                             )}
                           </div>
                         </div>
-                        <div className="flex-shrink-0">
+                        <div className="flex-shrink-0 flex flex-col items-end gap-1">
                           <div className="text-[10px] text-muted-foreground">{Math.round(item.relevance * 100)}%</div>
+                          <button
+                            onClick={(e) => handleCopyResult(item, e)}
+                            title="Copy to clipboard"
+                            className="p-1 rounded hover:bg-muted"
+                          >
+                            {copiedId === item.id ? (
+                              <Check className="h-3 w-3 text-green-500" />
+                            ) : (
+                              <Copy className="h-3 w-3 text-muted-foreground" />
+                            )}
+                          </button>
                         </div>
-                      </button>
+                      </div>
                     );
                   })}
                 </div>
@@ -656,8 +770,10 @@ export function UnifiedSearchBar({
                           <Badge variant="outline" className="text-[10px] h-4 px-1 capitalize">{loc.type}</Badge>
                         </div>
                         <div className="text-xs text-muted-foreground">
-                          {loc.lat.toFixed(4)}, {loc.lng.toFixed(4)}
-                          {loc.population && ` · Pop: ${loc.population}`}
+                          <span className="font-mono">{formatMgrsShort(loc.lat, loc.lng)}</span>
+                          <span className="mx-1">·</span>
+                          <span>{loc.lat.toFixed(4)}, {loc.lng.toFixed(4)}</span>
+                          {loc.population && <span> · Pop: {loc.population}</span>}
                         </div>
                       </div>
                       <ArrowRight className="h-4 w-4 text-muted-foreground" />
@@ -670,6 +786,35 @@ export function UnifiedSearchBar({
             {/* Filter Discovery - shown when no search value */}
             {searchValue.length < 2 && filterView === "main" && (
               <>
+                {/* Saved Searches */}
+                {savedSearches.length > 0 && (
+                  <div className="border-b">
+                    <div className="px-3 pt-2 pb-1 flex items-center gap-2">
+                      <BookmarkCheck className="h-3.5 w-3.5 text-primary" />
+                      <span className="text-xs font-medium text-primary uppercase tracking-wide">Saved Searches</span>
+                    </div>
+                    <div className="pb-1">
+                      {savedSearches.map((query, idx) => (
+                        <div
+                          key={idx}
+                          onClick={() => handleSuggestionClick(query)}
+                          className="w-full text-left px-3 py-2 hover-elevate flex items-center gap-3 cursor-pointer"
+                        >
+                          <Bookmark className="h-4 w-4 text-primary" />
+                          <span className="text-sm flex-1">{query}</span>
+                          <button
+                            onClick={(e) => handleSaveSearch(query, e)}
+                            title="Remove saved search"
+                            className="p-1 rounded hover:bg-muted"
+                          >
+                            <X className="h-3 w-3 text-muted-foreground" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {/* Recent Searches */}
                 {searchHistory.length > 0 && (
                   <div className="border-b">
@@ -678,16 +823,30 @@ export function UnifiedSearchBar({
                       <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Recent</span>
                     </div>
                     <div className="pb-1">
-                      {searchHistory.map((query, idx) => (
-                        <button
-                          key={idx}
-                          onClick={() => handleSuggestionClick(query)}
-                          className="w-full text-left px-3 py-2 hover-elevate flex items-center gap-3"
-                        >
-                          <History className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm">{query}</span>
-                        </button>
-                      ))}
+                      {searchHistory.map((query, idx) => {
+                        const isSaved = savedSearches.includes(query);
+                        return (
+                          <div
+                            key={idx}
+                            onClick={() => handleSuggestionClick(query)}
+                            className="w-full text-left px-3 py-2 hover-elevate flex items-center gap-3 cursor-pointer"
+                          >
+                            <History className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-sm flex-1">{query}</span>
+                            <button
+                              onClick={(e) => handleSaveSearch(query, e)}
+                              title={isSaved ? "Remove from saved" : "Save search"}
+                              className="p-1 rounded hover:bg-muted"
+                            >
+                              {isSaved ? (
+                                <BookmarkCheck className="h-3 w-3 text-primary" />
+                              ) : (
+                                <Bookmark className="h-3 w-3 text-muted-foreground" />
+                              )}
+                            </button>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
