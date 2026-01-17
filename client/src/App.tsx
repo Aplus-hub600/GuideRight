@@ -101,30 +101,24 @@ function App() {
                       mobileView === "intel" ? "hidden md:flex" : "flex"
                     )}
                   >
-                    {/* Map Header - Fixed, docked, solid background */}
-                    <div className="flex-shrink-0 bg-background border-b p-3 space-y-2">
-                      {/* Row 1: AOI Info */}
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <span className="text-sm font-medium truncate">{currentAOI.name || "Select Location"}</span>
-                          <span className="text-xs text-muted-foreground">
-                            {currentAOI.lat.toFixed(2)}, {currentAOI.lng.toFixed(2)}
-                          </span>
+                    {/* Map Header - Compact, docked, solid background */}
+                    <div className="flex-shrink-0 bg-background border-b p-2">
+                      <div className="flex items-center gap-2">
+                        {/* Search Bar - fills available space */}
+                        <div className="flex-1 min-w-0">
+                          <LocationSearchBar 
+                            onLocationSelect={handleLocationSelect}
+                            currentLocation={currentAOI.name}
+                          />
                         </div>
-                        {/* Mobile toggle in header */}
+                        {/* Mobile toggle */}
                         <button
                           onClick={() => setMobileView("intel")}
-                          className="md:hidden flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium bg-muted rounded-md hover-elevate"
+                          className="md:hidden flex-shrink-0 px-3 py-2 text-xs font-medium bg-muted rounded-md hover-elevate"
                         >
-                          Intel Panel
+                          Intel
                         </button>
                       </div>
-                      
-                      {/* Row 2: Search Bar - in document flow, not floating */}
-                      <LocationSearchBar 
-                        onLocationSelect={handleLocationSelect}
-                        currentLocation={currentAOI.name}
-                      />
                     </div>
                     
                     {/* Map Canvas - fills remaining space */}

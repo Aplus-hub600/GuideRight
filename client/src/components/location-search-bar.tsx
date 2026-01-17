@@ -187,13 +187,9 @@ export function LocationSearchBar({ onLocationSelect, currentLocation }: Locatio
   const totalResults = searchResults?.total || 0;
 
   return (
-    <div className="relative" ref={containerRef}>
+    <div className="relative w-full" ref={containerRef}>
       <Card 
-        className={`
-          transition-all duration-200 ease-out overflow-hidden
-          w-full max-w-[320px] sm:max-w-[480px]
-          ${isExpanded || showAdvancedSearch ? 'sm:max-w-[480px]' : 'max-w-[320px]'}
-        `}
+        className="transition-all duration-200 ease-out overflow-hidden w-full"
         data-testid="location-search-bar"
       >
         <div className="flex items-center gap-3 p-3">
