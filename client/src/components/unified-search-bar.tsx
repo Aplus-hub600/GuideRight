@@ -34,22 +34,39 @@ interface IntelligenceResult {
 }
 
 const LOCATIONS = [
-  { name: "Dhaka", lat: 23.8103, lng: 90.4125, aliases: ["dhaka", "dha"], population: "21M" },
-  { name: "Chittagong", lat: 22.3569, lng: 91.7832, aliases: ["chittagong", "ctg", "chattogram"], population: "5M" },
-  { name: "Sylhet", lat: 24.8949, lng: 91.8687, aliases: ["sylhet", "syl"], population: "500K" },
-  { name: "Khulna", lat: 22.8456, lng: 89.5403, aliases: ["khulna", "khu"], population: "1.5M" },
-  { name: "Rajshahi", lat: 24.3745, lng: 88.6042, aliases: ["rajshahi", "raj"], population: "450K" },
-  { name: "Cox's Bazar", lat: 21.4272, lng: 92.0058, aliases: ["cox's bazar", "coxs bazar", "cox"], population: "250K" },
-  { name: "Kamalapur Station", lat: 23.7327, lng: 90.4264, aliases: ["kamalapur", "kamalapur station", "railway station"], population: "" },
-  { name: "Hazrat Shahjalal Airport", lat: 23.8513, lng: 90.4089, aliases: ["airport", "shahjalal", "dhaka airport"], population: "" },
+  // Major cities
+  { name: "Dhaka", lat: 23.8103, lng: 90.4125, aliases: ["dhaka", "dha"], population: "21M", type: "city" },
+  { name: "Chittagong", lat: 22.3569, lng: 91.7832, aliases: ["chittagong", "ctg", "chattogram"], population: "5M", type: "city" },
+  { name: "Sylhet", lat: 24.8949, lng: 91.8687, aliases: ["sylhet", "syl"], population: "500K", type: "city" },
+  { name: "Khulna", lat: 22.8456, lng: 89.5403, aliases: ["khulna", "khu"], population: "1.5M", type: "city" },
+  { name: "Rajshahi", lat: 24.3745, lng: 88.6042, aliases: ["rajshahi", "raj"], population: "450K", type: "city" },
+  { name: "Cox's Bazar", lat: 21.4272, lng: 92.0058, aliases: ["cox's bazar", "coxs bazar", "cox"], population: "250K", type: "city" },
+  // Dhaka neighborhoods
+  { name: "Shahbag, Dhaka", lat: 23.7380, lng: 90.3958, aliases: ["shahbag"], population: "", type: "neighborhood" },
+  { name: "Gulshan, Dhaka", lat: 23.7925, lng: 90.4078, aliases: ["gulshan"], population: "", type: "neighborhood" },
+  { name: "Banani, Dhaka", lat: 23.7937, lng: 90.4066, aliases: ["banani"], population: "", type: "neighborhood" },
+  { name: "Mirpur, Dhaka", lat: 23.8223, lng: 90.3654, aliases: ["mirpur"], population: "", type: "neighborhood" },
+  { name: "Dhanmondi, Dhaka", lat: 23.7461, lng: 90.3742, aliases: ["dhanmondi"], population: "", type: "neighborhood" },
+  { name: "Uttara, Dhaka", lat: 23.8759, lng: 90.3795, aliases: ["uttara"], population: "", type: "neighborhood" },
+  { name: "Motijheel, Dhaka", lat: 23.7331, lng: 90.4179, aliases: ["motijheel"], population: "", type: "neighborhood" },
+  { name: "Old Dhaka", lat: 23.7104, lng: 90.4074, aliases: ["old dhaka", "puran dhaka"], population: "", type: "neighborhood" },
+  { name: "Mohammadpur, Dhaka", lat: 23.7662, lng: 90.3589, aliases: ["mohammadpur"], population: "", type: "neighborhood" },
+  { name: "Tejgaon, Dhaka", lat: 23.7627, lng: 90.3923, aliases: ["tejgaon"], population: "", type: "neighborhood" },
+  // Chittagong neighborhoods
+  { name: "Agrabad, Chittagong", lat: 22.3203, lng: 91.8081, aliases: ["agrabad"], population: "", type: "neighborhood" },
+  { name: "Nasirabad, Chittagong", lat: 22.3648, lng: 91.8227, aliases: ["nasirabad"], population: "", type: "neighborhood" },
+  // Key infrastructure
+  { name: "Kamalapur Station", lat: 23.7327, lng: 90.4264, aliases: ["kamalapur", "kamalapur station", "railway station"], population: "", type: "infrastructure" },
+  { name: "Hazrat Shahjalal Airport", lat: 23.8513, lng: 90.4089, aliases: ["airport", "shahjalal", "dhaka airport"], population: "", type: "infrastructure" },
+  { name: "Chittagong Port", lat: 22.3267, lng: 91.8044, aliases: ["chittagong port", "port"], population: "", type: "infrastructure" },
 ];
 
 const SMART_SUGGESTIONS = [
-  { query: "Dhaka protests last 7 days", icon: AlertTriangle, category: "Trending" },
+  { query: "Shahbag protests 2 hours ago", icon: AlertTriangle, category: "Trending" },
+  { query: "Gulshan power outage last 3 hours", icon: Zap, category: "Live" },
   { query: "infrastructure status Chittagong", icon: Building2, category: "Common" },
+  { query: "Mirpur flooding today", icon: AlertTriangle, category: "Events" },
   { query: "healthcare access gaps", icon: TrendingUp, category: "Analysis" },
-  { query: "transport disruptions today", icon: Zap, category: "Live" },
-  { query: "power grid vulnerabilities", icon: Building2, category: "Infrastructure" },
   { query: "political unrest since December", icon: AlertTriangle, category: "Events" },
 ];
 
@@ -57,55 +74,75 @@ const MOCK_INTELLIGENCE: IntelligenceResult[] = [
   {
     id: "intel-1",
     title: "Elevated protest activity in Shahbag",
-    summary: "University students organizing peaceful demonstrations. Low escalation risk assessed.",
+    summary: "University students organizing peaceful demonstrations near Dhaka University. Low escalation risk assessed.",
     source: "Field Report",
     timestamp: "2h ago",
     type: "event",
     relevance: 0.95,
-    location: "Dhaka"
+    location: "Shahbag"
   },
   {
     id: "intel-2", 
-    title: "Power grid maintenance scheduled",
-    summary: "DPDC announces scheduled maintenance affecting Gulshan and Banani sectors.",
+    title: "Power grid maintenance in Gulshan",
+    summary: "DPDC announces scheduled maintenance affecting Gulshan and Banani sectors. Expected duration 4 hours.",
     source: "Official Notice",
-    timestamp: "4h ago",
+    timestamp: "1h ago",
     type: "infrastructure",
-    relevance: 0.88,
-    location: "Dhaka"
+    relevance: 0.92,
+    location: "Gulshan"
   },
   {
     id: "intel-3",
     title: "Transport disruption at Kamalapur",
-    summary: "Train delays reported due to track maintenance. Alternative routes recommended.",
+    summary: "Train delays reported due to track maintenance. Alternative routes recommended via Mirpur.",
     source: "Local Report",
-    timestamp: "6h ago",
+    timestamp: "3h ago",
     type: "infrastructure",
-    relevance: 0.82,
-    location: "Dhaka"
+    relevance: 0.85,
+    location: "Kamalapur"
   },
   {
     id: "intel-4",
+    title: "Water supply issue in Mirpur",
+    summary: "WASA reports low pressure in Mirpur-10 and Mirpur-11 sectors. Tanker deployment authorized.",
+    source: "Utility Report",
+    timestamp: "45m ago",
+    type: "infrastructure",
+    relevance: 0.88,
+    location: "Mirpur"
+  },
+  {
+    id: "intel-5",
     title: "Healthcare facility capacity update",
     summary: "Dhaka Medical College operating at 78% capacity. No critical shortages reported.",
     source: "Health Ministry",
-    timestamp: "1d ago",
+    timestamp: "6h ago",
     type: "report",
     relevance: 0.75,
     location: "Dhaka"
   },
   {
-    id: "intel-5",
+    id: "intel-6",
     title: "Political rally announced for Chittagong",
-    summary: "Opposition party scheduled rally for next week. Enhanced monitoring recommended.",
+    summary: "Opposition party scheduled rally at Agrabad for next week. Enhanced monitoring recommended.",
     source: "Open Source",
     timestamp: "1d ago",
     type: "event",
     relevance: 0.71,
-    location: "Chittagong"
+    location: "Agrabad"
   },
   {
-    id: "intel-6",
+    id: "intel-7",
+    title: "Traffic congestion Dhanmondi",
+    summary: "Heavy traffic reported on Satmasjid Road due to construction. Delays of 30-45 minutes expected.",
+    source: "Traffic Control",
+    timestamp: "30m ago",
+    type: "event",
+    relevance: 0.82,
+    location: "Dhanmondi"
+  },
+  {
+    id: "intel-8",
     title: "Port operations normal at Chittagong",
     summary: "All berths operational. Cargo throughput at seasonal average levels.",
     source: "Port Authority",
@@ -123,9 +160,16 @@ const TIME_PATTERNS = [
     handler: (m: RegExpMatchArray) => ({ label: `${m[1]} ${m[2]}`, value: `date:${m[1].toLowerCase()}-${m[2]}` }) },
   { pattern: /mid[- ]?(january|february|march|april|may|june|july|august|september|october|november|december)/i,
     handler: (m: RegExpMatchArray) => ({ label: `Mid-${m[1]}`, value: `mid:${m[1].toLowerCase()}` }) },
+  // "X hours/minutes ago" patterns
+  { pattern: /(\d+)\s*hours?\s*ago/i, handler: (m: RegExpMatchArray) => ({ label: `${m[1]}h ago`, value: `ago:${m[1]}h` }) },
+  { pattern: /(\d+)\s*mins?\s*ago/i, handler: (m: RegExpMatchArray) => ({ label: `${m[1]}m ago`, value: `ago:${m[1]}m` }) },
+  { pattern: /(\d+)\s*minutes?\s*ago/i, handler: (m: RegExpMatchArray) => ({ label: `${m[1]}m ago`, value: `ago:${m[1]}m` }) },
+  { pattern: /(\d+)\s*days?\s*ago/i, handler: (m: RegExpMatchArray) => ({ label: `${m[1]}d ago`, value: `ago:${m[1]}d` }) },
+  // "last X" patterns
   { pattern: /last\s*(\d+)\s*days?/i, handler: (m: RegExpMatchArray) => ({ label: `Last ${m[1]} days`, value: `${m[1]}d` }) },
   { pattern: /past\s*(\d+)\s*days?/i, handler: (m: RegExpMatchArray) => ({ label: `Past ${m[1]} days`, value: `${m[1]}d` }) },
   { pattern: /last\s*(\d+)\s*hours?/i, handler: (m: RegExpMatchArray) => ({ label: `Last ${m[1]} hours`, value: `${m[1]}h` }) },
+  { pattern: /last\s*(\d+)\s*mins?/i, handler: (m: RegExpMatchArray) => ({ label: `Last ${m[1]} min`, value: `${m[1]}m` }) },
   { pattern: /last\s*week/i, handler: () => ({ label: "Last week", value: "7d" }) },
   { pattern: /past\s*week/i, handler: () => ({ label: "Past week", value: "7d" }) },
   { pattern: /last\s*month/i, handler: () => ({ label: "Last month", value: "30d" }) },
@@ -133,6 +177,8 @@ const TIME_PATTERNS = [
   { pattern: /since\s+(january|february|march|april|may|june|july|august|september|october|november|december)/i, 
     handler: (m: RegExpMatchArray) => ({ label: `Since ${m[1]}`, value: `since-${m[1].toLowerCase()}` }) },
   { pattern: /today/i, handler: () => ({ label: "Today", value: "24h" }) },
+  { pattern: /yesterday/i, handler: () => ({ label: "Yesterday", value: "yesterday" }) },
+  { pattern: /this\s*morning/i, handler: () => ({ label: "This morning", value: "morning" }) },
 ];
 
 const EVENT_KEYWORDS = [
@@ -513,13 +559,21 @@ export function UnifiedSearchBar({
                       className="w-full text-left px-3 py-2 hover-elevate flex items-center gap-3"
                       data-testid={`location-${loc.name.toLowerCase().replace(/\s+/g, '-')}`}
                     >
-                      <div className="flex items-center justify-center w-7 h-7 rounded-md bg-primary/10 text-primary flex-shrink-0">
+                      <div className={cn(
+                        "flex items-center justify-center w-7 h-7 rounded-md flex-shrink-0",
+                        loc.type === "neighborhood" ? "bg-blue-500/10 text-blue-600" :
+                        loc.type === "infrastructure" ? "bg-orange-500/10 text-orange-600" :
+                        "bg-primary/10 text-primary"
+                      )}>
                         <MapPin className="h-3.5 w-3.5" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium">{loc.name}</div>
+                        <div className="text-sm font-medium flex items-center gap-2">
+                          {loc.name}
+                          <Badge variant="outline" className="text-[10px] h-4 px-1 capitalize">{loc.type}</Badge>
+                        </div>
                         <div className="text-xs text-muted-foreground">
-                          {loc.lat.toFixed(2)}, {loc.lng.toFixed(2)}
+                          {loc.lat.toFixed(4)}, {loc.lng.toFixed(4)}
                           {loc.population && ` · Pop: ${loc.population}`}
                         </div>
                       </div>
