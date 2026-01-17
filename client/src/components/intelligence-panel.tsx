@@ -127,27 +127,29 @@ export function IntelligencePanel({
   const hasActiveOverlay = activeTopPanel || activeBottomPanel
 
   return (
-    <div className={cn("h-full flex flex-col", className)}>
-      {/* Header with AOI and Risk Summary */}
-      <div className="p-4 border-b bg-muted/30">
-        <div className="flex items-center justify-between mb-3">
-          <div>
-            <h1 className="text-lg font-semibold">{currentAOI.name || "Area of Interest"}</h1>
-            <p className="text-sm text-muted-foreground">
+    <div className={cn("flex flex-col overflow-hidden", className)}>
+      {/* Header - matches map header padding (p-3) */}
+      <div className="flex-shrink-0 p-3 border-b bg-background space-y-3">
+        {/* Row 1: AOI + Risk Badge */}
+        <div className="flex items-center justify-between gap-2">
+          <div className="min-w-0">
+            <h1 className="text-base font-semibold truncate">{currentAOI.name || "Area of Interest"}</h1>
+            <p className="text-xs text-muted-foreground">
               {currentAOI.lat.toFixed(4)}, {currentAOI.lng.toFixed(4)}
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <Badge variant={riskScore >= 70 ? "destructive" : riskScore >= 40 ? "secondary" : "outline"}>
-              Risk: {riskScore}%
-            </Badge>
-          </div>
+          <Badge 
+            variant={riskScore >= 70 ? "destructive" : riskScore >= 40 ? "secondary" : "outline"}
+            className="flex-shrink-0"
+          >
+            Risk: {riskScore}%
+          </Badge>
         </div>
         
-        {/* Lens Selector - Vertical with readable labels */}
-        <div className="space-y-1">
+        {/* Row 2: Lens Selector - 2x2 grid */}
+        <div>
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Analysis Lens</p>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-1.5">
             {LENS_OPTIONS.map((lens) => {
               const Icon = lens.icon
               const isActive = activeLens === lens.id
@@ -156,7 +158,7 @@ export function IntelligencePanel({
                   key={lens.id}
                   onClick={() => onLensChange(lens.id)}
                   className={cn(
-                    "flex items-center gap-2 p-2.5 rounded-lg text-left transition-all",
+                    "flex items-center gap-2 px-2.5 py-2 rounded-md text-left transition-colors",
                     isActive
                       ? "bg-primary text-primary-foreground"
                       : "bg-muted/50 hover-elevate text-muted-foreground hover:text-foreground"
@@ -164,9 +166,7 @@ export function IntelligencePanel({
                   data-testid={`lens-${lens.id}`}
                 >
                   <Icon className="h-4 w-4 flex-shrink-0" />
-                  <div className="min-w-0 flex-1">
-                    <div className="text-sm font-medium truncate">{lens.label}</div>
-                  </div>
+                  <span className="text-sm font-medium truncate">{lens.label}</span>
                 </button>
               )
             })}
@@ -174,8 +174,8 @@ export function IntelligencePanel({
         </div>
       </div>
 
-      {/* Main Content Area - No absolute positioning */}
-      <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
+      {/* Content Area - proper flex layout, no absolute positioning */}
+      <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
         {!hasActiveOverlay ? (
           /* Default View: Context Panel for selected lens */
           <ScrollArea className="flex-1">

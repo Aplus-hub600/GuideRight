@@ -90,41 +90,75 @@ function App() {
               <SystemStatusBanner />
               
               <div className="h-screen w-screen bg-background flex flex-col overflow-hidden">
-                {/* Main Content Area - Fixed 60/40 Split */}
-                <div className="flex-1 flex overflow-hidden">
-                  {/* Left: Map Panel (60%) */}
+                {/* Main Content - Two Column Layout */}
+                <div className="flex-1 flex min-h-0">
+                  
+                  {/* LEFT COLUMN: Map Container (60%) */}
                   <div 
                     className={cn(
-                      "h-full relative",
+                      "flex flex-col min-h-0",
                       "w-full md:w-[60%] md:flex-shrink-0",
-                      mobileView === "intel" ? "hidden md:block" : "block"
+                      mobileView === "intel" ? "hidden md:flex" : "flex"
                     )}
                   >
-                    {/* Location Search Bar */}
-                    <div className="absolute top-3 left-1/2 -translate-x-1/2 z-10 w-full max-w-md px-4">
+                    {/* Map Header - Fixed, docked, solid background */}
+                    <div className="flex-shrink-0 bg-background border-b p-3 space-y-2">
+                      {/* Row 1: AOI Info */}
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-sm font-medium truncate">{currentAOI.name || "Select Location"}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {currentAOI.lat.toFixed(2)}, {currentAOI.lng.toFixed(2)}
+                          </span>
+                        </div>
+                        {/* Mobile toggle in header */}
+                        <button
+                          onClick={() => setMobileView("intel")}
+                          className="md:hidden flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium bg-muted rounded-md hover-elevate"
+                        >
+                          Intel Panel
+                        </button>
+                      </div>
+                      
+                      {/* Row 2: Search Bar - in document flow, not floating */}
                       <LocationSearchBar 
                         onLocationSelect={handleLocationSelect}
                         currentLocation={currentAOI.name}
                       />
                     </div>
                     
-                    <MapLibrePanel
-                      aoi={currentAOI}
-                      onAOIChange={setCurrentAOI}
-                      activeLens={activeLens}
-                      hideLensSelector={true}
-                      className="h-full w-full"
-                    />
+                    {/* Map Canvas - fills remaining space */}
+                    <div className="flex-1 min-h-0">
+                      <MapLibrePanel
+                        aoi={currentAOI}
+                        onAOIChange={setCurrentAOI}
+                        activeLens={activeLens}
+                        hideLensSelector={true}
+                        className="h-full w-full"
+                      />
+                    </div>
                   </div>
                   
-                  {/* Right: Intelligence Panel (40%) */}
+                  {/* RIGHT COLUMN: Intelligence Panel (40%) - Full height, docked */}
                   <div 
                     className={cn(
-                      "h-full border-l bg-background overflow-hidden",
+                      "flex flex-col min-h-0 border-l bg-background",
                       "w-full md:w-[40%] md:flex-shrink-0",
-                      mobileView === "map" ? "hidden md:block" : "block"
+                      mobileView === "map" ? "hidden md:flex" : "flex"
                     )}
                   >
+                    {/* Mobile: Back to Map button */}
+                    <div className="md:hidden flex-shrink-0 p-2 border-b bg-muted/30">
+                      <button
+                        onClick={() => setMobileView("map")}
+                        className="flex items-center gap-2 px-3 py-2 text-sm font-medium bg-background border rounded-md hover-elevate w-full justify-center"
+                      >
+                        <Map className="h-4 w-4" />
+                        Back to Map
+                      </button>
+                    </div>
+                    
+                    {/* Intelligence Panel - fills column */}
                     <IntelligencePanel
                       currentAOI={currentAOI}
                       activeTopPanel={activeTopPanel}
@@ -137,29 +171,12 @@ function App() {
                       onToggleChat={() => setIsChatOpen(!isChatOpen)}
                       onQuerySubmit={handleQuerySubmit}
                       mediaContextIds={mediaContextIds}
-                      className="h-full"
+                      className="flex-1 min-h-0"
                     />
                   </div>
                 </div>
-                
-                {/* Mobile View Toggle */}
-                <div className="md:hidden fixed top-3 right-3 z-30">
-                  <button
-                    onClick={() => setMobileView(mobileView === "map" ? "intel" : "map")}
-                    className="flex items-center gap-2 px-3 py-2 bg-background/95 backdrop-blur border rounded-lg shadow-sm"
-                  >
-                    {mobileView === "map" ? (
-                      <span className="text-sm font-medium">Intel</span>
-                    ) : (
-                      <>
-                        <Map className="h-4 w-4" />
-                        <span className="text-sm font-medium">Map</span>
-                      </>
-                    )}
-                  </button>
-                </div>
 
-                {/* Bottom Navigation Bar */}
+                {/* Bottom Navigation Bar - Docked */}
                 <div className="h-12 flex-shrink-0 border-t bg-background flex items-center justify-center px-4">
                   <BottomNavBar 
                     activeTopPanel={activeTopPanel}

@@ -1,0 +1,214 @@
+Layout Correction Plan (Focused, Defensible)
+Core Principle (lock this)
+
+No panel floats. No panel overlaps. Every panel is docked, flush, and bounded.
+
+If a panel exists, it must:
+
+have a clear container,
+
+respect z-order,
+
+and never cover another control.
+
+1️⃣ Top Control Bar — Make It Flush (Critical)
+❌ Current issue
+
+The top panel (AOI / scope / infra/activity status) is:
+
+visually “hanging”
+
+not anchored to the map container
+
+covering the search input beneath it
+
+This immediately signals UI immaturity to analysts.
+
+✅ Required fix
+
+Convert the top panel into a fixed, docked header inside the map column.
+
+Implementation guidance:
+
+The map column becomes a vertical stack:
+
+┌───────────────────────────┐
+│ Map Header (fixed height) │  ← AOI, Scope, Coverage, Search
+├───────────────────────────┤
+│                           │
+│        Map Canvas         │
+│                           │
+└───────────────────────────┘
+
+
+The header:
+
+is part of the map container
+
+has a solid background (no translucency)
+
+reserves vertical space (no overlap)
+
+Acceptance criteria
+
+Search bar is always visible
+
+Header never overlaps map or search
+
+Header scrolls only if explicitly designed to
+
+2️⃣ Search Panel — Give It a Reserved Slot
+❌ Current issue
+
+Search is being covered by the top panel
+
+Indicates improper layout flow (absolute positioning)
+
+✅ Required fix
+
+Search must live inside the same header container
+
+Use normal document flow (position: relative / static)
+
+No absolute positioning for demo-critical controls
+
+Suggested structure:
+
+Map Header
+├─ AOI + Scope row
+├─ Coverage indicators
+├─ Search input
+
+Acceptance criteria
+
+You can resize the window
+
+Search never disappears
+
+No element overlaps it
+
+3️⃣ Intelligence Panel — Dock It, Don’t Float It
+❌ Current issue
+
+The intelligence panel feels visually detached
+
+It looks like it’s hovering rather than belonging to the layout
+
+This creates subconscious distrust (“is this stable?”).
+
+✅ Required fix
+
+Hard-dock the intelligence panel as a full-height right column.
+
+Implementation guidance:
+
+Parent container: display: grid or flex
+
+Two columns only:
+
+Left: Map column (with header + canvas)
+
+Right: Intelligence panel
+
+The intel panel:
+
+spans full viewport height
+
+has its own internal scroll
+
+never overlaps the map
+
+Acceptance criteria
+
+Intel panel edges align with viewport
+
+No shadows suggesting floating
+
+It feels “built-in”, not “added on”
+
+4️⃣ Z-Index Rule (Non-Negotiable)
+Global rule
+
+Only dropdown menus may float above panels. Nothing else.
+
+Required implementation
+
+Define a z-index hierarchy explicitly:
+
+Base layout panels: lowest
+
+Map + intel panels: same level
+
+Dropdowns / popovers: higher
+
+No component should invent its own z-index ad hoc
+
+Acceptance criteria
+
+Open every dropdown
+
+Nothing hides behind another panel
+
+No menu clips or disappears
+
+5️⃣ Eliminate Any Remaining Absolute Positioning (Demo Path)
+
+For the demo build:
+
+Remove position: absolute from:
+
+headers
+
+search
+
+intelligence panel
+
+Absolute positioning is allowed only for:
+
+tooltips
+
+popovers
+
+dropdown menus
+
+This alone prevents 90% of overlap bugs.
+
+6️⃣ Visual Alignment Polish (Low Risk, High Payoff)
+
+These are subtle but important for perceived maturity:
+
+Align:
+
+top of intel panel with top of map header
+
+bottom of intel panel with bottom of viewport
+
+Match padding:
+
+header padding = intel panel header padding
+
+Remove any “gaps” that make panels feel misaligned
+
+Acceptance criteria
+
+A screenshot looks clean even without explanation
+
+No element looks “out of place”
+
+What NOT to change (important)
+
+❌ Do not redesign colors
+
+❌ Do not add new controls
+
+❌ Do not move lenses
+
+❌ Do not change analytics logic
+
+This is layout hygiene only.
+
+How you should describe this work (if asked)
+
+“We’re cleaning up layout flow and panel docking so controls are always visible and nothing overlaps. No new features — just structural fixes.”
+
+That is accurate and defensible.
