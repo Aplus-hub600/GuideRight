@@ -1,10 +1,68 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Search, MapPin, Clock, X, Zap, Building2, AlertTriangle, History, Sparkles, ArrowRight, FileText, TrendingUp } from "lucide-react";
+import { Search, MapPin, Clock, X, Zap, Building2, AlertTriangle, History, Sparkles, ArrowRight, FileText, TrendingUp, ChevronRight, Droplets, Activity, Train, Plane, Anchor, Hospital, Filter } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+
+const FILTER_CATEGORIES = {
+  locations: {
+    label: "Locations",
+    icon: MapPin,
+    subcategories: [
+      { 
+        label: "Major Cities", 
+        items: ["Dhaka", "Chittagong", "Sylhet", "Khulna", "Rajshahi", "Cox's Bazar"]
+      },
+      { 
+        label: "Dhaka Neighborhoods", 
+        items: ["Shahbag", "Gulshan", "Banani", "Mirpur", "Dhanmondi", "Uttara", "Motijheel", "Old Dhaka"]
+      },
+      { 
+        label: "Key Infrastructure", 
+        items: ["Kamalapur Station", "Shahjalal Airport", "Chittagong Port"]
+      }
+    ]
+  },
+  timeRanges: {
+    label: "Time Range",
+    icon: Clock,
+    presets: [
+      { label: "1 hour", value: "last 1 hour" },
+      { label: "6 hours", value: "last 6 hours" },
+      { label: "24 hours", value: "last 24 hours" },
+      { label: "7 days", value: "last 7 days" },
+      { label: "30 days", value: "last 30 days" },
+      { label: "Yesterday", value: "yesterday" },
+      { label: "This morning", value: "this morning" }
+    ]
+  },
+  events: {
+    label: "Event Types",
+    icon: AlertTriangle,
+    items: [
+      { label: "Protests", value: "protests", icon: Activity },
+      { label: "Strikes / Hartal", value: "strikes", icon: X },
+      { label: "Flooding", value: "flooding", icon: Droplets },
+      { label: "Power Outages", value: "power outage", icon: Zap },
+      { label: "Transport Disruption", value: "transport disruption", icon: Train },
+      { label: "Political Unrest", value: "political unrest", icon: AlertTriangle }
+    ]
+  },
+  infrastructure: {
+    label: "Infrastructure",
+    icon: Building2,
+    items: [
+      { label: "Hospitals", value: "hospitals", icon: Hospital },
+      { label: "Power Grid", value: "power grid", icon: Zap },
+      { label: "Rail / Transport", value: "rail transport", icon: Train },
+      { label: "Airports", value: "airports", icon: Plane },
+      { label: "Ports", value: "ports", icon: Anchor },
+      { label: "Water Systems", value: "water systems", icon: Droplets }
+    ]
+  }
+};
 
 export interface ParsedQuery {
   location?: { name: string; lat: number; lng: number };
@@ -299,6 +357,8 @@ const typeIcons = {
   infrastructure: Building2
 };
 
+type FilterView = "main" | "locations" | "timeRanges" | "events" | "infrastructure";
+
 export function UnifiedSearchBar({ 
   onQueryParsed, 
   currentLocation, 
@@ -311,6 +371,7 @@ export function UnifiedSearchBar({
   const [preview, setPreview] = useState<ParsedQuery | null>(null);
   const [searchResults, setSearchResults] = useState<IntelligenceResult[]>([]);
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
+  const [filterView, setFilterView] = useState<FilterView>("main");
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -382,6 +443,28 @@ export function UnifiedSearchBar({
     setSearchHistory(getSearchHistory());
     setSearchValue("");
     setIsExpanded(false);
+    setFilterView("main");
+  };
+
+  const handleFilterItemClick = (value: string) => {
+    const currentQuery = searchValue.trim();
+    const newQuery = currentQuery ? `${currentQuery} ${value}` : value;
+    setSearchValue(newQuery);
+    setFilterView("main");
+    inputRef.current?.focus();
+  };
+
+  const handleFilterLocationClick = (locationName: string) => {
+    const loc = LOCATIONS.find(l => 
+      l.name === locationName || 
+      l.name.startsWith(locationName) ||
+      l.aliases.some(a => a.toLowerCase() === locationName.toLowerCase())
+    );
+    if (loc) {
+      handleLocationClick(loc);
+    } else {
+      handleFilterItemClick(locationName);
+    }
   };
 
   const filteredLocations = LOCATIONS.filter(loc =>
@@ -584,8 +667,8 @@ export function UnifiedSearchBar({
               </div>
             )}
 
-            {/* Smart Suggestions - shown when no search value */}
-            {searchValue.length < 2 && (
+            {/* Filter Discovery - shown when no search value */}
+            {searchValue.length < 2 && filterView === "main" && (
               <>
                 {/* Recent Searches */}
                 {searchHistory.length > 0 && (
@@ -609,14 +692,47 @@ export function UnifiedSearchBar({
                   </div>
                 )}
 
+                {/* Filter Categories */}
+                <div className="border-b">
+                  <div className="px-3 pt-2 pb-1 flex items-center gap-2">
+                    <Filter className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Browse Filters</span>
+                  </div>
+                  <div className="pb-1">
+                    {(["locations", "timeRanges", "events", "infrastructure"] as const).map((key) => {
+                      const category = FILTER_CATEGORIES[key];
+                      const CategoryIcon = category.icon;
+                      return (
+                        <button
+                          key={key}
+                          onClick={() => setFilterView(key)}
+                          className="w-full text-left px-3 py-2 hover-elevate flex items-center gap-3"
+                        >
+                          <div className={cn(
+                            "flex items-center justify-center w-7 h-7 rounded-md flex-shrink-0",
+                            key === "locations" ? "bg-primary/10 text-primary" :
+                            key === "timeRanges" ? "bg-blue-500/10 text-blue-600" :
+                            key === "events" ? "bg-amber-500/10 text-amber-600" :
+                            "bg-orange-500/10 text-orange-600"
+                          )}>
+                            <CategoryIcon className="h-3.5 w-3.5" />
+                          </div>
+                          <span className="text-sm flex-1">{category.label}</span>
+                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
                 {/* Smart Suggestions */}
                 <div>
                   <div className="px-3 pt-2 pb-1 flex items-center gap-2">
                     <Sparkles className="h-3.5 w-3.5 text-muted-foreground" />
-                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Suggested Queries</span>
+                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Example Queries</span>
                   </div>
                   <div className="pb-2">
-                    {SMART_SUGGESTIONS.map((suggestion, idx) => {
+                    {SMART_SUGGESTIONS.slice(0, 4).map((suggestion, idx) => {
                       const Icon = suggestion.icon;
                       return (
                         <button
@@ -640,6 +756,139 @@ export function UnifiedSearchBar({
                   </div>
                 </div>
               </>
+            )}
+
+            {/* Locations Filter View */}
+            {searchValue.length < 2 && filterView === "locations" && (
+              <div>
+                <button 
+                  onClick={() => setFilterView("main")}
+                  className="w-full text-left px-3 py-2 border-b flex items-center gap-2 text-sm text-muted-foreground hover-elevate"
+                >
+                  <ArrowRight className="h-4 w-4 rotate-180" />
+                  Back to filters
+                </button>
+                <div className="px-3 pt-2 pb-1 flex items-center gap-2">
+                  <MapPin className="h-3.5 w-3.5 text-primary" />
+                  <span className="text-xs font-medium text-primary uppercase tracking-wide">Locations</span>
+                </div>
+                {FILTER_CATEGORIES.locations.subcategories.map((sub, idx) => (
+                  <div key={idx} className="mb-2">
+                    <div className="px-3 py-1 text-xs text-muted-foreground font-medium">{sub.label}</div>
+                    <div className="flex flex-wrap gap-1.5 px-3 pb-2">
+                      {sub.items.map((item) => (
+                        <Badge 
+                          key={item} 
+                          variant="outline" 
+                          className="cursor-pointer hover-elevate text-xs"
+                          onClick={() => handleFilterLocationClick(item)}
+                        >
+                          <MapPin className="h-3 w-3 mr-1" />
+                          {item}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Time Range Filter View */}
+            {searchValue.length < 2 && filterView === "timeRanges" && (
+              <div>
+                <button 
+                  onClick={() => setFilterView("main")}
+                  className="w-full text-left px-3 py-2 border-b flex items-center gap-2 text-sm text-muted-foreground hover-elevate"
+                >
+                  <ArrowRight className="h-4 w-4 rotate-180" />
+                  Back to filters
+                </button>
+                <div className="px-3 pt-2 pb-1 flex items-center gap-2">
+                  <Clock className="h-3.5 w-3.5 text-blue-600" />
+                  <span className="text-xs font-medium text-blue-600 uppercase tracking-wide">Time Range</span>
+                </div>
+                <div className="flex flex-wrap gap-1.5 px-3 pb-3 pt-1">
+                  {FILTER_CATEGORIES.timeRanges.presets.map((preset) => (
+                    <Badge 
+                      key={preset.value} 
+                      variant="outline" 
+                      className="cursor-pointer hover-elevate text-xs"
+                      onClick={() => handleFilterItemClick(preset.value)}
+                    >
+                      <Clock className="h-3 w-3 mr-1" />
+                      {preset.label}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Events Filter View */}
+            {searchValue.length < 2 && filterView === "events" && (
+              <div>
+                <button 
+                  onClick={() => setFilterView("main")}
+                  className="w-full text-left px-3 py-2 border-b flex items-center gap-2 text-sm text-muted-foreground hover-elevate"
+                >
+                  <ArrowRight className="h-4 w-4 rotate-180" />
+                  Back to filters
+                </button>
+                <div className="px-3 pt-2 pb-1 flex items-center gap-2">
+                  <AlertTriangle className="h-3.5 w-3.5 text-amber-600" />
+                  <span className="text-xs font-medium text-amber-600 uppercase tracking-wide">Event Types</span>
+                </div>
+                <div className="pb-2">
+                  {FILTER_CATEGORIES.events.items.map((item) => {
+                    const ItemIcon = item.icon;
+                    return (
+                      <button
+                        key={item.value}
+                        onClick={() => handleFilterItemClick(item.value)}
+                        className="w-full text-left px-3 py-2 hover-elevate flex items-center gap-3"
+                      >
+                        <div className="flex items-center justify-center w-7 h-7 rounded-md bg-amber-500/10 text-amber-600 flex-shrink-0">
+                          <ItemIcon className="h-3.5 w-3.5" />
+                        </div>
+                        <span className="text-sm">{item.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Infrastructure Filter View */}
+            {searchValue.length < 2 && filterView === "infrastructure" && (
+              <div>
+                <button 
+                  onClick={() => setFilterView("main")}
+                  className="w-full text-left px-3 py-2 border-b flex items-center gap-2 text-sm text-muted-foreground hover-elevate"
+                >
+                  <ArrowRight className="h-4 w-4 rotate-180" />
+                  Back to filters
+                </button>
+                <div className="px-3 pt-2 pb-1 flex items-center gap-2">
+                  <Building2 className="h-3.5 w-3.5 text-orange-600" />
+                  <span className="text-xs font-medium text-orange-600 uppercase tracking-wide">Infrastructure</span>
+                </div>
+                <div className="pb-2">
+                  {FILTER_CATEGORIES.infrastructure.items.map((item) => {
+                    const ItemIcon = item.icon;
+                    return (
+                      <button
+                        key={item.value}
+                        onClick={() => handleFilterItemClick(item.value)}
+                        className="w-full text-left px-3 py-2 hover-elevate flex items-center gap-3"
+                      >
+                        <div className="flex items-center justify-center w-7 h-7 rounded-md bg-orange-500/10 text-orange-600 flex-shrink-0">
+                          <ItemIcon className="h-3.5 w-3.5" />
+                        </div>
+                        <span className="text-sm">{item.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             )}
           </ScrollArea>
         </Card>
