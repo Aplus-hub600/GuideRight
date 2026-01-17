@@ -430,15 +430,17 @@ export function MapLibrePanel({
       {/* Map Container */}
       <div ref={mapContainer} className="absolute inset-0" data-testid="map-container" />
 
-      {/* Scope Bar - Top Left (Non-Negotiable per blueprint) */}
-      <div className="absolute top-3 left-3 right-3 z-10">
-        <MapScopeBar
-          aoiName={aoi?.name || "Bangladesh"}
-          scope="metropolitan"
-          coverage={dynamicCoverage}
-          zoomLevel={zoomLevel}
-        />
-      </div>
+      {/* Scope Bar - Only show if lens selector is visible (not using external header) */}
+      {!hideLensSelector && (
+        <div className="absolute top-3 left-3 right-3 z-10">
+          <MapScopeBar
+            aoiName={aoi?.name || "Bangladesh"}
+            scope="metropolitan"
+            coverage={dynamicCoverage}
+            zoomLevel={zoomLevel}
+          />
+        </div>
+      )}
 
       {/* Left Rail: Lens Selector + Style - only show if not hidden */}
       {!hideLensSelector && (
@@ -473,9 +475,9 @@ export function MapLibrePanel({
         </div>
       )}
       
-      {/* Minimal map style toggle when lens selector is hidden */}
+      {/* Minimal map style toggle when lens selector is hidden - positioned at top left */}
       {hideLensSelector && (
-        <div className="absolute top-16 left-3 z-10">
+        <div className="absolute top-3 left-3 z-10">
           <div className="flex gap-1 bg-background/95 backdrop-blur-sm rounded-md border p-1">
             <Button
               size="icon"
