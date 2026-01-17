@@ -174,27 +174,22 @@ export function IntelligencePanel({
         </div>
       </div>
 
-      {/* Main Content Area */}
-      <div className="flex-1 min-h-0 relative">
-        {/* Default View: Context Panel for selected lens */}
-        <div className={cn(
-          "absolute inset-0 transition-opacity duration-200",
-          hasActiveOverlay ? "opacity-0 pointer-events-none" : "opacity-100"
-        )}>
-          <ScrollArea className="h-full">
+      {/* Main Content Area - No absolute positioning */}
+      <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
+        {!hasActiveOverlay ? (
+          /* Default View: Context Panel for selected lens */
+          <ScrollArea className="flex-1">
             <MapContextPanel
               aoiName={currentAOI.name || "Dhaka"}
               activeLens={activeLens}
               className="border-0 rounded-none"
             />
           </ScrollArea>
-        </div>
-
-        {/* Overlay Panels - shown when nav items are active */}
-        {hasActiveOverlay && (
-          <div className="absolute inset-0 bg-background flex flex-col">
+        ) : (
+          /* Nav Panel Content - replaces context panel when active */
+          <div className="flex-1 flex flex-col overflow-hidden">
             {/* Panel Header */}
-            <div className="p-3 border-b flex items-center justify-between bg-muted/30">
+            <div className="p-3 border-b flex items-center justify-between bg-muted/30 flex-shrink-0">
               <h2 className="text-sm font-semibold flex items-center gap-2">
                 {activeTopPanel === "intelligence" && <><TrendingUp className="h-4 w-4" />Intelligence</>}
                 {activeTopPanel === "analytics" && <><BarChart3 className="h-4 w-4" />Analytics</>}
@@ -256,14 +251,14 @@ export function IntelligencePanel({
         )}
       </div>
       
-      {/* Chat Panel - Docked at bottom of intelligence panel */}
+      {/* Chat Panel - Docked at bottom */}
       <div className={cn(
-        "border-t transition-all duration-300",
-        isChatOpen ? "h-[40%] min-h-[200px]" : "h-12"
+        "border-t flex-shrink-0 flex flex-col",
+        isChatOpen ? "h-64" : "h-12"
       )}>
         <button
           onClick={onToggleChat}
-          className="w-full h-12 px-4 flex items-center justify-between bg-muted/50 hover-elevate"
+          className="w-full h-12 flex-shrink-0 px-4 flex items-center justify-between bg-muted/50 hover-elevate"
           data-testid="button-toggle-chat"
         >
           <span className="flex items-center gap-2 text-sm font-medium">
@@ -277,7 +272,7 @@ export function IntelligencePanel({
           )}
         </button>
         {isChatOpen && (
-          <div className="h-[calc(100%-48px)] overflow-hidden">
+          <div className="flex-1 overflow-hidden">
             <ChatPanel 
               onQuerySubmit={onQuerySubmit}
               mediaContextIds={mediaContextIds}

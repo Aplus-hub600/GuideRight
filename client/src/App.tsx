@@ -89,24 +89,25 @@ function App() {
             <TooltipProvider>
               <SystemStatusBanner />
               
-              <div className="h-screen w-screen overflow-hidden bg-background flex flex-col">
-                {/* Fixed 60/40 Split Layout - Desktop */}
-                <div className="flex-1 flex min-h-0">
-                  {/* Left: Map Panel (60%) - Desktop, full on mobile when map view selected */}
-                  <div className={cn(
-                    "relative flex-shrink-0 transition-all duration-300",
-                    "hidden md:block md:w-[60%]",
-                    mobileView === "map" && "block w-full md:w-[60%]"
-                  )}>
-                    {/* Location Search Bar - positioned over map */}
-                    <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20 w-full max-w-md px-4">
+              <div className="h-screen w-screen bg-background flex flex-col overflow-hidden">
+                {/* Main Content Area - Fixed 60/40 Split */}
+                <div className="flex-1 flex overflow-hidden">
+                  {/* Left: Map Panel (60%) */}
+                  <div 
+                    className={cn(
+                      "h-full relative",
+                      "w-full md:w-[60%] md:flex-shrink-0",
+                      mobileView === "intel" ? "hidden md:block" : "block"
+                    )}
+                  >
+                    {/* Location Search Bar */}
+                    <div className="absolute top-3 left-1/2 -translate-x-1/2 z-10 w-full max-w-md px-4">
                       <LocationSearchBar 
                         onLocationSelect={handleLocationSelect}
                         currentLocation={currentAOI.name}
                       />
                     </div>
                     
-                    {/* Map - fills entire left panel */}
                     <MapLibrePanel
                       aoi={currentAOI}
                       onAOIChange={setCurrentAOI}
@@ -116,12 +117,14 @@ function App() {
                     />
                   </div>
                   
-                  {/* Right: Intelligence Panel (40%) - Desktop, full on mobile when intel view selected */}
-                  <div className={cn(
-                    "flex-1 min-w-0 border-l bg-background flex flex-col",
-                    "hidden md:flex",
-                    mobileView === "intel" && "flex md:flex"
-                  )}>
+                  {/* Right: Intelligence Panel (40%) */}
+                  <div 
+                    className={cn(
+                      "h-full border-l bg-background overflow-hidden",
+                      "w-full md:w-[40%] md:flex-shrink-0",
+                      mobileView === "map" ? "hidden md:block" : "block"
+                    )}
+                  >
                     <IntelligencePanel
                       currentAOI={currentAOI}
                       activeTopPanel={activeTopPanel}
@@ -134,20 +137,19 @@ function App() {
                       onToggleChat={() => setIsChatOpen(!isChatOpen)}
                       onQuerySubmit={handleQuerySubmit}
                       mediaContextIds={mediaContextIds}
+                      className="h-full"
                     />
                   </div>
                 </div>
                 
-                {/* Mobile View Toggle - only visible on mobile */}
+                {/* Mobile View Toggle */}
                 <div className="md:hidden fixed top-3 right-3 z-30">
                   <button
                     onClick={() => setMobileView(mobileView === "map" ? "intel" : "map")}
                     className="flex items-center gap-2 px-3 py-2 bg-background/95 backdrop-blur border rounded-lg shadow-sm"
                   >
                     {mobileView === "map" ? (
-                      <>
-                        <span className="text-sm font-medium">Intel</span>
-                      </>
+                      <span className="text-sm font-medium">Intel</span>
                     ) : (
                       <>
                         <Map className="h-4 w-4" />
@@ -157,8 +159,8 @@ function App() {
                   </button>
                 </div>
 
-                {/* Bottom Bar: Nav Only - Chat is now in the right panel */}
-                <div className="h-12 border-t bg-background/95 backdrop-blur flex items-center justify-center px-4 relative z-30">
+                {/* Bottom Navigation Bar */}
+                <div className="h-12 flex-shrink-0 border-t bg-background flex items-center justify-center px-4">
                   <BottomNavBar 
                     activeTopPanel={activeTopPanel}
                     activeBottomPanel={activeBottomPanel}
