@@ -15,6 +15,7 @@ import { Map } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MapLibrePanel } from "./components/maplibre-panel";
 import { IntelligencePanel } from "./components/intelligence-panel";
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import type { MapLens } from "./components/map-lens-selector";
 
 interface AOI {
@@ -136,95 +137,143 @@ function App() {
                 <ClassificationBanner level="UNCLASSIFIED_FOUO" />
                 
                 <SystemStatusBanner />
-                {/* Main Content - Two Column Layout */}
-                <div className="flex-1 flex min-h-0">
-                  
-                  {/* LEFT COLUMN: Map Container (60%) */}
-                  <div 
-                    className={cn(
-                      "flex flex-col min-h-0",
-                      "w-full md:w-[60%] md:flex-shrink-0",
-                      mobileView === "intel" ? "hidden md:flex" : "flex"
-                    )}
-                  >
-                    {/* Map Header - Compact, docked, solid background */}
-                    <div className="flex-shrink-0 bg-background border-b p-2">
-                      <div className="flex items-center gap-2">
-                        {/* Unified Search Bar - handles location, time, events, infrastructure */}
-                        <div className="flex-1 min-w-0">
-                          <UnifiedSearchBar 
-                            onQueryParsed={handleSearchQuery}
-                            currentLocation={currentAOI.name}
-                            activeFilters={activeSearchFilters || undefined}
-                            onClearFilters={clearSearchFilters}
+                {/* Main Content - Resizable Two Column Layout (Desktop) / Toggle (Mobile) */}
+                <div className="flex-1 min-h-0">
+                  {/* Desktop: Resizable Panels */}
+                  <div className="hidden md:block h-full">
+                    <ResizablePanelGroup direction="horizontal" className="h-full">
+                      {/* LEFT PANEL: Map Container */}
+                      <ResizablePanel defaultSize={60} minSize={40} maxSize={80}>
+                        <div className="flex flex-col h-full">
+                          {/* Map Header - Compact, docked, solid background */}
+                          <div className="flex-shrink-0 bg-background border-b p-2">
+                            <div className="flex items-center gap-2">
+                              <div className="flex-1 min-w-0">
+                                <UnifiedSearchBar 
+                                  onQueryParsed={handleSearchQuery}
+                                  currentLocation={currentAOI.name}
+                                  activeFilters={activeSearchFilters || undefined}
+                                  onClearFilters={clearSearchFilters}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {/* Map Canvas - fills remaining space */}
+                          <div className="flex-1 min-h-0 relative">
+                            <MapLibrePanel
+                              aoi={currentAOI}
+                              onAOIChange={setCurrentAOI}
+                              activeLens={activeLens}
+                              hideLensSelector={true}
+                              className="h-full w-full"
+                            />
+                            
+                            {/* Bottom Navigation Bar - Centered on map */}
+                            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 z-10">
+                              <BottomNavBar 
+                                activeTopPanel={activeTopPanel}
+                                activeBottomPanel={activeBottomPanel}
+                                onTogglePanel={togglePanel}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </ResizablePanel>
+                      
+                      {/* Resize Handle */}
+                      <ResizableHandle withHandle />
+                      
+                      {/* RIGHT PANEL: Intelligence Panel */}
+                      <ResizablePanel defaultSize={40} minSize={25} maxSize={60}>
+                        <div className="flex flex-col h-full border-l bg-background">
+                          <IntelligencePanel
+                            currentAOI={currentAOI}
+                            activeTopPanel={activeTopPanel}
+                            activeBottomPanel={activeBottomPanel}
+                            onClosePanel={closeActivePanel}
+                            onMediaContextChange={setMediaContextIds}
+                            activeLens={activeLens}
+                            onLensChange={setActiveLens}
+                            isChatOpen={isChatOpen}
+                            onToggleChat={() => setIsChatOpen(!isChatOpen)}
+                            onQuerySubmit={handleQuerySubmit}
+                            mediaContextIds={mediaContextIds}
+                            activeSearchFilters={activeSearchFilters || undefined}
+                            className="flex-1 min-h-0"
                           />
                         </div>
-                        {/* Mobile toggle */}
-                        <button
-                          onClick={() => setMobileView("intel")}
-                          className="md:hidden flex-shrink-0 px-3 py-2 text-xs font-medium bg-muted rounded-md hover-elevate"
-                        >
-                          Intel
-                        </button>
-                      </div>
-                    </div>
-                    
-                    {/* Map Canvas - fills remaining space */}
-                    <div className="flex-1 min-h-0 relative">
-                      <MapLibrePanel
-                        aoi={currentAOI}
-                        onAOIChange={setCurrentAOI}
-                        activeLens={activeLens}
-                        hideLensSelector={true}
-                        className="h-full w-full"
-                      />
-                      
-                      {/* Bottom Navigation Bar - Centered on map */}
-                      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 z-10">
-                        <BottomNavBar 
-                          activeTopPanel={activeTopPanel}
-                          activeBottomPanel={activeBottomPanel}
-                          onTogglePanel={togglePanel}
-                        />
-                      </div>
-                    </div>
+                      </ResizablePanel>
+                    </ResizablePanelGroup>
                   </div>
                   
-                  {/* RIGHT COLUMN: Intelligence Panel (40%) - Full height, docked */}
-                  <div 
-                    className={cn(
-                      "flex flex-col min-h-0 border-l bg-background",
-                      "w-full md:w-[40%] md:flex-shrink-0",
-                      mobileView === "map" ? "hidden md:flex" : "flex"
+                  {/* Mobile: Toggle-based Layout */}
+                  <div className="md:hidden h-full flex flex-col">
+                    {mobileView === "map" ? (
+                      <div className="flex flex-col h-full">
+                        <div className="flex-shrink-0 bg-background border-b p-2">
+                          <div className="flex items-center gap-2">
+                            <div className="flex-1 min-w-0">
+                              <UnifiedSearchBar 
+                                onQueryParsed={handleSearchQuery}
+                                currentLocation={currentAOI.name}
+                                activeFilters={activeSearchFilters || undefined}
+                                onClearFilters={clearSearchFilters}
+                              />
+                            </div>
+                            <button
+                              onClick={() => setMobileView("intel")}
+                              className="flex-shrink-0 px-3 py-2 text-xs font-medium bg-muted rounded-md hover-elevate"
+                            >
+                              Intel
+                            </button>
+                          </div>
+                        </div>
+                        <div className="flex-1 min-h-0 relative">
+                          <MapLibrePanel
+                            aoi={currentAOI}
+                            onAOIChange={setCurrentAOI}
+                            activeLens={activeLens}
+                            hideLensSelector={true}
+                            className="h-full w-full"
+                          />
+                          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 z-10">
+                            <BottomNavBar 
+                              activeTopPanel={activeTopPanel}
+                              activeBottomPanel={activeBottomPanel}
+                              onTogglePanel={togglePanel}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col h-full bg-background">
+                        <div className="flex-shrink-0 p-2 border-b bg-muted/30">
+                          <button
+                            onClick={() => setMobileView("map")}
+                            className="flex items-center gap-2 px-3 py-2 text-sm font-medium bg-background border rounded-md hover-elevate w-full justify-center"
+                          >
+                            <Map className="h-4 w-4" />
+                            Back to Map
+                          </button>
+                        </div>
+                        <IntelligencePanel
+                          currentAOI={currentAOI}
+                          activeTopPanel={activeTopPanel}
+                          activeBottomPanel={activeBottomPanel}
+                          onClosePanel={closeActivePanel}
+                          onMediaContextChange={setMediaContextIds}
+                          activeLens={activeLens}
+                          onLensChange={setActiveLens}
+                          isChatOpen={isChatOpen}
+                          onToggleChat={() => setIsChatOpen(!isChatOpen)}
+                          onQuerySubmit={handleQuerySubmit}
+                          mediaContextIds={mediaContextIds}
+                          activeSearchFilters={activeSearchFilters || undefined}
+                          className="flex-1 min-h-0"
+                        />
+                      </div>
                     )}
-                  >
-                    {/* Mobile: Back to Map button */}
-                    <div className="md:hidden flex-shrink-0 p-2 border-b bg-muted/30">
-                      <button
-                        onClick={() => setMobileView("map")}
-                        className="flex items-center gap-2 px-3 py-2 text-sm font-medium bg-background border rounded-md hover-elevate w-full justify-center"
-                      >
-                        <Map className="h-4 w-4" />
-                        Back to Map
-                      </button>
-                    </div>
-                    
-                    {/* Intelligence Panel - fills column */}
-                    <IntelligencePanel
-                      currentAOI={currentAOI}
-                      activeTopPanel={activeTopPanel}
-                      activeBottomPanel={activeBottomPanel}
-                      onClosePanel={closeActivePanel}
-                      onMediaContextChange={setMediaContextIds}
-                      activeLens={activeLens}
-                      onLensChange={setActiveLens}
-                      isChatOpen={isChatOpen}
-                      onToggleChat={() => setIsChatOpen(!isChatOpen)}
-                      onQuerySubmit={handleQuerySubmit}
-                      mediaContextIds={mediaContextIds}
-                      activeSearchFilters={activeSearchFilters || undefined}
-                      className="flex-1 min-h-0"
-                    />
                   </div>
                 </div>
               </div>
