@@ -738,28 +738,6 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, className }: ChatPan
         </div>
 
         <div className="border-t bg-gradient-to-r from-muted/30 to-transparent">
-          {messages.length > 0 && (
-            <div className="flex items-center gap-2 px-4 py-2 border-b overflow-x-auto">
-              <span className="text-xs text-muted-foreground whitespace-nowrap">Quick:</span>
-              {QUICK_ACTIONS.map((action) => {
-                const Icon = action.icon
-                return (
-                  <Button
-                    key={action.id}
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleQuickAction(action.prompt)}
-                    disabled={isStreaming}
-                    className="gap-1.5 text-xs whitespace-nowrap"
-                  >
-                    <Icon className="h-3 w-3" />
-                    {action.label}
-                  </Button>
-                )
-              })}
-            </div>
-          )}
-          
           {mediaContextIds && mediaContextIds.length > 0 && (
             <div className="flex items-center gap-2 px-4 py-2 border-b bg-muted/20">
               <Paperclip className="h-3.5 w-3.5 text-muted-foreground" />
