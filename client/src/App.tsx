@@ -177,7 +177,7 @@ function App() {
                       />
                       
                       {/* Bottom Navigation Bar - Centered on map */}
-                      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 z-10 pb-2">
+                      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 z-10">
                         <BottomNavBar 
                           activeTopPanel={activeTopPanel}
                           activeBottomPanel={activeBottomPanel}
