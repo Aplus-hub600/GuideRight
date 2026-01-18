@@ -2,7 +2,8 @@ import { useState, useRef, useEffect, useCallback, useMemo } from "react"
 import { 
   Send, Loader2, Globe, Paperclip, Shield, 
   BarChart3, AlertTriangle, FileText, Briefcase, 
-  Sparkles, ChevronRight, Zap, Target, Languages
+  Sparkles, ChevronRight, Zap, Target, Languages,
+  Brain, GitBranch, Info
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
@@ -26,12 +27,21 @@ interface ChatMessage {
   isStreaming?: boolean
 }
 
+interface ReasoningStep {
+  step: number
+  category: string
+  observation: string
+  implication: string
+}
+
 interface TacticalAnalysis {
   summary: string
   keyFindings: string[]
   riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
   recommendations: string[]
   confidence: number
+  reasoningTrace?: ReasoningStep[]
+  sources?: string[]
 }
 
 interface ChatPanelProps {
@@ -369,6 +379,65 @@ function IntelCard({ message }: { message: ChatMessage }) {
                         </motion.li>
                       ))}
                     </ul>
+                  </div>
+                )}
+                
+                {analysis.reasoningTrace && analysis.reasoningTrace.length > 0 && (
+                  <div className="space-y-2 mt-3 pt-3 border-t border-dashed">
+                    <div className="flex items-center gap-2">
+                      <Brain className="h-4 w-4 text-primary" />
+                      <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                        Reasoning Trace (Chain-of-Thought)
+                      </span>
+                    </div>
+                    <div className="space-y-2">
+                      {analysis.reasoningTrace.map((step, i) => (
+                        <motion.div
+                          key={i}
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.5 + i * 0.15 }}
+                          className="pl-3 border-l-2 border-primary/30 space-y-1"
+                        >
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 font-mono">
+                              Step {step.step}
+                            </Badge>
+                            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4">
+                              {step.category}
+                            </Badge>
+                          </div>
+                          <p className="text-xs text-foreground">
+                            <span className="font-medium">Observed:</span> {step.observation}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            <span className="font-medium text-foreground/80">Implication:</span> {step.implication}
+                          </p>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {analysis.sources && analysis.sources.length > 0 && (
+                  <div className="space-y-1 mt-3 pt-2 border-t">
+                    <div className="flex items-center gap-2">
+                      <Info className="h-3 w-3 text-muted-foreground" />
+                      <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">
+                        Sources
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-1">
+                      {analysis.sources.map((source, i) => (
+                        <Badge 
+                          key={i} 
+                          variant="outline" 
+                          className="text-[10px] px-1.5 py-0 h-4 font-mono text-muted-foreground"
+                        >
+                          {source}
+                        </Badge>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>

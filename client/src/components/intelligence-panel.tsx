@@ -30,6 +30,8 @@ import { cn } from "@/lib/utils"
 import { MapContextPanel } from "./map-context-panel"
 import { IntelligenceIntegration } from "./intelligence-integration"
 import { PMESIIBriefing } from "./pmesii-briefing"
+import { ASCOPEBriefing } from "./ascope-briefing"
+import { SIGACTPanel } from "./sigact-panel"
 import { RiskAssessment } from "./risk-assessment"
 import { SocialMediaPanel } from "./social-media-panel"
 import { WeatherPanel } from "./weather-panel"
@@ -339,16 +341,24 @@ export function IntelligencePanel({
             <div className="flex-1 overflow-auto">
               {activeTopPanel === "intelligence" && (
                 <Tabs defaultValue="intelligence" className="h-full flex flex-col">
-                  <TabsList className="mx-3 mt-3">
-                    <TabsTrigger value="intelligence" className="flex-1">Intel</TabsTrigger>
-                    <TabsTrigger value="pmesii" className="flex-1">PMESII</TabsTrigger>
-                    <TabsTrigger value="risk" className="flex-1">Risk</TabsTrigger>
+                  <TabsList className="mx-3 mt-3 flex-wrap h-auto gap-1">
+                    <TabsTrigger value="intelligence" className="text-xs">Intel</TabsTrigger>
+                    <TabsTrigger value="pmesii" className="text-xs">PMESII</TabsTrigger>
+                    <TabsTrigger value="ascope" className="text-xs">ASCOPE</TabsTrigger>
+                    <TabsTrigger value="sigact" className="text-xs">SIGACT</TabsTrigger>
+                    <TabsTrigger value="risk" className="text-xs">Risk</TabsTrigger>
                   </TabsList>
                   <TabsContent value="intelligence" className="flex-1 p-3 overflow-auto">
                     <IntelligenceIntegration />
                   </TabsContent>
                   <TabsContent value="pmesii" className="flex-1 p-3 overflow-auto">
                     <PMESIIBriefing aoi={currentAOI} />
+                  </TabsContent>
+                  <TabsContent value="ascope" className="flex-1 p-3 overflow-auto">
+                    <ASCOPEBriefing aoi={currentAOI} />
+                  </TabsContent>
+                  <TabsContent value="sigact" className="flex-1 p-3 overflow-auto">
+                    <SIGACTPanel aoi={currentAOI} />
                   </TabsContent>
                   <TabsContent value="risk" className="flex-1 p-3 overflow-auto">
                     <RiskAssessment aoi={currentAOI} onRiskUpdate={handleRiskUpdate} />

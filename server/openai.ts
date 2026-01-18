@@ -4,12 +4,21 @@ import OpenAI from "openai";
 // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
+export interface ReasoningStep {
+  step: number;
+  category: string;
+  observation: string;
+  implication: string;
+}
+
 export interface TacticalAnalysisResult {
   summary: string;
   keyFindings: string[];
   riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
   recommendations: string[];
   confidence: number;
+  reasoningTrace?: ReasoningStep[];
+  sources?: string[];
 }
 
 export interface PMESIIAnalysis {
@@ -159,12 +168,49 @@ function getMockTacticalResult(query: string, context?: string[]): TacticalAnaly
     contextualSummary += " Analysis incorporates relevant contextual intelligence from previous assessments and operations."
   }
   
+  // Generate mock reasoning traces based on query type
+  const reasoningTraces: { critical: ReasoningStep[], threat: ReasoningStep[], operational: ReasoningStep[], intelligence: ReasoningStep[], general: ReasoningStep[] } = {
+    critical: [
+      { step: 1, category: "Military", observation: "Active hostile indicators detected in multiple sectors", implication: "Immediate tactical response required to neutralize threat" },
+      { step: 2, category: "Infrastructure", observation: "Critical assets within threat envelope", implication: "Asset protection protocols must be activated" },
+      { step: 3, category: "Time", observation: "72-hour window identified for preventive action", implication: "Delays reduce effectiveness of response options" },
+      { step: 4, category: "Information", observation: "Intelligence confidence HIGH across multiple sources", implication: "Assessment reliability supports immediate action" }
+    ],
+    threat: [
+      { step: 1, category: "Military", observation: "Pattern analysis indicates coordinated activity", implication: "Threat actors operating with unified command structure" },
+      { step: 2, category: "Political", observation: "Regional tensions creating permissive environment", implication: "External intervention may be delayed or limited" },
+      { step: 3, category: "Social", observation: "Local population sentiment shifting negatively", implication: "Civil-military cooperation becoming more challenging" }
+    ],
+    operational: [
+      { step: 1, category: "Infrastructure", observation: "Urban terrain complexity HIGH", implication: "Standard maneuver doctrine requires adaptation" },
+      { step: 2, category: "Social", observation: "Mixed population density zones identified", implication: "ROE considerations require careful calibration" },
+      { step: 3, category: "Economic", observation: "Critical supply routes remain accessible", implication: "Logistics sustainability for extended operations confirmed" }
+    ],
+    intelligence: [
+      { step: 1, category: "Information", observation: "Multi-source intelligence successfully correlated", implication: "Assessment confidence meets operational threshold" },
+      { step: 2, category: "Political", observation: "Baseline conditions remain within normal parameters", implication: "No immediate escalation indicators present" },
+      { step: 3, category: "Military", observation: "Force disposition consistent with historical patterns", implication: "No significant threat posture changes detected" }
+    ],
+    general: [
+      { step: 1, category: "Information", observation: "Query processed through tactical intelligence framework", implication: "Standard analytical protocols applied successfully" },
+      { step: 2, category: "Infrastructure", observation: "Operational parameters within expected ranges", implication: "No immediate infrastructure concerns identified" },
+      { step: 3, category: "Political", observation: "Regional stability indicators normal", implication: "Permissive environment for planned operations" }
+    ]
+  }
+  
+  const mockSources = [
+    "SIGINT Analysis (B)", "HUMINT Reports (C)", "OSINT Aggregation (A)", 
+    "IMINT Assessment (B)", "Social Media OSINT (C)", "Regional Analyst Network (B)"
+  ]
+  
   return {
     summary: contextualSummary,
     keyFindings: baseResponse.keyFindings,
     riskLevel,
     recommendations: baseResponse.recommendations,
-    confidence: 0.75 + Math.random() * 0.2 // Random confidence between 0.75-0.95
+    confidence: 0.75 + Math.random() * 0.2, // Random confidence between 0.75-0.95
+    reasoningTrace: reasoningTraces[mockType as keyof typeof reasoningTraces] || reasoningTraces.general,
+    sources: mockSources.slice(0, 3 + Math.floor(Math.random() * 3))
   }
 }
 
@@ -177,7 +223,7 @@ export async function processTacticalQuery(
     : '';
 
   const prompt = `You are GuideRight, an advanced tactical intelligence assistant for USSOCOM operations. 
-Analyze the following tactical query and provide a structured intelligence assessment.
+Analyze the following tactical query and provide a structured intelligence assessment with explicit reasoning traces.
 
 Query: ${query}${contextInfo}
 
@@ -187,10 +233,25 @@ Provide your analysis in JSON format with the following structure:
   "keyFindings": ["Key intelligence finding 1", "Key finding 2", "..."],
   "riskLevel": "LOW|MEDIUM|HIGH|CRITICAL",
   "recommendations": ["Tactical recommendation 1", "Recommendation 2", "..."],
-  "confidence": 0.85
+  "confidence": 0.85,
+  "reasoningTrace": [
+    {
+      "step": 1,
+      "category": "PMESII-PT factor or analytical category (e.g., Political, Military, Economic, Social, Information, Infrastructure, Physical Environment, Time)",
+      "observation": "What specific data or pattern was observed",
+      "implication": "What this means for the assessment"
+    }
+  ],
+  "sources": ["Intelligence source 1 (reliability rating)", "Source 2 (rating)"]
 }
 
-Focus on actionable intelligence, threat assessment, and tactical implications. Consider PMESII factors where relevant.`;
+IMPORTANT: The reasoningTrace must explicitly show your chain-of-thought analysis:
+- Include 3-5 reasoning steps showing how you arrived at your conclusions
+- Each step should reference a specific PMESII-PT factor or analytical framework
+- Link observations to their tactical implications
+- This enables analysts to understand and validate your assessment
+
+Focus on actionable intelligence, threat assessment, and tactical implications.`;
 
   try {
     const response = await openai.chat.completions.create({
@@ -205,7 +266,9 @@ Focus on actionable intelligence, threat assessment, and tactical implications. 
       keyFindings: result.keyFindings || [],
       riskLevel: result.riskLevel || 'MEDIUM',
       recommendations: result.recommendations || [],
-      confidence: Math.max(0, Math.min(1, result.confidence || 0.7))
+      confidence: Math.max(0, Math.min(1, result.confidence || 0.7)),
+      reasoningTrace: result.reasoningTrace || [],
+      sources: result.sources || []
     };
   } catch (error) {
     console.error("OpenAI tactical analysis error:", error);
