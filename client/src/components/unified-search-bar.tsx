@@ -70,6 +70,8 @@ export interface ParsedQuery {
   timeRange?: { label: string; value: string; from?: Date; to?: Date };
   events?: string[];
   infrastructure?: string[];
+  booleanOperators?: string[];
+  exclusions?: string[];
   raw: string;
 }
 
@@ -88,8 +90,11 @@ interface IntelligenceResult {
   title: string;
   summary: string;
   source: string;
+  sources?: { name: string; reliability: SourceReliability }[];
   sourceReliability: SourceReliability;
   timestamp: string;
+  lastUpdated?: string;
+  coverageWindow?: string;
   type: "report" | "event" | "threat" | "infrastructure";
   relevance: number;
   location?: string;
@@ -147,8 +152,14 @@ const MOCK_INTELLIGENCE: IntelligenceResult[] = [
     title: "Elevated protest activity in Shahbag",
     summary: "University students organizing peaceful demonstrations near Dhaka University. Low escalation risk assessed.",
     source: "Field Report",
+    sources: [
+      { name: "Field Report", reliability: "A" },
+      { name: "Social Media", reliability: "C" }
+    ],
     sourceReliability: "A",
     timestamp: "2h ago",
+    lastUpdated: "15 min ago",
+    coverageWindow: "Last 6 hours",
     type: "event",
     relevance: 0.95,
     location: "Shahbag"
@@ -158,8 +169,11 @@ const MOCK_INTELLIGENCE: IntelligenceResult[] = [
     title: "Power grid maintenance in Gulshan",
     summary: "DPDC announces scheduled maintenance affecting Gulshan and Banani sectors. Expected duration 4 hours.",
     source: "Official Notice",
+    sources: [{ name: "DPDC Official", reliability: "A" }],
     sourceReliability: "A",
     timestamp: "1h ago",
+    lastUpdated: "1 hr ago",
+    coverageWindow: "Today",
     type: "infrastructure",
     relevance: 0.92,
     location: "Gulshan"
@@ -169,8 +183,14 @@ const MOCK_INTELLIGENCE: IntelligenceResult[] = [
     title: "Transport disruption at Kamalapur",
     summary: "Train delays reported due to track maintenance. Alternative routes recommended via Mirpur.",
     source: "Local Report",
+    sources: [
+      { name: "Railway Authority", reliability: "B" },
+      { name: "Local Media", reliability: "C" }
+    ],
     sourceReliability: "B",
     timestamp: "3h ago",
+    lastUpdated: "2 hr ago",
+    coverageWindow: "Last 12 hours",
     type: "infrastructure",
     relevance: 0.85,
     location: "Kamalapur"
@@ -180,8 +200,11 @@ const MOCK_INTELLIGENCE: IntelligenceResult[] = [
     title: "Water supply issue in Mirpur",
     summary: "WASA reports low pressure in Mirpur-10 and Mirpur-11 sectors. Tanker deployment authorized.",
     source: "Utility Report",
+    sources: [{ name: "WASA Official", reliability: "B" }],
     sourceReliability: "B",
     timestamp: "45m ago",
+    lastUpdated: "30 min ago",
+    coverageWindow: "Last 3 hours",
     type: "infrastructure",
     relevance: 0.88,
     location: "Mirpur"
@@ -191,8 +214,14 @@ const MOCK_INTELLIGENCE: IntelligenceResult[] = [
     title: "Healthcare facility capacity update",
     summary: "Dhaka Medical College operating at 78% capacity. No critical shortages reported.",
     source: "Health Ministry",
+    sources: [
+      { name: "Health Ministry", reliability: "A" },
+      { name: "Fraym", reliability: "B" }
+    ],
     sourceReliability: "A",
     timestamp: "6h ago",
+    lastUpdated: "4 hr ago",
+    coverageWindow: "Last 24 hours",
     type: "report",
     relevance: 0.75,
     location: "Dhaka"
@@ -202,8 +231,15 @@ const MOCK_INTELLIGENCE: IntelligenceResult[] = [
     title: "Political rally announced for Chittagong",
     summary: "Opposition party scheduled rally at Agrabad for next week. Enhanced monitoring recommended.",
     source: "Open Source",
+    sources: [
+      { name: "News Media", reliability: "C" },
+      { name: "Social Media", reliability: "C" },
+      { name: "Seerist", reliability: "B" }
+    ],
     sourceReliability: "C",
     timestamp: "1d ago",
+    lastUpdated: "12 hr ago",
+    coverageWindow: "Last 7 days",
     type: "event",
     relevance: 0.71,
     location: "Agrabad"
@@ -213,8 +249,11 @@ const MOCK_INTELLIGENCE: IntelligenceResult[] = [
     title: "Traffic congestion Dhanmondi",
     summary: "Heavy traffic reported on Satmasjid Road due to construction. Delays of 30-45 minutes expected.",
     source: "Traffic Control",
+    sources: [{ name: "Traffic Control", reliability: "B" }],
     sourceReliability: "B",
     timestamp: "30m ago",
+    lastUpdated: "10 min ago",
+    coverageWindow: "Real-time",
     type: "event",
     relevance: 0.82,
     location: "Dhanmondi"
@@ -224,8 +263,11 @@ const MOCK_INTELLIGENCE: IntelligenceResult[] = [
     title: "Port operations normal at Chittagong",
     summary: "All berths operational. Cargo throughput at seasonal average levels.",
     source: "Port Authority",
+    sources: [{ name: "Port Authority", reliability: "A" }],
     sourceReliability: "A",
     timestamp: "3h ago",
+    lastUpdated: "2 hr ago",
+    coverageWindow: "Last 24 hours",
     type: "infrastructure",
     relevance: 0.68,
     location: "Chittagong"
@@ -283,6 +325,21 @@ function parseQuery(query: string): ParsedQuery {
   const result: ParsedQuery = { raw: query };
   const lowerQuery = query.toLowerCase().trim();
   if (!lowerQuery) return result;
+  
+  // Parse Boolean operators
+  const booleanOps: string[] = [];
+  if (lowerQuery.includes(" and ")) booleanOps.push("AND");
+  if (lowerQuery.includes(" or ")) booleanOps.push("OR");
+  if (lowerQuery.includes(" not ") || lowerQuery.startsWith("not ")) booleanOps.push("NOT");
+  if (booleanOps.length > 0) {
+    result.booleanOperators = booleanOps;
+  }
+  
+  // Extract NOT exclusions
+  const notMatch = lowerQuery.match(/\bnot\s+(\w+)/gi);
+  if (notMatch) {
+    result.exclusions = notMatch.map(m => m.replace(/^not\s+/i, ""));
+  }
   
   const coordMatch = query.match(/(-?\d+\.?\d*)[,\s]+(-?\d+\.?\d*)/);
   if (coordMatch) {
@@ -671,6 +728,16 @@ export function UnifiedSearchBar({
                       {infra}
                     </Badge>
                   ))}
+                  {preview?.booleanOperators?.map(op => (
+                    <Badge key={op} variant="outline" className="gap-1 text-xs bg-blue-500/10 text-blue-600 border-blue-500/30">
+                      {op}
+                    </Badge>
+                  ))}
+                  {preview?.exclusions?.map(excl => (
+                    <Badge key={excl} variant="outline" className="gap-1 text-xs bg-red-500/10 text-red-600 border-red-500/30">
+                      NOT {excl}
+                    </Badge>
+                  ))}
                 </div>
               </div>
             )}
@@ -713,12 +780,25 @@ export function UnifiedSearchBar({
                             <Badge variant="outline" className={cn("text-[10px] h-4 px-1 border", reliability.color)}>
                               {item.sourceReliability}
                             </Badge>
-                            <span className="text-[10px] text-muted-foreground">{item.source}</span>
-                            <span className="text-[10px] text-muted-foreground">{item.timestamp}</span>
+                            {item.sources && item.sources.length > 1 ? (
+                              <span className="text-[10px] text-muted-foreground">
+                                Fused from {item.sources.length} sources: {item.sources.map(s => `${s.name}(${s.reliability})`).join(", ")}
+                              </span>
+                            ) : (
+                              <span className="text-[10px] text-muted-foreground">{item.source}</span>
+                            )}
+                            {item.lastUpdated && (
+                              <span className="text-[10px] text-blue-600">Updated: {item.lastUpdated}</span>
+                            )}
                             {item.location && (
                               <Badge variant="outline" className="text-[10px] h-4 px-1">{item.location}</Badge>
                             )}
                           </div>
+                          {item.coverageWindow && (
+                            <div className="text-[10px] text-muted-foreground mt-0.5">
+                              Coverage: {item.coverageWindow}
+                            </div>
+                          )}
                         </div>
                         <div className="flex-shrink-0 flex flex-col items-end gap-1">
                           <div className="text-[10px] text-muted-foreground">{Math.round(item.relevance * 100)}%</div>

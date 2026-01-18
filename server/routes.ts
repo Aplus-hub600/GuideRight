@@ -406,6 +406,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { query, contextIds } = chatQuerySchema.parse(req.body);
       
+      // AUDIT LOG: Log all chat queries for OPSEC review
+      console.log(`[AUDIT] Chat query logged | timestamp=${new Date().toISOString()} | query="${query.substring(0, 100)}${query.length > 100 ? '...' : ''}" | contextIds=${contextIds?.length || 0} | ip=${req.ip}`);
+      
       // Set up Server-Sent Events headers
       res.setHeader('Content-Type', 'text/event-stream');
       res.setHeader('Cache-Control', 'no-cache');
@@ -1749,6 +1752,9 @@ Return realistic intelligence-style events based on your knowledge of the region
         filters: req.query.filters ? JSON.parse(req.query.filters as string) : undefined,
         limit: req.query.limit ? parseInt(req.query.limit as string) : 50
       });
+      
+      // AUDIT LOG: Log all search queries for OPSEC review
+      console.log(`[AUDIT] Search query logged | timestamp=${new Date().toISOString()} | query="${query.q}" | filters=${JSON.stringify(query.filters || {})} | ip=${req.ip}`);
       
       const results = await storage.searchAll(query);
       

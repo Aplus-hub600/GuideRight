@@ -1,0 +1,148 @@
+Objective:
+Harden the GuideRight prototype to meet IC/SOCOM demo and evaluation expectations by addressing identified UX, operational, and credibility gaps without expanding scope or introducing speculative features.
+
+MANDATORY UI / UX FIXES (DO FIRST)
+1. Classification Banner (Non-Negotiable)
+
+Add a persistent, full-width classification banner at the very top of the application.
+
+Default text: UNCLASSIFIED // FOUO (demo-safe).
+
+Banner must:
+
+Be flush (not floating)
+
+Never scroll out of view
+
+Never overlap or obscure any panel
+
+Architecture must allow future toggling (e.g., UNCLASS / SECRET) but do not overbuild.
+
+2. Panel Hierarchy Enforcement
+
+Enforce a strict layout rule: No panel may overlap or obscure another panel.
+
+Required layout order:
+
+Classification banner
+
+Global search / tasking bar
+
+Main content area:
+
+Map (left, ~60%)
+
+Intelligence panel (right, ~40%, docked)
+
+Bottom action bar (chat / export / share)
+
+Remove any floating or z-index behavior that allows panels to cover:
+
+Search bar
+
+Dropdown menus
+
+Map controls
+
+3. Search Bar → Operational Tasking Bar
+
+Upgrade the search bar to support multi-criteria tasking, including:
+
+Location (city, district, neighborhood)
+
+Time window (relative + absolute dates)
+
+Event keywords
+
+Support Boolean operators:
+
+AND / OR / NOT
+
+Example: protest AND violence NOT rumor
+
+Display a parsed intent summary beneath the bar:
+
+Example: AOI: Dhaka | Time: Last 14 days | Focus: Protests, Infrastructure
+
+This is parsing + UX only — do not add new analytics.
+
+INTELLIGENCE CREDIBILITY IMPROVEMENTS
+4. Data Freshness & Staleness Indicators
+
+Every intelligence item must display:
+
+Last updated: X min / hr / days ago
+
+Coverage window: [start – end]
+
+This applies to:
+
+Context summaries
+
+Risk assessments
+
+Event timelines
+
+Use existing timestamps; no new ingestion logic required.
+
+5. Source Attribution (Multi-Source Ready)
+
+Extend source attribution to support multiple sources per intel item.
+
+Display:
+
+Source list (e.g., Fraym, Seerist, media)
+
+Aggregated confidence score (simple weighted aggregation is acceptable)
+
+Clearly label as “Fused from X sources”.
+
+Do not claim verification or ground truth.
+
+OPERATIONAL EXPECTATION SIGNALS (LIGHTWEIGHT, UI-ONLY)
+6. Audit Trail Visibility
+
+Log all user queries server-side (if not already).
+
+Add visible UI text:
+
+“All queries are logged for audit and OPSEC review.”
+
+Full audit UI is out of scope for this phase.
+
+7. Offline Mode Indicator (Status Only)
+
+Add a simple offline status indicator:
+
+Example: Offline cache: Not available
+
+Do NOT implement offline caching yet.
+
+Purpose is expectation-setting, not functionality.
+
+8. Print / Export Quick Access
+
+Add a visible, one-click Export / Print button in the intelligence panel header or bottom action bar.
+
+Export scope:
+
+Context summary
+
+Risk level + confidence
+
+Sources
+
+Do not hide export exclusively in navigation menus.
+
+IMPORTANT CONSTRAINTS
+
+Do NOT add new intelligence feeds.
+
+Do NOT introduce real-time signal tracking.
+
+Do NOT expand analytic scope.
+
+Focus on clarity, hierarchy, credibility, and IC norms.
+
+End state:
+A clean, non-overlapping, map-centric interface with explicit classification, data freshness, audit awareness, and analyst-grade tasking — suitable for internal IC/SOCOM demos and funding evaluations.

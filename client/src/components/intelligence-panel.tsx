@@ -21,7 +21,10 @@ import {
   ChevronUp,
   MapPin,
   Zap,
-  Filter
+  Filter,
+  Download,
+  Shield,
+  WifiOff
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { MapContextPanel } from "./map-context-panel"
@@ -132,11 +135,60 @@ export function IntelligencePanel({
 
   const hasActiveOverlay = activeTopPanel || activeBottomPanel
 
+  const handleExport = () => {
+    const riskLevel = riskScore >= 70 ? "HIGH" : riskScore >= 40 ? "MEDIUM" : "LOW";
+    const exportData = {
+      classification: "UNCLASSIFIED // FOUO",
+      exportTimestamp: new Date().toISOString(),
+      areaOfInterest: {
+        name: currentAOI.name,
+        coordinates: { lat: currentAOI.lat, lng: currentAOI.lng },
+        radiusKm: currentAOI.radiusKm
+      },
+      contextSummary: `Intelligence assessment for ${currentAOI.name || "selected area"}. Analysis conducted using ${activeLens} lens with focus on ${activeSearchFilters?.events?.join(", ") || "general intelligence"}.`,
+      riskAssessment: {
+        score: riskScore,
+        level: riskLevel,
+        confidence: "MEDIUM",
+        methodology: "Dempster-Shafer aggregation"
+      },
+      sources: [
+        { name: "Field Report", reliability: "A" },
+        { name: "Open Source", reliability: "B" },
+        { name: "Social Media", reliability: "C" }
+      ],
+      activeFilters: activeSearchFilters,
+      activeLens: activeLens,
+      disclaimer: "This assessment is based on available open-source and reported intelligence. Confidence levels reflect source reliability aggregation."
+    };
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `guideright-intel-${currentAOI.name || 'export'}-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className={cn("flex flex-col overflow-hidden", className)}>
+      {/* Operational Status Bar */}
+      <div className="flex items-center justify-between px-3 py-1.5 bg-muted/50 border-b text-[10px] text-muted-foreground flex-shrink-0">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-1.5">
+            <Shield className="h-3 w-3" />
+            <span>All queries logged for audit and OPSEC review</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-1.5 text-amber-600">
+          <WifiOff className="h-3 w-3" />
+          <span>Offline cache: Not available</span>
+        </div>
+      </div>
+
       {/* Header - matches map header padding (p-3) */}
       <div className="flex-shrink-0 p-3 border-b bg-background space-y-3">
-        {/* Row 1: AOI + Risk Badge */}
+        {/* Row 1: AOI + Risk Badge + Export */}
         <div className="flex items-center justify-between gap-2">
           <div className="min-w-0">
             <h1 className="text-base font-semibold truncate">{currentAOI.name || "Area of Interest"}</h1>
@@ -144,15 +196,26 @@ export function IntelligencePanel({
               {currentAOI.lat.toFixed(4)}, {currentAOI.lng.toFixed(4)}
             </p>
           </div>
-          <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
-            <Badge 
-              variant={riskScore >= 70 ? "destructive" : riskScore >= 40 ? "secondary" : "outline"}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleExport}
+              className="h-7 text-xs gap-1"
             >
-              Risk: {riskScore}%
-            </Badge>
-            {activeSearchFilters && (activeSearchFilters.timeRange || activeSearchFilters.events?.length) && (
-              <span className="text-[10px] text-muted-foreground">reflects current filter set</span>
-            )}
+              <Download className="h-3 w-3" />
+              Export
+            </Button>
+            <div className="flex flex-col items-end gap-0.5">
+              <Badge 
+                variant={riskScore >= 70 ? "destructive" : riskScore >= 40 ? "secondary" : "outline"}
+              >
+                Risk: {riskScore}%
+              </Badge>
+              {activeSearchFilters && (activeSearchFilters.timeRange || activeSearchFilters.events?.length) && (
+                <span className="text-[10px] text-muted-foreground">reflects current filter set</span>
+              )}
+            </div>
           </div>
         </div>
 

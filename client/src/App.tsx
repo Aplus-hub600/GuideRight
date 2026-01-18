@@ -8,6 +8,7 @@ import { BottomNavBar, NavSection } from "./components/bottom-nav-bar";
 import { UnifiedSearchBar, ParsedQuery } from "./components/unified-search-bar";
 import { SystemStatusBanner } from "./components/system-status-banner";
 import { SystemStatusProvider } from "./lib/system-status";
+import { ClassificationBanner } from "./components/classification-banner";
 import { useState, useCallback } from "react";
 import i18n from "./lib/i18n";
 import { Map } from "lucide-react";
@@ -130,9 +131,11 @@ function App() {
         <ThemeProvider>
           <SystemStatusProvider>
             <TooltipProvider>
-              <SystemStatusBanner />
-              
               <div className="h-screen w-screen bg-background flex flex-col overflow-hidden">
+                {/* Classification Banner - Always at top, never scrolls */}
+                <ClassificationBanner level="UNCLASSIFIED_FOUO" />
+                
+                <SystemStatusBanner />
                 {/* Main Content - Two Column Layout */}
                 <div className="flex-1 flex min-h-0">
                   
