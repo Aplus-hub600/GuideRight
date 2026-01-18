@@ -1243,15 +1243,15 @@ export function MapContextPanel({
                 Guided Questions
               </h3>
             </div>
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               {guidedQuestions.map((question) => (
                 <button
                   key={question}
                   onClick={() => onQuerySelect?.(question)}
-                  className="w-full flex items-center justify-between p-2 text-xs text-left rounded-md border hover-elevate transition-colors duration-100"
+                  className="w-full flex items-center justify-between p-3 text-sm text-left rounded-md border bg-muted/30 hover-elevate transition-colors duration-100 group"
                 >
-                  <span>{question}</span>
-                  <ArrowRight className="h-3 w-3 text-muted-foreground shrink-0" />
+                  <span className="text-foreground font-medium">{question}</span>
+                  <ArrowRight className="h-4 w-4 text-primary shrink-0 group-hover:translate-x-0.5 transition-transform" />
                 </button>
               ))}
             </div>

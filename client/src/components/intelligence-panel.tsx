@@ -274,7 +274,36 @@ export function IntelligencePanel({
 
       {/* Content Area - proper flex layout, no absolute positioning */}
       <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
-        {!hasActiveOverlay ? (
+        {/* Chat Takeover Mode - when chat is open, it dominates the panel */}
+        {isChatOpen && !hasActiveOverlay ? (
+          <div className="flex-1 flex flex-col overflow-hidden">
+            {/* Minimized Context Summary - collapsed header */}
+            <button
+              onClick={onToggleChat}
+              className="flex-shrink-0 px-3 py-2 border-b bg-muted/30 hover-elevate flex items-center justify-between"
+            >
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <MapPin className="h-3 w-3" />
+                <span className="font-medium">{currentAOI.name || "Dhaka"}</span>
+                <span className="mx-1">•</span>
+                <span className="capitalize">{activeLens.replace("-", " ")} Lens</span>
+              </div>
+              <div className="flex items-center gap-1 text-xs text-primary">
+                <span>Show Context</span>
+                <ChevronDown className="h-3 w-3" />
+              </div>
+            </button>
+            
+            {/* Chat Panel - Expanded to fill content area */}
+            <div className="flex-1 overflow-hidden">
+              <ChatPanel 
+                onQuerySubmit={onQuerySubmit}
+                mediaContextIds={mediaContextIds}
+                className="h-full"
+              />
+            </div>
+          </div>
+        ) : !hasActiveOverlay ? (
           /* Default View: Context Panel for selected lens */
           <ScrollArea className="flex-1">
             <MapContextPanel
@@ -353,36 +382,22 @@ export function IntelligencePanel({
         )}
       </div>
       
-      {/* Chat Panel - Docked at bottom */}
-      <div className={cn(
-        "border-t flex-shrink-0 flex flex-col",
-        isChatOpen ? "h-64" : "h-12"
-      )}>
-        <button
-          onClick={onToggleChat}
-          className="w-full h-12 flex-shrink-0 px-4 flex items-center justify-between bg-muted/50 hover-elevate"
-          data-testid="button-toggle-chat"
-        >
-          <span className="flex items-center gap-2 text-sm font-medium">
-            <MessageSquare className="h-4 w-4" />
-            Chat Assistant
-          </span>
-          {isChatOpen ? (
-            <ChevronDown className="h-4 w-4" />
-          ) : (
-            <ChevronUp className="h-4 w-4" />
-          )}
-        </button>
-        {isChatOpen && (
-          <div className="flex-1 overflow-hidden">
-            <ChatPanel 
-              onQuerySubmit={onQuerySubmit}
-              mediaContextIds={mediaContextIds}
-              className="h-full"
-            />
-          </div>
-        )}
-      </div>
+      {/* Chat Toggle - Only visible when chat is closed or overlay is active */}
+      {(!isChatOpen || hasActiveOverlay) && (
+        <div className="border-t flex-shrink-0">
+          <button
+            onClick={onToggleChat}
+            className="w-full h-12 px-4 flex items-center justify-between bg-gradient-to-r from-primary/10 to-transparent hover-elevate"
+            data-testid="button-toggle-chat"
+          >
+            <span className="flex items-center gap-2 text-sm font-semibold text-primary">
+              <MessageSquare className="h-4 w-4" />
+              Chat Assistant
+            </span>
+            <ChevronUp className="h-4 w-4 text-primary" />
+          </button>
+        </div>
+      )}
     </div>
   )
 }
