@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useRef, useCallback } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
@@ -24,7 +24,8 @@ import {
   Filter,
   Download,
   Shield,
-  WifiOff
+  WifiOff,
+  GripHorizontal
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { MapContextPanel } from "./map-context-panel"
@@ -122,6 +123,9 @@ export function IntelligencePanel({
   className
 }: IntelligencePanelProps) {
   const [riskScore, setRiskScore] = useState(67)
+  const [chatHeight, setChatHeight] = useState(256)
+  const isResizing = useRef(false)
+  const panelRef = useRef<HTMLDivElement>(null)
 
   const handleRiskUpdate = (score: number, level: string) => {
     setRiskScore(score)
@@ -134,6 +138,29 @@ export function IntelligencePanel({
       onMediaContextChange(ids)
     }
   }
+
+  const startResize = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    isResizing.current = true
+    const startY = e.clientY
+    const startHeight = chatHeight
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      if (!isResizing.current) return
+      const deltaY = startY - moveEvent.clientY
+      const newHeight = Math.min(Math.max(startHeight + deltaY, 150), 500)
+      setChatHeight(newHeight)
+    }
+
+    const handleMouseUp = () => {
+      isResizing.current = false
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
+    }
+
+    document.addEventListener('mousemove', handleMouseMove)
+    document.addEventListener('mouseup', handleMouseUp)
+  }, [chatHeight])
 
   const hasActiveOverlay = activeTopPanel || activeBottomPanel
 
@@ -394,11 +421,20 @@ export function IntelligencePanel({
       
       {/* Chat Section - Different behavior based on context */}
       {hasActiveOverlay ? (
-        /* When overlay is active: traditional docked chat at bottom */
-        <div className={cn(
-          "border-t flex-shrink-0 flex flex-col",
-          isChatOpen ? "h-64" : "h-12"
-        )}>
+        /* When overlay is active: traditional docked chat at bottom with resize */
+        <div 
+          className="border-t flex-shrink-0 flex flex-col"
+          style={{ height: isChatOpen ? chatHeight : 48 }}
+        >
+          {/* Resize Handle - only show when chat is open */}
+          {isChatOpen && (
+            <div
+              onMouseDown={startResize}
+              className="h-2 w-full cursor-ns-resize flex items-center justify-center hover:bg-muted/50 transition-colors group"
+            >
+              <GripHorizontal className="h-3 w-8 text-muted-foreground/50 group-hover:text-muted-foreground" />
+            </div>
+          )}
           <button
             onClick={onToggleChat}
             className="w-full h-12 flex-shrink-0 px-4 flex items-center justify-between bg-gradient-to-r from-primary/10 to-transparent hover-elevate"
