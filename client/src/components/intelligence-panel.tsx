@@ -382,8 +382,40 @@ export function IntelligencePanel({
         )}
       </div>
       
-      {/* Chat Toggle - Only visible when chat is closed or overlay is active */}
-      {(!isChatOpen || hasActiveOverlay) && (
+      {/* Chat Section - Different behavior based on context */}
+      {hasActiveOverlay ? (
+        /* When overlay is active: traditional docked chat at bottom */
+        <div className={cn(
+          "border-t flex-shrink-0 flex flex-col",
+          isChatOpen ? "h-64" : "h-12"
+        )}>
+          <button
+            onClick={onToggleChat}
+            className="w-full h-12 flex-shrink-0 px-4 flex items-center justify-between bg-gradient-to-r from-primary/10 to-transparent hover-elevate"
+            data-testid="button-toggle-chat"
+          >
+            <span className="flex items-center gap-2 text-sm font-semibold text-primary">
+              <MessageSquare className="h-4 w-4" />
+              Chat Assistant
+            </span>
+            {isChatOpen ? (
+              <ChevronDown className="h-4 w-4 text-primary" />
+            ) : (
+              <ChevronUp className="h-4 w-4 text-primary" />
+            )}
+          </button>
+          {isChatOpen && (
+            <div className="flex-1 overflow-hidden">
+              <ChatPanel 
+                onQuerySubmit={onQuerySubmit}
+                mediaContextIds={mediaContextIds}
+                className="h-full"
+              />
+            </div>
+          )}
+        </div>
+      ) : !isChatOpen ? (
+        /* No overlay, chat closed: show toggle at bottom */
         <div className="border-t flex-shrink-0">
           <button
             onClick={onToggleChat}
@@ -397,7 +429,7 @@ export function IntelligencePanel({
             <ChevronUp className="h-4 w-4 text-primary" />
           </button>
         </div>
-      )}
+      ) : null}
     </div>
   )
 }
