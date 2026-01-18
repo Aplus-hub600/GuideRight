@@ -280,6 +280,10 @@ export function IntelligencePanel({
             <MapContextPanel
               aoiName={currentAOI.name || "Dhaka"}
               activeLens={activeLens}
+              onQuerySelect={(query) => {
+                onQuerySubmit(query)
+                if (!isChatOpen) onToggleChat()
+              }}
               className="border-0 rounded-none"
             />
           </ScrollArea>
