@@ -167,7 +167,7 @@ function App() {
                     </div>
                     
                     {/* Map Canvas - fills remaining space */}
-                    <div className="flex-1 min-h-0">
+                    <div className="flex-1 min-h-0 relative">
                       <MapLibrePanel
                         aoi={currentAOI}
                         onAOIChange={setCurrentAOI}
@@ -175,6 +175,15 @@ function App() {
                         hideLensSelector={true}
                         className="h-full w-full"
                       />
+                      
+                      {/* Bottom Navigation Bar - Centered on map */}
+                      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10">
+                        <BottomNavBar 
+                          activeTopPanel={activeTopPanel}
+                          activeBottomPanel={activeBottomPanel}
+                          onTogglePanel={togglePanel}
+                        />
+                      </div>
                     </div>
                   </div>
                   
@@ -214,15 +223,6 @@ function App() {
                       className="flex-1 min-h-0"
                     />
                   </div>
-                </div>
-
-                {/* Bottom Navigation Bar - Docked */}
-                <div className="h-12 flex-shrink-0 border-t bg-background flex items-center justify-center px-4">
-                  <BottomNavBar 
-                    activeTopPanel={activeTopPanel}
-                    activeBottomPanel={activeBottomPanel}
-                    onTogglePanel={togglePanel}
-                  />
                 </div>
               </div>
 
