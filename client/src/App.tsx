@@ -9,6 +9,7 @@ import { UnifiedSearchBar, ParsedQuery } from "./components/unified-search-bar";
 import { SystemStatusBanner } from "./components/system-status-banner";
 import { SystemStatusProvider } from "./lib/system-status";
 import { ClassificationBanner } from "./components/classification-banner";
+import { ScenarioProvider } from "./context/scenario-context";
 import { useState, useCallback } from "react";
 import i18n from "./lib/i18n";
 import { Map } from "lucide-react";
@@ -130,13 +131,14 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <I18nextProvider i18n={i18n}>
         <ThemeProvider>
-          <SystemStatusProvider>
-            <TooltipProvider>
-              <div className="h-screen w-screen bg-background flex flex-col overflow-hidden">
-                {/* Classification Banner - Always at top, never scrolls */}
-                <ClassificationBanner level="UNCLASSIFIED_FOUO" />
-                
-                <SystemStatusBanner />
+          <ScenarioProvider>
+            <SystemStatusProvider>
+              <TooltipProvider>
+                <div className="h-screen w-screen bg-background flex flex-col overflow-hidden">
+                  {/* Classification Banner - Always at top, never scrolls */}
+                  <ClassificationBanner level="UNCLASSIFIED_FOUO" />
+                  
+                  <SystemStatusBanner />
                 {/* Main Content - Resizable Two Column Layout (Desktop) / Toggle (Mobile) */}
                 <div className="flex-1 min-h-0">
                   {/* Desktop: Resizable Panels */}
@@ -278,9 +280,10 @@ function App() {
                 </div>
               </div>
 
-              <Toaster />
-            </TooltipProvider>
-          </SystemStatusProvider>
+                <Toaster />
+              </TooltipProvider>
+            </SystemStatusProvider>
+          </ScenarioProvider>
         </ThemeProvider>
       </I18nextProvider>
     </QueryClientProvider>

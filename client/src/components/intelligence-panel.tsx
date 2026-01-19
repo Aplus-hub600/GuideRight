@@ -39,6 +39,7 @@ import { WeatherPanel } from "./weather-panel"
 import { FileDrop } from "./file-drop"
 import { ExportPanel } from "./export-panel"
 import { ChatPanel } from "./chat-panel"
+import { TimeWindowCompact } from "./time-window-selector"
 import Timeline from "@/pages/timeline"
 import Analytics from "@/pages/analytics"
 import type { NavSection } from "./bottom-nav-bar"
@@ -368,13 +369,19 @@ export function IntelligencePanel({
             <div className="flex-1 overflow-auto">
               {activeTopPanel === "intelligence" && (
                 <Tabs defaultValue="intelligence" className="h-full flex flex-col">
-                  <TabsList className="mx-3 mt-3 flex-wrap h-auto gap-1">
-                    <TabsTrigger value="intelligence" className="text-xs">Intel</TabsTrigger>
-                    <TabsTrigger value="pmesii" className="text-xs">PMESII</TabsTrigger>
-                    <TabsTrigger value="ascope" className="text-xs">ASCOPE</TabsTrigger>
-                    <TabsTrigger value="sigact" className="text-xs">SIGACT</TabsTrigger>
-                    <TabsTrigger value="risk" className="text-xs">Risk</TabsTrigger>
-                  </TabsList>
+                  <div className="mx-3 mt-3 space-y-2">
+                    <TabsList className="flex-wrap h-auto gap-1 w-full">
+                      <TabsTrigger value="intelligence" className="text-xs">Intel</TabsTrigger>
+                      <TabsTrigger value="pmesii" className="text-xs">PMESII</TabsTrigger>
+                      <TabsTrigger value="ascope" className="text-xs">ASCOPE</TabsTrigger>
+                      <TabsTrigger value="sigact" className="text-xs">SIGACT</TabsTrigger>
+                      <TabsTrigger value="risk" className="text-xs">Risk</TabsTrigger>
+                    </TabsList>
+                    <div className="flex items-center justify-between border rounded-md p-1.5 bg-muted/30">
+                      <span className="text-[10px] font-medium text-muted-foreground ml-1">Time Window:</span>
+                      <TimeWindowCompact />
+                    </div>
+                  </div>
                   <TabsContent value="intelligence" className="flex-1 p-3 overflow-auto">
                     <IntelligenceIntegration />
                   </TabsContent>

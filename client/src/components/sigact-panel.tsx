@@ -4,7 +4,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { 
   User,
-  HelpCircle,
   MapPin,
   Clock,
   MessageCircle,
@@ -15,6 +14,8 @@ import {
   Filter
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useScenario } from "@/context/scenario-context";
+import type { SIGACTEvent } from "@shared/scenarios";
 
 interface AOI {
   name?: string;
@@ -26,20 +27,6 @@ interface AOI {
 interface SIGACTPanelProps {
   aoi: AOI;
   className?: string;
-}
-
-interface SIGACT5Ws {
-  id: string;
-  category: "SECURITY" | "POLITICAL" | "ECONOMIC" | "SOCIAL" | "INFRASTRUCTURE";
-  severity: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
-  who: string;
-  what: string;
-  where: string;
-  when: string;
-  why: string;
-  source: string;
-  reliability: "A" | "B" | "C" | "D" | "E" | "F";
-  timestamp: Date;
 }
 
 const categoryColors = {
@@ -62,7 +49,7 @@ function SIGACTCard({
   isExpanded, 
   onToggle 
 }: { 
-  sigact: SIGACT5Ws;
+  sigact: SIGACTEvent;
   isExpanded: boolean;
   onToggle: () => void;
 }) {
@@ -78,7 +65,7 @@ function SIGACTCard({
           <div className="flex items-center gap-2 mt-0.5">
             <span className="text-[10px] text-muted-foreground">{sigact.when}</span>
             <span className="text-[10px] text-muted-foreground">•</span>
-            <span className="text-[10px] text-muted-foreground">{sigact.where}</span>
+            <span className="text-[10px] text-muted-foreground truncate">{sigact.where}</span>
           </div>
         </div>
         <Badge 
@@ -143,9 +130,12 @@ function SIGACTCard({
               <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 font-mono">
                 {sigact.source} ({sigact.reliability})
               </Badge>
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4">
+                Conf: {Math.round(sigact.confidence * 100)}%
+              </Badge>
             </div>
             <span className="text-[10px] text-muted-foreground font-mono">
-              {sigact.timestamp.toLocaleString()}
+              {new Date(sigact.timestamp).toLocaleString()}
             </span>
           </div>
         </div>
@@ -154,89 +144,21 @@ function SIGACTCard({
   );
 }
 
-function generateMockSIGACTs(aoi: AOI): SIGACT5Ws[] {
-  const regionName = aoi.name || "Dhaka";
-  const now = new Date();
-  
-  return [
-    {
-      id: "sig-001",
-      category: "SECURITY",
-      severity: "HIGH",
-      who: "Unidentified armed group (~15 individuals)",
-      what: "Armed demonstration at government complex",
-      where: `${regionName} Central District, near Parliament`,
-      when: "2025-01-17 14:30 local",
-      why: "Likely protest against recent economic policies; group appears organized with possible political backing",
-      source: "Field Report",
-      reliability: "B",
-      timestamp: new Date(now.getTime() - 2 * 60 * 60 * 1000)
-    },
-    {
-      id: "sig-002",
-      category: "POLITICAL",
-      severity: "MEDIUM",
-      who: "Opposition party leadership",
-      what: "Mass rally announced for next week",
-      where: `${regionName} Shahbagh intersection`,
-      when: "2025-01-24 (planned)",
-      why: "Opposition seeking to mobilize ahead of local elections; expect 50,000+ attendees",
-      source: "OSINT",
-      reliability: "A",
-      timestamp: new Date(now.getTime() - 6 * 60 * 60 * 1000)
-    },
-    {
-      id: "sig-003",
-      category: "INFRASTRUCTURE",
-      severity: "MEDIUM",
-      who: "Local utility workers",
-      what: "Power grid maintenance causing scheduled outages",
-      where: `${regionName} Industrial Zone sectors 3-7`,
-      when: "2025-01-18 06:00-18:00 local",
-      why: "Routine maintenance ahead of monsoon season; may impact manufacturing output",
-      source: "Official Notice",
-      reliability: "A",
-      timestamp: new Date(now.getTime() - 12 * 60 * 60 * 1000)
-    },
-    {
-      id: "sig-004",
-      category: "SOCIAL",
-      severity: "LOW",
-      who: "Garment workers union",
-      what: "Peaceful wage negotiation talks",
-      where: `${regionName} Gazipur industrial area`,
-      when: "2025-01-17 10:00 local",
-      why: "Annual wage review process; negotiations appear constructive with government mediation",
-      source: "Social Media",
-      reliability: "C",
-      timestamp: new Date(now.getTime() - 24 * 60 * 60 * 1000)
-    },
-    {
-      id: "sig-005",
-      category: "ECONOMIC",
-      severity: "MEDIUM",
-      who: "Central bank officials",
-      what: "Currency intervention announcement",
-      where: "National level (Bangladesh Bank HQ)",
-      when: "2025-01-16 16:00 local",
-      why: "Response to taka depreciation; signals economic pressure and potential import cost increases",
-      source: "Official Release",
-      reliability: "A",
-      timestamp: new Date(now.getTime() - 48 * 60 * 60 * 1000)
-    }
-  ];
-}
-
 export function SIGACTPanel({ aoi, className }: SIGACTPanelProps) {
-  const [expandedId, setExpandedId] = useState<string | null>("sig-001");
+  const { getSIGACTsForWindow, getActiveTimeWindowLabel, currentScenario } = useScenario();
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
   
-  const sigacts = generateMockSIGACTs(aoi);
+  const sigacts = getSIGACTsForWindow();
   const filteredSIGACTs = categoryFilter 
     ? sigacts.filter(s => s.category === categoryFilter)
     : sigacts;
   
   const categories = ["SECURITY", "POLITICAL", "ECONOMIC", "SOCIAL", "INFRASTRUCTURE"];
+  
+  if (expandedId === null && filteredSIGACTs.length > 0) {
+    setExpandedId(filteredSIGACTs[0].id);
+  }
   
   return (
     <Card className={cn("border-0 shadow-none bg-transparent", className)}>
@@ -245,12 +167,14 @@ export function SIGACTPanel({ aoi, className }: SIGACTPanelProps) {
           <div>
             <h3 className="text-sm font-bold uppercase tracking-wide">SIGACT Log</h3>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Significant Activities (5Ws Extraction)
+              Significant Activities - {getActiveTimeWindowLabel()} Window
             </p>
           </div>
-          <Badge variant="outline" className="text-[10px] font-mono">
-            {filteredSIGACTs.length} events
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="text-[10px] font-mono">
+              {filteredSIGACTs.length} events
+            </Badge>
+          </div>
         </div>
         
         <div className="flex items-center gap-1 mt-2 flex-wrap">
@@ -280,7 +204,8 @@ export function SIGACTPanel({ aoi, className }: SIGACTPanelProps) {
       <CardContent className="px-0 pb-0 space-y-2">
         {filteredSIGACTs.length === 0 ? (
           <div className="text-center py-6 text-muted-foreground text-sm">
-            No significant activities matching filter
+            <p>No significant activities in {getActiveTimeWindowLabel()} window</p>
+            <p className="text-xs mt-1">Try selecting a different time period</p>
           </div>
         ) : (
           filteredSIGACTs.map(sigact => (
