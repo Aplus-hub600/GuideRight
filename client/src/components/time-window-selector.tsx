@@ -11,9 +11,24 @@ const windowIcons = {
 };
 
 const windowColors = {
-  baseline: "border-blue-600 bg-blue-900/30",
-  focused: "border-orange-600 bg-orange-900/30",
-  recent: "border-green-600 bg-green-900/30",
+  baseline: {
+    active: "border-blue-500 bg-gradient-to-br from-blue-900/50 to-blue-950/50 text-blue-200 shadow-blue-500/20 shadow-md",
+    inactive: "text-blue-400/70 hover:bg-blue-900/20",
+    icon: "text-blue-400",
+    glow: "ring-2 ring-blue-500/30"
+  },
+  focused: {
+    active: "border-orange-500 bg-gradient-to-br from-orange-900/50 to-orange-950/50 text-orange-200 shadow-orange-500/20 shadow-md",
+    inactive: "text-orange-400/70 hover:bg-orange-900/20",
+    icon: "text-orange-400",
+    glow: "ring-2 ring-orange-500/30"
+  },
+  recent: {
+    active: "border-green-500 bg-gradient-to-br from-green-900/50 to-green-950/50 text-green-200 shadow-green-500/20 shadow-md",
+    inactive: "text-green-400/70 hover:bg-green-900/20",
+    icon: "text-green-400",
+    glow: "ring-2 ring-green-500/30"
+  },
 };
 
 export function TimeWindowSelector({ className }: { className?: string }) {
@@ -31,25 +46,29 @@ export function TimeWindowSelector({ className }: { className?: string }) {
         </Badge>
       </div>
       
-      <div className="flex gap-1">
+      <div className="flex gap-2">
         {currentScenario.timeWindows.map((window) => {
           const Icon = windowIcons[window.id as keyof typeof windowIcons] || Clock;
+          const colors = windowColors[window.id as keyof typeof windowColors];
           const isActive = activeTimeWindow === window.id;
           
           return (
-            <Button
+            <button
               key={window.id}
-              variant={isActive ? "secondary" : "ghost"}
-              size="sm"
               className={cn(
-                "flex-1 h-auto py-2 flex flex-col items-center gap-1",
-                isActive && "border-2 " + (windowColors[window.id as keyof typeof windowColors] || "")
+                "flex-1 py-2.5 px-2 flex flex-col items-center gap-1.5 rounded-lg border transition-all duration-200",
+                isActive 
+                  ? cn("border-2", colors?.active, colors?.glow)
+                  : cn("border-transparent", colors?.inactive)
               )}
               onClick={() => setActiveTimeWindow(window.id as TimeWindowId)}
             >
-              <Icon className="h-3 w-3" />
-              <span className="text-[10px] font-medium">{window.label}</span>
-            </Button>
+              <Icon className={cn("h-4 w-4 transition-transform duration-200", isActive && "scale-110", colors?.icon)} />
+              <span className="text-[11px] font-semibold">{window.label}</span>
+              {isActive && (
+                <div className="w-6 h-0.5 rounded-full bg-current animate-in fade-in duration-300" />
+              )}
+            </button>
           );
         })}
       </div>
@@ -65,20 +84,24 @@ export function TimeWindowCompact({ className }: { className?: string }) {
   const { currentScenario, activeTimeWindow, setActiveTimeWindow } = useScenario();
   
   return (
-    <div className={cn("flex items-center gap-1", className)}>
+    <div className={cn("flex items-center gap-1 p-0.5 rounded-lg bg-muted/50", className)}>
       {currentScenario.timeWindows.map((window) => {
+        const colors = windowColors[window.id as keyof typeof windowColors];
         const isActive = activeTimeWindow === window.id;
         
         return (
-          <Button
+          <button
             key={window.id}
-            variant={isActive ? "secondary" : "ghost"}
-            size="sm"
-            className="h-6 px-2 text-[10px]"
+            className={cn(
+              "px-2.5 py-1 text-[10px] font-medium rounded-md transition-all duration-200",
+              isActive 
+                ? cn("bg-gradient-to-r shadow-sm", colors?.active)
+                : "text-muted-foreground hover:text-foreground hover:bg-muted"
+            )}
             onClick={() => setActiveTimeWindow(window.id as TimeWindowId)}
           >
             {window.label}
-          </Button>
+          </button>
         );
       })}
     </div>
