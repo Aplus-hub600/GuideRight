@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -156,9 +156,13 @@ export function SIGACTPanel({ aoi, className }: SIGACTPanelProps) {
   
   const categories = ["SECURITY", "POLITICAL", "ECONOMIC", "SOCIAL", "INFRASTRUCTURE"];
   
-  if (expandedId === null && filteredSIGACTs.length > 0) {
-    setExpandedId(filteredSIGACTs[0].id);
-  }
+  useEffect(() => {
+    if (filteredSIGACTs.length > 0) {
+      setExpandedId(filteredSIGACTs[0].id);
+    } else {
+      setExpandedId(null);
+    }
+  }, [categoryFilter, sigacts.length]);
   
   return (
     <Card className={cn("border-0 shadow-none bg-transparent", className)}>

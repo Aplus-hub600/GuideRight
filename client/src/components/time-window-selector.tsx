@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Clock, Calendar, TrendingUp, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useScenario } from "@/context/scenario-context";
+import { useScenario, type TimeWindowId } from "@/context/scenario-context";
 
 const windowIcons = {
   baseline: Calendar,
@@ -45,7 +45,7 @@ export function TimeWindowSelector({ className }: { className?: string }) {
                 "flex-1 h-auto py-2 flex flex-col items-center gap-1",
                 isActive && "border-2 " + (windowColors[window.id as keyof typeof windowColors] || "")
               )}
-              onClick={() => setActiveTimeWindow(window.id)}
+              onClick={() => setActiveTimeWindow(window.id as TimeWindowId)}
             >
               <Icon className="h-3 w-3" />
               <span className="text-[10px] font-medium">{window.label}</span>
@@ -75,7 +75,7 @@ export function TimeWindowCompact({ className }: { className?: string }) {
             variant={isActive ? "secondary" : "ghost"}
             size="sm"
             className="h-6 px-2 text-[10px]"
-            onClick={() => setActiveTimeWindow(window.id)}
+            onClick={() => setActiveTimeWindow(window.id as TimeWindowId)}
           >
             {window.label}
           </Button>

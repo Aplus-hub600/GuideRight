@@ -1,10 +1,12 @@
 import { createContext, useContext, useState, ReactNode } from "react";
 import { DHAKA_POLITICAL_CRISIS, type Scenario, type TimeWindow } from "@shared/scenarios";
 
+export type TimeWindowId = "baseline" | "focused" | "recent";
+
 interface ScenarioContextValue {
   currentScenario: Scenario;
-  activeTimeWindow: string;
-  setActiveTimeWindow: (windowId: string) => void;
+  activeTimeWindow: TimeWindowId;
+  setActiveTimeWindow: (windowId: TimeWindowId) => void;
   getActiveTimeWindowLabel: () => string;
   getPMESIIForWindow: () => Scenario["pmesiiAssessments"][0] | undefined;
   getASCOPEForWindow: () => Scenario["ascopeProfiles"][0] | undefined;
@@ -17,7 +19,7 @@ const ScenarioContext = createContext<ScenarioContextValue | null>(null);
 
 export function ScenarioProvider({ children }: { children: ReactNode }) {
   const [currentScenario] = useState<Scenario>(DHAKA_POLITICAL_CRISIS);
-  const [activeTimeWindow, setActiveTimeWindow] = useState<string>("recent");
+  const [activeTimeWindow, setActiveTimeWindow] = useState<TimeWindowId>("recent");
 
   const getActiveTimeWindowLabel = () => {
     const window = currentScenario.timeWindows.find(w => w.id === activeTimeWindow);
