@@ -51,11 +51,18 @@ interface ChatPanelProps {
 }
 
 const QUICK_ACTIONS = [
-  { id: "PMESII", label: "PMESII", icon: BarChart3, prompt: "Provide a comprehensive PMESII analysis for the current area of interest" },
-  { id: "RISK_BRIEF", label: "Risk Brief", icon: AlertTriangle, prompt: "Generate a tactical risk assessment briefing" },
-  { id: "SITREP", label: "SITREP", icon: FileText, prompt: "Create a situation report for current operations" },
-  { id: "MISSION", label: "Mission", icon: Briefcase, prompt: "Provide mission support analysis and recommendations" },
+  { id: "PMESII", label: "PMESII", icon: BarChart3, prompt: "Provide a comprehensive PMESII analysis for the current area of interest", color: "text-blue-400 bg-blue-500/10 border-blue-500/30 hover:bg-blue-500/20" },
+  { id: "RISK_BRIEF", label: "Risk Brief", icon: AlertTriangle, prompt: "Generate a tactical risk assessment briefing", color: "text-orange-400 bg-orange-500/10 border-orange-500/30 hover:bg-orange-500/20" },
+  { id: "SITREP", label: "SITREP", icon: FileText, prompt: "Create a situation report for current operations", color: "text-green-400 bg-green-500/10 border-green-500/30 hover:bg-green-500/20" },
+  { id: "MISSION", label: "Mission", icon: Briefcase, prompt: "Provide mission support analysis and recommendations", color: "text-purple-400 bg-purple-500/10 border-purple-500/30 hover:bg-purple-500/20" },
 ]
+
+const RISK_COLORS = {
+  LOW: "bg-green-500/20 text-green-300 border-green-500/40",
+  MEDIUM: "bg-yellow-500/20 text-yellow-300 border-yellow-500/40",
+  HIGH: "bg-orange-500/20 text-orange-300 border-orange-500/40 animate-pulse",
+  CRITICAL: "bg-red-500/20 text-red-300 border-red-500/40 animate-pulse",
+}
 
 function detectNonEnglish(text: string): { isNonEnglish: boolean; detectedScript: string } {
   const banglaRegex = /[\u0980-\u09FF]/
@@ -298,31 +305,44 @@ function IntelCard({ message }: { message: ChatMessage }) {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        className="border rounded-lg overflow-hidden bg-background/50"
+        className={cn(
+          "border rounded-lg overflow-hidden bg-background/50 transition-all duration-300",
+          analysis.riskLevel === 'CRITICAL' && "border-red-500/40 shadow-[0_0_15px_rgba(239,68,68,0.15)]",
+          analysis.riskLevel === 'HIGH' && "border-orange-500/40 shadow-[0_0_12px_rgba(249,115,22,0.12)]"
+        )}
       >
         <div 
           className="flex items-center justify-between p-3 cursor-pointer hover-elevate"
           onClick={() => setExpanded(!expanded)}
         >
           <div className="flex items-center gap-3">
-            <Target className="h-4 w-4 text-primary" />
+            <div className={cn(
+              "p-1.5 rounded-md",
+              analysis.riskLevel === 'CRITICAL' ? "bg-red-500/20" :
+              analysis.riskLevel === 'HIGH' ? "bg-orange-500/20" :
+              analysis.riskLevel === 'MEDIUM' ? "bg-yellow-500/20" : "bg-green-500/20"
+            )}>
+              <Target className={cn(
+                "h-4 w-4",
+                analysis.riskLevel === 'CRITICAL' ? "text-red-400" :
+                analysis.riskLevel === 'HIGH' ? "text-orange-400" :
+                analysis.riskLevel === 'MEDIUM' ? "text-yellow-400" : "text-green-400"
+              )} />
+            </div>
             <span className="text-sm font-medium">Intelligence Assessment</span>
           </div>
           <div className="flex items-center gap-3">
             <Badge
-              variant={
-                analysis.riskLevel === 'CRITICAL' || analysis.riskLevel === 'HIGH' 
-                  ? 'destructive' 
-                  : analysis.riskLevel === 'MEDIUM' 
-                    ? 'secondary' 
-                    : 'outline'
-              }
+              className={cn(
+                "border font-semibold",
+                RISK_COLORS[analysis.riskLevel]
+              )}
             >
               {analysis.riskLevel} RISK
             </Badge>
             <ConfidenceGauge value={analysis.confidence} animate={!expanded} />
             <ChevronRight className={cn(
-              "h-4 w-4 transition-transform",
+              "h-4 w-4 transition-transform duration-200",
               expanded && "rotate-90"
             )} />
           </div>
@@ -636,30 +656,37 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, className }: ChatPan
   }
 
   return (
-    <Card className={cn("flex flex-col h-full overflow-hidden border-2", className)}>
-      <CardHeader className="flex flex-row items-center justify-between gap-4 px-4 py-3 border-b bg-gradient-to-r from-muted/50 to-muted/30">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 border border-primary/20">
-            <Shield className="h-4 w-4 text-primary" />
+    <Card className={cn("flex flex-col h-full overflow-hidden border-2 border-primary/20", className)}>
+      <CardHeader className="flex flex-row items-center justify-between gap-4 px-4 py-3 border-b border-primary/10 bg-gradient-to-r from-primary/5 via-muted/30 to-transparent relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(var(--primary-rgb,59,130,246),0.08),transparent_50%)]" />
+        <div className="flex items-center gap-3 relative z-10">
+          <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/30 shadow-[0_0_12px_rgba(var(--primary-rgb,59,130,246),0.2)]">
+            <Shield className="h-5 w-5 text-primary" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-bold tracking-wide">GIA</span>
-              <Badge variant="outline" className="text-xs font-mono h-5 gap-1 px-1.5">
+              <span className="text-sm font-bold tracking-wide bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">GIA</span>
+              <Badge className="text-[10px] font-mono h-5 gap-1.5 px-2 bg-green-500/15 text-green-400 border-green-500/30">
                 <PulsingIndicator />
-                <span className="text-primary">LIVE</span>
+                <span>ONLINE</span>
               </Badge>
             </div>
-            <p className="text-xs text-muted-foreground">GuideRight Intelligence Assistant</p>
+            <p className="text-[11px] text-muted-foreground font-medium">GuideRight Intelligence Assistant</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 relative z-10">
+          {isStreaming && (
+            <Badge className="text-[10px] font-mono h-5 gap-1.5 px-2 bg-amber-500/15 text-amber-400 border-amber-500/30">
+              <Loader2 className="h-2.5 w-2.5 animate-spin" />
+              PROCESSING
+            </Badge>
+          )}
           {messages.length > 0 && (
             <Button 
               variant="ghost" 
               size="sm" 
               onClick={handleClearChat}
-              className="text-xs text-muted-foreground"
+              className="text-xs text-muted-foreground hover:text-destructive"
               data-testid="button-clear-chat"
             >
               Clear
@@ -671,40 +698,51 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, className }: ChatPan
       <CardContent className="flex-1 overflow-hidden p-0 flex flex-col">
         <div className="flex-1 overflow-y-auto">
           {messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full p-6">
+            <div className="flex flex-col items-center justify-center h-full p-6 relative">
+              <div className="absolute inset-0 opacity-5 bg-[linear-gradient(rgba(var(--primary-rgb,59,130,246),0.3)_1px,transparent_1px),linear-gradient(90deg,rgba(var(--primary-rgb,59,130,246),0.3)_1px,transparent_1px)] bg-[size:20px_20px]" />
               <motion.div
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ duration: 0.3 }}
-                className="text-center max-w-md"
+                className="text-center max-w-md relative z-10"
               >
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center mb-4 mx-auto border border-primary/20">
-                  <Sparkles className="h-8 w-8 text-primary" />
+                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary/30 to-primary/5 flex items-center justify-center mb-5 mx-auto border border-primary/30 shadow-[0_0_30px_rgba(var(--primary-rgb,59,130,246),0.2)] relative">
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                    className="absolute inset-0 rounded-2xl border border-dashed border-primary/20"
+                  />
+                  <Sparkles className="h-10 w-10 text-primary" />
                 </div>
-                <h3 className="text-lg font-bold mb-1">GuideRight Intelligence Assistant</h3>
-                <p className="text-xs text-muted-foreground font-mono tracking-wider mb-2">
-                  TACTICAL ANALYSIS • PMESII FRAMEWORK • BANGLADESH FOCUS
-                </p>
+                <h3 className="text-xl font-bold mb-2 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                  GuideRight Intelligence Assistant
+                </h3>
+                <div className="flex items-center justify-center gap-2 mb-3">
+                  <Badge className="text-[10px] font-mono px-2 bg-blue-500/10 text-blue-400 border-blue-500/30">TACTICAL</Badge>
+                  <Badge className="text-[10px] font-mono px-2 bg-purple-500/10 text-purple-400 border-purple-500/30">PMESII</Badge>
+                  <Badge className="text-[10px] font-mono px-2 bg-green-500/10 text-green-400 border-green-500/30">BANGLADESH</Badge>
+                </div>
                 <p className="text-sm text-muted-foreground mb-6">
                   Query intelligence sources, analyze threats, or request situational assessments
                 </p>
                 
-                <div className="space-y-2">
-                  <p className="text-xs text-muted-foreground uppercase tracking-wide mb-3">Quick Actions</p>
+                <div className="space-y-3">
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Quick Actions</p>
                   <div className="flex flex-wrap justify-center gap-2">
                     {QUICK_ACTIONS.map((action) => {
                       const Icon = action.icon
                       return (
-                        <Button
+                        <button
                           key={action.id}
-                          variant="outline"
-                          size="sm"
                           onClick={() => handleQuickAction(action.prompt)}
-                          className="gap-2"
+                          className={cn(
+                            "flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border transition-all duration-200",
+                            action.color
+                          )}
                         >
                           <Icon className="h-4 w-4" />
                           {action.label}
-                        </Button>
+                        </button>
                       )
                     })}
                   </div>
@@ -731,17 +769,24 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, className }: ChatPan
                     className="group"
                   >
                     <div className="flex items-center gap-2 mb-1.5">
-                      <span className={cn(
-                        "text-xs font-semibold uppercase tracking-wide",
-                        message.role === "user" ? "text-primary" : "text-muted-foreground"
+                      <div className={cn(
+                        "flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider",
+                        message.role === "user" 
+                          ? "bg-cyan-500/15 text-cyan-400" 
+                          : "bg-primary/15 text-primary"
                       )}>
+                        {message.role === "user" ? (
+                          <Target className="h-3 w-3" />
+                        ) : (
+                          <Shield className="h-3 w-3" />
+                        )}
                         {message.role === "user" ? "Operator" : "GIA"}
-                      </span>
-                      <span className="text-xs text-muted-foreground/60 font-mono">
+                      </div>
+                      <span className="text-[10px] text-muted-foreground/60 font-mono">
                         {format(message.timestamp, "HH:mm:ss")}
                       </span>
                       {message.isStreaming && (
-                        <Badge variant="secondary" className="text-xs h-5 gap-1 px-1.5">
+                        <Badge className="text-[10px] h-5 gap-1 px-1.5 bg-amber-500/15 text-amber-400 border-amber-500/30">
                           <Loader2 className="h-2.5 w-2.5 animate-spin" />
                           Processing
                         </Badge>
@@ -749,10 +794,10 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, className }: ChatPan
                     </div>
                     
                     <div className={cn(
-                      "rounded-lg px-4 py-3 transition-all",
+                      "rounded-lg px-4 py-3 transition-all border-l-[3px]",
                       message.role === "user" 
-                        ? "bg-primary/10 border border-primary/20" 
-                        : "bg-muted/50 border"
+                        ? "bg-cyan-500/5 border border-cyan-500/20 border-l-cyan-500" 
+                        : "bg-muted/30 border border-border/50 border-l-primary"
                     )}>
                       <IntelCard message={message} />
                     </div>
@@ -767,33 +812,34 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, className }: ChatPan
                   className="group"
                 >
                   <div className="flex items-center gap-2 mb-1.5">
-                    <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-primary/15 text-primary">
+                      <Shield className="h-3 w-3" />
                       GIA
-                    </span>
-                    <span className="text-xs text-muted-foreground/60 font-mono">
+                    </div>
+                    <span className="text-[10px] text-muted-foreground/60 font-mono">
                       {format(new Date(), "HH:mm:ss")}
                     </span>
                   </div>
-                  <div className="bg-muted/50 border rounded-lg px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      <div className="flex gap-1">
+                  <div className="bg-muted/30 border border-border/50 border-l-[3px] border-l-primary rounded-lg px-4 py-4">
+                    <div className="flex items-center gap-4">
+                      <div className="flex gap-1.5">
                         <motion.div
-                          animate={{ scale: [1, 1.2, 1] }}
-                          transition={{ duration: 0.6, repeat: Infinity, delay: 0 }}
-                          className="w-2 h-2 rounded-full bg-primary"
+                          animate={{ scale: [1, 1.3, 1], opacity: [0.5, 1, 0.5] }}
+                          transition={{ duration: 0.8, repeat: Infinity, delay: 0 }}
+                          className="w-2.5 h-2.5 rounded-full bg-primary"
                         />
                         <motion.div
-                          animate={{ scale: [1, 1.2, 1] }}
-                          transition={{ duration: 0.6, repeat: Infinity, delay: 0.2 }}
-                          className="w-2 h-2 rounded-full bg-primary"
+                          animate={{ scale: [1, 1.3, 1], opacity: [0.5, 1, 0.5] }}
+                          transition={{ duration: 0.8, repeat: Infinity, delay: 0.2 }}
+                          className="w-2.5 h-2.5 rounded-full bg-primary"
                         />
                         <motion.div
-                          animate={{ scale: [1, 1.2, 1] }}
-                          transition={{ duration: 0.6, repeat: Infinity, delay: 0.4 }}
-                          className="w-2 h-2 rounded-full bg-primary"
+                          animate={{ scale: [1, 1.3, 1], opacity: [0.5, 1, 0.5] }}
+                          transition={{ duration: 0.8, repeat: Infinity, delay: 0.4 }}
+                          className="w-2.5 h-2.5 rounded-full bg-primary"
                         />
                       </div>
-                      <span className="text-sm text-muted-foreground">
+                      <span className="text-sm text-muted-foreground font-medium">
                         Analyzing intelligence request...
                       </span>
                     </div>
@@ -806,14 +852,14 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, className }: ChatPan
           )}
         </div>
 
-        <div className="border-t bg-gradient-to-r from-muted/30 to-transparent">
+        <div className="border-t border-primary/10 bg-gradient-to-r from-primary/5 via-muted/20 to-transparent">
           {mediaContextIds && mediaContextIds.length > 0 && (
-            <div className="flex items-center gap-2 px-4 py-2 border-b bg-muted/20">
-              <Paperclip className="h-3.5 w-3.5 text-muted-foreground" />
-              <span className="text-xs text-muted-foreground">Attached:</span>
+            <div className="flex items-center gap-2 px-4 py-2 border-b border-border/50 bg-muted/20">
+              <Paperclip className="h-3.5 w-3.5 text-primary" />
+              <span className="text-xs text-muted-foreground font-medium">Attached:</span>
               <div className="flex flex-wrap gap-1.5">
                 {mediaContextIds.map((id) => (
-                  <Badge key={id} variant="secondary" className="text-xs h-5 px-1.5">
+                  <Badge key={id} className="text-[10px] h-5 px-1.5 bg-primary/10 text-primary border-primary/30">
                     {id}
                   </Badge>
                 ))}
@@ -823,14 +869,14 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, className }: ChatPan
           
           <div className="p-3">
             <form onSubmit={handleSubmit} className="flex items-end gap-2">
-              <div className="flex-1 relative">
+              <div className="flex-1 relative group">
                 <Textarea
                   ref={textareaRef}
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder="Enter intelligence tasking or ask a question..."
-                  className="min-h-[52px] max-h-[120px] resize-none pr-12 text-sm bg-background border-border/50 focus:border-primary/50"
+                  className="min-h-[52px] max-h-[120px] resize-none pr-12 text-sm bg-background/80 border-border/50 focus:border-primary/50 focus:bg-background focus:shadow-[0_0_0_2px_rgba(var(--primary-rgb,59,130,246),0.1)] transition-all duration-200"
                   disabled={isStreaming}
                   data-testid="textarea-chat-input"
                 />
@@ -845,7 +891,10 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, className }: ChatPan
                 type="submit"
                 size="lg"
                 disabled={!input.trim() || isStreaming}
-                className="gap-2 shadow-lg"
+                className={cn(
+                  "gap-2 shadow-lg transition-all duration-200",
+                  input.trim() && !isStreaming && "shadow-[0_0_15px_rgba(var(--primary-rgb,59,130,246),0.3)]"
+                )}
                 data-testid="button-chat-send"
               >
                 {isStreaming ? (
@@ -858,9 +907,16 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, className }: ChatPan
                 )}
               </Button>
             </form>
-            <p className="text-xs text-muted-foreground/60 mt-2 text-center">
-              Ctrl+Enter to send • Voice input available
-            </p>
+            <div className="flex items-center justify-center gap-3 mt-2 text-[10px] text-muted-foreground/60">
+              <span className="flex items-center gap-1">
+                <kbd className="px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-mono">Ctrl</kbd>
+                +
+                <kbd className="px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-mono">Enter</kbd>
+                to send
+              </span>
+              <span className="w-1 h-1 rounded-full bg-muted-foreground/30" />
+              <span>Voice input available</span>
+            </div>
           </div>
         </div>
       </CardContent>
