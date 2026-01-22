@@ -134,43 +134,88 @@ export function MapLensSelector({
   )
 }
 
+export type MapStyleType = "streets" | "satellite" | "hybrid" | "roadmap"
+
 interface LensLegendProps {
   activeLens: MapLens
+  mapStyle?: MapStyleType
   className?: string
 }
 
-// Lens accent colors - consistent military-style color coding
+// Lens accent colors - adapt for different map backgrounds
 const LENS_COLORS = {
-  infrastructure: { accent: "rgb(59, 130, 246)", bg: "rgba(59, 130, 246, 0.08)", border: "rgba(59, 130, 246, 0.2)" },
-  "human-activity": { accent: "rgb(168, 85, 247)", bg: "rgba(168, 85, 247, 0.08)", border: "rgba(168, 85, 247, 0.2)" },
-  "risk-stress": { accent: "rgb(249, 115, 22)", bg: "rgba(249, 115, 22, 0.08)", border: "rgba(249, 115, 22, 0.2)" },
-  logistics: { accent: "rgb(6, 182, 212)", bg: "rgba(6, 182, 212, 0.08)", border: "rgba(6, 182, 212, 0.2)" }
+  infrastructure: { 
+    accent: "rgb(59, 130, 246)", 
+    bg: "rgba(59, 130, 246, 0.08)", 
+    border: "rgba(59, 130, 246, 0.2)",
+    // Satellite mode: brighter accents for dark imagery
+    satelliteAccent: "rgb(96, 165, 250)",
+    satelliteBg: "rgba(59, 130, 246, 0.15)",
+    satelliteBorder: "rgba(59, 130, 246, 0.4)"
+  },
+  "human-activity": { 
+    accent: "rgb(168, 85, 247)", 
+    bg: "rgba(168, 85, 247, 0.08)", 
+    border: "rgba(168, 85, 247, 0.2)",
+    satelliteAccent: "rgb(192, 132, 252)",
+    satelliteBg: "rgba(168, 85, 247, 0.15)",
+    satelliteBorder: "rgba(168, 85, 247, 0.4)"
+  },
+  "risk-stress": { 
+    accent: "rgb(249, 115, 22)", 
+    bg: "rgba(249, 115, 22, 0.08)", 
+    border: "rgba(249, 115, 22, 0.2)",
+    satelliteAccent: "rgb(251, 146, 60)",
+    satelliteBg: "rgba(249, 115, 22, 0.15)",
+    satelliteBorder: "rgba(249, 115, 22, 0.4)"
+  },
+  logistics: { 
+    accent: "rgb(6, 182, 212)", 
+    bg: "rgba(6, 182, 212, 0.08)", 
+    border: "rgba(6, 182, 212, 0.2)",
+    satelliteAccent: "rgb(34, 211, 238)",
+    satelliteBg: "rgba(6, 182, 212, 0.15)",
+    satelliteBorder: "rgba(6, 182, 212, 0.4)"
+  }
 }
 
-export function LensLegend({ activeLens, className }: LensLegendProps) {
+export function LensLegend({ activeLens, mapStyle = "streets", className }: LensLegendProps) {
   const lensConfig = LENS_CONFIGS.find(l => l.id === activeLens)
   if (!lensConfig) return null
   
-  const colors = LENS_COLORS[activeLens]
+  const lensColors = LENS_COLORS[activeLens]
+  const isSatellite = mapStyle === "satellite" || mapStyle === "hybrid"
+  
+  // Adapt colors based on map style
+  const colors = {
+    accent: isSatellite ? lensColors.satelliteAccent : lensColors.accent,
+    bg: isSatellite ? lensColors.satelliteBg : lensColors.bg,
+    border: isSatellite ? lensColors.satelliteBorder : lensColors.border
+  }
+  
   const Icon = lensConfig.icon
   
   return (
     <AnimatePresence mode="wait">
       <motion.div
-        key={activeLens}
+        key={`${activeLens}-${mapStyle}`}
         initial={{ opacity: 0, y: 8, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: -8, scale: 0.98 }}
         transition={{ duration: 0.12, ease: "easeOut" }}
         className={cn(
-          "bg-background/98 backdrop-blur-md border shadow-xl rounded",
+          "backdrop-blur-md border shadow-xl rounded",
           "font-mono text-[11px] select-none",
+          // Satellite mode: more opaque background for visibility over imagery
+          isSatellite 
+            ? "bg-zinc-900/95 text-zinc-100" 
+            : "bg-background/98 text-foreground",
           className
         )}
         style={{ 
           borderColor: colors.border,
           minWidth: "156px",
-          maxWidth: "180px"
+          maxWidth: "190px"
         }}
       >
         {/* Header - Professional and accessible */}
@@ -258,13 +303,25 @@ export function LensLegend({ activeLens, className }: LensLegendProps) {
           )}
         </div>
         
-        {/* Footer - Professional data attribution */}
-        <div className="px-2.5 py-1.5 border-t border-border/40 bg-muted/30">
-          <div className="flex items-center justify-between text-[9px] text-muted-foreground">
-            <span>Updated: {new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })} UTC</span>
+        {/* Footer - Adaptive to map style */}
+        <div className={cn(
+          "px-2.5 py-1.5 border-t",
+          isSatellite 
+            ? "border-zinc-700/50 bg-zinc-800/50" 
+            : "border-border/40 bg-muted/30"
+        )}>
+          <div className={cn(
+            "flex items-center justify-between text-[9px]",
+            isSatellite ? "text-zinc-400" : "text-muted-foreground"
+          )}>
+            <span className="flex items-center gap-1.5">
+              {isSatellite ? "Satellite" : "Map"} View
+              <span className="opacity-60">|</span>
+              {new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })} UTC
+            </span>
             <span className="flex items-center gap-1">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-              Real-time
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              Live
             </span>
           </div>
         </div>

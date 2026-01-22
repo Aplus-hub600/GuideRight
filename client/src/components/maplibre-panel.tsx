@@ -437,7 +437,7 @@ export function MapLibrePanel({
         
         {/* Always show the legend - even when map fails or lens selector is hidden */}
         <div className="absolute bottom-4 left-3 z-10">
-          <LensLegend activeLens={activeLens} />
+          <LensLegend activeLens={activeLens} mapStyle={mapStyle} />
         </div>
       </div>
     )
@@ -521,7 +521,7 @@ export function MapLibrePanel({
       
       {/* Legend - Bottom Left - Always show regardless of lens selector visibility */}
       <div className="absolute bottom-4 left-3 z-10">
-        <LensLegend activeLens={activeLens} />
+        <LensLegend activeLens={activeLens} mapStyle={mapStyle} />
       </div>
 
       {/* Zoom Controls - Bottom Right */}

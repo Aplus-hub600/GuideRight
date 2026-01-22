@@ -380,7 +380,7 @@ function GoogleMapsContent({
       </div>
       
       <div className="absolute bottom-16 left-3 z-10">
-        <LensLegend activeLens={activeLens} />
+        <LensLegend activeLens={activeLens} mapStyle={mapStyle} />
       </div>
       
       <div className="absolute top-16 right-3 bottom-3 w-80 z-10">
