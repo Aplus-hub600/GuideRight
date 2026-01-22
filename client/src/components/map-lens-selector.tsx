@@ -307,12 +307,12 @@ export function LensLegend({ activeLens, mapStyle = "streets", className }: Lens
         <div className={cn(
           "px-2.5 py-1.5 border-t",
           isSatellite 
-            ? "border-zinc-700/50 bg-zinc-800/50" 
-            : "border-border/40 bg-muted/30"
+            ? "border-zinc-600 bg-zinc-800/60" 
+            : "border-border bg-muted/50"
         )}>
           <div className={cn(
-            "flex items-center justify-between text-[9px]",
-            isSatellite ? "text-zinc-400" : "text-muted-foreground"
+            "flex items-center justify-between text-[9px] font-medium",
+            isSatellite ? "text-zinc-300" : "text-muted-foreground"
           )}>
             <span className="flex items-center gap-1.5">
               {isSatellite ? "Satellite" : "Map"} View
@@ -334,7 +334,7 @@ export function LensLegend({ activeLens, mapStyle = "streets", className }: Lens
 function LegendGroup({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <div className="text-[9px] font-semibold text-muted-foreground/80 tracking-wide mb-1.5 pb-0.5 border-b border-border/40">
+      <div className="text-[9px] font-semibold text-muted-foreground tracking-wide mb-1.5 pb-0.5 border-b border-border/50">
         {label}
       </div>
       <div className="space-y-1">{children}</div>
@@ -350,7 +350,7 @@ function LegendItem({ color, label }: { color: string; label: string }) {
         className="w-2.5 h-2.5 rounded-sm shrink-0 shadow-sm"
         style={{ backgroundColor: color }}
       />
-      <span className="text-[10px] text-foreground/80">{label}</span>
+      <span className="text-[10px] text-foreground">{label}</span>
     </div>
   )
 }
@@ -371,10 +371,10 @@ function LegendQuality({ status, label }: { status: "high" | "medium" | "low"; l
         style={{ 
           backgroundColor: config.fill ? config.bg : "transparent",
           border: `2px solid ${config.bg}`,
-          opacity: status === "low" ? 0.6 : 1
+          opacity: status === "low" ? 0.7 : 1
         }}
       />
-      <span className="text-[10px] text-foreground/80">{label}</span>
+      <span className="text-[10px] text-foreground">{label}</span>
     </div>
   )
 }
@@ -383,13 +383,13 @@ function LegendQuality({ status, label }: { status: "high" | "medium" | "low"; l
 function LegendLevel({ level, color, fill, pulse }: { level: string; color: string; fill: number; pulse?: boolean }) {
   return (
     <div className="flex items-center gap-2 h-[18px]">
-      <div className="relative w-8 h-2 rounded-full overflow-hidden bg-border/40 shrink-0">
+      <div className="relative w-8 h-2 rounded-full overflow-hidden bg-muted shrink-0">
         <div 
           className={cn("absolute inset-y-0 left-0 rounded-full transition-all", pulse && "animate-pulse")}
           style={{ backgroundColor: color, width: `${fill}%` }}
         />
       </div>
-      <span className="text-[10px] text-foreground/80">{level}</span>
+      <span className="text-[10px] text-foreground">{level}</span>
     </div>
   )
 }
@@ -413,7 +413,7 @@ function LegendActivityIcon({ type, label }: { type: "gathering" | "movement" | 
           </svg>
         )}
       </div>
-      <span className="text-[10px] text-foreground/80">{label}</span>
+      <span className="text-[10px] text-foreground">{label}</span>
     </div>
   )
 }
@@ -434,7 +434,7 @@ function LegendRisk({ level, color, pulse }: { level: string; color: string; pul
           style={{ backgroundColor: color }}
         />
       </div>
-      <span className="text-[10px] text-foreground/80">{level}</span>
+      <span className="text-[10px] text-foreground">{level}</span>
     </div>
   )
 }
@@ -451,7 +451,7 @@ function LegendOverlay({ type, label }: { type: "fill" | "border"; label: string
           <div className="w-full h-full rounded-sm border-2 border-dashed border-red-500/70" />
         )}
       </div>
-      <span className="text-[10px] text-foreground/80">{label}</span>
+      <span className="text-[10px] text-foreground">{label}</span>
     </div>
   )
 }
@@ -463,8 +463,8 @@ function LegendRouteStatus({ status, color, desc }: { status: string; color: str
       <div className="w-5 flex items-center shrink-0">
         <div className="w-full h-[3px] rounded-full shadow-sm" style={{ backgroundColor: color }} />
       </div>
-      <span className="text-[10px] font-medium text-foreground/90">{status}</span>
-      <span className="text-[9px] text-muted-foreground/70 ml-auto">{desc}</span>
+      <span className="text-[10px] font-medium text-foreground">{status}</span>
+      <span className="text-[9px] text-muted-foreground ml-auto">{desc}</span>
     </div>
   )
 }
@@ -477,7 +477,7 @@ function LegendSupplyPoint({ color, label }: { color: string; label: string }) {
         className="w-2.5 h-2.5 rotate-45 rounded-[2px] shrink-0 shadow-sm"
         style={{ backgroundColor: color }}
       />
-      <span className="text-[10px] text-foreground/80">{label}</span>
+      <span className="text-[10px] text-foreground">{label}</span>
     </div>
   )
 }
