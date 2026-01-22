@@ -504,13 +504,13 @@ export function SmartMapControls({
       animate={{ opacity: 1, x: 0 }}
       className={cn(
         "backdrop-blur-md border shadow-lg rounded-lg overflow-hidden",
-        "font-mono text-[11px] select-none",
+        "font-mono text-[11px] select-none border-l-0 border-b-0",
         isSatellite 
           ? "bg-zinc-900/95 text-zinc-100 border-zinc-700" 
           : "bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 border-zinc-300 dark:border-zinc-700",
         className
       )}
-      style={{ minWidth: "140px" }}
+      style={{ minWidth: "150px" }}
     >
       {/* Zoom Level Header */}
       <div className={cn(

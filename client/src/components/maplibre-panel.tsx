@@ -437,8 +437,8 @@ export function MapLibrePanel({
           <LensLegend activeLens={activeLens} mapStyle={mapStyle} className="rounded-br-none rounded-bl-none rounded-tr-none" />
         </div>
         
-        {/* Smart Map Controls - even when map fails */}
-        <div className="absolute bottom-4 left-3 z-10">
+        {/* Smart Map Controls - flush bottom-left */}
+        <div className="absolute bottom-0 left-0 z-10">
           <SmartMapControls
             zoomLevel={zoomLevel}
             onZoomIn={handleZoomIn}
@@ -447,6 +447,7 @@ export function MapLibrePanel({
             onMovementPlan={onMovementPlanRequest}
             aoiName={aoi?.name || "Bangladesh"}
             mapStyle={mapStyle}
+            className="rounded-bl-none rounded-tl-none rounded-br-none"
           />
         </div>
       </div>
@@ -534,8 +535,8 @@ export function MapLibrePanel({
         <LensLegend activeLens={activeLens} mapStyle={mapStyle} className="rounded-br-none rounded-bl-none rounded-tr-none" />
       </div>
 
-      {/* Smart Map Controls - Bottom left */}
-      <div className="absolute bottom-4 left-3 z-10">
+      {/* Smart Map Controls - flush bottom-left */}
+      <div className="absolute bottom-0 left-0 z-10">
         <SmartMapControls
           zoomLevel={zoomLevel}
           onZoomIn={handleZoomIn}
@@ -544,6 +545,7 @@ export function MapLibrePanel({
           onMovementPlan={onMovementPlanRequest}
           aoiName={aoi?.name || "Bangladesh"}
           mapStyle={mapStyle}
+          className="rounded-bl-none rounded-tl-none rounded-br-none"
         />
       </div>
 
