@@ -33,7 +33,15 @@ import {
   type AssistantMessage,
   type InsertAssistantMessage,
   type AssistantRun,
-  type InsertAssistantRun
+  type InsertAssistantRun,
+  type IntelGdeltEvent,
+  type InsertIntelGdeltEvent,
+  type IntelGdeltDoc,
+  type InsertIntelGdeltDoc,
+  type IntelCacheState,
+  type InsertIntelCacheState,
+  type IntelRefreshRun,
+  type InsertIntelRefreshRun
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 
@@ -129,6 +137,19 @@ export interface IStorage {
   getAssistantRunById(id: string): Promise<AssistantRun | undefined>;
   createAssistantRun(run: InsertAssistantRun): Promise<AssistantRun>;
   updateAssistantRun(id: string, updates: Partial<InsertAssistantRun>): Promise<AssistantRun | null>;
+  
+  // GDELT Intel operations
+  getGdeltEvents(queryHash: string, limit?: number): Promise<IntelGdeltEvent[]>;
+  upsertGdeltEvent(event: InsertIntelGdeltEvent): Promise<IntelGdeltEvent>;
+  upsertGdeltEventsBulk(events: InsertIntelGdeltEvent[]): Promise<number>;
+  getGdeltDocs(queryHash: string, limit?: number): Promise<IntelGdeltDoc[]>;
+  upsertGdeltDoc(doc: InsertIntelGdeltDoc): Promise<IntelGdeltDoc>;
+  upsertGdeltDocsBulk(docs: InsertIntelGdeltDoc[]): Promise<number>;
+  getCacheState(queryHash: string): Promise<IntelCacheState | undefined>;
+  upsertCacheState(state: InsertIntelCacheState): Promise<IntelCacheState>;
+  createRefreshRun(run: InsertIntelRefreshRun): Promise<IntelRefreshRun>;
+  updateRefreshRun(id: string, updates: Partial<InsertIntelRefreshRun>): Promise<IntelRefreshRun | null>;
+  getRecentRefreshRuns(limit?: number): Promise<IntelRefreshRun[]>;
 }
 
 export class MemStorage implements IStorage {
@@ -1952,6 +1973,190 @@ export class MemStorage implements IStorage {
         label: "May delay milestone",
       });
     }
+  }
+  
+  // GDELT Intel operations (in-memory implementation)
+  private gdeltEvents: IntelGdeltEvent[] = [];
+  private gdeltDocs: IntelGdeltDoc[] = [];
+  private cacheStates: IntelCacheState[] = [];
+  private refreshRuns: IntelRefreshRun[] = [];
+  
+  async getGdeltEvents(queryHash: string, limit: number = 250): Promise<IntelGdeltEvent[]> {
+    return this.gdeltEvents
+      .filter(e => e.queryHash === queryHash)
+      .sort((a, b) => new Date(b.eventDate).getTime() - new Date(a.eventDate).getTime())
+      .slice(0, limit);
+  }
+  
+  async upsertGdeltEvent(event: InsertIntelGdeltEvent): Promise<IntelGdeltEvent> {
+    const existing = this.gdeltEvents.find(e => e.globalEventId === event.globalEventId);
+    if (existing) {
+      Object.assign(existing, event, { fetchedAt: new Date() });
+      return existing;
+    }
+    const newEvent: IntelGdeltEvent = {
+      id: randomUUID(),
+      globalEventId: event.globalEventId,
+      eventDate: event.eventDate,
+      eventCode: event.eventCode ?? null,
+      eventBaseCode: event.eventBaseCode ?? null,
+      eventRootCode: event.eventRootCode ?? null,
+      quadClass: event.quadClass ?? null,
+      goldsteinScale: event.goldsteinScale ?? null,
+      numMentions: event.numMentions ?? null,
+      numSources: event.numSources ?? null,
+      numArticles: event.numArticles ?? null,
+      avgTone: event.avgTone ?? null,
+      actor1Name: event.actor1Name ?? null,
+      actor1CountryCode: event.actor1CountryCode ?? null,
+      actor1Type1Code: event.actor1Type1Code ?? null,
+      actor2Name: event.actor2Name ?? null,
+      actor2CountryCode: event.actor2CountryCode ?? null,
+      actor2Type1Code: event.actor2Type1Code ?? null,
+      actionGeoType: event.actionGeoType ?? null,
+      actionGeoFullname: event.actionGeoFullname ?? null,
+      actionGeoCountryCode: event.actionGeoCountryCode ?? null,
+      actionGeoLat: event.actionGeoLat ?? null,
+      actionGeoLon: event.actionGeoLon ?? null,
+      sourceUrl: event.sourceUrl ?? null,
+      raw: event.raw,
+      queryHash: event.queryHash,
+      fetchedAt: new Date(),
+    };
+    this.gdeltEvents.push(newEvent);
+    return newEvent;
+  }
+  
+  async upsertGdeltEventsBulk(events: InsertIntelGdeltEvent[]): Promise<number> {
+    let count = 0;
+    for (const event of events) {
+      await this.upsertGdeltEvent(event);
+      count++;
+    }
+    return count;
+  }
+  
+  async getGdeltDocs(queryHash: string, limit: number = 250): Promise<IntelGdeltDoc[]> {
+    return this.gdeltDocs
+      .filter(d => d.queryHash === queryHash)
+      .sort((a, b) => {
+        const dateA = a.publishedAt ? new Date(a.publishedAt).getTime() : 0;
+        const dateB = b.publishedAt ? new Date(b.publishedAt).getTime() : 0;
+        return dateB - dateA;
+      })
+      .slice(0, limit);
+  }
+  
+  async upsertGdeltDoc(doc: InsertIntelGdeltDoc): Promise<IntelGdeltDoc> {
+    const existing = this.gdeltDocs.find(d => d.docId === doc.docId);
+    if (existing) {
+      Object.assign(existing, doc, { fetchedAt: new Date() });
+      return existing;
+    }
+    const newDoc: IntelGdeltDoc = {
+      id: randomUUID(),
+      docId: doc.docId,
+      url: doc.url,
+      urlMobile: doc.urlMobile ?? null,
+      title: doc.title ?? null,
+      seenDate: doc.seenDate ?? null,
+      publishedAt: doc.publishedAt ?? null,
+      domain: doc.domain ?? null,
+      language: doc.language ?? null,
+      sourceName: doc.sourceName ?? null,
+      sourceCountry: doc.sourceCountry ?? null,
+      theme: doc.theme ?? null,
+      tone: doc.tone ?? null,
+      positiveScore: doc.positiveScore ?? null,
+      negativeScore: doc.negativeScore ?? null,
+      polarity: doc.polarity ?? null,
+      activityDensity: doc.activityDensity ?? null,
+      selfGroup: doc.selfGroup ?? null,
+      socialImage: doc.socialImage ?? null,
+      socialVideo: doc.socialVideo ?? null,
+      lat: doc.lat ?? null,
+      lon: doc.lon ?? null,
+      locationName: doc.locationName ?? null,
+      locationCountry: doc.locationCountry ?? null,
+      raw: doc.raw,
+      queryHash: doc.queryHash,
+      fetchedAt: new Date(),
+    };
+    this.gdeltDocs.push(newDoc);
+    return newDoc;
+  }
+  
+  async upsertGdeltDocsBulk(docs: InsertIntelGdeltDoc[]): Promise<number> {
+    let count = 0;
+    for (const doc of docs) {
+      await this.upsertGdeltDoc(doc);
+      count++;
+    }
+    return count;
+  }
+  
+  async getCacheState(queryHash: string): Promise<IntelCacheState | undefined> {
+    return this.cacheStates.find(c => c.queryHash === queryHash);
+  }
+  
+  async upsertCacheState(state: InsertIntelCacheState): Promise<IntelCacheState> {
+    const existing = this.cacheStates.find(c => c.queryHash === state.queryHash);
+    if (existing) {
+      Object.assign(existing, state, { updatedAt: new Date() });
+      return existing;
+    }
+    const newState: IntelCacheState = {
+      id: randomUUID(),
+      queryHash: state.queryHash,
+      aoiName: state.aoiName,
+      aoiLat: state.aoiLat,
+      aoiLon: state.aoiLon,
+      radiusKm: state.radiusKm ?? null,
+      timeWindowDays: state.timeWindowDays ?? null,
+      eventsCount: state.eventsCount ?? null,
+      docsCount: state.docsCount ?? null,
+      lastRefreshAt: state.lastRefreshAt ?? null,
+      lastRefreshStatus: state.lastRefreshStatus ?? null,
+      ttlMinutes: state.ttlMinutes ?? null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.cacheStates.push(newState);
+    return newState;
+  }
+  
+  async createRefreshRun(run: InsertIntelRefreshRun): Promise<IntelRefreshRun> {
+    const newRun: IntelRefreshRun = {
+      id: randomUUID(),
+      queryHash: run.queryHash,
+      aoiName: run.aoiName,
+      aoiLat: run.aoiLat,
+      aoiLon: run.aoiLon,
+      radiusKm: run.radiusKm ?? null,
+      timeWindowDays: run.timeWindowDays ?? null,
+      status: run.status ?? "pending",
+      eventsCount: run.eventsCount ?? null,
+      docsCount: run.docsCount ?? null,
+      errorMessage: run.errorMessage ?? null,
+      completedAt: run.completedAt ?? null,
+      durationMs: run.durationMs ?? null,
+      startedAt: new Date(),
+    };
+    this.refreshRuns.push(newRun);
+    return newRun;
+  }
+  
+  async updateRefreshRun(id: string, updates: Partial<InsertIntelRefreshRun>): Promise<IntelRefreshRun | null> {
+    const run = this.refreshRuns.find(r => r.id === id);
+    if (!run) return null;
+    Object.assign(run, updates);
+    return run;
+  }
+  
+  async getRecentRefreshRuns(limit: number = 20): Promise<IntelRefreshRun[]> {
+    return this.refreshRuns
+      .sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime())
+      .slice(0, limit);
   }
 }
 

@@ -1036,3 +1036,144 @@ export const pmesiiAnalyzeRequestSchema = z.object({
 });
 
 export type PmesiiAnalyzeRequest = z.infer<typeof pmesiiAnalyzeRequestSchema>;
+
+// ============================================================================
+// GDELT Intelligence Tables (DB-first caching for open-source event data)
+// ============================================================================
+
+export const intelGdeltEvents = pgTable("intel_gdelt_event", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  globalEventId: text("global_event_id").notNull().unique(),
+  eventDate: timestamp("event_date").notNull(),
+  eventCode: text("event_code"),
+  eventBaseCode: text("event_base_code"),
+  eventRootCode: text("event_root_code"),
+  quadClass: text("quad_class"),
+  goldsteinScale: real("goldstein_scale"),
+  numMentions: real("num_mentions"),
+  numSources: real("num_sources"),
+  numArticles: real("num_articles"),
+  avgTone: real("avg_tone"),
+  actor1Name: text("actor1_name"),
+  actor1CountryCode: text("actor1_country_code"),
+  actor1Type1Code: text("actor1_type1_code"),
+  actor2Name: text("actor2_name"),
+  actor2CountryCode: text("actor2_country_code"),
+  actor2Type1Code: text("actor2_type1_code"),
+  actionGeoType: text("action_geo_type"),
+  actionGeoFullname: text("action_geo_fullname"),
+  actionGeoCountryCode: text("action_geo_country_code"),
+  actionGeoLat: real("action_geo_lat"),
+  actionGeoLon: real("action_geo_lon"),
+  sourceUrl: text("source_url"),
+  raw: jsonb("raw").notNull(),
+  queryHash: text("query_hash").notNull(),
+  fetchedAt: timestamp("fetched_at").defaultNow().notNull(),
+});
+
+export const intelGdeltDocs = pgTable("intel_gdelt_doc", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  docId: text("doc_id").notNull().unique(),
+  url: text("url").notNull(),
+  urlMobile: text("url_mobile"),
+  title: text("title"),
+  seenDate: timestamp("seen_date"),
+  publishedAt: timestamp("published_at"),
+  domain: text("domain"),
+  language: text("language"),
+  sourceName: text("source_name"),
+  sourceCountry: text("source_country"),
+  theme: text("theme"),
+  tone: real("tone"),
+  positiveScore: real("positive_score"),
+  negativeScore: real("negative_score"),
+  polarity: real("polarity"),
+  activityDensity: real("activity_density"),
+  selfGroup: text("self_group"),
+  socialImage: text("social_image"),
+  socialVideo: text("social_video"),
+  lat: real("lat"),
+  lon: real("lon"),
+  locationName: text("location_name"),
+  locationCountry: text("location_country"),
+  raw: jsonb("raw").notNull(),
+  queryHash: text("query_hash").notNull(),
+  fetchedAt: timestamp("fetched_at").defaultNow().notNull(),
+});
+
+export const intelRefreshRuns = pgTable("intel_refresh_run", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  queryHash: text("query_hash").notNull(),
+  aoiName: text("aoi_name").notNull(),
+  aoiLat: real("aoi_lat").notNull(),
+  aoiLon: real("aoi_lon").notNull(),
+  radiusKm: real("radius_km"),
+  timeWindowDays: real("time_window_days"),
+  status: text("status").notNull().default("pending"),
+  eventsCount: real("events_count").default(0),
+  docsCount: real("docs_count").default(0),
+  errorMessage: text("error_message"),
+  startedAt: timestamp("started_at").defaultNow().notNull(),
+  completedAt: timestamp("completed_at"),
+  durationMs: real("duration_ms"),
+});
+
+export const intelCacheState = pgTable("intel_cache_state", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  queryHash: text("query_hash").notNull().unique(),
+  aoiName: text("aoi_name").notNull(),
+  aoiLat: real("aoi_lat").notNull(),
+  aoiLon: real("aoi_lon").notNull(),
+  radiusKm: real("radius_km"),
+  timeWindowDays: real("time_window_days"),
+  eventsCount: real("events_count").default(0),
+  docsCount: real("docs_count").default(0),
+  lastRefreshAt: timestamp("last_refresh_at"),
+  lastRefreshStatus: text("last_refresh_status"),
+  ttlMinutes: real("ttl_minutes").default(60),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Insert schemas
+export const insertIntelGdeltEventSchema = createInsertSchema(intelGdeltEvents).omit({ id: true, fetchedAt: true });
+export const insertIntelGdeltDocSchema = createInsertSchema(intelGdeltDocs).omit({ id: true, fetchedAt: true });
+export const insertIntelRefreshRunSchema = createInsertSchema(intelRefreshRuns).omit({ id: true, startedAt: true });
+export const insertIntelCacheStateSchema = createInsertSchema(intelCacheState).omit({ id: true, createdAt: true, updatedAt: true });
+
+// Types
+export type IntelGdeltEvent = typeof intelGdeltEvents.$inferSelect;
+export type InsertIntelGdeltEvent = z.infer<typeof insertIntelGdeltEventSchema>;
+export type IntelGdeltDoc = typeof intelGdeltDocs.$inferSelect;
+export type InsertIntelGdeltDoc = z.infer<typeof insertIntelGdeltDocSchema>;
+export type IntelRefreshRun = typeof intelRefreshRuns.$inferSelect;
+export type InsertIntelRefreshRun = z.infer<typeof insertIntelRefreshRunSchema>;
+export type IntelCacheState = typeof intelCacheState.$inferSelect;
+export type InsertIntelCacheState = z.infer<typeof insertIntelCacheStateSchema>;
+
+// GDELT Query request schemas
+export const gdeltQueryRequestSchema = z.object({
+  aoi: z.object({
+    name: z.string(),
+    lat: z.number(),
+    lon: z.number(),
+    radiusKm: z.number().optional().default(50),
+  }),
+  timeWindowDays: z.number().optional().default(7),
+  themes: z.array(z.string()).optional(),
+  forceRefresh: z.boolean().optional().default(false),
+});
+
+export const gdeltRefreshRequestSchema = z.object({
+  aoi: z.object({
+    name: z.string(),
+    lat: z.number(),
+    lon: z.number(),
+    radiusKm: z.number().optional().default(50),
+  }),
+  timeWindowDays: z.number().optional().default(7),
+  themes: z.array(z.string()).optional(),
+});
+
+export type GdeltQueryRequest = z.infer<typeof gdeltQueryRequestSchema>;
+export type GdeltRefreshRequest = z.infer<typeof gdeltRefreshRequestSchema>;

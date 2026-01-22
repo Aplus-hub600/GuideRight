@@ -2232,6 +2232,381 @@ Return realistic intelligence-style events based on your knowledge of the region
     }
   });
 
+  // ============================================================================
+  // GDELT Intelligence Routes (DB-first caching with background refresh)
+  // ============================================================================
+  
+  // Active SSE connections for live refresh updates
+  const gdeltRefreshClients: Map<string, { res: any; queryHash: string }> = new Map();
+  
+  // POST /api/intel/gdelt/query - Query cached GDELT data, return stale flag if needed
+  app.post("/api/intel/gdelt/query", async (req, res) => {
+    try {
+      const { gdeltQueryRequestSchema } = await import("@shared/schema");
+      const { generateQueryHash, isCacheStale } = await import("./services/gdelt");
+      
+      const parsed = gdeltQueryRequestSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({
+          success: false,
+          error: "Invalid request format",
+          details: parsed.error.issues
+        });
+      }
+      
+      const { aoi, timeWindowDays, forceRefresh } = parsed.data;
+      const queryHash = generateQueryHash({ aoi, timeWindowDays });
+      
+      console.log(`[GDELT Query] ${aoi.name} (hash: ${queryHash})`);
+      
+      // Get cache state
+      const cacheState = await storage.getCacheState(queryHash);
+      const isStale = !cacheState || isCacheStale(cacheState.lastRefreshAt, cacheState.ttlMinutes || 60);
+      
+      // Get cached events and docs
+      const [events, docs] = await Promise.all([
+        storage.getGdeltEvents(queryHash),
+        storage.getGdeltDocs(queryHash)
+      ]);
+      
+      // If stale or force refresh, trigger background refresh (non-blocking)
+      if ((isStale || forceRefresh) && cacheState?.lastRefreshStatus !== "running") {
+        console.log(`[GDELT Query] Cache stale, triggering background refresh`);
+        
+        // Fire and forget - don't await
+        (async () => {
+          try {
+            const { refreshGdeltData } = await import("./services/gdelt");
+            
+            // Create refresh run
+            const run = await storage.createRefreshRun({
+              queryHash,
+              aoiName: aoi.name,
+              aoiLat: aoi.lat,
+              aoiLon: aoi.lon,
+              radiusKm: aoi.radiusKm,
+              timeWindowDays,
+              status: "running"
+            });
+            
+            // Update cache state to running
+            await storage.upsertCacheState({
+              queryHash,
+              aoiName: aoi.name,
+              aoiLat: aoi.lat,
+              aoiLon: aoi.lon,
+              radiusKm: aoi.radiusKm,
+              timeWindowDays,
+              lastRefreshStatus: "running",
+              ttlMinutes: 60
+            });
+            
+            // Notify SSE clients
+            gdeltRefreshClients.forEach((client) => {
+              if (client.queryHash === queryHash) {
+                client.res.write(`data: ${JSON.stringify({ type: "refresh_started", runId: run.id })}\n\n`);
+              }
+            });
+            
+            // Perform refresh
+            const result = await refreshGdeltData({ aoi, timeWindowDays });
+            
+            if (result.success) {
+              // Upsert events
+              const eventInserts = result.events.map(e => ({ ...e, queryHash }));
+              await storage.upsertGdeltEventsBulk(eventInserts as any);
+              
+              // Upsert docs
+              const docInserts = result.docs.map(d => ({ ...d, queryHash }));
+              await storage.upsertGdeltDocsBulk(docInserts as any);
+              
+              // Update cache state
+              await storage.upsertCacheState({
+                queryHash,
+                aoiName: aoi.name,
+                aoiLat: aoi.lat,
+                aoiLon: aoi.lon,
+                radiusKm: aoi.radiusKm,
+                timeWindowDays,
+                eventsCount: result.eventsCount,
+                docsCount: result.docsCount,
+                lastRefreshAt: new Date(),
+                lastRefreshStatus: "success",
+                ttlMinutes: 60
+              });
+              
+              // Update run
+              await storage.updateRefreshRun(run.id, {
+                status: "success",
+                eventsCount: result.eventsCount,
+                docsCount: result.docsCount,
+                completedAt: new Date(),
+                durationMs: result.durationMs
+              });
+              
+              // Notify SSE clients
+              gdeltRefreshClients.forEach((client) => {
+                if (client.queryHash === queryHash) {
+                  client.res.write(`data: ${JSON.stringify({ 
+                    type: "refresh_complete", 
+                    eventsCount: result.eventsCount,
+                    docsCount: result.docsCount,
+                    durationMs: result.durationMs
+                  })}\n\n`);
+                }
+              });
+            } else {
+              await storage.upsertCacheState({
+                queryHash,
+                aoiName: aoi.name,
+                aoiLat: aoi.lat,
+                aoiLon: aoi.lon,
+                radiusKm: aoi.radiusKm,
+                timeWindowDays,
+                lastRefreshStatus: "error",
+                ttlMinutes: 60
+              });
+              
+              await storage.updateRefreshRun(run.id, {
+                status: "error",
+                errorMessage: result.error,
+                completedAt: new Date(),
+                durationMs: result.durationMs
+              });
+            }
+          } catch (bgError) {
+            console.error("[GDELT] Background refresh error:", bgError);
+          }
+        })();
+      }
+      
+      // Return cached data immediately
+      res.json({
+        success: true,
+        queryHash,
+        aoi,
+        coverage: {
+          eventsCount: events.length,
+          docsCount: docs.length,
+          lastUpdated: cacheState?.lastRefreshAt || null,
+          isStale,
+          refreshing: cacheState?.lastRefreshStatus === "running"
+        },
+        events: events.slice(0, 100),
+        docs: docs.slice(0, 100)
+      });
+      
+    } catch (error) {
+      console.error("[GDELT Query] Error:", error);
+      res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+  
+  // POST /api/intel/gdelt/refresh - Force refresh GDELT data for AOI
+  app.post("/api/intel/gdelt/refresh", async (req, res) => {
+    try {
+      const { gdeltRefreshRequestSchema } = await import("@shared/schema");
+      const { generateQueryHash, refreshGdeltData } = await import("./services/gdelt");
+      
+      const parsed = gdeltRefreshRequestSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({
+          success: false,
+          error: "Invalid request format",
+          details: parsed.error.issues
+        });
+      }
+      
+      const { aoi, timeWindowDays, themes } = parsed.data;
+      const queryHash = generateQueryHash({ aoi, timeWindowDays, themes });
+      
+      console.log(`[GDELT Refresh] Starting: ${aoi.name} (hash: ${queryHash})`);
+      
+      // Create refresh run
+      const run = await storage.createRefreshRun({
+        queryHash,
+        aoiName: aoi.name,
+        aoiLat: aoi.lat,
+        aoiLon: aoi.lon,
+        radiusKm: aoi.radiusKm,
+        timeWindowDays,
+        status: "running"
+      });
+      
+      // Update cache state
+      await storage.upsertCacheState({
+        queryHash,
+        aoiName: aoi.name,
+        aoiLat: aoi.lat,
+        aoiLon: aoi.lon,
+        radiusKm: aoi.radiusKm,
+        timeWindowDays,
+        lastRefreshStatus: "running",
+        ttlMinutes: 60
+      });
+      
+      // Perform refresh
+      const result = await refreshGdeltData({ aoi, timeWindowDays, themes });
+      
+      if (result.success) {
+        // Upsert events
+        const eventInserts = result.events.map(e => ({ ...e, queryHash }));
+        const eventsUpserted = await storage.upsertGdeltEventsBulk(eventInserts as any);
+        
+        // Upsert docs
+        const docInserts = result.docs.map(d => ({ ...d, queryHash }));
+        const docsUpserted = await storage.upsertGdeltDocsBulk(docInserts as any);
+        
+        // Update cache state
+        await storage.upsertCacheState({
+          queryHash,
+          aoiName: aoi.name,
+          aoiLat: aoi.lat,
+          aoiLon: aoi.lon,
+          radiusKm: aoi.radiusKm,
+          timeWindowDays,
+          eventsCount: result.eventsCount,
+          docsCount: result.docsCount,
+          lastRefreshAt: new Date(),
+          lastRefreshStatus: "success",
+          ttlMinutes: 60
+        });
+        
+        // Update run
+        await storage.updateRefreshRun(run.id, {
+          status: "success",
+          eventsCount: result.eventsCount,
+          docsCount: result.docsCount,
+          completedAt: new Date(),
+          durationMs: result.durationMs
+        });
+        
+        // Notify SSE clients
+        gdeltRefreshClients.forEach((client) => {
+          if (client.queryHash === queryHash) {
+            client.res.write(`data: ${JSON.stringify({ 
+              type: "refresh_complete", 
+              eventsCount: result.eventsCount,
+              docsCount: result.docsCount,
+              durationMs: result.durationMs
+            })}\n\n`);
+          }
+        });
+        
+        res.json({
+          success: true,
+          runId: run.id,
+          queryHash,
+          eventsCount: result.eventsCount,
+          docsCount: result.docsCount,
+          eventsUpserted,
+          docsUpserted,
+          durationMs: result.durationMs
+        });
+      } else {
+        await storage.upsertCacheState({
+          queryHash,
+          aoiName: aoi.name,
+          aoiLat: aoi.lat,
+          aoiLon: aoi.lon,
+          radiusKm: aoi.radiusKm,
+          timeWindowDays,
+          lastRefreshStatus: "error",
+          ttlMinutes: 60
+        });
+        
+        await storage.updateRefreshRun(run.id, {
+          status: "error",
+          errorMessage: result.error,
+          completedAt: new Date(),
+          durationMs: result.durationMs
+        });
+        
+        res.status(500).json({
+          success: false,
+          runId: run.id,
+          queryHash,
+          error: result.error,
+          durationMs: result.durationMs
+        });
+      }
+      
+    } catch (error) {
+      console.error("[GDELT Refresh] Error:", error);
+      res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+  
+  // GET /api/intel/gdelt/live - SSE stream for refresh status updates
+  app.get("/api/intel/gdelt/live", async (req, res) => {
+    const queryHash = req.query.queryHash as string;
+    
+    if (!queryHash) {
+      return res.status(400).json({
+        success: false,
+        error: "queryHash parameter required"
+      });
+    }
+    
+    // Set up SSE headers
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.flushHeaders();
+    
+    const clientId = crypto.randomUUID();
+    gdeltRefreshClients.set(clientId, { res, queryHash });
+    
+    console.log(`[GDELT Live] Client connected: ${clientId} for hash ${queryHash}`);
+    
+    // Send initial state
+    const cacheState = await storage.getCacheState(queryHash);
+    res.write(`data: ${JSON.stringify({ 
+      type: "connected", 
+      clientId,
+      cacheState: cacheState ? {
+        eventsCount: cacheState.eventsCount,
+        docsCount: cacheState.docsCount,
+        lastRefreshAt: cacheState.lastRefreshAt,
+        lastRefreshStatus: cacheState.lastRefreshStatus
+      } : null
+    })}\n\n`);
+    
+    // Keep-alive ping every 30s
+    const pingInterval = setInterval(() => {
+      res.write(`data: ${JSON.stringify({ type: "ping", timestamp: Date.now() })}\n\n`);
+    }, 30000);
+    
+    // Cleanup on close
+    req.on("close", () => {
+      clearInterval(pingInterval);
+      gdeltRefreshClients.delete(clientId);
+      console.log(`[GDELT Live] Client disconnected: ${clientId}`);
+    });
+  });
+  
+  // GET /api/intel/gdelt/runs - Get recent refresh runs
+  app.get("/api/intel/gdelt/runs", async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 20;
+      const runs = await storage.getRecentRefreshRuns(limit);
+      res.json({ success: true, runs });
+    } catch (error) {
+      console.error("[GDELT Runs] Error:", error);
+      res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
   // Gemini Integration Routes
   
   // Location-based intelligence query with Google Maps grounding

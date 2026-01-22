@@ -34,6 +34,14 @@ import {
   type InsertAssistantMessage,
   type AssistantRun,
   type InsertAssistantRun,
+  type IntelGdeltEvent,
+  type InsertIntelGdeltEvent,
+  type IntelGdeltDoc,
+  type InsertIntelGdeltDoc,
+  type IntelCacheState,
+  type InsertIntelCacheState,
+  type IntelRefreshRun,
+  type InsertIntelRefreshRun,
   users,
   chatMessages,
   analysisResults,
@@ -48,7 +56,11 @@ import {
   graphEdges,
   assistantSessions,
   assistantMessages,
-  assistantRuns
+  assistantRuns,
+  intelGdeltEvents,
+  intelGdeltDocs,
+  intelCacheState,
+  intelRefreshRuns
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, like, sql, desc, asc, inArray, gte, lte, isNotNull, isNull } from "drizzle-orm";
@@ -779,5 +791,111 @@ export class DatabaseStorage implements IStorage {
       .where(eq(assistantRuns.id, id))
       .returning();
     return result || null;
+  }
+  
+  // GDELT Intel operations
+  async getGdeltEvents(queryHash: string, limit: number = 250): Promise<IntelGdeltEvent[]> {
+    return await db
+      .select()
+      .from(intelGdeltEvents)
+      .where(eq(intelGdeltEvents.queryHash, queryHash))
+      .orderBy(desc(intelGdeltEvents.eventDate))
+      .limit(limit);
+  }
+  
+  async upsertGdeltEvent(event: InsertIntelGdeltEvent): Promise<IntelGdeltEvent> {
+    const [result] = await db
+      .insert(intelGdeltEvents)
+      .values(event)
+      .onConflictDoUpdate({
+        target: intelGdeltEvents.globalEventId,
+        set: { ...event, fetchedAt: sql`NOW()` }
+      })
+      .returning();
+    return result;
+  }
+  
+  async upsertGdeltEventsBulk(events: InsertIntelGdeltEvent[]): Promise<number> {
+    if (events.length === 0) return 0;
+    const result = await db
+      .insert(intelGdeltEvents)
+      .values(events)
+      .onConflictDoNothing({ target: intelGdeltEvents.globalEventId });
+    return events.length;
+  }
+  
+  async getGdeltDocs(queryHash: string, limit: number = 250): Promise<IntelGdeltDoc[]> {
+    return await db
+      .select()
+      .from(intelGdeltDocs)
+      .where(eq(intelGdeltDocs.queryHash, queryHash))
+      .orderBy(desc(intelGdeltDocs.publishedAt))
+      .limit(limit);
+  }
+  
+  async upsertGdeltDoc(doc: InsertIntelGdeltDoc): Promise<IntelGdeltDoc> {
+    const [result] = await db
+      .insert(intelGdeltDocs)
+      .values(doc)
+      .onConflictDoUpdate({
+        target: intelGdeltDocs.docId,
+        set: { ...doc, fetchedAt: sql`NOW()` }
+      })
+      .returning();
+    return result;
+  }
+  
+  async upsertGdeltDocsBulk(docs: InsertIntelGdeltDoc[]): Promise<number> {
+    if (docs.length === 0) return 0;
+    const result = await db
+      .insert(intelGdeltDocs)
+      .values(docs)
+      .onConflictDoNothing({ target: intelGdeltDocs.docId });
+    return docs.length;
+  }
+  
+  async getCacheState(queryHash: string): Promise<IntelCacheState | undefined> {
+    const [result] = await db
+      .select()
+      .from(intelCacheState)
+      .where(eq(intelCacheState.queryHash, queryHash));
+    return result || undefined;
+  }
+  
+  async upsertCacheState(state: InsertIntelCacheState): Promise<IntelCacheState> {
+    const [result] = await db
+      .insert(intelCacheState)
+      .values(state)
+      .onConflictDoUpdate({
+        target: intelCacheState.queryHash,
+        set: { ...state, updatedAt: sql`NOW()` }
+      })
+      .returning();
+    return result;
+  }
+  
+  async createRefreshRun(run: InsertIntelRefreshRun): Promise<IntelRefreshRun> {
+    const [result] = await db
+      .insert(intelRefreshRuns)
+      .values(run)
+      .returning();
+    return result;
+  }
+  
+  async updateRefreshRun(id: string, updates: Partial<InsertIntelRefreshRun>): Promise<IntelRefreshRun | null> {
+    const [result] = await db
+      .update(intelRefreshRuns)
+      .set(updates)
+      .where(eq(intelRefreshRuns.id, id))
+      .returning();
+    return result || null;
+  }
+  
+  async getRecentRefreshRuns(limit: number = 20): Promise<IntelRefreshRun[]> {
+    return await db
+      .select()
+      .from(intelRefreshRuns)
+      .orderBy(desc(intelRefreshRuns.startedAt))
+      .limit(limit);
   }
 }
