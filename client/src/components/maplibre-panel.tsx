@@ -407,19 +407,37 @@ export function MapLibrePanel({
 
   if (mapError) {
     return (
-      <div className={cn("relative w-full h-full flex items-center justify-center bg-muted", className)}>
-        <div className="text-center p-8 max-w-md">
-          <div className="text-6xl mb-4 opacity-50">
-            <MapPin className="h-16 w-16 mx-auto text-muted-foreground" />
+      <div className={cn("relative w-full h-full bg-muted", className)}>
+        {/* Error message in center */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="text-center p-8 max-w-md">
+            <div className="text-6xl mb-4 opacity-50">
+              <MapPin className="h-16 w-16 mx-auto text-muted-foreground" />
+            </div>
+            <h3 className="text-lg font-semibold mb-2">Map Unavailable</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              {mapError}
+            </p>
+            <div className="text-xs text-muted-foreground bg-background/50 rounded-md p-3 border">
+              <strong>Current AOI:</strong> {aoi?.name || "Dhaka, Bangladesh"}<br/>
+              <strong>Coordinates:</strong> {(aoi?.lat || 23.8103).toFixed(4)}, {(aoi?.lng || 90.4125).toFixed(4)}
+            </div>
           </div>
-          <h3 className="text-lg font-semibold mb-2">Map Unavailable</h3>
-          <p className="text-sm text-muted-foreground mb-4">
-            {mapError}
-          </p>
-          <div className="text-xs text-muted-foreground bg-background/50 rounded-md p-3 border">
-            <strong>Current AOI:</strong> {aoi?.name || "Dhaka, Bangladesh"}<br/>
-            <strong>Coordinates:</strong> {(aoi?.lat || 23.8103).toFixed(4)}, {(aoi?.lng || 90.4125).toFixed(4)}
+        </div>
+        
+        {/* Show lens selector if not hidden */}
+        {!hideLensSelector && (
+          <div className="absolute top-3 left-3 z-10 flex flex-col gap-2">
+            <MapLensSelector
+              activeLens={activeLens}
+              onLensChange={setActiveLens}
+            />
           </div>
+        )}
+        
+        {/* Always show the legend - even when map fails or lens selector is hidden */}
+        <div className="absolute bottom-4 left-3 z-10">
+          <LensLegend activeLens={activeLens} />
         </div>
       </div>
     )
@@ -501,12 +519,10 @@ export function MapLibrePanel({
         </div>
       )}
       
-      {/* Legend - Bottom Left (only show if lens selector not hidden) */}
-      {!hideLensSelector && (
-        <div className="absolute bottom-4 left-3 z-10">
-          <LensLegend activeLens={activeLens} />
-        </div>
-      )}
+      {/* Legend - Bottom Left - Always show regardless of lens selector visibility */}
+      <div className="absolute bottom-4 left-3 z-10">
+        <LensLegend activeLens={activeLens} />
+      </div>
 
       {/* Zoom Controls - Bottom Right */}
       <div className="absolute bottom-4 right-3 z-10 flex flex-col gap-1">
