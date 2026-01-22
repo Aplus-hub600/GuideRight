@@ -379,8 +379,9 @@ function GoogleMapsContent({
         </div>
       </div>
       
-      <div className="absolute bottom-16 left-3 z-10">
-        <LensLegend activeLens={activeLens} mapStyle={mapStyle} />
+      {/* Legend - flush bottom-right */}
+      <div className="absolute bottom-0 right-0 z-10">
+        <LensLegend activeLens={activeLens} mapStyle={mapStyle} className="rounded-br-none rounded-bl-none rounded-tr-none" />
       </div>
       
       <div className="absolute top-16 right-3 bottom-3 w-80 z-10">

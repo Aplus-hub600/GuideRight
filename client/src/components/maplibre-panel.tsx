@@ -435,9 +435,9 @@ export function MapLibrePanel({
           </div>
         )}
         
-        {/* Always show the legend - even when map fails or lens selector is hidden */}
-        <div className="absolute bottom-4 left-3 z-10">
-          <LensLegend activeLens={activeLens} mapStyle={mapStyle} />
+        {/* Always show the legend - flush bottom-right */}
+        <div className="absolute bottom-0 right-0 z-10">
+          <LensLegend activeLens={activeLens} mapStyle={mapStyle} className="rounded-br-none rounded-bl-none rounded-tr-none" />
         </div>
       </div>
     )
@@ -519,13 +519,13 @@ export function MapLibrePanel({
         </div>
       )}
       
-      {/* Legend - Bottom Left - Always show regardless of lens selector visibility */}
-      <div className="absolute bottom-4 left-3 z-10">
-        <LensLegend activeLens={activeLens} mapStyle={mapStyle} />
+      {/* Legend - Flush bottom-right */}
+      <div className="absolute bottom-0 right-0 z-10">
+        <LensLegend activeLens={activeLens} mapStyle={mapStyle} className="rounded-br-none rounded-bl-none rounded-tr-none" />
       </div>
 
-      {/* Zoom Controls - Bottom Right */}
-      <div className="absolute bottom-4 right-3 z-10 flex flex-col gap-1">
+      {/* Zoom Controls - Above legend on right side */}
+      <div className="absolute bottom-52 right-3 z-10 flex flex-col gap-1">
         <Button size="icon" variant="secondary" onClick={handleZoomIn} data-testid="button-zoom-in">
           <ZoomIn className="h-4 w-4" />
         </Button>

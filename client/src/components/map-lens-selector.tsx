@@ -290,17 +290,17 @@ export function LensLegend({ activeLens, mapStyle = "streets", className }: Lens
         exit={{ opacity: 0, y: -8, scale: 0.98 }}
         transition={{ duration: 0.12, ease: "easeOut" }}
         className={cn(
-          "backdrop-blur-md border shadow-xl rounded-lg overflow-hidden",
+          "backdrop-blur-md border shadow-lg rounded-lg overflow-hidden",
           "font-mono text-[11px] select-none",
           isSatellite 
-            ? "bg-zinc-900/95 text-zinc-100" 
-            : "bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100",
+            ? "bg-zinc-900/95 text-zinc-100 border-r-0 border-b-0" 
+            : "bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 border-r-0 border-b-0",
           className
         )}
         style={{ 
           borderColor: colors.border,
-          minWidth: "200px",
-          maxWidth: "240px"
+          minWidth: "220px",
+          maxWidth: "260px"
         }}
       >
         {/* Smart Header with live stats */}
