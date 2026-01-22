@@ -16,7 +16,10 @@ import {
   Crosshair,
   Navigation,
   Maximize2,
-  Locate
+  Locate,
+  Map,
+  Satellite,
+  Globe2
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { motion, AnimatePresence } from "framer-motion"
@@ -682,6 +685,122 @@ export function SmartMapControls({
           </div>
         </div>
       )}
+    </motion.div>
+  )
+}
+
+// Map style options with metadata
+const MAP_STYLES = [
+  { 
+    id: "streets" as const, 
+    label: "Terrain", 
+    shortLabel: "TRN",
+    icon: Map,
+    desc: "Roads & boundaries"
+  },
+  { 
+    id: "satellite" as const, 
+    label: "Satellite", 
+    shortLabel: "SAT",
+    icon: Satellite,
+    desc: "Aerial imagery"
+  },
+  { 
+    id: "hybrid" as const, 
+    label: "Hybrid", 
+    shortLabel: "HYB",
+    icon: Globe2,
+    desc: "Imagery + labels"
+  }
+]
+
+interface SmartMapStyleToggleProps {
+  activeStyle: "streets" | "satellite" | "hybrid"
+  onStyleChange: (style: "streets" | "satellite" | "hybrid") => void
+  className?: string
+}
+
+export function SmartMapStyleToggle({
+  activeStyle,
+  onStyleChange,
+  className
+}: SmartMapStyleToggleProps) {
+  const activeConfig = MAP_STYLES.find(s => s.id === activeStyle) || MAP_STYLES[0]
+  
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -8 }}
+      animate={{ opacity: 1, y: 0 }}
+      className={cn(
+        "backdrop-blur-md border shadow-lg rounded-lg overflow-hidden",
+        "font-mono text-[11px] select-none",
+        "bg-zinc-900/90 text-zinc-100 border-zinc-700",
+        className
+      )}
+    >
+      {/* Style selector with sliding indicator */}
+      <div className="relative p-1 flex gap-0.5">
+        {MAP_STYLES.map((style) => {
+          const Icon = style.icon
+          const isActive = style.id === activeStyle
+          
+          return (
+            <Tooltip key={style.id}>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => onStyleChange(style.id)}
+                  className={cn(
+                    "relative z-10 flex items-center gap-1.5 px-2.5 py-1.5 rounded transition-all duration-200",
+                    isActive 
+                      ? "text-white" 
+                      : "text-zinc-400 hover:text-zinc-200"
+                  )}
+                  data-testid={`button-map-${style.id}`}
+                >
+                  {isActive && (
+                    <motion.div
+                      layoutId="activeStyleBg"
+                      className="absolute inset-0 bg-gradient-to-r from-emerald-600 to-emerald-500 rounded"
+                      initial={false}
+                      transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                    />
+                  )}
+                  <Icon className="w-3.5 h-3.5 relative z-10" />
+                  <span className="text-[10px] font-medium relative z-10 hidden sm:inline">
+                    {style.shortLabel}
+                  </span>
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">
+                <div className="font-medium">{style.label}</div>
+                <div className="text-[10px] opacity-70">{style.desc}</div>
+              </TooltipContent>
+            </Tooltip>
+          )
+        })}
+      </div>
+      
+      {/* Active mode indicator */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={activeStyle}
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: "auto" }}
+          exit={{ opacity: 0, height: 0 }}
+          transition={{ duration: 0.15 }}
+          className="border-t border-zinc-700 px-2.5 py-1.5 bg-zinc-800/50"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[9px] text-zinc-400 uppercase tracking-wider">
+              {activeConfig.label} View
+            </span>
+            <span className="text-[9px] text-emerald-400 flex items-center gap-1">
+              <div className="w-1 h-1 rounded-full bg-emerald-400 animate-pulse" />
+              Active
+            </span>
+          </div>
+        </motion.div>
+      </AnimatePresence>
     </motion.div>
   )
 }

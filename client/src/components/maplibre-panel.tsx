@@ -7,7 +7,7 @@ import { Navigation, Target, Layers, MapPin, Crosshair, ZoomIn, ZoomOut } from "
 import { useTranslation } from "react-i18next"
 import { cn } from "@/lib/utils"
 import { MapScopeBar, type DataCoverage } from "./map-scope-bar"
-import { MapLensSelector, LensLegend, SmartMapControls, type MapLens, LENS_CONFIGS } from "./map-lens-selector"
+import { MapLensSelector, LensLegend, SmartMapControls, SmartMapStyleToggle, type MapLens, LENS_CONFIGS } from "./map-lens-selector"
 import { useMapInfrastructureLayer, INFRASTRUCTURE_NODES, type InfrastructureNode } from "./map-infrastructure-layer"
 import { useMapAccessibilityLayer } from "./map-accessibility-layer"
 import { useMapActivityLayer } from "./map-activity-layer"
@@ -479,54 +479,20 @@ export function MapLibrePanel({
             onLensChange={setActiveLens}
           />
 
-          <div className="flex flex-col gap-0.5 bg-background/95 backdrop-blur-sm rounded-md border overflow-hidden">
-            <Button
-              size="sm"
-              variant={mapStyle === "streets" ? "default" : "ghost"}
-              onClick={() => setMapStyle("streets")}
-              className="rounded-none justify-start gap-2 h-8"
-              data-testid="button-map-streets"
-            >
-              <Layers className="h-3.5 w-3.5" />
-              <span className="text-xs">Streets</span>
-            </Button>
-            <Button
-              size="sm"
-              variant={mapStyle === "satellite" ? "default" : "ghost"}
-              onClick={() => setMapStyle("satellite")}
-              className="rounded-none justify-start gap-2 h-8"
-              data-testid="button-map-satellite"
-            >
-              <Target className="h-3.5 w-3.5" />
-              <span className="text-xs">Satellite</span>
-            </Button>
-          </div>
+          <SmartMapStyleToggle
+            activeStyle={mapStyle}
+            onStyleChange={setMapStyle}
+          />
         </div>
       )}
       
-      {/* Minimal map style toggle when lens selector is hidden - positioned at top left */}
+      {/* Smart Map Style Toggle - top left when lens selector is hidden */}
       {hideLensSelector && (
         <div className="absolute top-3 left-3 z-10">
-          <div className="flex gap-1 bg-background/95 backdrop-blur-sm rounded-md border p-1">
-            <Button
-              size="icon"
-              variant={mapStyle === "streets" ? "default" : "ghost"}
-              onClick={() => setMapStyle("streets")}
-              className="h-8 w-8"
-              data-testid="button-map-streets"
-            >
-              <Layers className="h-4 w-4" />
-            </Button>
-            <Button
-              size="icon"
-              variant={mapStyle === "satellite" ? "default" : "ghost"}
-              onClick={() => setMapStyle("satellite")}
-              className="h-8 w-8"
-              data-testid="button-map-satellite"
-            >
-              <Target className="h-4 w-4" />
-            </Button>
-          </div>
+          <SmartMapStyleToggle
+            activeStyle={mapStyle}
+            onStyleChange={setMapStyle}
+          />
         </div>
       )}
       
