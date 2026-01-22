@@ -524,11 +524,19 @@ export function MapLibrePanel({
         <LensLegend activeLens={activeLens} mapStyle={mapStyle} className="rounded-br-none rounded-bl-none rounded-tr-none" />
       </div>
 
-      {/* Zoom Controls - Above legend on right side */}
-      <div className="absolute bottom-52 right-3 z-10 flex flex-col gap-1">
+      {/* Zoom & Navigation Controls - Bottom left, above any other elements */}
+      <div className="absolute bottom-4 left-3 z-10 flex flex-col gap-1">
+        <Button size="icon" variant="secondary" onClick={handleZoomIn} data-testid="button-zoom-in">
+          <ZoomIn className="h-4 w-4" />
+        </Button>
         <Button size="icon" variant="secondary" onClick={handleZoomOut} data-testid="button-zoom-out">
           <ZoomOut className="h-4 w-4" />
         </Button>
+        {aoi && (
+          <Button size="icon" variant="secondary" onClick={handleCenterOnAOI} data-testid="button-center-aoi">
+            <Crosshair className="h-4 w-4" />
+          </Button>
+        )}
         {onMovementPlanRequest && (
           <Button size="icon" variant="secondary" onClick={onMovementPlanRequest} data-testid="button-movement-plan">
             <Navigation className="h-4 w-4" />
