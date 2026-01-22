@@ -173,40 +173,36 @@ export function LensLegend({ activeLens, className }: LensLegendProps) {
           maxWidth: "180px"
         }}
       >
-        {/* Header - Compact military style */}
+        {/* Header - Professional and accessible */}
         <div 
-          className="flex items-center gap-1.5 px-2 py-1.5 border-b"
+          className="flex items-center gap-2 px-2.5 py-2 border-b"
           style={{ backgroundColor: colors.bg, borderColor: colors.border }}
         >
-          <Icon className="h-3 w-3 shrink-0" style={{ color: colors.accent }} />
+          <Icon className="h-3.5 w-3.5 shrink-0" style={{ color: colors.accent }} />
           <span 
-            className="text-[10px] font-bold tracking-[0.08em] uppercase truncate"
+            className="text-[11px] font-semibold tracking-wide truncate"
             style={{ color: colors.accent }}
           >
-            {lensConfig.shortLabel}
+            {lensConfig.label}
           </span>
-          <div className="ml-auto flex items-center gap-1">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-[8px] text-muted-foreground uppercase tracking-wide">LIVE</span>
-          </div>
         </div>
         
-        {/* Legend Content - Tight grid layout */}
-        <div className="px-2 py-1.5 space-y-2">
+        {/* Legend Content - Clear labels for executive understanding */}
+        <div className="px-2.5 py-2 space-y-2.5">
           {/* Infrastructure */}
           {activeLens === "infrastructure" && (
             <>
-              <LegendGroup label="FACILITIES">
-                <LegendRow color="#ef4444" code="MED" label="Medical" />
-                <LegendRow color="#3b82f6" code="TRN" label="Transport" />
-                <LegendRow color="#f59e0b" code="UTL" label="Utility" />
-                <LegendRow color="#10b981" code="GOV" label="Government" />
-                <LegendRow color="#8b5cf6" code="EDU" label="Education" />
+              <LegendGroup label="Critical Facilities">
+                <LegendItem color="#ef4444" label="Hospitals & Clinics" />
+                <LegendItem color="#3b82f6" label="Transport Hubs" />
+                <LegendItem color="#f59e0b" label="Power & Utilities" />
+                <LegendItem color="#10b981" label="Government Buildings" />
+                <LegendItem color="#8b5cf6" label="Schools & Universities" />
               </LegendGroup>
-              <LegendGroup label="CONFIDENCE">
-                <LegendConfidence level="A" label="Multi-source" status="verified" />
-                <LegendConfidence level="B" label="Single source" status="partial" />
-                <LegendConfidence level="C" label="Inferred" status="low" />
+              <LegendGroup label="Data Quality">
+                <LegendQuality status="high" label="Verified (3+ sources)" />
+                <LegendQuality status="medium" label="Confirmed (1 source)" />
+                <LegendQuality status="low" label="Estimated" />
               </LegendGroup>
             </>
           )}
@@ -214,15 +210,15 @@ export function LensLegend({ activeLens, className }: LensLegendProps) {
           {/* Human Activity */}
           {activeLens === "human-activity" && (
             <>
-              <LegendGroup label="INTENSITY">
-                <LegendIntensity level="HIGH" color="#ef4444" pulse />
-                <LegendIntensity level="MOD" color="#f59e0b" />
-                <LegendIntensity level="LOW" color="#10b981" />
+              <LegendGroup label="Activity Level">
+                <LegendLevel level="High" color="#ef4444" fill={100} pulse />
+                <LegendLevel level="Moderate" color="#f59e0b" fill={60} />
+                <LegendLevel level="Low" color="#10b981" fill={30} />
               </LegendGroup>
-              <LegendGroup label="TYPE">
-                <LegendActivityType type="gathering" label="Gathering" />
-                <LegendActivityType type="movement" label="Movement" />
-                <LegendActivityType type="incident" label="Incident" />
+              <LegendGroup label="Activity Type">
+                <LegendActivityIcon type="gathering" label="Public Gatherings" />
+                <LegendActivityIcon type="movement" label="Population Flow" />
+                <LegendActivityIcon type="incident" label="Reported Incidents" />
               </LegendGroup>
             </>
           )}
@@ -230,15 +226,15 @@ export function LensLegend({ activeLens, className }: LensLegendProps) {
           {/* Risk & Stress */}
           {activeLens === "risk-stress" && (
             <>
-              <LegendGroup label="THREAT LEVEL">
-                <LegendThreat level="HIGH" color="#ef4444" pulse />
-                <LegendThreat level="ELEV" color="#f97316" />
-                <LegendThreat level="MOD" color="#eab308" />
-                <LegendThreat level="LOW" color="#22c55e" />
+              <LegendGroup label="Risk Assessment">
+                <LegendRisk level="High Risk" color="#ef4444" pulse />
+                <LegendRisk level="Elevated" color="#f97316" />
+                <LegendRisk level="Moderate" color="#eab308" />
+                <LegendRisk level="Low Risk" color="#22c55e" />
               </LegendGroup>
-              <LegendGroup label="ZONES">
-                <LegendZone type="fill" label="Risk Area" />
-                <LegendZone type="border" label="Boundary" />
+              <LegendGroup label="Map Overlay">
+                <LegendOverlay type="fill" label="Risk Zone" />
+                <LegendOverlay type="border" label="Zone Boundary" />
               </LegendGroup>
             </>
           )}
@@ -246,198 +242,185 @@ export function LensLegend({ activeLens, className }: LensLegendProps) {
           {/* Logistics */}
           {activeLens === "logistics" && (
             <>
-              <LegendGroup label="MSR STATUS">
-                <LegendRoute status="GREEN" color="#22c55e" />
-                <LegendRoute status="AMBER" color="#f59e0b" />
-                <LegendRoute status="RED" color="#ef4444" />
-                <LegendRoute status="BLACK" color="#6b7280" />
+              <LegendGroup label="Route Conditions">
+                <LegendRouteStatus status="Clear" color="#22c55e" desc="Open, no delays" />
+                <LegendRouteStatus status="Congested" color="#f59e0b" desc="Slow traffic" />
+                <LegendRouteStatus status="Blocked" color="#ef4444" desc="Impassable" />
+                <LegendRouteStatus status="Restricted" color="#6b7280" desc="Limited access" />
               </LegendGroup>
-              <LegendGroup label="LOG POINTS">
-                <LegendSupply type="POL" color="#f97316" label="Fuel" />
-                <LegendSupply type="MED" color="#ef4444" label="Medical" />
-                <LegendSupply type="CL1" color="#22c55e" label="Subsist" />
-                <LegendSupply type="GEN" color="#3b82f6" label="General" />
+              <LegendGroup label="Supply Points">
+                <LegendSupplyPoint color="#f97316" label="Fuel Stations" />
+                <LegendSupplyPoint color="#ef4444" label="Medical Supplies" />
+                <LegendSupplyPoint color="#22c55e" label="Food & Water" />
+                <LegendSupplyPoint color="#3b82f6" label="General Supplies" />
               </LegendGroup>
             </>
           )}
         </div>
         
-        {/* Footer - Data freshness indicator */}
-        <div className="px-2 py-1 border-t border-border/50 flex items-center justify-between">
-          <span className="text-[8px] text-muted-foreground/70 uppercase tracking-wide">
-            DTG: {new Date().toISOString().slice(11, 16)}Z
-          </span>
-          <span className="text-[8px] text-muted-foreground/70 uppercase tracking-wide">
-            REF: AOI-01
-          </span>
+        {/* Footer - Professional data attribution */}
+        <div className="px-2.5 py-1.5 border-t border-border/40 bg-muted/30">
+          <div className="flex items-center justify-between text-[9px] text-muted-foreground">
+            <span>Updated: {new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })} UTC</span>
+            <span className="flex items-center gap-1">
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              Real-time
+            </span>
+          </div>
         </div>
       </motion.div>
     </AnimatePresence>
   )
 }
 
-// Compact legend group with military-style section header
+// Legend section group with clean header
 function LegendGroup({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <div className="text-[8px] font-semibold text-muted-foreground/60 tracking-[0.1em] mb-1 border-b border-border/30 pb-0.5">
+      <div className="text-[9px] font-semibold text-muted-foreground/80 tracking-wide mb-1.5 pb-0.5 border-b border-border/40">
         {label}
       </div>
-      <div className="space-y-0.5">{children}</div>
+      <div className="space-y-1">{children}</div>
     </div>
   )
 }
 
-// Facility type row with color indicator and military code
-function LegendRow({ color, code, label }: { color: string; code: string; label: string }) {
+// Simple color + label item for facilities
+function LegendItem({ color, label }: { color: string; label: string }) {
   return (
-    <div className="flex items-center gap-1.5 h-4">
+    <div className="flex items-center gap-2 h-[18px]">
       <div 
-        className="w-2 h-2 rounded-sm shrink-0 shadow-sm"
+        className="w-2.5 h-2.5 rounded-sm shrink-0 shadow-sm"
         style={{ backgroundColor: color }}
       />
-      <span className="text-[9px] font-bold text-muted-foreground w-6 shrink-0">{code}</span>
-      <span className="text-[9px] text-foreground/70 truncate">{label}</span>
+      <span className="text-[10px] text-foreground/80">{label}</span>
     </div>
   )
 }
 
-// Confidence level indicator with reliability rating
-function LegendConfidence({ level, label, status }: { level: string; label: string; status: "verified" | "partial" | "low" }) {
-  const statusColors = {
-    verified: { bg: "#22c55e", border: "#16a34a" },
-    partial: { bg: "#f59e0b", border: "#d97706" },
-    low: { bg: "#6b7280", border: "#4b5563" }
+// Data quality indicator with visual status
+function LegendQuality({ status, label }: { status: "high" | "medium" | "low"; label: string }) {
+  const colors = {
+    high: { bg: "#22c55e", fill: true },
+    medium: { bg: "#f59e0b", fill: false },
+    low: { bg: "#9ca3af", fill: false }
   }
-  const colors = statusColors[status]
+  const config = colors[status]
   
   return (
-    <div className="flex items-center gap-1.5 h-4">
+    <div className="flex items-center gap-2 h-[18px]">
       <div 
-        className="w-2 h-2 rounded-full shrink-0"
+        className="w-2.5 h-2.5 rounded-full shrink-0"
         style={{ 
-          backgroundColor: status === "verified" ? colors.bg : "transparent",
-          border: `1.5px solid ${colors.border}`,
-          opacity: status === "low" ? 0.5 : 1
+          backgroundColor: config.fill ? config.bg : "transparent",
+          border: `2px solid ${config.bg}`,
+          opacity: status === "low" ? 0.6 : 1
         }}
       />
-      <span className="text-[9px] font-bold text-muted-foreground w-3 shrink-0">({level})</span>
-      <span className="text-[9px] text-foreground/70 truncate">{label}</span>
+      <span className="text-[10px] text-foreground/80">{label}</span>
     </div>
   )
 }
 
-// Activity intensity bar with pulse for high
-function LegendIntensity({ level, color, pulse }: { level: string; color: string; pulse?: boolean }) {
+// Activity level with proportional bar
+function LegendLevel({ level, color, fill, pulse }: { level: string; color: string; fill: number; pulse?: boolean }) {
   return (
-    <div className="flex items-center gap-1.5 h-4">
-      <div className="relative w-6 h-2 rounded-sm overflow-hidden bg-border/30 shrink-0">
+    <div className="flex items-center gap-2 h-[18px]">
+      <div className="relative w-8 h-2 rounded-full overflow-hidden bg-border/40 shrink-0">
         <div 
-          className={cn("absolute inset-y-0 left-0 rounded-sm", pulse && "animate-pulse")}
-          style={{ 
-            backgroundColor: color,
-            width: level === "HIGH" ? "100%" : level === "MOD" ? "60%" : "30%"
-          }}
+          className={cn("absolute inset-y-0 left-0 rounded-full transition-all", pulse && "animate-pulse")}
+          style={{ backgroundColor: color, width: `${fill}%` }}
         />
       </div>
-      <span className="text-[9px] font-bold text-foreground/80">{level}</span>
+      <span className="text-[10px] text-foreground/80">{level}</span>
     </div>
   )
 }
 
-// Activity type icon indicator
-function LegendActivityType({ type, label }: { type: "gathering" | "movement" | "incident"; label: string }) {
+// Activity type with descriptive icon
+function LegendActivityIcon({ type, label }: { type: "gathering" | "movement" | "incident"; label: string }) {
   return (
-    <div className="flex items-center gap-1.5 h-4">
-      <div className="w-3 h-3 flex items-center justify-center shrink-0">
+    <div className="flex items-center gap-2 h-[18px]">
+      <div className="w-3.5 h-3.5 flex items-center justify-center shrink-0">
         {type === "gathering" && (
-          <div className="w-2 h-2 rounded-full bg-purple-500" />
+          <div className="w-2.5 h-2.5 rounded-full bg-purple-500 shadow-sm" />
         )}
         {type === "movement" && (
-          <svg className="w-3 h-3 text-blue-500" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5">
-            <path d="M2 6h7M7 3.5l2.5 2.5-2.5 2.5" strokeLinecap="round" strokeLinejoin="round" />
+          <svg className="w-3.5 h-3.5 text-blue-500" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <path d="M2 7h8M8 4l3 3-3 3" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         )}
         {type === "incident" && (
-          <svg className="w-2.5 h-2.5 text-red-500" viewBox="0 0 12 12" fill="currentColor">
+          <svg className="w-3 h-3 text-red-500" viewBox="0 0 12 12" fill="currentColor">
             <path d="M6 1L11 10H1L6 1z" />
           </svg>
         )}
       </div>
-      <span className="text-[9px] text-foreground/70">{label}</span>
+      <span className="text-[10px] text-foreground/80">{label}</span>
     </div>
   )
 }
 
-// Threat level indicator with color band
-function LegendThreat({ level, color, pulse }: { level: string; color: string; pulse?: boolean }) {
+// Risk level with color band
+function LegendRisk({ level, color, pulse }: { level: string; color: string; pulse?: boolean }) {
   return (
-    <div className="flex items-center gap-1.5 h-4">
+    <div className="flex items-center gap-2 h-[18px]">
       <div className="relative shrink-0">
         {pulse && (
           <div 
-            className="absolute inset-0 rounded-sm animate-ping opacity-40"
+            className="absolute inset-0 rounded animate-ping opacity-30"
             style={{ backgroundColor: color }}
           />
         )}
         <div 
-          className="w-5 h-2.5 rounded-sm relative z-10"
+          className="w-6 h-3 rounded relative z-10 shadow-sm"
           style={{ backgroundColor: color }}
         />
       </div>
-      <span className="text-[9px] font-bold text-foreground/80 w-8">{level}</span>
+      <span className="text-[10px] text-foreground/80">{level}</span>
     </div>
   )
 }
 
-// Risk zone indicator
-function LegendZone({ type, label }: { type: "fill" | "border"; label: string }) {
+// Map overlay indicator
+function LegendOverlay({ type, label }: { type: "fill" | "border"; label: string }) {
   return (
-    <div className="flex items-center gap-1.5 h-4">
-      <div className="w-4 h-2.5 shrink-0">
+    <div className="flex items-center gap-2 h-[18px]">
+      <div className="w-5 h-3 shrink-0">
         {type === "fill" && (
-          <div className="w-full h-full rounded-sm bg-red-500/25 border border-red-500/40" />
+          <div className="w-full h-full rounded-sm bg-red-500/30 border border-red-500/50" />
         )}
         {type === "border" && (
-          <div className="w-full h-full rounded-sm border border-dashed border-red-500" />
+          <div className="w-full h-full rounded-sm border-2 border-dashed border-red-500/70" />
         )}
       </div>
-      <span className="text-[9px] text-foreground/70">{label}</span>
+      <span className="text-[10px] text-foreground/80">{label}</span>
     </div>
   )
 }
 
-// Route status indicator with line style
-function LegendRoute({ status, color }: { status: string; color: string }) {
-  const lineStyle = status === "BLACK" ? "dashed" : "solid"
-  
+// Route status with description
+function LegendRouteStatus({ status, color, desc }: { status: string; color: string; desc: string }) {
   return (
-    <div className="flex items-center gap-1.5 h-4">
+    <div className="flex items-center gap-2 h-[18px]">
       <div className="w-5 flex items-center shrink-0">
-        {lineStyle === "solid" ? (
-          <div className="w-full h-[3px] rounded-full" style={{ backgroundColor: color }} />
-        ) : (
-          <div className="w-full h-[3px] flex gap-0.5">
-            <div className="flex-1 h-full rounded-full" style={{ backgroundColor: color }} />
-            <div className="flex-1 h-full rounded-full" style={{ backgroundColor: color }} />
-          </div>
-        )}
+        <div className="w-full h-[3px] rounded-full shadow-sm" style={{ backgroundColor: color }} />
       </div>
-      <span className="text-[9px] font-bold text-foreground/80">{status}</span>
+      <span className="text-[10px] font-medium text-foreground/90">{status}</span>
+      <span className="text-[9px] text-muted-foreground/70 ml-auto">{desc}</span>
     </div>
   )
 }
 
-// Supply point indicator with class code
-function LegendSupply({ type, color, label }: { type: string; color: string; label: string }) {
+// Supply point with diamond marker
+function LegendSupplyPoint({ color, label }: { color: string; label: string }) {
   return (
-    <div className="flex items-center gap-1.5 h-4">
+    <div className="flex items-center gap-2 h-[18px]">
       <div 
-        className="w-2 h-2 rotate-45 rounded-[1px] shrink-0 shadow-sm"
+        className="w-2.5 h-2.5 rotate-45 rounded-[2px] shrink-0 shadow-sm"
         style={{ backgroundColor: color }}
       />
-      <span className="text-[9px] font-bold text-muted-foreground w-6 shrink-0">{type}</span>
-      <span className="text-[9px] text-foreground/70 truncate">{label}</span>
+      <span className="text-[10px] text-foreground/80">{label}</span>
     </div>
   )
 }
