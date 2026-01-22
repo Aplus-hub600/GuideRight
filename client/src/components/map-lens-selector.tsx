@@ -5,10 +5,16 @@ import {
   Users, 
   AlertTriangle, 
   Truck,
-  ChevronRight
+  ChevronRight,
+  Eye,
+  EyeOff,
+  TrendingUp,
+  Clock,
+  Database
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { motion, AnimatePresence } from "framer-motion"
+import { useState, useMemo } from "react"
 
 export type MapLens = "infrastructure" | "human-activity" | "risk-stress" | "logistics"
 
@@ -179,12 +185,92 @@ const LENS_COLORS = {
   }
 }
 
+// Simulated live data - in production, this would come from actual map data
+const SMART_LEGEND_DATA = {
+  infrastructure: {
+    layers: [
+      { id: "hospitals", label: "Hospitals & Clinics", color: "#ef4444", count: 47, visible: true, source: "Fraym", freshness: 2, confidence: 94 },
+      { id: "transport", label: "Transport Hubs", color: "#3b82f6", count: 23, visible: true, source: "OSM", freshness: 1, confidence: 89 },
+      { id: "utilities", label: "Power & Utilities", color: "#f59e0b", count: 156, visible: true, source: "Seerist", freshness: 4, confidence: 76 },
+      { id: "government", label: "Government", color: "#10b981", count: 18, visible: true, source: "Multi", freshness: 12, confidence: 98 },
+      { id: "education", label: "Schools", color: "#8b5cf6", count: 89, visible: true, source: "OSM", freshness: 24, confidence: 82 }
+    ],
+    totalFeatures: 333,
+    avgConfidence: 88
+  },
+  "human-activity": {
+    layers: [
+      { id: "gatherings", label: "Public Gatherings", color: "#a855f7", count: 8, visible: true, source: "Sprinklr", freshness: 0.5, confidence: 71 },
+      { id: "movement", label: "Population Flow", color: "#3b82f6", count: 12, visible: true, source: "Fraym", freshness: 1, confidence: 85 },
+      { id: "incidents", label: "Reported Incidents", color: "#ef4444", count: 3, visible: true, source: "News", freshness: 2, confidence: 67 }
+    ],
+    totalFeatures: 23,
+    avgConfidence: 74
+  },
+  "risk-stress": {
+    layers: [
+      { id: "high", label: "High Risk Zones", color: "#ef4444", count: 2, visible: true, source: "Seerist", freshness: 1, confidence: 82 },
+      { id: "elevated", label: "Elevated Areas", color: "#f97316", count: 5, visible: true, source: "Multi", freshness: 4, confidence: 78 },
+      { id: "moderate", label: "Moderate Areas", color: "#eab308", count: 8, visible: true, source: "Multi", freshness: 6, confidence: 85 },
+      { id: "low", label: "Low Risk Areas", color: "#22c55e", count: 14, visible: true, source: "Seerist", freshness: 12, confidence: 91 }
+    ],
+    totalFeatures: 29,
+    avgConfidence: 84
+  },
+  logistics: {
+    layers: [
+      { id: "clear", label: "Clear Routes", color: "#22c55e", count: 34, visible: true, source: "Traffic", freshness: 0.25, confidence: 95 },
+      { id: "congested", label: "Congested", color: "#f59e0b", count: 12, visible: true, source: "Traffic", freshness: 0.25, confidence: 92 },
+      { id: "blocked", label: "Blocked", color: "#ef4444", count: 3, visible: true, source: "Intel", freshness: 1, confidence: 88 },
+      { id: "supplies", label: "Supply Points", color: "#3b82f6", count: 28, visible: true, source: "Fraym", freshness: 6, confidence: 79 }
+    ],
+    totalFeatures: 77,
+    avgConfidence: 89
+  }
+}
+
+// Format freshness as human-readable
+function formatFreshness(hours: number): string {
+  if (hours < 1) return `${Math.round(hours * 60)}m`
+  if (hours < 24) return `${Math.round(hours)}h`
+  return `${Math.round(hours / 24)}d`
+}
+
 export function LensLegend({ activeLens, mapStyle = "streets", className }: LensLegendProps) {
   const lensConfig = LENS_CONFIGS.find(l => l.id === activeLens)
   if (!lensConfig) return null
   
   const lensColors = LENS_COLORS[activeLens]
   const isSatellite = mapStyle === "satellite" || mapStyle === "hybrid"
+  
+  // Smart layer visibility state
+  const [hiddenLayers, setHiddenLayers] = useState<Set<string>>(new Set())
+  
+  const toggleLayer = (layerId: string) => {
+    setHiddenLayers(prev => {
+      const next = new Set(prev)
+      if (next.has(layerId)) {
+        next.delete(layerId)
+      } else {
+        next.add(layerId)
+      }
+      return next
+    })
+  }
+  
+  // Get smart data for current lens
+  const smartData = SMART_LEGEND_DATA[activeLens]
+  
+  // Calculate visible stats
+  const visibleLayers = useMemo(() => 
+    smartData.layers.filter(l => !hiddenLayers.has(l.id)),
+    [smartData.layers, hiddenLayers]
+  )
+  
+  const visibleCount = useMemo(() => 
+    visibleLayers.reduce((sum, l) => sum + l.count, 0),
+    [visibleLayers]
+  )
   
   // Adapt colors based on map style
   const colors = {
@@ -204,9 +290,8 @@ export function LensLegend({ activeLens, mapStyle = "streets", className }: Lens
         exit={{ opacity: 0, y: -8, scale: 0.98 }}
         transition={{ duration: 0.12, ease: "easeOut" }}
         className={cn(
-          "backdrop-blur-md border shadow-xl rounded",
+          "backdrop-blur-md border shadow-xl rounded-lg overflow-hidden",
           "font-mono text-[11px] select-none",
-          // Satellite mode: light text on dark bg | Streets mode: dark text on light bg
           isSatellite 
             ? "bg-zinc-900/95 text-zinc-100" 
             : "bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100",
@@ -214,270 +299,155 @@ export function LensLegend({ activeLens, mapStyle = "streets", className }: Lens
         )}
         style={{ 
           borderColor: colors.border,
-          minWidth: "156px",
-          maxWidth: "190px"
+          minWidth: "200px",
+          maxWidth: "240px"
         }}
       >
-        {/* Header - Professional and accessible */}
+        {/* Smart Header with live stats */}
         <div 
-          className="flex items-center gap-2 px-2.5 py-2 border-b"
+          className="flex items-center justify-between px-3 py-2 border-b"
           style={{ backgroundColor: colors.bg, borderColor: colors.border }}
         >
-          <Icon className="h-3.5 w-3.5 shrink-0" style={{ color: colors.accent }} />
-          <span 
-            className="text-[11px] font-semibold tracking-wide truncate"
-            style={{ color: colors.accent }}
-          >
-            {lensConfig.label}
-          </span>
-        </div>
-        
-        {/* Legend Content - Clear labels for executive understanding */}
-        <div className="px-2.5 py-2 space-y-2.5">
-          {/* Infrastructure */}
-          {activeLens === "infrastructure" && (
-            <>
-              <LegendGroup label="Critical Facilities">
-                <LegendItem color="#ef4444" label="Hospitals & Clinics" />
-                <LegendItem color="#3b82f6" label="Transport Hubs" />
-                <LegendItem color="#f59e0b" label="Power & Utilities" />
-                <LegendItem color="#10b981" label="Government Buildings" />
-                <LegendItem color="#8b5cf6" label="Schools & Universities" />
-              </LegendGroup>
-              <LegendGroup label="Data Quality">
-                <LegendQuality status="high" label="Verified (3+ sources)" />
-                <LegendQuality status="medium" label="Confirmed (1 source)" />
-                <LegendQuality status="low" label="Estimated" />
-              </LegendGroup>
-            </>
-          )}
-          
-          {/* Human Activity */}
-          {activeLens === "human-activity" && (
-            <>
-              <LegendGroup label="Activity Level">
-                <LegendLevel level="High" color="#ef4444" fill={100} pulse />
-                <LegendLevel level="Moderate" color="#f59e0b" fill={60} />
-                <LegendLevel level="Low" color="#10b981" fill={30} />
-              </LegendGroup>
-              <LegendGroup label="Activity Type">
-                <LegendActivityIcon type="gathering" label="Public Gatherings" />
-                <LegendActivityIcon type="movement" label="Population Flow" />
-                <LegendActivityIcon type="incident" label="Reported Incidents" />
-              </LegendGroup>
-            </>
-          )}
-          
-          {/* Risk & Stress */}
-          {activeLens === "risk-stress" && (
-            <>
-              <LegendGroup label="Risk Assessment">
-                <LegendRisk level="High Risk" color="#ef4444" pulse />
-                <LegendRisk level="Elevated" color="#f97316" />
-                <LegendRisk level="Moderate" color="#eab308" />
-                <LegendRisk level="Low Risk" color="#22c55e" />
-              </LegendGroup>
-              <LegendGroup label="Map Overlay">
-                <LegendOverlay type="fill" label="Risk Zone" />
-                <LegendOverlay type="border" label="Zone Boundary" />
-              </LegendGroup>
-            </>
-          )}
-          
-          {/* Logistics */}
-          {activeLens === "logistics" && (
-            <>
-              <LegendGroup label="Route Conditions">
-                <LegendRouteStatus status="Clear" color="#22c55e" desc="Open, no delays" />
-                <LegendRouteStatus status="Congested" color="#f59e0b" desc="Slow traffic" />
-                <LegendRouteStatus status="Blocked" color="#ef4444" desc="Impassable" />
-                <LegendRouteStatus status="Restricted" color="#6b7280" desc="Limited access" />
-              </LegendGroup>
-              <LegendGroup label="Supply Points">
-                <LegendSupplyPoint color="#f97316" label="Fuel Stations" />
-                <LegendSupplyPoint color="#ef4444" label="Medical Supplies" />
-                <LegendSupplyPoint color="#22c55e" label="Food & Water" />
-                <LegendSupplyPoint color="#3b82f6" label="General Supplies" />
-              </LegendGroup>
-            </>
-          )}
-        </div>
-        
-        {/* Footer - Adaptive to map style */}
-        <div className={cn(
-          "px-2.5 py-1.5 border-t",
-          isSatellite 
-            ? "border-zinc-600 bg-zinc-800/60" 
-            : "border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800/60"
-        )}>
-          <div className={cn(
-            "flex items-center justify-between text-[9px] font-medium",
-            isSatellite ? "text-zinc-300" : "text-zinc-600 dark:text-zinc-400"
-          )}>
-            <span className="flex items-center gap-1.5">
-              {isSatellite ? "Satellite" : "Map"} View
-              <span className="opacity-60">|</span>
-              {new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })} UTC
-            </span>
-            <span className="flex items-center gap-1">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              Live
+          <div className="flex items-center gap-2">
+            <Icon className="h-4 w-4 shrink-0" style={{ color: colors.accent }} />
+            <span 
+              className="text-[11px] font-bold tracking-wide"
+              style={{ color: colors.accent }}
+            >
+              {lensConfig.label}
             </span>
           </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px] font-bold" style={{ color: colors.accent }}>
+              {visibleCount}
+            </span>
+            <span className="text-[9px] opacity-60">features</span>
+          </div>
+        </div>
+        
+        {/* Smart Interactive Legend */}
+        <div className="px-1 py-1.5">
+          {smartData.layers.map((layer, idx) => {
+            const isHidden = hiddenLayers.has(layer.id)
+            return (
+              <motion.div
+                key={layer.id}
+                initial={false}
+                animate={{ opacity: isHidden ? 0.4 : 1 }}
+                className={cn(
+                  "flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer transition-colors",
+                  "hover:bg-current/5",
+                  isHidden && "line-through decoration-1"
+                )}
+                onClick={() => toggleLayer(layer.id)}
+              >
+                {/* Visibility Toggle */}
+                <div className="w-4 h-4 flex items-center justify-center shrink-0 opacity-50">
+                  {isHidden ? (
+                    <EyeOff className="w-3 h-3" />
+                  ) : (
+                    <Eye className="w-3 h-3" />
+                  )}
+                </div>
+                
+                {/* Color indicator */}
+                <div 
+                  className={cn(
+                    "w-3 h-3 rounded shrink-0 shadow-sm transition-opacity",
+                    isHidden && "opacity-40"
+                  )}
+                  style={{ backgroundColor: layer.color }}
+                />
+                
+                {/* Label & Count */}
+                <div className="flex-1 min-w-0">
+                  <span className="text-[10px] font-medium truncate block">
+                    {layer.label}
+                  </span>
+                </div>
+                
+                {/* Live Count */}
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <span className={cn(
+                    "text-[10px] font-bold tabular-nums",
+                    !isHidden && "text-emerald-600 dark:text-emerald-400"
+                  )}>
+                    {layer.count}
+                  </span>
+                </div>
+              </motion.div>
+            )
+          })}
+        </div>
+        
+        {/* Data Intelligence Bar */}
+        <div className={cn(
+          "px-3 py-2 border-t",
+          isSatellite 
+            ? "border-zinc-700 bg-zinc-800/40" 
+            : "border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/40"
+        )}>
+          <div className="flex items-center justify-between gap-2">
+            {/* Confidence Score */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center gap-1 cursor-help">
+                  <TrendingUp className="w-3 h-3 text-emerald-500" />
+                  <span className={cn(
+                    "text-[10px] font-bold",
+                    smartData.avgConfidence >= 85 ? "text-emerald-600 dark:text-emerald-400" :
+                    smartData.avgConfidence >= 70 ? "text-amber-600 dark:text-amber-400" :
+                    "text-red-600 dark:text-red-400"
+                  )}>
+                    {smartData.avgConfidence}%
+                  </span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="text-xs">
+                Average confidence across sources
+              </TooltipContent>
+            </Tooltip>
+            
+            {/* Sources indicator */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center gap-1 cursor-help">
+                  <Database className="w-3 h-3 opacity-50" />
+                  <span className="text-[9px] opacity-70">
+                    {Array.from(new Set(smartData.layers.map(l => l.source))).length} sources
+                  </span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="text-xs">
+                {Array.from(new Set(smartData.layers.map(l => l.source))).join(", ")}
+              </TooltipContent>
+            </Tooltip>
+            
+            {/* Live indicator */}
+            <div className="flex items-center gap-1">
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-[9px] opacity-70">Live</span>
+            </div>
+          </div>
+        </div>
+        
+        {/* Map Mode Footer */}
+        <div className={cn(
+          "px-3 py-1.5 border-t text-[8px] flex items-center justify-between",
+          isSatellite 
+            ? "border-zinc-700 bg-zinc-800/60 text-zinc-400" 
+            : "border-zinc-200 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800/60 text-zinc-500 dark:text-zinc-400"
+        )}>
+          <span className="flex items-center gap-1">
+            <Clock className="w-2.5 h-2.5" />
+            {new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })} UTC
+          </span>
+          <span className="uppercase tracking-wider">
+            {isSatellite ? "Satellite" : "Terrain"}
+          </span>
         </div>
       </motion.div>
     </AnimatePresence>
   )
 }
 
-// Legend section group with clean header - inherits text color from parent
-function LegendGroup({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <div className="text-[9px] font-semibold opacity-70 tracking-wide mb-1.5 pb-0.5 border-b border-current/20">
-        {label}
-      </div>
-      <div className="space-y-1">{children}</div>
-    </div>
-  )
-}
-
-// Simple color + label item for facilities - inherits text color
-function LegendItem({ color, label }: { color: string; label: string }) {
-  return (
-    <div className="flex items-center gap-2 h-[18px]">
-      <div 
-        className="w-2.5 h-2.5 rounded-sm shrink-0 shadow-sm"
-        style={{ backgroundColor: color }}
-      />
-      <span className="text-[10px]">{label}</span>
-    </div>
-  )
-}
-
-// Data quality indicator with visual status - inherits text color
-function LegendQuality({ status, label }: { status: "high" | "medium" | "low"; label: string }) {
-  const colors = {
-    high: { bg: "#22c55e", fill: true },
-    medium: { bg: "#f59e0b", fill: false },
-    low: { bg: "#9ca3af", fill: false }
-  }
-  const config = colors[status]
-  
-  return (
-    <div className="flex items-center gap-2 h-[18px]">
-      <div 
-        className="w-2.5 h-2.5 rounded-full shrink-0"
-        style={{ 
-          backgroundColor: config.fill ? config.bg : "transparent",
-          border: `2px solid ${config.bg}`,
-          opacity: status === "low" ? 0.7 : 1
-        }}
-      />
-      <span className="text-[10px]">{label}</span>
-    </div>
-  )
-}
-
-// Activity level with proportional bar - inherits text color
-function LegendLevel({ level, color, fill, pulse }: { level: string; color: string; fill: number; pulse?: boolean }) {
-  return (
-    <div className="flex items-center gap-2 h-[18px]">
-      <div className="relative w-8 h-2 rounded-full overflow-hidden bg-current/20 shrink-0">
-        <div 
-          className={cn("absolute inset-y-0 left-0 rounded-full transition-all", pulse && "animate-pulse")}
-          style={{ backgroundColor: color, width: `${fill}%` }}
-        />
-      </div>
-      <span className="text-[10px]">{level}</span>
-    </div>
-  )
-}
-
-// Activity type with descriptive icon - inherits text color
-function LegendActivityIcon({ type, label }: { type: "gathering" | "movement" | "incident"; label: string }) {
-  return (
-    <div className="flex items-center gap-2 h-[18px]">
-      <div className="w-3.5 h-3.5 flex items-center justify-center shrink-0">
-        {type === "gathering" && (
-          <div className="w-2.5 h-2.5 rounded-full bg-purple-500 shadow-sm" />
-        )}
-        {type === "movement" && (
-          <svg className="w-3.5 h-3.5 text-blue-500" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5">
-            <path d="M2 7h8M8 4l3 3-3 3" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        )}
-        {type === "incident" && (
-          <svg className="w-3 h-3 text-red-500" viewBox="0 0 12 12" fill="currentColor">
-            <path d="M6 1L11 10H1L6 1z" />
-          </svg>
-        )}
-      </div>
-      <span className="text-[10px]">{label}</span>
-    </div>
-  )
-}
-
-// Risk level with color band - inherits text color
-function LegendRisk({ level, color, pulse }: { level: string; color: string; pulse?: boolean }) {
-  return (
-    <div className="flex items-center gap-2 h-[18px]">
-      <div className="relative shrink-0">
-        {pulse && (
-          <div 
-            className="absolute inset-0 rounded animate-ping opacity-30"
-            style={{ backgroundColor: color }}
-          />
-        )}
-        <div 
-          className="w-6 h-3 rounded relative z-10 shadow-sm"
-          style={{ backgroundColor: color }}
-        />
-      </div>
-      <span className="text-[10px]">{level}</span>
-    </div>
-  )
-}
-
-// Map overlay indicator - inherits text color
-function LegendOverlay({ type, label }: { type: "fill" | "border"; label: string }) {
-  return (
-    <div className="flex items-center gap-2 h-[18px]">
-      <div className="w-5 h-3 shrink-0">
-        {type === "fill" && (
-          <div className="w-full h-full rounded-sm bg-red-500/30 border border-red-500/50" />
-        )}
-        {type === "border" && (
-          <div className="w-full h-full rounded-sm border-2 border-dashed border-red-500/70" />
-        )}
-      </div>
-      <span className="text-[10px]">{label}</span>
-    </div>
-  )
-}
-
-// Route status with description - inherits text color
-function LegendRouteStatus({ status, color, desc }: { status: string; color: string; desc: string }) {
-  return (
-    <div className="flex items-center gap-2 h-[18px]">
-      <div className="w-5 flex items-center shrink-0">
-        <div className="w-full h-[3px] rounded-full shadow-sm" style={{ backgroundColor: color }} />
-      </div>
-      <span className="text-[10px] font-medium">{status}</span>
-      <span className="text-[9px] opacity-60 ml-auto">{desc}</span>
-    </div>
-  )
-}
-
-// Supply point with diamond marker - inherits text color
-function LegendSupplyPoint({ color, label }: { color: string; label: string }) {
-  return (
-    <div className="flex items-center gap-2 h-[18px]">
-      <div 
-        className="w-2.5 h-2.5 rotate-45 rounded-[2px] shrink-0 shadow-sm"
-        style={{ backgroundColor: color }}
-      />
-      <span className="text-[10px]">{label}</span>
-    </div>
-  )
-}
