@@ -188,11 +188,8 @@ export function MapLibrePanel({
         attributionControl: false
       })
 
-      // Add attribution control separately
-      map.current.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-right")
-
-      // Add navigation controls
-      map.current.addControl(new maplibregl.NavigationControl(), "top-right")
+      // Add attribution control - bottom-left to avoid legend overlap
+      map.current.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-left")
 
       map.current.on("load", () => {
         setIsMapReady(true)
