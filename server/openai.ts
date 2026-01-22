@@ -58,9 +58,86 @@ export interface PMESIIAnalysis {
   };
 }
 
+// Helper functions to extract entities from query for contextual mock responses
+function extractLocation(query: string): string | null {
+  const locations = [
+    { pattern: /dhaka|ধাকা/, name: "Dhaka, Bangladesh" },
+    { pattern: /bangladesh|বাংলাদেশ/, name: "Bangladesh" },
+    { pattern: /chittagong|chattogram/, name: "Chittagong, Bangladesh" },
+    { pattern: /sylhet/, name: "Sylhet, Bangladesh" },
+    { pattern: /khulna/, name: "Khulna, Bangladesh" },
+    { pattern: /rajshahi/, name: "Rajshahi, Bangladesh" },
+    { pattern: /cox'?s?\s*bazar/, name: "Cox's Bazar, Bangladesh" },
+    { pattern: /motijheel/, name: "Motijheel, Dhaka" },
+    { pattern: /gulshan/, name: "Gulshan, Dhaka" },
+    { pattern: /uttara/, name: "Uttara, Dhaka" },
+    { pattern: /mirpur/, name: "Mirpur, Dhaka" },
+    { pattern: /dhanmondi/, name: "Dhanmondi, Dhaka" },
+  ]
+  for (const loc of locations) {
+    if (loc.pattern.test(query)) return loc.name
+  }
+  return null
+}
+
+function extractTopic(query: string): string | null {
+  const topics = [
+    { pattern: /protest|demonstration|rally|march/, name: "civil unrest and protests" },
+    { pattern: /election|political|government|opposition/, name: "political situation" },
+    { pattern: /infrastructure|power|electricity|water/, name: "infrastructure status" },
+    { pattern: /security|threat|attack|violence/, name: "security situation" },
+    { pattern: /economic|trade|commerce|business/, name: "economic conditions" },
+    { pattern: /transport|road|traffic|movement/, name: "transportation and mobility" },
+    { pattern: /medical|hospital|health|covid/, name: "medical and health situation" },
+    { pattern: /military|army|forces|defense/, name: "military posture" },
+    { pattern: /communication|media|internet|network/, name: "communications infrastructure" },
+    { pattern: /refugee|migration|displacement/, name: "population displacement" },
+    { pattern: /flood|cyclone|disaster|weather/, name: "natural disaster impact" },
+  ]
+  for (const topic of topics) {
+    if (topic.pattern.test(query)) return topic.name
+  }
+  return null
+}
+
+function extractTimeframe(query: string): string | null {
+  const timeframes = [
+    { pattern: /today|current|now|immediate/, name: "current conditions" },
+    { pattern: /yesterday|last\s*24/, name: "past 24 hours" },
+    { pattern: /this\s*week|past\s*7|last\s*week/, name: "past 7 days" },
+    { pattern: /this\s*month|past\s*30|recent/, name: "past 30 days" },
+    { pattern: /next\s*week|upcoming|forecast/, name: "next 7 days forecast" },
+  ]
+  for (const tf of timeframes) {
+    if (tf.pattern.test(query)) return tf.name
+  }
+  return null
+}
+
+function extractActionType(query: string): string | null {
+  const actions = [
+    { pattern: /brief|sitrep|report/, name: "situation report" },
+    { pattern: /assess|evaluate|analyze/, name: "assessment" },
+    { pattern: /recommend|advise|suggest/, name: "recommendations" },
+    { pattern: /plan|prepare|coordinate/, name: "operational planning" },
+  ]
+  for (const action of actions) {
+    if (action.pattern.test(query)) return action.name
+  }
+  return null
+}
+
 // Mock tactical query results for development when OpenAI is unavailable
 function getMockTacticalResult(query: string, context?: string[]): TacticalAnalysisResult {
   const queryLower = query.toLowerCase()
+  
+  // Extract key entities from query for contextual responses
+  const extractedEntities = {
+    location: extractLocation(queryLower),
+    topic: extractTopic(queryLower),
+    timeframe: extractTimeframe(queryLower),
+    actionType: extractActionType(queryLower)
+  }
   
   // Analyze query content to provide appropriate mock response
   let riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' = 'MEDIUM'
@@ -71,89 +148,113 @@ function getMockTacticalResult(query: string, context?: string[]): TacticalAnaly
       queryLower.includes('analyze immediate') || queryLower.includes('active threat')) {
     riskLevel = 'CRITICAL'
     mockType = 'critical'
-  } else if (queryLower.includes('threat') || queryLower.includes('attack') || queryLower.includes('hostile')) {
+  } else if (queryLower.includes('threat') || queryLower.includes('attack') || queryLower.includes('hostile') || queryLower.includes('risk')) {
     riskLevel = 'HIGH'
     mockType = 'threat'
-  } else if (queryLower.includes('urban') || queryLower.includes('operation') || queryLower.includes('tactical')) {
+  } else if (queryLower.includes('pmesii') || queryLower.includes('political') || queryLower.includes('economic') || queryLower.includes('social')) {
+    riskLevel = 'MEDIUM'
+    mockType = 'pmesii'
+  } else if (queryLower.includes('urban') || queryLower.includes('operation') || queryLower.includes('tactical') || queryLower.includes('sitrep')) {
     riskLevel = 'MEDIUM' 
     mockType = 'operational'
-  } else if (queryLower.includes('assessment') || queryLower.includes('analysis') || queryLower.includes('intelligence')) {
+  } else if (queryLower.includes('assessment') || queryLower.includes('analysis') || queryLower.includes('intelligence') || queryLower.includes('brief')) {
     riskLevel = 'MEDIUM'
     mockType = 'intelligence'
   }
   
+  // Build query-aware response
+  const locationContext = extractedEntities.location || "the area of interest"
+  const topicContext = extractedEntities.topic || "current situation"
+  const timeContext = extractedEntities.timeframe || "recent period"
+  
   const mockResponses = {
     critical: {
-      summary: "CRITICAL THREAT ASSESSMENT: Immediate tactical response required. Multiple high-priority threat indicators detected requiring coordinated emergency action protocols.",
+      summary: `CRITICAL THREAT ASSESSMENT for ${locationContext}: Analysis of ${topicContext} during ${timeContext} indicates immediate tactical response required. Multiple high-priority threat indicators detected in the operational area requiring coordinated emergency action protocols.`,
       keyFindings: [
-        "IMMEDIATE THREAT: Active hostile elements identified in operational area",
-        "CRITICAL TIMELINE: Window for preventive action rapidly closing",
-        "HIGH-PRIORITY ASSETS: Critical infrastructure and personnel at immediate risk",
+        `IMMEDIATE THREAT: Active hostile indicators identified in ${locationContext}`,
+        `CRITICAL TIMELINE: Window for preventive action regarding ${topicContext} rapidly closing`,
+        `HIGH-PRIORITY ASSETS: Critical infrastructure in ${locationContext} at immediate risk`,
         "COORDINATION REQUIRED: Multi-domain response protocols must be activated NOW"
       ],
       recommendations: [
-        "IMMEDIATE ACTION: Initiate emergency response protocols",
-        "CRITICAL PRIORITY: Deploy rapid response teams to threat zones",
+        `IMMEDIATE ACTION: Initiate emergency response protocols for ${locationContext}`,
+        `CRITICAL PRIORITY: Deploy rapid response teams to address ${topicContext}`,
         "URGENT COORDINATION: Contact all relevant security elements immediately",
         "EMERGENCY MEASURES: Prepare evacuation and containment procedures"
       ]
     },
     threat: {
-      summary: "Threat assessment indicates elevated risk profile with multiple convergent factors requiring tactical awareness and coordinated response protocols.",
+      summary: `Threat assessment for ${locationContext} indicates elevated risk profile regarding ${topicContext}. Analysis of ${timeContext} shows multiple convergent factors requiring tactical awareness and coordinated response protocols.`,
       keyFindings: [
-        "Elevated threat indicators detected across operational zones",
-        "Pattern analysis suggests coordinated hostile activities", 
+        `Elevated threat indicators detected in ${locationContext}`,
+        `Pattern analysis of ${topicContext} suggests coordinated hostile activities`, 
         "Intelligence fusion indicates 72-hour operational window",
-        "Resource signatures consistent with advanced planning phases"
+        `Resource signatures in ${locationContext} consistent with advanced planning phases`
       ],
       recommendations: [
-        "Implement enhanced threat monitoring protocols",
+        `Implement enhanced monitoring protocols for ${topicContext} in ${locationContext}`,
         "Coordinate with regional security elements",
         "Deploy additional reconnaissance assets",
         "Prepare rapid response contingency procedures"
       ]
     },
-    operational: {
-      summary: "Operational assessment reveals complex multi-domain environment requiring coordinated tactical approach with emphasis on urban terrain considerations.",
+    pmesii: {
+      summary: `PMESII-PT Analysis for ${locationContext}: Comprehensive assessment of ${topicContext} during ${timeContext}. This analysis evaluates Political, Military, Economic, Social, Information, and Infrastructure factors affecting the operational environment.`,
       keyFindings: [
-        "Urban terrain analysis indicates mixed threat/opportunity zones",
-        "Population density creates both challenges and advantages",
-        "Infrastructure mapping reveals critical vulnerability points", 
+        `POLITICAL: ${locationContext} experiencing heightened political tensions with ongoing civil discourse`,
+        `MILITARY: Security forces maintaining elevated posture in response to ${topicContext}`,
+        `ECONOMIC: Regional trade and commerce showing moderate disruption patterns`,
+        `SOCIAL: Population sentiment reflecting concern over ${topicContext}`,
+        `INFRASTRUCTURE: Critical systems in ${locationContext} operating at reduced capacity`
+      ],
+      recommendations: [
+        `Monitor political developments in ${locationContext} closely`,
+        `Coordinate with local security elements regarding ${topicContext}`,
+        "Establish redundant communication channels",
+        "Prepare contingency plans for infrastructure degradation"
+      ]
+    },
+    operational: {
+      summary: `Operational SITREP for ${locationContext}: Assessment of ${topicContext} reveals complex multi-domain environment requiring coordinated tactical approach. Current conditions during ${timeContext} require emphasis on urban terrain considerations.`,
+      keyFindings: [
+        `Urban terrain analysis of ${locationContext} indicates mixed threat/opportunity zones`,
+        `${topicContext} creating both tactical challenges and advantages`,
+        `Infrastructure mapping of ${locationContext} reveals critical vulnerability points`, 
         "Communication networks show moderate resilience patterns"
       ],
       recommendations: [
-        "Conduct detailed urban terrain analysis",
+        `Conduct detailed terrain analysis of ${locationContext}`,
         "Establish secure communication protocols",
-        "Coordinate with local security forces",
+        `Coordinate with local forces regarding ${topicContext}`,
         "Implement graduated response procedures"
       ]
     },
     intelligence: {
-      summary: "Intelligence analysis completed successfully. Current operational picture shows moderate complexity with mixed indicators requiring continued monitoring.",
+      summary: `Intelligence Analysis for ${locationContext}: Assessment of ${topicContext} during ${timeContext} completed. Current operational picture shows moderate complexity with mixed indicators requiring continued monitoring.`,
       keyFindings: [
-        "Multi-source intelligence correlation completed",
-        "Confidence levels vary across intelligence domains",
-        "Pattern recognition indicates stable baseline conditions",
-        "No immediate critical threats identified in current assessment"
+        `Multi-source intelligence on ${topicContext} in ${locationContext} successfully correlated`,
+        "Confidence levels vary across intelligence domains (HUMINT: HIGH, SIGINT: MODERATE)",
+        `Pattern recognition for ${locationContext} indicates dynamic baseline conditions`,
+        "Continued collection recommended to refine assessment accuracy"
       ],
       recommendations: [
-        "Continue routine intelligence collection protocols",
+        `Continue intelligence collection on ${topicContext} in ${locationContext}`,
         "Monitor for pattern changes in baseline indicators", 
-        "Maintain coordination with intelligence fusion centers",
-        "Update assessment based on emerging information"
+        "Maintain coordination with regional intelligence fusion centers",
+        "Update assessment as new information becomes available"
       ]
     },
     general: {
-      summary: "Tactical query processed successfully. Analysis indicates standard operational parameters with manageable risk factors and clear recommended actions.",
+      summary: `Tactical Intelligence Assessment: Analysis of your query regarding "${query.substring(0, 80)}${query.length > 80 ? '...' : ''}" has been processed. ${locationContext !== "the area of interest" ? `Focus area: ${locationContext}.` : ""} ${topicContext !== "current situation" ? `Topic: ${topicContext}.` : ""} Assessment indicates manageable risk factors with clear recommended actions.`,
       keyFindings: [
-        "Query processed within tactical intelligence framework",
-        "Standard operational parameters identified",
+        `Query analyzed within tactical intelligence framework for ${locationContext}`,
+        `${topicContext} assessment completed with standard operational parameters`,
         "Risk factors assessed and categorized appropriately",
         "Actionable intelligence recommendations prepared"
       ],
       recommendations: [
+        `Monitor ${topicContext} in ${locationContext} for developments`,
         "Implement standard tactical procedures",
-        "Monitor situation for developments",
         "Coordinate with relevant operational elements",
         "Maintain situational awareness protocols"
       ]
@@ -168,33 +269,40 @@ function getMockTacticalResult(query: string, context?: string[]): TacticalAnaly
     contextualSummary += " Analysis incorporates relevant contextual intelligence from previous assessments and operations."
   }
   
-  // Generate mock reasoning traces based on query type
-  const reasoningTraces: { critical: ReasoningStep[], threat: ReasoningStep[], operational: ReasoningStep[], intelligence: ReasoningStep[], general: ReasoningStep[] } = {
+  // Generate mock reasoning traces based on query type - now contextual
+  const reasoningTraces: { critical: ReasoningStep[], threat: ReasoningStep[], pmesii: ReasoningStep[], operational: ReasoningStep[], intelligence: ReasoningStep[], general: ReasoningStep[] } = {
     critical: [
-      { step: 1, category: "Military", observation: "Active hostile indicators detected in multiple sectors", implication: "Immediate tactical response required to neutralize threat" },
-      { step: 2, category: "Infrastructure", observation: "Critical assets within threat envelope", implication: "Asset protection protocols must be activated" },
+      { step: 1, category: "Military", observation: `Active hostile indicators detected in ${locationContext}`, implication: "Immediate tactical response required to neutralize threat" },
+      { step: 2, category: "Infrastructure", observation: `Critical assets in ${locationContext} within threat envelope`, implication: "Asset protection protocols must be activated" },
       { step: 3, category: "Time", observation: "72-hour window identified for preventive action", implication: "Delays reduce effectiveness of response options" },
-      { step: 4, category: "Information", observation: "Intelligence confidence HIGH across multiple sources", implication: "Assessment reliability supports immediate action" }
+      { step: 4, category: "Information", observation: `Intelligence on ${topicContext} confidence HIGH across multiple sources`, implication: "Assessment reliability supports immediate action" }
     ],
     threat: [
-      { step: 1, category: "Military", observation: "Pattern analysis indicates coordinated activity", implication: "Threat actors operating with unified command structure" },
-      { step: 2, category: "Political", observation: "Regional tensions creating permissive environment", implication: "External intervention may be delayed or limited" },
-      { step: 3, category: "Social", observation: "Local population sentiment shifting negatively", implication: "Civil-military cooperation becoming more challenging" }
+      { step: 1, category: "Military", observation: `Pattern analysis of ${topicContext} in ${locationContext} indicates coordinated activity`, implication: "Threat actors operating with unified command structure" },
+      { step: 2, category: "Political", observation: `Regional tensions in ${locationContext} creating permissive environment`, implication: "External intervention may be delayed or limited" },
+      { step: 3, category: "Social", observation: `Local population in ${locationContext} sentiment shifting`, implication: "Civil-military cooperation dynamics changing" }
+    ],
+    pmesii: [
+      { step: 1, category: "Political", observation: `Government stability in ${locationContext} shows stress indicators`, implication: "Political situation requires close monitoring" },
+      { step: 2, category: "Military", observation: `Security forces in ${locationContext} maintaining elevated posture`, implication: "Military readiness affecting civilian movement patterns" },
+      { step: 3, category: "Economic", observation: `Trade activity in ${locationContext} showing disruption patterns`, implication: "Economic stress may exacerbate social tensions" },
+      { step: 4, category: "Social", observation: `Population in ${locationContext} expressing concerns about ${topicContext}`, implication: "Social cohesion under pressure" },
+      { step: 5, category: "Infrastructure", observation: `Critical infrastructure in ${locationContext} operating at reduced capacity`, implication: "Infrastructure resilience should be factored into planning" }
     ],
     operational: [
-      { step: 1, category: "Infrastructure", observation: "Urban terrain complexity HIGH", implication: "Standard maneuver doctrine requires adaptation" },
-      { step: 2, category: "Social", observation: "Mixed population density zones identified", implication: "ROE considerations require careful calibration" },
-      { step: 3, category: "Economic", observation: "Critical supply routes remain accessible", implication: "Logistics sustainability for extended operations confirmed" }
+      { step: 1, category: "Infrastructure", observation: `Urban terrain complexity in ${locationContext} rated HIGH`, implication: "Standard maneuver doctrine requires adaptation" },
+      { step: 2, category: "Social", observation: `Mixed population density zones identified in ${locationContext}`, implication: "ROE considerations require careful calibration" },
+      { step: 3, category: "Economic", observation: `Critical supply routes in ${locationContext} remain accessible`, implication: "Logistics sustainability for extended operations confirmed" }
     ],
     intelligence: [
-      { step: 1, category: "Information", observation: "Multi-source intelligence successfully correlated", implication: "Assessment confidence meets operational threshold" },
-      { step: 2, category: "Political", observation: "Baseline conditions remain within normal parameters", implication: "No immediate escalation indicators present" },
-      { step: 3, category: "Military", observation: "Force disposition consistent with historical patterns", implication: "No significant threat posture changes detected" }
+      { step: 1, category: "Information", observation: `Multi-source intelligence on ${topicContext} successfully correlated`, implication: "Assessment confidence meets operational threshold" },
+      { step: 2, category: "Political", observation: `Baseline conditions in ${locationContext} within normal parameters`, implication: "No immediate escalation indicators present" },
+      { step: 3, category: "Military", observation: `Force disposition in ${locationContext} consistent with historical patterns`, implication: "No significant threat posture changes detected" }
     ],
     general: [
-      { step: 1, category: "Information", observation: "Query processed through tactical intelligence framework", implication: "Standard analytical protocols applied successfully" },
-      { step: 2, category: "Infrastructure", observation: "Operational parameters within expected ranges", implication: "No immediate infrastructure concerns identified" },
-      { step: 3, category: "Political", observation: "Regional stability indicators normal", implication: "Permissive environment for planned operations" }
+      { step: 1, category: "Information", observation: `Query about ${topicContext} processed through tactical intelligence framework`, implication: "Standard analytical protocols applied successfully" },
+      { step: 2, category: "Infrastructure", observation: `Operational parameters in ${locationContext} within expected ranges`, implication: "No immediate infrastructure concerns identified" },
+      { step: 3, category: "Political", observation: `Regional stability indicators for ${locationContext} normal`, implication: "Permissive environment for planned operations" }
     ]
   }
   
