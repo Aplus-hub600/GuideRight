@@ -529,11 +529,6 @@ export function MapLibrePanel({
         <Button size="icon" variant="secondary" onClick={handleZoomOut} data-testid="button-zoom-out">
           <ZoomOut className="h-4 w-4" />
         </Button>
-        {aoi && (
-          <Button size="icon" variant="secondary" onClick={handleCenterOnAOI} data-testid="button-center-aoi">
-            <Crosshair className="h-4 w-4" />
-          </Button>
-        )}
         {onMovementPlanRequest && (
           <Button size="icon" variant="secondary" onClick={onMovementPlanRequest} data-testid="button-movement-plan">
             <Navigation className="h-4 w-4" />
