@@ -10,7 +10,13 @@ import {
   EyeOff,
   TrendingUp,
   Clock,
-  Database
+  Database,
+  Plus,
+  Minus,
+  Crosshair,
+  Navigation,
+  Maximize2,
+  Locate
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { motion, AnimatePresence } from "framer-motion"
@@ -448,6 +454,235 @@ export function LensLegend({ activeLens, mapStyle = "streets", className }: Lens
         </div>
       </motion.div>
     </AnimatePresence>
+  )
+}
+
+// Smart zoom level context - what each zoom level means operationally
+const ZOOM_CONTEXT = [
+  { min: 0, max: 4, label: "Continental", scale: "1000+ km", desc: "Regional overview" },
+  { min: 5, max: 7, label: "Country", scale: "100-500 km", desc: "National scope" },
+  { min: 8, max: 10, label: "Metro", scale: "10-50 km", desc: "Metropolitan area" },
+  { min: 11, max: 13, label: "District", scale: "1-5 km", desc: "District detail" },
+  { min: 14, max: 16, label: "Street", scale: "100-500 m", desc: "Street level" },
+  { min: 17, max: 22, label: "Building", scale: "<100 m", desc: "Structure detail" }
+]
+
+function getZoomContext(zoom: number) {
+  return ZOOM_CONTEXT.find(c => zoom >= c.min && zoom <= c.max) || ZOOM_CONTEXT[2]
+}
+
+interface SmartMapControlsProps {
+  zoomLevel: number
+  onZoomIn: () => void
+  onZoomOut: () => void
+  onCenterAOI?: () => void
+  onMovementPlan?: () => void
+  aoiName?: string
+  mapStyle?: "streets" | "satellite" | "hybrid"
+  className?: string
+}
+
+export function SmartMapControls({
+  zoomLevel,
+  onZoomIn,
+  onZoomOut,
+  onCenterAOI,
+  onMovementPlan,
+  aoiName = "AOI",
+  mapStyle = "streets",
+  className
+}: SmartMapControlsProps) {
+  const context = getZoomContext(zoomLevel)
+  const isSatellite = mapStyle === "satellite" || mapStyle === "hybrid"
+  
+  // Calculate zoom progress (0-100) within the usable range (4-18)
+  const zoomProgress = Math.min(100, Math.max(0, ((zoomLevel - 4) / 14) * 100))
+  
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: -8 }}
+      animate={{ opacity: 1, x: 0 }}
+      className={cn(
+        "backdrop-blur-md border shadow-lg rounded-lg overflow-hidden",
+        "font-mono text-[11px] select-none",
+        isSatellite 
+          ? "bg-zinc-900/95 text-zinc-100 border-zinc-700" 
+          : "bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 border-zinc-300 dark:border-zinc-700",
+        className
+      )}
+      style={{ minWidth: "140px" }}
+    >
+      {/* Zoom Level Header */}
+      <div className={cn(
+        "px-3 py-2 border-b",
+        isSatellite 
+          ? "bg-zinc-800/60 border-zinc-700" 
+          : "bg-zinc-50 dark:bg-zinc-800/60 border-zinc-200 dark:border-zinc-700"
+      )}>
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5">
+            <Maximize2 className="w-3 h-3 opacity-60" />
+            <span className="text-[10px] font-bold uppercase tracking-wider">
+              {context.label}
+            </span>
+          </div>
+          <span className={cn(
+            "text-[10px] font-mono tabular-nums px-1.5 py-0.5 rounded",
+            isSatellite 
+              ? "bg-zinc-700 text-zinc-200" 
+              : "bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200"
+          )}>
+            z{zoomLevel}
+          </span>
+        </div>
+        
+        {/* Visual zoom bar */}
+        <div className="mt-2 h-1.5 bg-current/10 rounded-full overflow-hidden">
+          <motion.div
+            className="h-full bg-emerald-500 rounded-full"
+            initial={false}
+            animate={{ width: `${zoomProgress}%` }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+          />
+        </div>
+        
+        {/* Scale indicator */}
+        <div className="mt-1.5 flex items-center justify-between text-[9px] opacity-60">
+          <span>{context.scale}</span>
+          <span>{context.desc}</span>
+        </div>
+      </div>
+      
+      {/* Zoom Controls */}
+      <div className="p-1.5 space-y-1">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={onZoomIn}
+              disabled={zoomLevel >= 18}
+              className={cn(
+                "w-full flex items-center gap-2 px-2 py-1.5 rounded transition-colors",
+                "hover:bg-current/5 active:bg-current/10",
+                "disabled:opacity-40 disabled:cursor-not-allowed"
+              )}
+              data-testid="button-zoom-in"
+            >
+              <div className={cn(
+                "w-6 h-6 rounded flex items-center justify-center",
+                isSatellite 
+                  ? "bg-emerald-600/20 text-emerald-400" 
+                  : "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400"
+              )}>
+                <Plus className="w-3.5 h-3.5" />
+              </div>
+              <span className="text-[10px] font-medium">Zoom In</span>
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="right" className="text-xs">
+            Increase detail level
+          </TooltipContent>
+        </Tooltip>
+        
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={onZoomOut}
+              disabled={zoomLevel <= 4}
+              className={cn(
+                "w-full flex items-center gap-2 px-2 py-1.5 rounded transition-colors",
+                "hover:bg-current/5 active:bg-current/10",
+                "disabled:opacity-40 disabled:cursor-not-allowed"
+              )}
+              data-testid="button-zoom-out"
+            >
+              <div className={cn(
+                "w-6 h-6 rounded flex items-center justify-center",
+                isSatellite 
+                  ? "bg-amber-600/20 text-amber-400" 
+                  : "bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400"
+              )}>
+                <Minus className="w-3.5 h-3.5" />
+              </div>
+              <span className="text-[10px] font-medium">Zoom Out</span>
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="right" className="text-xs">
+            Expand view area
+          </TooltipContent>
+        </Tooltip>
+      </div>
+      
+      {/* Quick Actions */}
+      {(onCenterAOI || onMovementPlan) && (
+        <div className={cn(
+          "px-1.5 pb-1.5 pt-0 space-y-1 border-t",
+          isSatellite 
+            ? "border-zinc-700" 
+            : "border-zinc-200 dark:border-zinc-700"
+        )}>
+          <div className="pt-1.5">
+            {onCenterAOI && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={onCenterAOI}
+                    className={cn(
+                      "w-full flex items-center gap-2 px-2 py-1.5 rounded transition-colors",
+                      "hover:bg-current/5 active:bg-current/10"
+                    )}
+                    data-testid="button-center-aoi"
+                  >
+                    <div className={cn(
+                      "w-6 h-6 rounded flex items-center justify-center",
+                      isSatellite 
+                        ? "bg-blue-600/20 text-blue-400" 
+                        : "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"
+                    )}>
+                      <Locate className="w-3.5 h-3.5" />
+                    </div>
+                    <div className="flex-1 text-left">
+                      <span className="text-[10px] font-medium block">Center AOI</span>
+                      <span className="text-[8px] opacity-60">{aoiName}</span>
+                    </div>
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="right" className="text-xs">
+                  Center map on {aoiName}
+                </TooltipContent>
+              </Tooltip>
+            )}
+            
+            {onMovementPlan && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={onMovementPlan}
+                    className={cn(
+                      "w-full flex items-center gap-2 px-2 py-1.5 rounded transition-colors",
+                      "hover:bg-current/5 active:bg-current/10"
+                    )}
+                    data-testid="button-movement-plan"
+                  >
+                    <div className={cn(
+                      "w-6 h-6 rounded flex items-center justify-center",
+                      isSatellite 
+                        ? "bg-purple-600/20 text-purple-400" 
+                        : "bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400"
+                    )}>
+                      <Navigation className="w-3.5 h-3.5" />
+                    </div>
+                    <span className="text-[10px] font-medium">Route Plan</span>
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="right" className="text-xs">
+                  Create movement plan
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </div>
+        </div>
+      )}
+    </motion.div>
   )
 }
 

@@ -7,7 +7,7 @@ import { Navigation, Target, Layers, MapPin, Crosshair, ZoomIn, ZoomOut } from "
 import { useTranslation } from "react-i18next"
 import { cn } from "@/lib/utils"
 import { MapScopeBar, type DataCoverage } from "./map-scope-bar"
-import { MapLensSelector, LensLegend, type MapLens, LENS_CONFIGS } from "./map-lens-selector"
+import { MapLensSelector, LensLegend, SmartMapControls, type MapLens, LENS_CONFIGS } from "./map-lens-selector"
 import { useMapInfrastructureLayer, INFRASTRUCTURE_NODES, type InfrastructureNode } from "./map-infrastructure-layer"
 import { useMapAccessibilityLayer } from "./map-accessibility-layer"
 import { useMapActivityLayer } from "./map-activity-layer"
@@ -436,6 +436,19 @@ export function MapLibrePanel({
         <div className="absolute bottom-0 right-0 z-10">
           <LensLegend activeLens={activeLens} mapStyle={mapStyle} className="rounded-br-none rounded-bl-none rounded-tr-none" />
         </div>
+        
+        {/* Smart Map Controls - even when map fails */}
+        <div className="absolute bottom-4 left-3 z-10">
+          <SmartMapControls
+            zoomLevel={zoomLevel}
+            onZoomIn={handleZoomIn}
+            onZoomOut={handleZoomOut}
+            onCenterAOI={aoi ? handleCenterOnAOI : undefined}
+            onMovementPlan={onMovementPlanRequest}
+            aoiName={aoi?.name || "Bangladesh"}
+            mapStyle={mapStyle}
+          />
+        </div>
       </div>
     )
   }
@@ -521,24 +534,17 @@ export function MapLibrePanel({
         <LensLegend activeLens={activeLens} mapStyle={mapStyle} className="rounded-br-none rounded-bl-none rounded-tr-none" />
       </div>
 
-      {/* Zoom & Navigation Controls - Bottom left, above any other elements */}
-      <div className="absolute bottom-4 left-3 z-10 flex flex-col gap-1">
-        <Button size="icon" variant="secondary" onClick={handleZoomIn} data-testid="button-zoom-in">
-          <ZoomIn className="h-4 w-4" />
-        </Button>
-        <Button size="icon" variant="secondary" onClick={handleZoomOut} data-testid="button-zoom-out">
-          <ZoomOut className="h-4 w-4" />
-        </Button>
-        {aoi && (
-          <Button size="icon" variant="secondary" onClick={handleCenterOnAOI} data-testid="button-center-aoi">
-            <Crosshair className="h-4 w-4" />
-          </Button>
-        )}
-        {onMovementPlanRequest && (
-          <Button size="icon" variant="secondary" onClick={onMovementPlanRequest} data-testid="button-movement-plan">
-            <Navigation className="h-4 w-4" />
-          </Button>
-        )}
+      {/* Smart Map Controls - Bottom left */}
+      <div className="absolute bottom-4 left-3 z-10">
+        <SmartMapControls
+          zoomLevel={zoomLevel}
+          onZoomIn={handleZoomIn}
+          onZoomOut={handleZoomOut}
+          onCenterAOI={aoi ? handleCenterOnAOI : undefined}
+          onMovementPlan={onMovementPlanRequest}
+          aoiName={aoi?.name || "Bangladesh"}
+          mapStyle={mapStyle}
+        />
       </div>
 
       {/* Loading Overlay */}
