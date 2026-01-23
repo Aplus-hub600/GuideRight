@@ -102,6 +102,23 @@ const lensEvidence: Record<MapLens, EvidenceItem[]> = {
       source: "Local Report",
       timestamp: "2025-01-08 22:45"
     }
+  ],
+  intel: [
+    {
+      id: "ev-7",
+      originalText: "Bangladesh Security Forces conduct joint operations in Chittagong Hill Tracts region.",
+      originalLanguage: "en",
+      source: "GDELT",
+      timestamp: "2025-01-09 10:15"
+    },
+    {
+      id: "ev-8",
+      originalText: "গার্মেন্ট শ্রমিকদের ধর্মঘট গাজীপুর শিল্প এলাকায় তৃতীয় দিনে প্রবেশ করেছে",
+      originalLanguage: "bn",
+      translatedText: "Garment workers strike enters third day in Gazipur Industrial Zone",
+      source: "GDELT/BDNews24",
+      timestamp: "2025-01-09 08:30"
+    }
   ]
 }
 
@@ -129,6 +146,12 @@ const lensGuidedQuestions: Record<MapLens, string[]> = {
     "Supply line vulnerabilities",
     "Border crossing status",
     "Fuel and resupply points"
+  ],
+  intel: [
+    "Recent security incidents",
+    "Current protest activity",
+    "Diplomatic developments",
+    "Economic disruptions"
   ]
 }
 
@@ -283,6 +306,31 @@ const locationContextData: Record<string, LocationContextData> = {
           ]
         }
       ]
+    },
+    intel: {
+      summary: "Real-time intelligence monitoring for Dhaka. GDELT-sourced open source intelligence covering security events, political developments, economic indicators, and social activity patterns.",
+      sections: [
+        {
+          title: "Live Intel Summary",
+          icon: AlertCircle,
+          content: [
+            "Active monitoring of regional events via GDELT",
+            "Cross-referencing multiple open-source intelligence feeds",
+            "Real-time correlation with tactical situation"
+          ],
+          confidence: 0.82
+        },
+        {
+          title: "Recent Activity",
+          icon: Clock,
+          content: [
+            "8 security-related events in past 7 days",
+            "12 news articles covering regional developments",
+            "Mixed sentiment across economic and political themes"
+          ],
+          confidence: 0.78
+        }
+      ]
     }
   },
   "Chittagong": {
@@ -431,6 +479,31 @@ const locationContextData: Record<string, LocationContextData> = {
             "Shipping line schedules",
             "Freight forwarder networks"
           ]
+        }
+      ]
+    },
+    intel: {
+      summary: "Real-time intelligence monitoring for Chittagong. GDELT-sourced open source intelligence covering security events, political developments, economic indicators, and social activity patterns.",
+      sections: [
+        {
+          title: "Live Intel Summary",
+          icon: AlertCircle,
+          content: [
+            "Active monitoring of regional events via GDELT",
+            "Cross-referencing multiple open-source intelligence feeds",
+            "Real-time correlation with tactical situation"
+          ],
+          confidence: 0.82
+        },
+        {
+          title: "Recent Activity",
+          icon: Clock,
+          content: [
+            "8 security-related events in past 7 days",
+            "12 news articles covering regional developments",
+            "Mixed sentiment across economic and political themes"
+          ],
+          confidence: 0.78
         }
       ]
     }
@@ -583,6 +656,31 @@ const locationContextData: Record<string, LocationContextData> = {
           ]
         }
       ]
+    },
+    intel: {
+      summary: "Real-time intelligence monitoring for Sylhet. GDELT-sourced open source intelligence covering security events, political developments, economic indicators, and social activity patterns.",
+      sections: [
+        {
+          title: "Live Intel Summary",
+          icon: AlertCircle,
+          content: [
+            "Active monitoring of regional events via GDELT",
+            "Cross-referencing multiple open-source intelligence feeds",
+            "Real-time correlation with tactical situation"
+          ],
+          confidence: 0.82
+        },
+        {
+          title: "Recent Activity",
+          icon: Clock,
+          content: [
+            "8 security-related events in past 7 days",
+            "12 news articles covering regional developments",
+            "Mixed sentiment across economic and political themes"
+          ],
+          confidence: 0.78
+        }
+      ]
     }
   },
   "Cox's Bazar": {
@@ -731,6 +829,31 @@ const locationContextData: Record<string, LocationContextData> = {
             "Airport authority reports",
             "Road transport monitoring"
           ]
+        }
+      ]
+    },
+    intel: {
+      summary: "Real-time intelligence monitoring for Cox's Bazar. GDELT-sourced open source intelligence covering security events, political developments, economic indicators, and social activity patterns.",
+      sections: [
+        {
+          title: "Live Intel Summary",
+          icon: AlertCircle,
+          content: [
+            "Active monitoring of regional events via GDELT",
+            "Cross-referencing multiple open-source intelligence feeds",
+            "Real-time correlation with tactical situation"
+          ],
+          confidence: 0.82
+        },
+        {
+          title: "Recent Activity",
+          icon: Clock,
+          content: [
+            "8 security-related events in past 7 days",
+            "12 news articles covering regional developments",
+            "Mixed sentiment across economic and political themes"
+          ],
+          confidence: 0.78
         }
       ]
     }
@@ -883,6 +1006,31 @@ const locationContextData: Record<string, LocationContextData> = {
           ]
         }
       ]
+    },
+    intel: {
+      summary: "Real-time intelligence monitoring for Khulna. GDELT-sourced open source intelligence covering security events, political developments, economic indicators, and social activity patterns.",
+      sections: [
+        {
+          title: "Live Intel Summary",
+          icon: AlertCircle,
+          content: [
+            "Active monitoring of regional events via GDELT",
+            "Cross-referencing multiple open-source intelligence feeds",
+            "Real-time correlation with tactical situation"
+          ],
+          confidence: 0.82
+        },
+        {
+          title: "Recent Activity",
+          icon: Clock,
+          content: [
+            "8 security-related events in past 7 days",
+            "12 news articles covering regional developments",
+            "Mixed sentiment across economic and political themes"
+          ],
+          confidence: 0.78
+        }
+      ]
     }
   },
   "Rajshahi": {
@@ -1031,6 +1179,31 @@ const locationContextData: Record<string, LocationContextData> = {
             "Civil aviation authority",
             "Supply chain monitoring"
           ]
+        }
+      ]
+    },
+    intel: {
+      summary: "Real-time intelligence monitoring for Rajshahi. GDELT-sourced open source intelligence covering security events, political developments, economic indicators, and social activity patterns.",
+      sections: [
+        {
+          title: "Live Intel Summary",
+          icon: AlertCircle,
+          content: [
+            "Active monitoring of regional events via GDELT",
+            "Cross-referencing multiple open-source intelligence feeds",
+            "Real-time correlation with tactical situation"
+          ],
+          confidence: 0.82
+        },
+        {
+          title: "Recent Activity",
+          icon: Clock,
+          content: [
+            "8 security-related events in past 7 days",
+            "12 news articles covering regional developments",
+            "Mixed sentiment across economic and political themes"
+          ],
+          confidence: 0.78
         }
       ]
     }

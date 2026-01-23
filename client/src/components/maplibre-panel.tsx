@@ -13,6 +13,7 @@ import { useMapAccessibilityLayer } from "./map-accessibility-layer"
 import { useMapActivityLayer } from "./map-activity-layer"
 import { useMapRiskLayer } from "./map-risk-layer"
 import { useMapLogisticsLayer } from "./map-logistics-layer"
+import { useMapIntelLayer, IntelLegend, type GdeltEvent } from "./map-intel-layer"
 
 interface AOI {
   name?: string
@@ -72,6 +73,7 @@ export function MapLibrePanel({
   const [internalLens, setInternalLens] = useState<MapLens>("infrastructure")
   const [zoomLevel, setZoomLevel] = useState(10)
   const [selectedInfraNode, setSelectedInfraNode] = useState<InfrastructureNode | null>(null)
+  const [selectedIntelEvent, setSelectedIntelEvent] = useState<GdeltEvent | null>(null)
   
   const activeLens = externalLens ?? internalLens
   const setActiveLens = (lens: MapLens) => setInternalLens(lens)
@@ -101,6 +103,12 @@ export function MapLibrePanel({
           infrastructure: zoom >= 10 ? "medium" : "low",
           humanActivity: "sparse",
           temporal: zoom >= 8 ? "current" : "limited"
+        }
+      case "intel":
+        return {
+          infrastructure: "sparse",
+          humanActivity: zoom >= 10 ? "high" : "medium",
+          temporal: "current"
         }
       default:
         return { infrastructure: "low", humanActivity: "low", temporal: "limited" }
@@ -141,6 +149,14 @@ export function MapLibrePanel({
     map: map.current,
     isMapReady,
     visible: activeLens === "logistics"
+  })
+  
+  const { events: intelEvents, docs: intelDocs, coverage: intelCoverage } = useMapIntelLayer({
+    map: map.current,
+    isMapReady,
+    aoi: aoi ? { name: aoi.name || "Selected Area", lat: aoi.lat, lon: aoi.lng, radiusKm: aoi.radiusKm } : undefined,
+    visible: activeLens === "intel",
+    onEventClick: setSelectedIntelEvent
   })
 
   // Map tile sources - using CARTO for English labels

@@ -25,7 +25,8 @@ import {
   Download,
   Shield,
   WifiOff,
-  GripHorizontal
+  GripHorizontal,
+  Radio
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { MapContextPanel } from "./map-context-panel"
@@ -89,6 +90,13 @@ const LENS_OPTIONS: LensConfig[] = [
     shortLabel: "Logistics",
     icon: Truck,
     description: "Supply routes, access points"
+  },
+  {
+    id: "intel",
+    label: "Live Intel",
+    shortLabel: "Intel",
+    icon: Radio,
+    description: "Real-time GDELT events and news"
   }
 ]
 

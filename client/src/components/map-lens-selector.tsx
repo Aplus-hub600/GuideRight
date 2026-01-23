@@ -19,13 +19,14 @@ import {
   Locate,
   Map,
   Satellite,
-  Globe2
+  Globe2,
+  Radio
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { motion, AnimatePresence } from "framer-motion"
 import { useState, useMemo } from "react"
 
-export type MapLens = "infrastructure" | "human-activity" | "risk-stress" | "logistics"
+export type MapLens = "infrastructure" | "human-activity" | "risk-stress" | "logistics" | "intel"
 
 interface LensConfig {
   id: MapLens
@@ -87,6 +88,19 @@ export const LENS_CONFIGS: LensConfig[] = [
       "Supply line vulnerabilities",
       "Border crossing status",
       "Fuel and resupply points"
+    ]
+  },
+  {
+    id: "intel",
+    label: "Live Intel",
+    shortLabel: "Intel",
+    icon: Radio,
+    description: "Real-time GDELT events, news, and open-source intelligence",
+    suggestedQuestions: [
+      "Recent security incidents",
+      "Current protest activity",
+      "Diplomatic developments",
+      "Economic disruptions"
     ]
   }
 ]
@@ -191,6 +205,14 @@ const LENS_COLORS = {
     satelliteAccent: "rgb(34, 211, 238)",
     satelliteBg: "rgba(6, 182, 212, 0.15)",
     satelliteBorder: "rgba(6, 182, 212, 0.4)"
+  },
+  intel: { 
+    accent: "rgb(239, 68, 68)", 
+    bg: "rgba(239, 68, 68, 0.08)", 
+    border: "rgba(239, 68, 68, 0.2)",
+    satelliteAccent: "rgb(248, 113, 113)",
+    satelliteBg: "rgba(6, 182, 212, 0.15)",
+    satelliteBorder: "rgba(6, 182, 212, 0.4)"
   }
 }
 
@@ -235,6 +257,17 @@ const SMART_LEGEND_DATA = {
     ],
     totalFeatures: 77,
     avgConfidence: 89
+  },
+  intel: {
+    layers: [
+      { id: "conflict", label: "Conflict Events", color: "#dc2626", count: 2, visible: true, source: "GDELT", freshness: 0.5, confidence: 78 },
+      { id: "tension", label: "Tension Events", color: "#f97316", count: 4, visible: true, source: "GDELT", freshness: 0.5, confidence: 82 },
+      { id: "neutral", label: "Neutral Activity", color: "#eab308", count: 6, visible: true, source: "GDELT", freshness: 1, confidence: 85 },
+      { id: "cooperation", label: "Cooperation", color: "#22c55e", count: 4, visible: true, source: "GDELT", freshness: 1, confidence: 88 },
+      { id: "news", label: "News Coverage", color: "#3b82f6", count: 12, visible: true, source: "GDELT", freshness: 0.25, confidence: 75 }
+    ],
+    totalFeatures: 28,
+    avgConfidence: 82
   }
 }
 
