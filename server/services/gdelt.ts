@@ -370,3 +370,128 @@ export function isCacheStale(lastRefreshAt: Date | null, ttlMinutes: number): bo
   const ttlMs = ttlMinutes * 60 * 1000;
   return (now - lastRefresh) > ttlMs;
 }
+
+function generateDemoEvents(aoi: GdeltAOI): GdeltEvent[] {
+  const now = new Date();
+  const baseLocations = [
+    { name: "Dhaka, Bangladesh", lat: 23.8103, lon: 90.4125 },
+    { name: "Chittagong Port, Bangladesh", lat: 22.3569, lon: 91.7832 },
+    { name: "Sylhet, Bangladesh", lat: 24.8949, lon: 91.8687 },
+    { name: "Khulna, Bangladesh", lat: 22.8456, lon: 89.5403 },
+    { name: "Cox's Bazar, Bangladesh", lat: 21.4272, lon: 92.0058 },
+    { name: "Rajshahi, Bangladesh", lat: 24.3745, lon: 88.6042 },
+  ];
+
+  const eventTemplates = [
+    { code: "043", rootCode: "04", quad: "Verbal Cooperation", goldstein: 2.8, actor1: "Bangladesh Government", actor2: "UN Agencies", mentions: 45 },
+    { code: "036", rootCode: "03", quad: "Material Cooperation", goldstein: 4.0, actor1: "Bangladesh Army", actor2: "International Partners", mentions: 32 },
+    { code: "100", rootCode: "10", quad: "Demand", goldstein: -5.0, actor1: "Opposition Parties", actor2: "Government Officials", mentions: 28 },
+    { code: "145", rootCode: "14", quad: "Protest", goldstein: -6.5, actor1: "Labor Unions", actor2: "Factory Owners", mentions: 67 },
+    { code: "190", rootCode: "19", quad: "Fight", goldstein: -10.0, actor1: "Unknown Militants", actor2: "Security Forces", mentions: 15 },
+    { code: "051", rootCode: "05", quad: "Diplomatic Cooperation", goldstein: 3.4, actor1: "Foreign Ministry", actor2: "India", mentions: 38 },
+    { code: "020", rootCode: "02", quad: "Appeal", goldstein: 1.5, actor1: "NGO Coalition", actor2: "International Donors", mentions: 22 },
+    { code: "172", rootCode: "17", quad: "Coerce", goldstein: -7.0, actor1: "Criminal Networks", actor2: "Local Businesses", mentions: 12 },
+  ];
+
+  return eventTemplates.map((template, idx) => {
+    const loc = baseLocations[idx % baseLocations.length];
+    const daysAgo = Math.floor(Math.random() * 7);
+    const eventDate = new Date(now);
+    eventDate.setDate(eventDate.getDate() - daysAgo);
+
+    return {
+      globalEventId: `DEMO-${Date.now()}-${idx}`,
+      eventDate,
+      eventCode: template.code,
+      eventBaseCode: template.code.slice(0, 2),
+      eventRootCode: template.rootCode,
+      quadClass: template.quad,
+      goldsteinScale: template.goldstein,
+      numMentions: template.mentions,
+      numSources: Math.floor(template.mentions * 0.6),
+      numArticles: Math.floor(template.mentions * 0.8),
+      avgTone: template.goldstein > 0 ? Math.random() * 3 : -Math.random() * 4,
+      actor1Name: template.actor1,
+      actor1CountryCode: "BGD",
+      actor1Type1Code: template.actor1.includes("Government") ? "GOV" : "OTH",
+      actor2Name: template.actor2,
+      actor2CountryCode: template.actor2 === "India" ? "IND" : "BGD",
+      actor2Type1Code: "OTH",
+      actionGeoType: "CITY",
+      actionGeoFullname: loc.name,
+      actionGeoCountryCode: "BD",
+      actionGeoLat: loc.lat + (Math.random() - 0.5) * 0.1,
+      actionGeoLon: loc.lon + (Math.random() - 0.5) * 0.1,
+      sourceUrl: `https://example.com/news/${idx}`,
+      raw: { demo: true, template },
+    };
+  });
+}
+
+function generateDemoDocs(aoi: GdeltAOI): GdeltDoc[] {
+  const now = new Date();
+  
+  const docTemplates = [
+    { title: "Bangladesh Security Forces Conduct Joint Operations in Chittagong Hill Tracts", domain: "bdnews24.com", theme: "SECURITY", tone: -2.3, country: "Bangladesh" },
+    { title: "Dhaka Stock Exchange Reports Record Foreign Investment Inflows", domain: "thedailystar.net", theme: "ECONOMY", tone: 4.2, country: "Bangladesh" },
+    { title: "Rohingya Camp Conditions Worsen as Monsoon Season Approaches", domain: "reuters.com", theme: "HUMANITARIAN", tone: -5.1, country: "Bangladesh" },
+    { title: "Bangladesh-India Border Trade Agreement Extended for Five Years", domain: "aljazeera.com", theme: "DIPLOMACY", tone: 3.8, country: "Bangladesh" },
+    { title: "Garment Workers Strike Enters Third Day in Gazipur Industrial Zone", domain: "bbc.com", theme: "LABOR", tone: -3.4, country: "Bangladesh" },
+    { title: "New Cybersecurity Framework Announced for Bangladesh Banking Sector", domain: "financialexpress.com", theme: "INFRASTRUCTURE", tone: 2.1, country: "Bangladesh" },
+    { title: "Opposition Coalition Announces Nationwide Protest Campaign", domain: "bdnews24.com", theme: "POLITICAL", tone: -4.5, country: "Bangladesh" },
+    { title: "Chinese Investment in Payra Deep Sea Port Reaches $2.5 Billion", domain: "xinhua.net", theme: "INFRASTRUCTURE", tone: 3.2, country: "Bangladesh" },
+    { title: "Flood Warning Issued for Brahmaputra River Basin", domain: "thedailystar.net", theme: "DISASTER", tone: -2.8, country: "Bangladesh" },
+    { title: "Bangladesh Army Chief Meets with US Indo-Pacific Command Officials", domain: "defensenews.com", theme: "MILITARY", tone: 1.5, country: "Bangladesh" },
+    { title: "Telecommunications Infrastructure Expansion Reaches Rural Districts", domain: "techasia.com", theme: "INFRASTRUCTURE", tone: 2.9, country: "Bangladesh" },
+    { title: "Social Media Disinformation Campaign Targets Upcoming Elections", domain: "atlanticcouncil.org", theme: "INFORMATION", tone: -3.7, country: "Bangladesh" },
+  ];
+
+  const locations = [
+    { lat: 23.8103, lon: 90.4125, name: "Dhaka" },
+    { lat: 22.3569, lon: 91.7832, name: "Chittagong" },
+    { lat: 24.8949, lon: 91.8687, name: "Sylhet" },
+    { lat: 21.4272, lon: 92.0058, name: "Cox's Bazar" },
+  ];
+
+  return docTemplates.map((template, idx) => {
+    const daysAgo = Math.floor(Math.random() * 7);
+    const publishDate = new Date(now);
+    publishDate.setDate(publishDate.getDate() - daysAgo);
+    const loc = locations[idx % locations.length];
+
+    return {
+      docId: `DEMO-DOC-${Date.now()}-${idx}`,
+      url: `https://${template.domain}/article/${idx}`,
+      urlMobile: null,
+      title: template.title,
+      seenDate: publishDate,
+      publishedAt: publishDate,
+      domain: template.domain,
+      language: "English",
+      sourceName: template.domain.replace(".com", "").replace(".net", "").replace(".org", ""),
+      sourceCountry: template.country,
+      theme: template.theme,
+      tone: template.tone,
+      positiveScore: template.tone > 0 ? template.tone * 10 : 5,
+      negativeScore: template.tone < 0 ? Math.abs(template.tone) * 10 : 5,
+      polarity: Math.abs(template.tone) / 10,
+      activityDensity: Math.random() * 50 + 20,
+      selfGroup: null,
+      socialImage: null,
+      socialVideo: null,
+      lat: loc.lat + (Math.random() - 0.5) * 0.05,
+      lon: loc.lon + (Math.random() - 0.5) * 0.05,
+      locationName: loc.name,
+      locationCountry: "Bangladesh",
+      raw: { demo: true, template },
+    };
+  });
+}
+
+export function getDemoData(aoi: GdeltAOI): { events: GdeltEvent[]; docs: GdeltDoc[] } {
+  console.log(`[GDELT Demo] Generating demo data for ${aoi.name}`);
+  return {
+    events: generateDemoEvents(aoi),
+    docs: generateDemoDocs(aoi),
+  };
+}

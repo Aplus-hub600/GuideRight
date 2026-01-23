@@ -2276,7 +2276,7 @@ Return realistic intelligence-style events based on your knowledge of the region
         // Fire and forget - don't await
         (async () => {
           try {
-            const { refreshGdeltData } = await import("./services/gdelt");
+            const { refreshGdeltData, getDemoData } = await import("./services/gdelt");
             
             // Create refresh run
             const run = await storage.createRefreshRun({
@@ -2309,7 +2309,20 @@ Return realistic intelligence-style events based on your knowledge of the region
             });
             
             // Perform refresh
-            const result = await refreshGdeltData({ aoi, timeWindowDays });
+            let result = await refreshGdeltData({ aoi, timeWindowDays });
+            
+            // If GDELT returns empty (e.g., future date), use demo data for showcase
+            if (result.success && result.eventsCount === 0 && result.docsCount === 0) {
+              console.log(`[GDELT Background Refresh] No live data, using demo data for ${aoi.name}`);
+              const demoData = getDemoData(aoi);
+              result = {
+                ...result,
+                events: demoData.events,
+                docs: demoData.docs,
+                eventsCount: demoData.events.length,
+                docsCount: demoData.docs.length
+              };
+            }
             
             if (result.success) {
               // Upsert events
@@ -2409,7 +2422,7 @@ Return realistic intelligence-style events based on your knowledge of the region
   app.post("/api/intel/gdelt/refresh", async (req, res) => {
     try {
       const { gdeltRefreshRequestSchema } = await import("@shared/schema");
-      const { generateQueryHash, refreshGdeltData } = await import("./services/gdelt");
+      const { generateQueryHash, refreshGdeltData, getDemoData } = await import("./services/gdelt");
       
       const parsed = gdeltRefreshRequestSchema.safeParse(req.body);
       if (!parsed.success) {
@@ -2449,7 +2462,20 @@ Return realistic intelligence-style events based on your knowledge of the region
       });
       
       // Perform refresh
-      const result = await refreshGdeltData({ aoi, timeWindowDays, themes });
+      let result = await refreshGdeltData({ aoi, timeWindowDays, themes });
+      
+      // If GDELT returns empty (e.g., future date), use demo data for showcase
+      if (result.success && result.eventsCount === 0 && result.docsCount === 0) {
+        console.log(`[GDELT Refresh] No live data, using demo data for ${aoi.name}`);
+        const demoData = getDemoData(aoi);
+        result = {
+          ...result,
+          events: demoData.events,
+          docs: demoData.docs,
+          eventsCount: demoData.events.length,
+          docsCount: demoData.docs.length
+        };
+      }
       
       if (result.success) {
         // Upsert events
