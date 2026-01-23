@@ -280,7 +280,9 @@ export function useMapIntelLayer({
           closeButton: true,
           closeOnClick: false,
           maxWidth: "320px",
-          className: "intel-popup"
+          className: "intel-popup",
+          anchor: "bottom",
+          offset: [0, -10]
         })
           .setLngLat([event.actionGeoLon!, event.actionGeoLat!])
           .setHTML(popupContent)
