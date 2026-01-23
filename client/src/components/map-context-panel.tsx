@@ -1261,8 +1261,8 @@ function ContextSectionCard({ section, defaultExpanded = true }: { section: Cont
         className="w-full flex items-center justify-between py-3 px-1 hover-elevate"
       >
         <div className="flex items-center gap-2">
-          <Icon className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm font-medium">{section.title}</span>
+          <Icon className="h-4 w-4 text-primary" />
+          <span className="text-sm font-medium text-foreground">{section.title}</span>
         </div>
         <div className="flex items-center gap-2">
           {section.confidence && <ConfidenceIndicator value={section.confidence} />}
@@ -1273,7 +1273,7 @@ function ContextSectionCard({ section, defaultExpanded = true }: { section: Cont
       {expanded && (
         <ul className="pb-3 pl-7 space-y-1.5">
           {section.content.map((item, idx) => (
-            <li key={idx} className="text-xs text-muted-foreground leading-relaxed">
+            <li key={idx} className="text-xs text-foreground/80 leading-relaxed">
               {item}
             </li>
           ))}
@@ -1349,20 +1349,20 @@ export function MapContextPanel({
               <div className="p-3 bg-primary/5 rounded-md border border-primary/20">
                 <div className="flex items-center gap-2 mb-2">
                   <Building2 className="h-4 w-4 text-primary" />
-                  <span className="text-sm font-medium">{selectedNode.name}</span>
+                  <span className="text-sm font-medium text-foreground">{selectedNode.name}</span>
                 </div>
                 {selectedNode.subCategory && (
-                  <p className="text-xs text-muted-foreground capitalize mb-2">{selectedNode.subCategory}</p>
+                  <p className="text-xs text-foreground/70 capitalize mb-2">{selectedNode.subCategory}</p>
                 )}
                 {selectedNode.details && (
-                  <p className="text-xs text-muted-foreground leading-relaxed">{selectedNode.details}</p>
+                  <p className="text-xs text-foreground/70 leading-relaxed">{selectedNode.details}</p>
                 )}
                 <div className="flex items-center gap-2 mt-3">
                   <Badge variant="secondary" className="text-xs">
                     {selectedNode.confidence === "verified" ? "Verified" : selectedNode.confidence === "single-source" ? "Single Source" : "Inferred"}
                   </Badge>
                   {selectedNode.sources && (
-                    <span className="text-xs text-muted-foreground">{selectedNode.sources} sources</span>
+                    <span className="text-xs text-foreground/70">{selectedNode.sources} sources</span>
                   )}
                 </div>
               </div>
