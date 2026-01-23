@@ -13,7 +13,7 @@ import { useMapAccessibilityLayer } from "./map-accessibility-layer"
 import { useMapActivityLayer } from "./map-activity-layer"
 import { useMapRiskLayer } from "./map-risk-layer"
 import { useMapLogisticsLayer } from "./map-logistics-layer"
-import { useMapIntelLayer, IntelLegend, type GdeltEvent } from "./map-intel-layer"
+import { useMapIntelLayer, SmartIntelLegend, type GdeltEvent, type GoldsteinCategory } from "./map-intel-layer"
 
 interface AOI {
   name?: string
@@ -74,6 +74,19 @@ export function MapLibrePanel({
   const [zoomLevel, setZoomLevel] = useState(10)
   const [selectedInfraNode, setSelectedInfraNode] = useState<InfrastructureNode | null>(null)
   const [selectedIntelEvent, setSelectedIntelEvent] = useState<GdeltEvent | null>(null)
+  const [hiddenIntelCategories, setHiddenIntelCategories] = useState<Set<GoldsteinCategory>>(new Set())
+  
+  const toggleIntelCategory = useCallback((category: GoldsteinCategory) => {
+    setHiddenIntelCategories(prev => {
+      const next = new Set(prev)
+      if (next.has(category)) {
+        next.delete(category)
+      } else {
+        next.add(category)
+      }
+      return next
+    })
+  }, [])
   
   const activeLens = externalLens ?? internalLens
   const setActiveLens = (lens: MapLens) => setInternalLens(lens)
@@ -151,12 +164,13 @@ export function MapLibrePanel({
     visible: activeLens === "logistics"
   })
   
-  const { events: intelEvents, docs: intelDocs, coverage: intelCoverage } = useMapIntelLayer({
+  const { events: intelEvents, docs: intelDocs, coverage: intelCoverage, refetch: refetchIntel, isLoading: isIntelLoading } = useMapIntelLayer({
     map: map.current,
     isMapReady,
     aoi: aoi ? { name: aoi.name || "Selected Area", lat: aoi.lat, lon: aoi.lng, radiusKm: aoi.radiusKm } : undefined,
     visible: activeLens === "intel",
-    onEventClick: setSelectedIntelEvent
+    onEventClick: setSelectedIntelEvent,
+    hiddenCategories: hiddenIntelCategories
   })
 
   // Map tile sources - using CARTO for English labels
@@ -450,7 +464,20 @@ export function MapLibrePanel({
         
         {/* Always show the legend - flush bottom-right */}
         <div className="absolute bottom-0 right-0 z-10">
-          <LensLegend activeLens={activeLens} mapStyle={mapStyle} className="rounded-br-none rounded-bl-none rounded-tr-none" />
+          {activeLens === "intel" ? (
+            <SmartIntelLegend
+              events={intelEvents}
+              docs={intelDocs}
+              coverage={intelCoverage}
+              hiddenCategories={hiddenIntelCategories}
+              onToggleCategory={toggleIntelCategory}
+              onRefresh={refetchIntel}
+              isLoading={isIntelLoading}
+              mapStyle={mapStyle}
+            />
+          ) : (
+            <LensLegend activeLens={activeLens} mapStyle={mapStyle} className="rounded-br-none rounded-bl-none rounded-tr-none" />
+          )}
         </div>
         
         {/* Smart Map Controls - flush bottom-left */}
@@ -514,7 +541,20 @@ export function MapLibrePanel({
       
       {/* Legend - Flush bottom-right */}
       <div className="absolute bottom-0 right-0 z-10">
-        <LensLegend activeLens={activeLens} mapStyle={mapStyle} className="rounded-br-none rounded-bl-none rounded-tr-none" />
+        {activeLens === "intel" ? (
+          <SmartIntelLegend
+            events={intelEvents}
+            docs={intelDocs}
+            coverage={intelCoverage}
+            hiddenCategories={hiddenIntelCategories}
+            onToggleCategory={toggleIntelCategory}
+            onRefresh={refetchIntel}
+            isLoading={isIntelLoading}
+            mapStyle={mapStyle}
+          />
+        ) : (
+          <LensLegend activeLens={activeLens} mapStyle={mapStyle} className="rounded-br-none rounded-bl-none rounded-tr-none" />
+        )}
       </div>
 
       {/* Smart Map Controls - flush bottom-left */}
