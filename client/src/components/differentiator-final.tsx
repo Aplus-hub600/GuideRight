@@ -1,7 +1,6 @@
 import { useRef, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Download } from "lucide-react"
-import platformScreenshot from "@assets/image_test_2_1769458972478.png"
 
 export function DifferentiatorFinal() {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -338,20 +337,113 @@ export function DifferentiatorFinal() {
                 </div>
               </div>
               
-              {/* Screenshot */}
+              {/* Clean Simulated UI */}
               <div style={{ 
                 height: "180px",
-                background: `url(${platformScreenshot}) center/cover`,
-                position: "relative"
+                background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
+                padding: "12px",
+                display: "grid",
+                gridTemplateColumns: "1fr 2.2fr 1fr",
+                gap: "10px"
               }}>
+                {/* Left Panel - Chat */}
                 <div style={{
-                  position: "absolute",
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  height: "40px",
-                  background: "linear-gradient(transparent, rgba(12,22,41,0.95))"
-                }} />
+                  background: "rgba(255,255,255,0.03)",
+                  borderRadius: "6px",
+                  padding: "10px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "8px"
+                }}>
+                  <div style={{ fontSize: "8px", fontWeight: 600, color: "#64748b", textTransform: "uppercase" }}>
+                    Chat
+                  </div>
+                  <div style={{ 
+                    background: "rgba(59,130,246,0.15)", 
+                    borderRadius: "4px", 
+                    padding: "6px 8px",
+                    fontSize: "7px",
+                    color: "#94a3b8"
+                  }}>
+                    Assess risk for AOI...
+                  </div>
+                  <div style={{ 
+                    background: "rgba(255,255,255,0.05)", 
+                    borderRadius: "4px", 
+                    padding: "6px 8px",
+                    fontSize: "7px",
+                    color: "#64748b",
+                    flex: 1
+                  }}>
+                    PMESII analysis shows...
+                  </div>
+                </div>
+                
+                {/* Center - Map */}
+                <div style={{
+                  background: "rgba(59,130,246,0.08)",
+                  borderRadius: "6px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  position: "relative",
+                  overflow: "hidden"
+                }}>
+                  {/* Grid lines */}
+                  <div style={{
+                    position: "absolute",
+                    inset: 0,
+                    backgroundImage: "linear-gradient(rgba(59,130,246,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(59,130,246,0.1) 1px, transparent 1px)",
+                    backgroundSize: "20px 20px"
+                  }} />
+                  {/* Map icon */}
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="1" opacity="0.6">
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" />
+                  </svg>
+                  {/* Markers */}
+                  <div style={{ position: "absolute", top: "25%", left: "35%", width: "8px", height: "8px", background: "#ef4444", borderRadius: "50%", border: "2px solid #fff" }} />
+                  <div style={{ position: "absolute", top: "45%", left: "55%", width: "8px", height: "8px", background: "#22c55e", borderRadius: "50%", border: "2px solid #fff" }} />
+                  <div style={{ position: "absolute", top: "60%", left: "40%", width: "8px", height: "8px", background: "#eab308", borderRadius: "50%", border: "2px solid #fff" }} />
+                </div>
+                
+                {/* Right Panel - Analysis */}
+                <div style={{
+                  background: "rgba(255,255,255,0.03)",
+                  borderRadius: "6px",
+                  padding: "10px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "6px"
+                }}>
+                  <div style={{ fontSize: "8px", fontWeight: 600, color: "#64748b", textTransform: "uppercase" }}>
+                    Analysis
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    <div style={{ width: "6px", height: "6px", borderRadius: "2px", background: "#22c55e" }} />
+                    <span style={{ fontSize: "7px", color: "#94a3b8" }}>Political: Stable</span>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    <div style={{ width: "6px", height: "6px", borderRadius: "2px", background: "#eab308" }} />
+                    <span style={{ fontSize: "7px", color: "#94a3b8" }}>Military: Moderate</span>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    <div style={{ width: "6px", height: "6px", borderRadius: "2px", background: "#22c55e" }} />
+                    <span style={{ fontSize: "7px", color: "#94a3b8" }}>Economic: Low Risk</span>
+                  </div>
+                  <div style={{ 
+                    marginTop: "auto",
+                    background: "rgba(34,197,94,0.15)",
+                    borderRadius: "4px",
+                    padding: "4px 6px",
+                    fontSize: "7px",
+                    fontWeight: 600,
+                    color: "#22c55e",
+                    textAlign: "center"
+                  }}>
+                    Confidence: 78%
+                  </div>
+                </div>
               </div>
             </div>
 
