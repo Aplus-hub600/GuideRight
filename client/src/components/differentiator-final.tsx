@@ -214,7 +214,7 @@ export function DifferentiatorFinal() {
               </div>
             </div>
 
-            {/* Data Sources */}
+            {/* Multi-Modal Data Sources */}
             <div style={{ 
               background: "rgba(255,255,255,0.02)",
               border: "1px solid rgba(255,255,255,0.06)",
@@ -224,26 +224,55 @@ export function DifferentiatorFinal() {
               <div style={{ 
                 fontSize: "8px", 
                 fontWeight: 600, 
-                color: "#475569",
+                color: "#ef4444",
                 textTransform: "uppercase",
                 letterSpacing: "0.08em",
-                marginBottom: "8px"
+                marginBottom: "6px"
               }}>
-                Adaptable Data Sources
+                Multi-Modal Data Sources
               </div>
               <div style={{ 
                 display: "flex", 
                 flexWrap: "wrap", 
-                gap: "6px" 
+                gap: "4px",
+                marginBottom: "8px"
               }}>
-                {["ODIN", "ACLED", "GDELT", "OSM"].map(src => (
+                {["GDELT", "ACLED", "News", "Social"].map(src => (
                   <span key={src} style={{
-                    fontSize: "8px",
+                    fontSize: "7px",
                     fontWeight: 600,
                     color: "#94a3b8",
                     background: "rgba(255,255,255,0.05)",
-                    padding: "3px 7px",
-                    borderRadius: "4px"
+                    padding: "2px 6px",
+                    borderRadius: "3px"
+                  }}>
+                    {src}
+                  </span>
+                ))}
+              </div>
+              <div style={{ 
+                fontSize: "8px", 
+                fontWeight: 600, 
+                color: "#ef4444",
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+                marginBottom: "6px"
+              }}>
+                Industry Data Partners
+              </div>
+              <div style={{ 
+                display: "flex", 
+                flexWrap: "wrap", 
+                gap: "4px" 
+              }}>
+                {["Fraym", "Seerist", "Sprinklr"].map(src => (
+                  <span key={src} style={{
+                    fontSize: "7px",
+                    fontWeight: 600,
+                    color: "#94a3b8",
+                    background: "rgba(255,255,255,0.05)",
+                    padding: "2px 6px",
+                    borderRadius: "3px"
                   }}>
                     {src}
                   </span>
