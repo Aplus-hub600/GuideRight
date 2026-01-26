@@ -1,0 +1,112 @@
+Integrated Differentiator Visual
+
+Create a clean, professional diagram-style visual component that depicts GuideRight’s Practitioner-Grounded, Interdisciplinary Development approach.
+
+Purpose:
+Visually communicate how GuideRight was built — through collaboration between practitioners, industry leadership, and academic research partners — for use in a Vulcan Scout Card and external demos.
+
+Design Requirements:
+
+Flat, neutral design (no gradients, no animations)
+
+Readable at small sizes (Scout Card thumbnail)
+
+Exportable as a static image (PNG)
+
+No marketing language, no operational claims
+
+Layout Structure:
+
+Center (Primary Node):
+
+Title: GuideRight Platform
+
+Subtitle: Research-Oriented Situational Awareness
+
+Small tags: Analyst-in-the-Loop · Explainable · Scenario-Driven
+
+Left Section (Practitioner Input):
+
+Header: Practitioner Engagement
+
+Bullet items:
+
+Intelligence Analysts
+
+Special Operations Personnel
+
+Structured Interviews
+
+Iterative Scenario Feedback
+
+Arrow direction: Left → Center (input into GuideRight)
+
+Top Section (Industry Leadership):
+
+Header: Aplus Capabilities
+
+Subtext:
+
+Small Business
+
+Military-Led
+
+Certified Professional Innovator
+
+Arrow direction: Top → Center
+
+Right Section (Academic Research Partners):
+
+Header: Academic Research Collaboration
+
+Institutions:
+
+University of Nebraska–Lincoln
+
+The Citadel
+
+Subtext:
+
+AI/ML & Reasoning
+
+Geospatial & Risk Analysis
+
+Evaluation Methodology
+
+Arrow direction: Right ↔ Center (iterative feedback)
+
+Bottom Section (Outcome):
+
+Header: Resulting Differentiation
+
+Bullet items:
+
+Aligned with real analyst workflows
+
+Explicit treatment of uncertainty
+
+Research-ready for evaluation and transition
+
+Implementation Guidance:
+
+Use React + TypeScript
+
+Render as SVG or HTML/CSS layout
+
+Use simple icons or shapes (circles/rectangles)
+
+Ensure clear spacing and no overlapping elements
+
+Include a single export function to download as PNG
+
+Do not include:
+
+Weapon imagery
+
+Claims of operational deployment
+
+Autonomy or prediction language
+
+Logos unless explicitly requested
+
+The result should be a single visual that can be used as a Scout Card image, demo slide, and documentation graphic.

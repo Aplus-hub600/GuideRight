@@ -18,6 +18,8 @@ import { MapLibrePanel } from "./components/maplibre-panel";
 import { IntelligencePanel } from "./components/intelligence-panel";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import type { MapLens } from "./components/map-lens-selector";
+import { Switch, Route } from "wouter";
+import ScoutCardPage from "./pages/scout-card";
 
 interface AOI {
   name?: string;
@@ -134,6 +136,11 @@ function App() {
           <ScenarioProvider>
             <SystemStatusProvider>
               <TooltipProvider>
+                <Switch>
+                  <Route path="/scout-card">
+                    <ScoutCardPage />
+                  </Route>
+                  <Route path="/">
                 <div className="h-screen w-screen bg-background flex flex-col overflow-hidden">
                   {/* Classification Banner - Always at top, never scrolls */}
                   <ClassificationBanner level="UNCLASSIFIED_FOUO" />
@@ -279,6 +286,8 @@ function App() {
                   </div>
                 </div>
               </div>
+                  </Route>
+                </Switch>
 
                 <Toaster />
               </TooltipProvider>
