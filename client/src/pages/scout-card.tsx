@@ -9,8 +9,8 @@ export default function ScoutCardPage() {
   const [view, setView] = useState<"final" | "compare">("final")
 
   return (
-    <div className="min-h-screen bg-muted/30 p-6">
-      <div className="max-w-[1200px] mx-auto">
+    <div className="min-h-screen bg-muted/30 p-6 overflow-auto">
+      <div className="max-w-[1400px] mx-auto">
         <div className="mb-6 flex items-center justify-between flex-wrap gap-4">
           <div>
             <h1 className="text-2xl font-semibold text-foreground mb-2">Scout Card Visual</h1>
