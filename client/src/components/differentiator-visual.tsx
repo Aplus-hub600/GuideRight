@@ -12,7 +12,7 @@ export function DifferentiatorVisual() {
       const html2canvas = (await import("html2canvas")).default
       const canvas = await html2canvas(containerRef.current, {
         backgroundColor: "#ffffff",
-        scale: 2,
+        scale: 3,
         useCORS: true,
       })
       
@@ -34,254 +34,299 @@ export function DifferentiatorVisual() {
       
       <div
         ref={containerRef}
-        className="bg-white p-8 rounded-lg"
-        style={{ width: "900px", minHeight: "700px" }}
+        style={{ 
+          width: "800px",
+          background: "#ffffff",
+          padding: "40px",
+          fontFamily: "'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif"
+        }}
       >
-        <svg
-          viewBox="0 0 900 700"
-          width="900"
-          height="700"
-          xmlns="http://www.w3.org/2000/svg"
-          style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}
-        >
-          {/* Background */}
-          <rect width="900" height="700" fill="#ffffff" />
-
-          {/* Center Node - GuideRight Platform */}
-          <g transform="translate(450, 350)">
-            <rect
-              x="-140"
-              y="-70"
-              width="280"
-              height="140"
-              rx="8"
-              fill="#1e3a5f"
-              stroke="#0f2744"
-              strokeWidth="2"
-            />
-            <text
-              x="0"
-              y="-30"
-              textAnchor="middle"
-              fill="#ffffff"
-              fontSize="18"
-              fontWeight="600"
-            >
-              GuideRight Platform
-            </text>
-            <text
-              x="0"
-              y="-5"
-              textAnchor="middle"
-              fill="#94a3b8"
-              fontSize="12"
-            >
-              Research-Oriented Situational Awareness
-            </text>
-            <line x1="-100" y1="15" x2="100" y2="15" stroke="#334d6e" strokeWidth="1" />
-            <text x="0" y="38" textAnchor="middle" fill="#cbd5e1" fontSize="10">
-              Analyst-in-the-Loop
-            </text>
-            <text x="0" y="52" textAnchor="middle" fill="#cbd5e1" fontSize="10">
-              Explainable · Scenario-Driven
-            </text>
-          </g>
-
-          {/* Left Section - Practitioner Input */}
-          <g transform="translate(100, 350)">
-            <rect
-              x="-80"
-              y="-100"
-              width="160"
-              height="200"
-              rx="6"
-              fill="#f8fafc"
-              stroke="#e2e8f0"
-              strokeWidth="1.5"
-            />
-            <text
-              x="0"
-              y="-70"
-              textAnchor="middle"
-              fill="#1e3a5f"
-              fontSize="13"
-              fontWeight="600"
-            >
-              Practitioner
-            </text>
-            <text
-              x="0"
-              y="-55"
-              textAnchor="middle"
-              fill="#1e3a5f"
-              fontSize="13"
-              fontWeight="600"
-            >
-              Engagement
-            </text>
-            <line x1="-60" y1="-40" x2="60" y2="-40" stroke="#e2e8f0" strokeWidth="1" />
-            <circle cx="-55" cy="-18" r="3" fill="#64748b" />
-            <text x="-45" y="-14" fill="#475569" fontSize="10">Intelligence Analysts</text>
-            <circle cx="-55" cy="2" r="3" fill="#64748b" />
-            <text x="-45" y="6" fill="#475569" fontSize="10">Special Operations</text>
-            <text x="-45" y="16" fill="#475569" fontSize="10">Personnel</text>
-            <circle cx="-55" cy="36" r="3" fill="#64748b" />
-            <text x="-45" y="40" fill="#475569" fontSize="10">Structured Interviews</text>
-            <circle cx="-55" cy="56" r="3" fill="#64748b" />
-            <text x="-45" y="60" fill="#475569" fontSize="10">Iterative Scenario</text>
-            <text x="-45" y="70" fill="#475569" fontSize="10">Feedback</text>
-          </g>
-
-          {/* Left Arrow */}
-          <g transform="translate(230, 350)">
-            <line x1="0" y1="0" x2="70" y2="0" stroke="#64748b" strokeWidth="2" />
-            <polygon points="75,0 65,-6 65,6" fill="#64748b" />
-          </g>
-
-          {/* Top Section - Industry Leadership */}
-          <g transform="translate(450, 100)">
-            <rect
-              x="-100"
-              y="-70"
-              width="200"
-              height="140"
-              rx="6"
-              fill="#f8fafc"
-              stroke="#e2e8f0"
-              strokeWidth="1.5"
-            />
-            <text
-              x="0"
-              y="-40"
-              textAnchor="middle"
-              fill="#1e3a5f"
-              fontSize="13"
-              fontWeight="600"
-            >
-              Aplus Capabilities
-            </text>
-            <line x1="-80" y1="-25" x2="80" y2="-25" stroke="#e2e8f0" strokeWidth="1" />
-            <circle cx="-70" cy="-5" r="3" fill="#64748b" />
-            <text x="-60" y="-1" fill="#475569" fontSize="10">Small Business</text>
-            <circle cx="-70" cy="15" r="3" fill="#64748b" />
-            <text x="-60" y="19" fill="#475569" fontSize="10">Military-Led</text>
-            <circle cx="-70" cy="35" r="3" fill="#64748b" />
-            <text x="-60" y="39" fill="#475569" fontSize="10">Certified Professional</text>
-            <text x="-60" y="49" fill="#475569" fontSize="10">Innovator</text>
-          </g>
-
-          {/* Top Arrow */}
-          <g transform="translate(450, 210)">
-            <line x1="0" y1="0" x2="0" y2="60" stroke="#64748b" strokeWidth="2" />
-            <polygon points="0,70 -6,60 6,60" fill="#64748b" />
-          </g>
-
-          {/* Right Section - Academic Research */}
-          <g transform="translate(800, 350)">
-            <rect
-              x="-80"
-              y="-110"
-              width="160"
-              height="220"
-              rx="6"
-              fill="#f8fafc"
-              stroke="#e2e8f0"
-              strokeWidth="1.5"
-            />
-            <text
-              x="0"
-              y="-80"
-              textAnchor="middle"
-              fill="#1e3a5f"
-              fontSize="13"
-              fontWeight="600"
-            >
-              Academic Research
-            </text>
-            <text
-              x="0"
-              y="-65"
-              textAnchor="middle"
-              fill="#1e3a5f"
-              fontSize="13"
-              fontWeight="600"
-            >
-              Collaboration
-            </text>
-            <line x1="-60" y1="-50" x2="60" y2="-50" stroke="#e2e8f0" strokeWidth="1" />
-            <text x="0" y="-30" textAnchor="middle" fill="#334d6e" fontSize="10" fontWeight="500">
-              University of Nebraska–Lincoln
-            </text>
-            <text x="0" y="-15" textAnchor="middle" fill="#334d6e" fontSize="10" fontWeight="500">
-              The Citadel
-            </text>
-            <line x1="-50" y1="0" x2="50" y2="0" stroke="#e2e8f0" strokeWidth="1" />
-            <circle cx="-55" cy="22" r="3" fill="#64748b" />
-            <text x="-45" y="26" fill="#475569" fontSize="10">AI/ML & Reasoning</text>
-            <circle cx="-55" cy="42" r="3" fill="#64748b" />
-            <text x="-45" y="46" fill="#475569" fontSize="10">Geospatial & Risk</text>
-            <text x="-45" y="56" fill="#475569" fontSize="10">Analysis</text>
-            <circle cx="-55" cy="76" r="3" fill="#64748b" />
-            <text x="-45" y="80" fill="#475569" fontSize="10">Evaluation</text>
-            <text x="-45" y="90" fill="#475569" fontSize="10">Methodology</text>
-          </g>
-
-          {/* Right Bidirectional Arrow */}
-          <g transform="translate(595, 350)">
-            <line x1="0" y1="0" x2="110" y2="0" stroke="#64748b" strokeWidth="2" />
-            <polygon points="-5,0 5,-6 5,6" fill="#64748b" />
-            <polygon points="115,0 105,-6 105,6" fill="#64748b" />
-          </g>
-
-          {/* Bottom Section - Outcome */}
-          <g transform="translate(450, 600)">
-            <rect
-              x="-180"
-              y="-55"
-              width="360"
-              height="110"
-              rx="6"
-              fill="#f0fdf4"
-              stroke="#86efac"
-              strokeWidth="1.5"
-            />
-            <text
-              x="0"
-              y="-25"
-              textAnchor="middle"
-              fill="#166534"
-              fontSize="14"
-              fontWeight="600"
-            >
-              Resulting Differentiation
-            </text>
-            <line x1="-150" y1="-10" x2="150" y2="-10" stroke="#86efac" strokeWidth="1" />
-            <circle cx="-145" cy="12" r="3" fill="#22c55e" />
-            <text x="-135" y="16" fill="#15803d" fontSize="11">Aligned with real analyst workflows</text>
-            <circle cx="-145" cy="32" r="3" fill="#22c55e" />
-            <text x="-135" y="36" fill="#15803d" fontSize="11">Explicit treatment of uncertainty</text>
-            <circle cx="-145" cy="52" r="3" fill="#22c55e" />
-            <text x="-135" y="56" fill="#15803d" fontSize="11">Research-ready for evaluation and transition</text>
-          </g>
-
-          {/* Bottom Arrow */}
-          <g transform="translate(450, 430)">
-            <line x1="0" y1="0" x2="0" y2="100" stroke="#64748b" strokeWidth="2" />
-            <polygon points="0,110 -6,100 6,100" fill="#64748b" />
-          </g>
-
-          {/* Title */}
-          <text
-            x="450"
-            y="35"
-            textAnchor="middle"
-            fill="#0f172a"
-            fontSize="16"
-            fontWeight="600"
-          >
+        {/* Title */}
+        <div style={{ 
+          textAlign: "center", 
+          marginBottom: "32px",
+          borderBottom: "1px solid #e5e7eb",
+          paddingBottom: "20px"
+        }}>
+          <h1 style={{ 
+            fontSize: "15px", 
+            fontWeight: 600, 
+            color: "#111827",
+            letterSpacing: "-0.01em",
+            margin: 0
+          }}>
             Practitioner-Grounded, Interdisciplinary Development
-          </text>
-        </svg>
+          </h1>
+        </div>
+
+        {/* Main Grid Layout */}
+        <div style={{ 
+          display: "grid",
+          gridTemplateColumns: "1fr 1.4fr 1fr",
+          gridTemplateRows: "auto auto auto",
+          gap: "20px",
+          alignItems: "center"
+        }}>
+          
+          {/* Top Row - Industry (spans middle) */}
+          <div />
+          <div style={{ 
+            background: "#f9fafb",
+            border: "1px solid #e5e7eb",
+            borderRadius: "6px",
+            padding: "16px 20px"
+          }}>
+            <div style={{ 
+              fontSize: "11px", 
+              fontWeight: 600, 
+              color: "#374151",
+              textTransform: "uppercase",
+              letterSpacing: "0.05em",
+              marginBottom: "10px"
+            }}>
+              Aplus Capabilities
+            </div>
+            <div style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}>
+              {["Small Business", "Military-Led", "Certified Professional Innovator"].map(item => (
+                <div key={item} style={{ 
+                  fontSize: "11px", 
+                  color: "#6b7280",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px"
+                }}>
+                  <span style={{ 
+                    width: "4px", 
+                    height: "4px", 
+                    borderRadius: "50%", 
+                    background: "#9ca3af" 
+                  }} />
+                  {item}
+                </div>
+              ))}
+            </div>
+          </div>
+          <div />
+
+          {/* Arrow down from Industry */}
+          <div />
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            <svg width="2" height="24" style={{ overflow: "visible" }}>
+              <line x1="1" y1="0" x2="1" y2="20" stroke="#d1d5db" strokeWidth="1.5" />
+              <polygon points="1,24 -3,18 5,18" fill="#d1d5db" />
+            </svg>
+          </div>
+          <div />
+
+          {/* Middle Row - Practitioner, Center, Academic */}
+          <div style={{ 
+            background: "#f9fafb",
+            border: "1px solid #e5e7eb",
+            borderRadius: "6px",
+            padding: "16px"
+          }}>
+            <div style={{ 
+              fontSize: "11px", 
+              fontWeight: 600, 
+              color: "#374151",
+              textTransform: "uppercase",
+              letterSpacing: "0.05em",
+              marginBottom: "12px"
+            }}>
+              Practitioner Engagement
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+              {["Intelligence Analysts", "Special Operations Personnel", "Structured Interviews", "Iterative Scenario Feedback"].map(item => (
+                <div key={item} style={{ 
+                  fontSize: "10px", 
+                  color: "#6b7280",
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: "6px",
+                  lineHeight: "1.4"
+                }}>
+                  <span style={{ 
+                    width: "4px", 
+                    height: "4px", 
+                    borderRadius: "50%", 
+                    background: "#9ca3af",
+                    marginTop: "4px",
+                    flexShrink: 0
+                  }} />
+                  {item}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Center Node with arrows */}
+          <div style={{ position: "relative" }}>
+            {/* Left arrow */}
+            <svg style={{ position: "absolute", left: "-22px", top: "50%", transform: "translateY(-50%)" }} width="20" height="12">
+              <line x1="0" y1="6" x2="14" y2="6" stroke="#d1d5db" strokeWidth="1.5" />
+              <polygon points="18,6 12,2 12,10" fill="#d1d5db" />
+            </svg>
+            
+            {/* Right bidirectional arrow */}
+            <svg style={{ position: "absolute", right: "-22px", top: "50%", transform: "translateY(-50%)" }} width="20" height="12">
+              <line x1="3" y1="6" x2="17" y2="6" stroke="#d1d5db" strokeWidth="1.5" />
+              <polygon points="0,6 6,2 6,10" fill="#d1d5db" />
+              <polygon points="20,6 14,2 14,10" fill="#d1d5db" />
+            </svg>
+
+            <div style={{ 
+              background: "#1e3a5f",
+              borderRadius: "8px",
+              padding: "20px 24px",
+              textAlign: "center"
+            }}>
+              <div style={{ 
+                fontSize: "14px", 
+                fontWeight: 600, 
+                color: "#ffffff",
+                marginBottom: "4px"
+              }}>
+                GuideRight Platform
+              </div>
+              <div style={{ 
+                fontSize: "10px", 
+                color: "#94a3b8",
+                marginBottom: "12px"
+              }}>
+                Research-Oriented Situational Awareness
+              </div>
+              <div style={{ 
+                borderTop: "1px solid #334d6e",
+                paddingTop: "10px",
+                display: "flex",
+                justifyContent: "center",
+                gap: "12px",
+                flexWrap: "wrap"
+              }}>
+                {["Analyst-in-the-Loop", "Explainable", "Scenario-Driven"].map(tag => (
+                  <span key={tag} style={{ 
+                    fontSize: "9px", 
+                    color: "#cbd5e1",
+                    background: "#2d4a6f",
+                    padding: "3px 8px",
+                    borderRadius: "3px"
+                  }}>
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div style={{ 
+            background: "#f9fafb",
+            border: "1px solid #e5e7eb",
+            borderRadius: "6px",
+            padding: "16px"
+          }}>
+            <div style={{ 
+              fontSize: "11px", 
+              fontWeight: 600, 
+              color: "#374151",
+              textTransform: "uppercase",
+              letterSpacing: "0.05em",
+              marginBottom: "8px"
+            }}>
+              Academic Research
+            </div>
+            <div style={{ 
+              fontSize: "10px", 
+              color: "#374151",
+              fontWeight: 500,
+              marginBottom: "8px",
+              lineHeight: "1.5"
+            }}>
+              University of Nebraska–Lincoln
+              <br />
+              The Citadel
+            </div>
+            <div style={{ 
+              borderTop: "1px solid #e5e7eb",
+              paddingTop: "8px",
+              display: "flex", 
+              flexDirection: "column", 
+              gap: "4px" 
+            }}>
+              {["AI/ML & Reasoning", "Geospatial & Risk Analysis", "Evaluation Methodology"].map(item => (
+                <div key={item} style={{ 
+                  fontSize: "9px", 
+                  color: "#6b7280",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "5px"
+                }}>
+                  <span style={{ 
+                    width: "3px", 
+                    height: "3px", 
+                    borderRadius: "50%", 
+                    background: "#9ca3af" 
+                  }} />
+                  {item}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Arrow down to outcome */}
+          <div />
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            <svg width="2" height="24" style={{ overflow: "visible" }}>
+              <line x1="1" y1="0" x2="1" y2="20" stroke="#d1d5db" strokeWidth="1.5" />
+              <polygon points="1,24 -3,18 5,18" fill="#d1d5db" />
+            </svg>
+          </div>
+          <div />
+
+          {/* Bottom Row - Outcome (spans all) */}
+          <div style={{ gridColumn: "1 / -1" }}>
+            <div style={{ 
+              background: "#f0fdf4",
+              border: "1px solid #bbf7d0",
+              borderRadius: "6px",
+              padding: "16px 24px"
+            }}>
+              <div style={{ 
+                fontSize: "11px", 
+                fontWeight: 600, 
+                color: "#166534",
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
+                marginBottom: "10px"
+              }}>
+                Resulting Differentiation
+              </div>
+              <div style={{ 
+                display: "flex", 
+                gap: "24px",
+                flexWrap: "wrap"
+              }}>
+                {[
+                  "Aligned with real analyst workflows",
+                  "Explicit treatment of uncertainty",
+                  "Research-ready for evaluation and transition"
+                ].map(item => (
+                  <div key={item} style={{ 
+                    fontSize: "11px", 
+                    color: "#15803d",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px"
+                  }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    {item}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   )
