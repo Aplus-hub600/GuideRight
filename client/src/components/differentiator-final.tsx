@@ -355,7 +355,7 @@ export function DifferentiatorFinal() {
                   flexDirection: "column",
                   gap: "8px"
                 }}>
-                  <div style={{ fontSize: "8px", fontWeight: 600, color: "#64748b", textTransform: "uppercase" }}>
+                  <div style={{ fontSize: "8px", fontWeight: 600, color: "#94a3b8", textTransform: "uppercase" }}>
                     Chat
                   </div>
                   <div style={{ 
@@ -416,7 +416,7 @@ export function DifferentiatorFinal() {
                   flexDirection: "column",
                   gap: "6px"
                 }}>
-                  <div style={{ fontSize: "8px", fontWeight: 600, color: "#64748b", textTransform: "uppercase" }}>
+                  <div style={{ fontSize: "8px", fontWeight: 600, color: "#94a3b8", textTransform: "uppercase" }}>
                     Analysis
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
@@ -484,7 +484,7 @@ export function DifferentiatorFinal() {
                 <strong>Purpose:</strong> Support human judgment in complex, uncertain environments.
               </div>
               <div style={{ fontSize: "9px", color: "#64748b", fontStyle: "italic" }}>
-                Not autonomous. Not predict. Not targeting.
+                Not autonomous. Not predictive. Not targeting.
               </div>
             </div>
           </div>
