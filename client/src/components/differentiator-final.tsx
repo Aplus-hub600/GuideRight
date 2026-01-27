@@ -269,10 +269,7 @@ export function DifferentiatorFinal() {
           marginBottom: "12px"
         }}>
           <div style={{ fontSize: "14px", color: "#ffffff", fontWeight: 600 }}>
-            Purpose: Support human judgment in complex, uncertain operational environments.
-          </div>
-          <div style={{ fontSize: "13px", color: "#fbbf24", fontWeight: 600, fontStyle: "italic", marginTop: "4px" }}>
-            Not autonomous. Not predictive. Not targeting.
+            Purpose: Deliver transparent, explainable, confidence-qualified intelligence to support rapid decision-making in high-stakes operational environments.
           </div>
         </div>
 
