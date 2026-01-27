@@ -83,79 +83,68 @@ export function DifferentiatorFinal() {
             </span>
           </div>
 
-          {/* Four Pillars of the Approach */}
-          <div style={{ display: "flex", gap: "16px", marginTop: "10px" }}>
+          {/* Three Pillars of the Approach */}
+          <div style={{ display: "flex", gap: "24px", marginTop: "10px" }}>
             
             {/* Pillar 1: Customer Discovery */}
             <div style={{ flex: 1, textAlign: "center" }}>
               <div style={{ 
-                width: "56px", height: "56px", margin: "0 auto 10px",
+                width: "60px", height: "60px", margin: "0 auto 10px",
                 background: "rgba(239,68,68,0.15)", border: "2px solid rgba(239,68,68,0.4)",
                 borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center"
               }}>
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
                   <circle cx="12" cy="8" r="4" stroke="#f87171" strokeWidth="2" />
                   <path d="M4 20c0-4 4-6 8-6s8 2 8 6" stroke="#f87171" strokeWidth="2" strokeLinecap="round" />
                 </svg>
               </div>
-              <div style={{ fontSize: "13px", fontWeight: 700, color: "#f87171", marginBottom: "6px" }}>Customer Discovery</div>
-              <div style={{ fontSize: "11px", color: "#ffffff", fontWeight: 600, marginBottom: "3px" }}>Special Operators</div>
-              <div style={{ fontSize: "11px", color: "#ffffff", fontWeight: 600, marginBottom: "3px" }}>Intelligence Analysts</div>
+              <div style={{ fontSize: "14px", fontWeight: 700, color: "#f87171", marginBottom: "8px" }}>Customer Discovery</div>
+              <div style={{ fontSize: "12px", color: "#ffffff", fontWeight: 600, marginBottom: "4px" }}>Special Operators</div>
+              <div style={{ fontSize: "12px", color: "#ffffff", fontWeight: 600, marginBottom: "4px" }}>Intelligence Analysts</div>
+              <div style={{ fontSize: "12px", color: "#ffffff", fontWeight: 600, marginBottom: "6px" }}>Adjacent Users</div>
               <div style={{ fontSize: "10px", color: "#94a3b8", fontStyle: "italic" }}>Real needs from real users</div>
             </div>
 
             {/* Pillar 2: Research Partners */}
             <div style={{ flex: 1, textAlign: "center" }}>
               <div style={{ 
-                width: "56px", height: "56px", margin: "0 auto 10px",
+                width: "60px", height: "60px", margin: "0 auto 10px",
                 background: "rgba(168,85,247,0.15)", border: "2px solid rgba(168,85,247,0.4)",
                 borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center"
               }}>
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
                   <path d="M12 3L20 7.5V16.5L12 21L4 16.5V7.5L12 3Z" stroke="#a855f7" strokeWidth="2" strokeLinejoin="round" />
                   <path d="M12 12L20 7.5" stroke="#a855f7" strokeWidth="2" />
                   <path d="M12 12V21" stroke="#a855f7" strokeWidth="2" />
                   <path d="M12 12L4 7.5" stroke="#a855f7" strokeWidth="2" />
                 </svg>
               </div>
-              <div style={{ fontSize: "13px", fontWeight: 700, color: "#a855f7", marginBottom: "6px" }}>Research Partners</div>
-              <div style={{ fontSize: "11px", color: "#ffffff", fontWeight: 600, marginBottom: "3px" }}>The Citadel</div>
-              <div style={{ fontSize: "11px", color: "#ffffff", fontWeight: 600, marginBottom: "3px" }}>University of Nebraska-Lincoln</div>
-              <div style={{ fontSize: "10px", color: "#94a3b8", fontStyle: "italic" }}>Academic rigor & innovation</div>
+              <div style={{ fontSize: "14px", fontWeight: 700, color: "#a855f7", marginBottom: "8px" }}>Research Partners</div>
+              <div style={{ fontSize: "12px", color: "#ffffff", fontWeight: 600, marginBottom: "4px" }}>The Citadel</div>
+              <div style={{ fontSize: "12px", color: "#ffffff", fontWeight: 600, marginBottom: "6px" }}>University of Nebraska-Lincoln</div>
+              <div style={{ fontSize: "10px", color: "#94a3b8", fontStyle: "italic" }}>Academic rigor & AI/ML research</div>
             </div>
 
-            {/* Pillar 3: Certified Innovators */}
+            {/* Pillar 3: Industry Team - Combined */}
             <div style={{ flex: 1, textAlign: "center" }}>
               <div style={{ 
-                width: "56px", height: "56px", margin: "0 auto 10px",
-                background: "rgba(59,130,246,0.15)", border: "2px solid rgba(59,130,246,0.4)",
+                width: "60px", height: "60px", margin: "0 auto 10px",
+                background: "linear-gradient(135deg, rgba(59,130,246,0.15) 0%, rgba(34,197,94,0.15) 100%)", 
+                border: "2px solid rgba(34,197,94,0.4)",
                 borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center"
               }}>
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-                  <path d="M12 2L15 8L22 9L17 14L18 21L12 18L6 21L7 14L2 9L9 8L12 2Z" stroke="#60a5fa" strokeWidth="2" strokeLinejoin="round" />
+                <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 2L15 8L22 9L17 14L18 21L12 18L6 21L7 14L2 9L9 8L12 2Z" stroke="#4ade80" strokeWidth="2" strokeLinejoin="round" />
                 </svg>
               </div>
-              <div style={{ fontSize: "13px", fontWeight: 700, color: "#60a5fa", marginBottom: "6px" }}>Certified Innovators</div>
-              <div style={{ fontSize: "11px", color: "#ffffff", fontWeight: 600, marginBottom: "3px" }}>Aplus Capabilities LLC</div>
-              <div style={{ fontSize: "11px", color: "#ffffff", fontWeight: 600, marginBottom: "3px" }}>Offset3 LLC</div>
-              <div style={{ fontSize: "10px", color: "#94a3b8", fontStyle: "italic" }}>Professional innovation expertise</div>
-            </div>
-
-            {/* Pillar 4: Lean Small Business */}
-            <div style={{ flex: 1, textAlign: "center" }}>
-              <div style={{ 
-                width: "56px", height: "56px", margin: "0 auto 10px",
-                background: "rgba(34,197,94,0.15)", border: "2px solid rgba(34,197,94,0.4)",
-                borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center"
-              }}>
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-                  <path d="M13 2L3 14H12L11 22L21 10H12L13 2Z" stroke="#4ade80" strokeWidth="2" strokeLinejoin="round" />
-                </svg>
+              <div style={{ fontSize: "14px", fontWeight: 700, color: "#4ade80", marginBottom: "8px" }}>Industry Team</div>
+              <div style={{ fontSize: "12px", color: "#ffffff", fontWeight: 600, marginBottom: "4px" }}>Aplus Capabilities LLC <span style={{ fontSize: "9px", color: "#22c55e" }}>(Lead)</span></div>
+              <div style={{ fontSize: "12px", color: "#ffffff", fontWeight: 600, marginBottom: "6px" }}>Offset3 LLC</div>
+              <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "4px", marginBottom: "6px" }}>
+                <span style={{ fontSize: "9px", fontWeight: 600, color: "#4ade80", background: "rgba(34,197,94,0.15)", padding: "2px 6px", borderRadius: "4px" }}>Veteran-Led</span>
+                <span style={{ fontSize: "9px", fontWeight: 600, color: "#4ade80", background: "rgba(34,197,94,0.15)", padding: "2px 6px", borderRadius: "4px" }}>Certified Innovators</span>
               </div>
-              <div style={{ fontSize: "13px", fontWeight: 700, color: "#4ade80", marginBottom: "6px" }}>Lean Small Business</div>
-              <div style={{ fontSize: "11px", color: "#ffffff", fontWeight: 600, marginBottom: "3px" }}>Veteran-Led Teams</div>
-              <div style={{ fontSize: "11px", color: "#ffffff", fontWeight: 600, marginBottom: "3px" }}>Agile Development</div>
-              <div style={{ fontSize: "10px", color: "#94a3b8", fontStyle: "italic" }}>Fast, efficient delivery</div>
+              <div style={{ fontSize: "10px", color: "#94a3b8", fontStyle: "italic" }}>Lean, agile small business</div>
             </div>
           </div>
         </div>
