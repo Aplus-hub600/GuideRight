@@ -58,7 +58,7 @@ export function DifferentiatorFinal() {
                 GuideRight: Multimodal LLM-Powered Tactical Assistant
               </h1>
               <div style={{ fontSize: "13px", color: "#94a3b8", fontWeight: 500 }}>
-                Enhanced Battlespace Awareness for USSOCOM Operations
+                Enhanced Battlespace Awareness for Defense & Intelligence Operations
               </div>
             </div>
           </div>
