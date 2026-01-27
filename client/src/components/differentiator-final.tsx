@@ -42,9 +42,9 @@ export function DifferentiatorFinal() {
         }}
       >
         {/* Header */}
-        <div style={{ textAlign: "center", marginBottom: "24px" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "14px", marginBottom: "6px" }}>
-            <svg width="40" height="40" viewBox="0 0 48 48" fill="none">
+        <div style={{ textAlign: "center", marginBottom: "20px" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "14px", marginBottom: "4px" }}>
+            <svg width="36" height="36" viewBox="0 0 48 48" fill="none">
               <circle cx="24" cy="24" r="20" stroke="#3b82f6" strokeWidth="2.5" fill="none" />
               <circle cx="24" cy="24" r="12" stroke="#3b82f6" strokeWidth="2" fill="none" opacity="0.6" />
               <circle cx="24" cy="24" r="5" fill="#3b82f6" />
@@ -54,321 +54,255 @@ export function DifferentiatorFinal() {
               <path d="M34 24L42 24" stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round" />
             </svg>
             <div>
-              <h1 style={{ fontSize: "24px", fontWeight: 700, color: "#ffffff", letterSpacing: "-0.02em", margin: 0 }}>
-                GuideRight: Multimodal LLM-Powered Tactical Assistant
+              <h1 style={{ fontSize: "22px", fontWeight: 700, color: "#ffffff", letterSpacing: "-0.02em", margin: 0 }}>
+                GuideRight Development Methodology
               </h1>
-              <div style={{ fontSize: "13px", color: "#94a3b8", fontWeight: 500 }}>
-                Enhanced Battlespace Awareness for Defense & Intelligence Operations
+              <div style={{ fontSize: "12px", color: "#94a3b8", fontWeight: 500 }}>
+                Key Differentiator: Iterative, Practitioner-Grounded Development Cycle
               </div>
             </div>
           </div>
         </div>
 
-        {/* Main 3-Column Flow */}
-        <div style={{ display: "flex", alignItems: "stretch", gap: "0", marginBottom: "16px" }}>
-          
-          {/* LEFT COLUMN - Team & Data */}
-          <div style={{ width: "250px", display: "flex", flexDirection: "column", gap: "10px" }}>
-            
-            {/* Project Team */}
-            <div style={{ 
-              background: "rgba(255,255,255,0.04)",
-              border: "1px solid rgba(255,255,255,0.12)",
-              borderRadius: "8px",
-              padding: "12px"
-            }}>
-              <div style={{ fontSize: "10px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "6px" }}>
-                Industry Partners
-              </div>
-              <div style={{ fontSize: "13px", fontWeight: 700, color: "#ffffff", marginBottom: "4px", display: "flex", alignItems: "center", gap: "8px" }}>
-                Aplus Capabilities LLC
-                <span style={{ fontSize: "9px", fontWeight: 700, color: "#22c55e", background: "rgba(34,197,94,0.15)", padding: "2px 6px", borderRadius: "4px", textTransform: "uppercase" }}>Lead</span>
-              </div>
-              <div style={{ fontSize: "13px", fontWeight: 700, color: "#ffffff", marginBottom: "6px" }}>Offset3 LLC</div>
-              <div style={{ fontSize: "10px", color: "#94a3b8", marginBottom: "8px" }}>Veteran-Led | Certified Professional Innovators</div>
-              
-              <div style={{ fontSize: "10px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "6px" }}>
-                Research Partners
-              </div>
-              <div style={{ fontSize: "13px", fontWeight: 700, color: "#ffffff", marginBottom: "4px" }}>The Citadel</div>
-              <div style={{ fontSize: "13px", fontWeight: 700, color: "#ffffff" }}>University of Nebraska-Lincoln</div>
-            </div>
-
-            {/* Practitioner Grounding */}
-            <div style={{ 
-              background: "linear-gradient(135deg, rgba(59,130,246,0.12) 0%, rgba(59,130,246,0.06) 100%)",
-              border: "2px solid rgba(59,130,246,0.35)",
-              borderRadius: "8px",
-              padding: "12px",
-              position: "relative",
-              flex: 1
-            }}>
-              <div style={{
-                position: "absolute", top: "-9px", right: "10px",
-                background: "#3b82f6", color: "#fff", fontSize: "9px", fontWeight: 700,
-                padding: "3px 8px", borderRadius: "8px", textTransform: "uppercase"
-              }}>Continuous</div>
-              
-              <div style={{ fontSize: "10px", fontWeight: 700, color: "#60a5fa", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "8px" }}>
-                Practitioner Engagement
-              </div>
-              {["SOF Analysts & Operators", "Scenario-Based Interviews", "Feedback Integration", "24-Hour Model Updates"].map(item => (
-                <div key={item} style={{ fontSize: "11px", color: "#ffffff", fontWeight: 500, marginBottom: "4px", display: "flex", alignItems: "center", gap: "6px" }}>
-                  <span style={{ width: "4px", height: "4px", borderRadius: "50%", background: "#60a5fa" }} />
-                  {item}
-                </div>
-              ))}
-            </div>
-
-            {/* Data Sources */}
-            <div style={{ 
-              background: "rgba(255,255,255,0.03)",
-              border: "1px solid rgba(239,68,68,0.25)",
-              borderRadius: "8px",
-              padding: "10px"
-            }}>
-              <div style={{ fontSize: "10px", fontWeight: 700, color: "#f87171", textTransform: "uppercase", marginBottom: "6px" }}>Multimodal Data Sources</div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
-                {["Text", "Imagery", "Video", "Geospatial", "SIGACT", "Social"].map(src => (
-                  <span key={src} style={{ fontSize: "9px", fontWeight: 600, color: "#fff", background: "rgba(255,255,255,0.08)", padding: "3px 6px", borderRadius: "4px" }}>{src}</span>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* ARROW: Left to Center */}
-          <div style={{ width: "44px", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}>
-            <svg width="36" height="100" viewBox="0 0 36 100">
-              <defs>
-                <marker id="arrow1" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto">
-                  <polygon points="0 0, 8 3, 0 6" fill="#60a5fa" />
-                </marker>
-              </defs>
-              <path d="M 4 25 L 28 25" fill="none" stroke="#60a5fa" strokeWidth="2" markerEnd="url(#arrow1)" />
-              <path d="M 4 50 L 28 50" fill="none" stroke="#60a5fa" strokeWidth="2" markerEnd="url(#arrow1)" />
-              <path d="M 4 75 L 28 75" fill="none" stroke="#60a5fa" strokeWidth="2" markerEnd="url(#arrow1)" />
-            </svg>
-          </div>
-
-          {/* CENTER COLUMN - Technical Actions */}
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "8px" }}>
-            
-            {/* TA1-TA2: Data & SIGACT */}
-            <div style={{
-              background: "linear-gradient(135deg, rgba(168,85,247,0.1) 0%, rgba(59,130,246,0.06) 100%)",
-              border: "2px solid rgba(168,85,247,0.3)",
-              borderRadius: "8px",
-              padding: "10px 12px",
-              position: "relative"
-            }}>
-              <div style={{ position: "absolute", top: "-9px", left: "12px", background: "#a855f7", color: "#fff", fontSize: "8px", fontWeight: 700, padding: "3px 8px", borderRadius: "8px", textTransform: "uppercase" }}>TA1-TA2</div>
-              <div style={{ position: "absolute", top: "-9px", right: "12px", background: "#a855f7", color: "#fff", fontSize: "8px", fontWeight: 700, padding: "3px 8px", borderRadius: "8px", textTransform: "uppercase" }}>Iterative</div>
-              
-              <div style={{ display: "flex", gap: "16px", marginTop: "4px" }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: "11px", fontWeight: 700, color: "#c084fc", marginBottom: "4px" }}>Data Ingestion Pipeline</div>
-                  <div style={{ fontSize: "10px", color: "#e9d5ff" }}>Preprocessing, tagging, translation, classification</div>
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: "11px", fontWeight: 700, color: "#c084fc", marginBottom: "4px" }}>SIGACT Detection</div>
-                  <div style={{ fontSize: "10px", color: "#e9d5ff" }}>5Ws extraction, event linking, knowledge graphs</div>
-                </div>
-              </div>
-            </div>
-
-            {/* TA3-TA4: REALM & Simulation */}
-            <div style={{
-              background: "linear-gradient(135deg, rgba(59,130,246,0.1) 0%, rgba(34,197,94,0.06) 100%)",
-              border: "2px solid rgba(59,130,246,0.35)",
-              borderRadius: "8px",
-              padding: "12px 14px",
-              position: "relative"
-            }}>
-              <div style={{ position: "absolute", top: "-9px", left: "12px", background: "linear-gradient(90deg, #3b82f6, #22c55e)", color: "#fff", fontSize: "8px", fontWeight: 700, padding: "3px 10px", borderRadius: "8px", textTransform: "uppercase" }}>TA3-TA4: REALM + Simulation</div>
-              
-              <div style={{ fontSize: "15px", fontWeight: 700, color: "#ffffff", marginBottom: "3px", marginTop: "4px" }}>GuideRight Platform</div>
-              <div style={{ fontSize: "10px", color: "#94a3b8", marginBottom: "8px" }}>Reasoning-Embedded Adaptive Language Models (REALMs)</div>
-              
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4px 12px" }}>
-                {[
-                  "PMESII-PT Analysis",
-                  "ASCOPE Profiling",
-                  "CARVER Risk Assessment",
-                  "Multi-Level Confidence",
-                  "Chain-of-Thought Reasoning",
-                  "Multimodal Inference",
-                  "Branch & Sequel Analysis",
-                  "Agent-Based Simulation"
-                ].map(item => (
-                  <div key={item} style={{ fontSize: "10px", color: "#e2e8f0", fontWeight: 500, display: "flex", alignItems: "center", gap: "4px" }}>
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none">
-                      <circle cx="12" cy="12" r="10" fill="#22c55e" />
-                      <path d="M8 12l3 3 5-6" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                    {item}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* TA5-TA6: Platform & Reports */}
-            <div style={{
-              background: "linear-gradient(135deg, rgba(34,197,94,0.1) 0%, rgba(34,197,94,0.04) 100%)",
-              border: "2px solid rgba(34,197,94,0.35)",
-              borderRadius: "8px",
-              padding: "10px 12px",
-              position: "relative"
-            }}>
-              <div style={{ position: "absolute", top: "-9px", left: "12px", background: "#22c55e", color: "#fff", fontSize: "8px", fontWeight: 700, padding: "3px 8px", borderRadius: "8px", textTransform: "uppercase" }}>TA5-TA6: Deliverables</div>
-              
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px 16px", marginTop: "4px" }}>
-                <div>
-                  <div style={{ fontSize: "11px", fontWeight: 700, color: "#4ade80", marginBottom: "4px" }}>TA5: Geospatial Platform</div>
-                  {["Web + Mobile + ATAK", "Interactive Mapping", "Chat & Voice Queries", "Dynamic Overlays"].map(item => (
-                    <div key={item} style={{ fontSize: "10px", color: "#e2e8f0", marginBottom: "2px" }}>• {item}</div>
-                  ))}
-                </div>
-                <div>
-                  <div style={{ fontSize: "11px", fontWeight: 700, color: "#4ade80", marginBottom: "4px" }}>TA6: Automated Reports</div>
-                  {["SITEMPs Generation", "CUB-Ready Products", "Annotated Maps", "Actor Profiles"].map(item => (
-                    <div key={item} style={{ fontSize: "10px", color: "#e2e8f0", marginBottom: "2px" }}>• {item}</div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* ARROW: Center to Right */}
-          <div style={{ width: "44px", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}>
-            <svg width="36" height="100" viewBox="0 0 36 100">
-              <defs>
-                <marker id="arrow2" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto">
-                  <polygon points="0 0, 8 3, 0 6" fill="#4ade80" />
-                </marker>
-              </defs>
-              <path d="M 4 25 L 28 25" fill="none" stroke="#4ade80" strokeWidth="2" markerEnd="url(#arrow2)" />
-              <path d="M 4 50 L 28 50" fill="none" stroke="#4ade80" strokeWidth="2" markerEnd="url(#arrow2)" />
-              <path d="M 4 75 L 28 75" fill="none" stroke="#4ade80" strokeWidth="2" markerEnd="url(#arrow2)" />
-            </svg>
-          </div>
-
-          {/* RIGHT COLUMN - Outcomes */}
-          <div style={{ width: "230px", display: "flex", flexDirection: "column", gap: "10px" }}>
-            
-            {/* Transition Advantage */}
-            <div style={{ 
-              background: "linear-gradient(135deg, rgba(34,197,94,0.12) 0%, rgba(34,197,94,0.06) 100%)",
-              border: "2px solid rgba(34,197,94,0.35)",
-              borderRadius: "8px",
-              padding: "12px"
-            }}>
-              <div style={{ fontSize: "10px", fontWeight: 700, color: "#4ade80", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "8px" }}>
-                Transition Advantage
-              </div>
-              {[
-                { label: "Efficient", desc: "Integrated team, no handoffs" },
-                { label: "Accurate", desc: "Practitioner-validated outputs" },
-                { label: "Rapid", desc: "24-hour model update cycle" }
-              ].map(item => (
-                <div key={item.label} style={{ marginBottom: "6px" }}>
-                  <div style={{ fontSize: "12px", fontWeight: 700, color: "#ffffff", display: "flex", alignItems: "center", gap: "5px" }}>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-                      <circle cx="12" cy="12" r="10" fill="#22c55e" />
-                      <path d="M8 12l3 3 5-6" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                    {item.label}
-                  </div>
-                  <div style={{ fontSize: "10px", color: "#a7f3d0", marginLeft: "17px" }}>{item.desc}</div>
-                </div>
-              ))}
-            </div>
-
-            {/* Key Capabilities */}
-            <div style={{ 
-              background: "rgba(255,255,255,0.04)",
-              border: "1px solid rgba(255,255,255,0.1)",
-              borderRadius: "8px",
-              padding: "12px",
-              flex: 1
-            }}>
-              <div style={{ fontSize: "10px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "8px" }}>
-                Key Capabilities
-              </div>
-              {[
-                "Transparent reasoning traces",
-                "Confidence-weighted outputs",
-                "Discrepancy detection",
-                "Trust-adaptive interface",
-                "Low-connectivity support"
-              ].map(item => (
-                <div key={item} style={{ fontSize: "11px", color: "#ffffff", fontWeight: 500, marginBottom: "4px", display: "flex", alignItems: "center", gap: "5px" }}>
-                  <span style={{ color: "#60a5fa", fontWeight: 700 }}>→</span>
-                  {item}
-                </div>
-              ))}
-            </div>
-
-            {/* TRL Progression */}
-            <div style={{ 
-              background: "rgba(59,130,246,0.06)",
-              border: "1px solid rgba(59,130,246,0.2)",
-              borderRadius: "8px",
-              padding: "10px"
-            }}>
-              <div style={{ fontSize: "10px", fontWeight: 700, color: "#60a5fa", textTransform: "uppercase", marginBottom: "6px" }}>5-Year TRL Progression</div>
-              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                <div style={{ fontSize: "11px", color: "#e2e8f0", fontWeight: 600 }}>TRL 4</div>
-                <div style={{ flex: 1, height: "6px", background: "rgba(255,255,255,0.1)", borderRadius: "3px", overflow: "hidden" }}>
-                  <div style={{ width: "100%", height: "100%", background: "linear-gradient(90deg, #3b82f6 0%, #22c55e 100%)" }} />
-                </div>
-                <div style={{ fontSize: "11px", color: "#4ade80", fontWeight: 600 }}>TRL 6</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* ITERATIVE FEEDBACK LOOP */}
-        <div style={{
-          margin: "0 30px 16px 30px",
-          padding: "10px 20px",
-          background: "linear-gradient(90deg, rgba(59,130,246,0.08) 0%, rgba(168,85,247,0.12) 50%, rgba(34,197,94,0.08) 100%)",
-          border: "2px solid rgba(168,85,247,0.3)",
-          borderRadius: "30px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: "14px"
+        {/* MAIN CYCLE VISUALIZATION */}
+        <div style={{ 
+          background: "linear-gradient(135deg, rgba(168,85,247,0.06) 0%, rgba(59,130,246,0.08) 50%, rgba(34,197,94,0.06) 100%)",
+          border: "2px solid rgba(168,85,247,0.25)",
+          borderRadius: "16px",
+          padding: "20px 24px",
+          marginBottom: "16px",
+          position: "relative"
         }}>
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-            <path d="M4 12C4 7.58172 7.58172 4 12 4C14.3894 4 16.5341 5.04752 18 6.70835" stroke="#a855f7" strokeWidth="2.5" strokeLinecap="round" />
-            <path d="M20 12C20 16.4183 16.4183 20 12 20C9.61062 20 7.46592 18.9525 6 17.2917" stroke="#a855f7" strokeWidth="2.5" strokeLinecap="round" />
-            <polygon points="18 3, 21 7, 17 7" fill="#a855f7" />
-            <polygon points="6 21, 3 17, 7 17" fill="#a855f7" />
-          </svg>
-          <span style={{ fontSize: "12px", fontWeight: 700, color: "#4ade80", textTransform: "uppercase" }}>Field Feedback</span>
-          <svg width="50" height="10" viewBox="0 0 50 10">
-            <defs>
-              <linearGradient id="loopGrad" x1="100%" y1="0%" x2="0%" y2="0%">
-                <stop offset="0%" stopColor="#4ade80" />
-                <stop offset="50%" stopColor="#a855f7" />
-                <stop offset="100%" stopColor="#60a5fa" />
-              </linearGradient>
-              <marker id="loopArrow" markerWidth="6" markerHeight="4" refX="5" refY="2" orient="auto">
-                <polygon points="0 0, 6 2, 0 4" fill="#60a5fa" />
-              </marker>
-            </defs>
-            <path d="M 45 5 L 5 5" fill="none" stroke="url(#loopGrad)" strokeWidth="2" markerEnd="url(#loopArrow)" />
-          </svg>
-          <span style={{ fontSize: "12px", fontWeight: 700, color: "#60a5fa", textTransform: "uppercase" }}>Model Updates</span>
-          <span style={{ fontSize: "13px", fontWeight: 700, color: "#a855f7", textTransform: "uppercase", letterSpacing: "0.1em", marginLeft: "8px" }}>
-            ITERATIVE DEVELOPMENT CYCLE
-          </span>
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-            <path d="M4 12C4 7.58172 7.58172 4 12 4C14.3894 4 16.5341 5.04752 18 6.70835" stroke="#a855f7" strokeWidth="2.5" strokeLinecap="round" />
-            <path d="M20 12C20 16.4183 16.4183 20 12 20C9.61062 20 7.46592 18.9525 6 17.2917" stroke="#a855f7" strokeWidth="2.5" strokeLinecap="round" />
-            <polygon points="18 3, 21 7, 17 7" fill="#a855f7" />
-            <polygon points="6 21, 3 17, 7 17" fill="#a855f7" />
-          </svg>
+          {/* Cycle Header */}
+          <div style={{ textAlign: "center", marginBottom: "16px" }}>
+            <div style={{ 
+              display: "inline-flex", alignItems: "center", gap: "10px",
+              background: "linear-gradient(90deg, #a855f7, #3b82f6, #22c55e)",
+              padding: "6px 20px", borderRadius: "20px"
+            }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M4 12C4 7.58172 7.58172 4 12 4C14.3894 4 16.5341 5.04752 18 6.70835" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" />
+                <path d="M20 12C20 16.4183 16.4183 20 12 20C9.61062 20 7.46592 18.9525 6 17.2917" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" />
+                <polygon points="18 3, 21 7, 17 7" fill="#fff" />
+                <polygon points="6 21, 3 17, 7 17" fill="#fff" />
+              </svg>
+              <span style={{ fontSize: "14px", fontWeight: 700, color: "#ffffff", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+                Continuous Iterative Development Cycle
+              </span>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M4 12C4 7.58172 7.58172 4 12 4C14.3894 4 16.5341 5.04752 18 6.70835" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" />
+                <path d="M20 12C20 16.4183 16.4183 20 12 20C9.61062 20 7.46592 18.9525 6 17.2917" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" />
+                <polygon points="18 3, 21 7, 17 7" fill="#fff" />
+                <polygon points="6 21, 3 17, 7 17" fill="#fff" />
+              </svg>
+            </div>
+          </div>
+
+          {/* 6-Stage Cycle Flow */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", marginBottom: "16px" }}>
+            {/* Stage 1 */}
+            <div style={{ 
+              background: "rgba(168,85,247,0.15)", border: "2px solid rgba(168,85,247,0.4)",
+              borderRadius: "8px", padding: "10px 14px", width: "150px", textAlign: "center"
+            }}>
+              <div style={{ fontSize: "9px", fontWeight: 700, color: "#a855f7", marginBottom: "4px" }}>STAGE 1</div>
+              <div style={{ fontSize: "12px", fontWeight: 700, color: "#ffffff" }}>Data Ingestion</div>
+              <div style={{ fontSize: "9px", color: "#e9d5ff" }}>TA1: Multi-modal pipeline</div>
+            </div>
+            
+            <svg width="24" height="16" viewBox="0 0 24 16"><polygon points="0 4, 16 4, 16 0, 24 8, 16 16, 16 12, 0 12" fill="#a855f7" /></svg>
+            
+            {/* Stage 2 */}
+            <div style={{ 
+              background: "rgba(168,85,247,0.15)", border: "2px solid rgba(168,85,247,0.4)",
+              borderRadius: "8px", padding: "10px 14px", width: "150px", textAlign: "center"
+            }}>
+              <div style={{ fontSize: "9px", fontWeight: 700, color: "#a855f7", marginBottom: "4px" }}>STAGE 2</div>
+              <div style={{ fontSize: "12px", fontWeight: 700, color: "#ffffff" }}>SIGACT Analysis</div>
+              <div style={{ fontSize: "9px", color: "#e9d5ff" }}>TA2: Event extraction</div>
+            </div>
+            
+            <svg width="24" height="16" viewBox="0 0 24 16"><polygon points="0 4, 16 4, 16 0, 24 8, 16 16, 16 12, 0 12" fill="#3b82f6" /></svg>
+            
+            {/* Stage 3 */}
+            <div style={{ 
+              background: "rgba(59,130,246,0.15)", border: "2px solid rgba(59,130,246,0.4)",
+              borderRadius: "8px", padding: "10px 14px", width: "150px", textAlign: "center"
+            }}>
+              <div style={{ fontSize: "9px", fontWeight: 700, color: "#60a5fa", marginBottom: "4px" }}>STAGE 3</div>
+              <div style={{ fontSize: "12px", fontWeight: 700, color: "#ffffff" }}>REALM Processing</div>
+              <div style={{ fontSize: "9px", color: "#bfdbfe" }}>TA3: AI reasoning</div>
+            </div>
+            
+            <svg width="24" height="16" viewBox="0 0 24 16"><polygon points="0 4, 16 4, 16 0, 24 8, 16 16, 16 12, 0 12" fill="#3b82f6" /></svg>
+            
+            {/* Stage 4 */}
+            <div style={{ 
+              background: "rgba(59,130,246,0.15)", border: "2px solid rgba(59,130,246,0.4)",
+              borderRadius: "8px", padding: "10px 14px", width: "150px", textAlign: "center"
+            }}>
+              <div style={{ fontSize: "9px", fontWeight: 700, color: "#60a5fa", marginBottom: "4px" }}>STAGE 4</div>
+              <div style={{ fontSize: "12px", fontWeight: 700, color: "#ffffff" }}>Simulation</div>
+              <div style={{ fontSize: "9px", color: "#bfdbfe" }}>TA4: Branch analysis</div>
+            </div>
+          </div>
+
+          {/* Second Row of Cycle */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", marginBottom: "16px" }}>
+            {/* Stage 5 */}
+            <div style={{ 
+              background: "rgba(34,197,94,0.15)", border: "2px solid rgba(34,197,94,0.4)",
+              borderRadius: "8px", padding: "10px 14px", width: "150px", textAlign: "center"
+            }}>
+              <div style={{ fontSize: "9px", fontWeight: 700, color: "#4ade80", marginBottom: "4px" }}>STAGE 5</div>
+              <div style={{ fontSize: "12px", fontWeight: 700, color: "#ffffff" }}>Platform Delivery</div>
+              <div style={{ fontSize: "9px", color: "#bbf7d0" }}>TA5: Web + Mobile</div>
+            </div>
+            
+            <svg width="24" height="16" viewBox="0 0 24 16"><polygon points="0 4, 16 4, 16 0, 24 8, 16 16, 16 12, 0 12" fill="#22c55e" /></svg>
+            
+            {/* Stage 6 */}
+            <div style={{ 
+              background: "rgba(34,197,94,0.15)", border: "2px solid rgba(34,197,94,0.4)",
+              borderRadius: "8px", padding: "10px 14px", width: "150px", textAlign: "center"
+            }}>
+              <div style={{ fontSize: "9px", fontWeight: 700, color: "#4ade80", marginBottom: "4px" }}>STAGE 6</div>
+              <div style={{ fontSize: "12px", fontWeight: 700, color: "#ffffff" }}>Reports & SITEMPs</div>
+              <div style={{ fontSize: "9px", color: "#bbf7d0" }}>TA6: CUB products</div>
+            </div>
+            
+            <svg width="24" height="16" viewBox="0 0 24 16"><polygon points="0 4, 16 4, 16 0, 24 8, 16 16, 16 12, 0 12" fill="#f59e0b" /></svg>
+            
+            {/* Field Deployment */}
+            <div style={{ 
+              background: "rgba(245,158,11,0.15)", border: "2px solid rgba(245,158,11,0.4)",
+              borderRadius: "8px", padding: "10px 14px", width: "150px", textAlign: "center"
+            }}>
+              <div style={{ fontSize: "9px", fontWeight: 700, color: "#fbbf24", marginBottom: "4px" }}>DEPLOY</div>
+              <div style={{ fontSize: "12px", fontWeight: 700, color: "#ffffff" }}>Field Operations</div>
+              <div style={{ fontSize: "9px", color: "#fef3c7" }}>Practitioner use</div>
+            </div>
+            
+            <svg width="24" height="16" viewBox="0 0 24 16"><polygon points="0 4, 16 4, 16 0, 24 8, 16 16, 16 12, 0 12" fill="#ef4444" /></svg>
+            
+            {/* Feedback */}
+            <div style={{ 
+              background: "rgba(239,68,68,0.15)", border: "2px solid rgba(239,68,68,0.4)",
+              borderRadius: "8px", padding: "10px 14px", width: "150px", textAlign: "center"
+            }}>
+              <div style={{ fontSize: "9px", fontWeight: 700, color: "#f87171", marginBottom: "4px" }}>FEEDBACK</div>
+              <div style={{ fontSize: "12px", fontWeight: 700, color: "#ffffff" }}>Field Corrections</div>
+              <div style={{ fontSize: "9px", color: "#fecaca" }}>24-hour updates</div>
+            </div>
+          </div>
+
+          {/* Feedback Loop Arrow Back */}
+          <div style={{ 
+            display: "flex", alignItems: "center", justifyContent: "center", gap: "12px",
+            background: "rgba(239,68,68,0.1)", border: "2px dashed rgba(239,68,68,0.4)",
+            borderRadius: "30px", padding: "8px 24px", margin: "0 auto", width: "fit-content"
+          }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M20 12C20 7.58172 16.4183 4 12 4C9.61062 4 7.46592 5.04752 6 6.70835" stroke="#f87171" strokeWidth="2.5" strokeLinecap="round" />
+              <path d="M4 12C4 16.4183 7.58172 20 12 20C14.3894 20 16.5341 18.9525 18 17.2917" stroke="#f87171" strokeWidth="2.5" strokeLinecap="round" />
+              <polygon points="6 3, 3 7, 7 7" fill="#f87171" />
+              <polygon points="18 21, 21 17, 17 17" fill="#f87171" />
+            </svg>
+            <span style={{ fontSize: "13px", fontWeight: 700, color: "#f87171", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+              Feedback Loops Back to Stage 1
+            </span>
+            <span style={{ fontSize: "11px", color: "#fecaca" }}>Continuous model refinement</span>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M20 12C20 7.58172 16.4183 4 12 4C9.61062 4 7.46592 5.04752 6 6.70835" stroke="#f87171" strokeWidth="2.5" strokeLinecap="round" />
+              <path d="M4 12C4 16.4183 7.58172 20 12 20C14.3894 20 16.5341 18.9525 18 17.2917" stroke="#f87171" strokeWidth="2.5" strokeLinecap="round" />
+              <polygon points="6 3, 3 7, 7 7" fill="#f87171" />
+              <polygon points="18 21, 21 17, 17 17" fill="#f87171" />
+            </svg>
+          </div>
+        </div>
+
+        {/* Bottom Section: Team + Capabilities + Advantage */}
+        <div style={{ display: "flex", gap: "16px", marginBottom: "16px" }}>
+          
+          {/* Team */}
+          <div style={{ 
+            flex: 1,
+            background: "rgba(255,255,255,0.04)",
+            border: "1px solid rgba(255,255,255,0.12)",
+            borderRadius: "8px",
+            padding: "14px"
+          }}>
+            <div style={{ fontSize: "10px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "8px" }}>
+              Industry Partners
+            </div>
+            <div style={{ fontSize: "13px", fontWeight: 700, color: "#ffffff", marginBottom: "3px", display: "flex", alignItems: "center", gap: "8px" }}>
+              Aplus Capabilities LLC
+              <span style={{ fontSize: "8px", fontWeight: 700, color: "#22c55e", background: "rgba(34,197,94,0.15)", padding: "2px 5px", borderRadius: "4px" }}>LEAD</span>
+            </div>
+            <div style={{ fontSize: "13px", fontWeight: 700, color: "#ffffff", marginBottom: "4px" }}>Offset3 LLC</div>
+            <div style={{ fontSize: "9px", color: "#94a3b8", marginBottom: "10px" }}>Veteran-Led | Certified Professional Innovators</div>
+            
+            <div style={{ fontSize: "10px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "6px" }}>
+              Research Partners
+            </div>
+            <div style={{ fontSize: "12px", fontWeight: 600, color: "#ffffff", marginBottom: "2px" }}>The Citadel</div>
+            <div style={{ fontSize: "12px", fontWeight: 600, color: "#ffffff" }}>University of Nebraska-Lincoln</div>
+          </div>
+
+          {/* Core Capabilities */}
+          <div style={{ 
+            flex: 1,
+            background: "rgba(59,130,246,0.06)",
+            border: "1px solid rgba(59,130,246,0.2)",
+            borderRadius: "8px",
+            padding: "14px"
+          }}>
+            <div style={{ fontSize: "10px", fontWeight: 700, color: "#60a5fa", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "8px" }}>
+              Integrated Frameworks
+            </div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "10px" }}>
+              {["PMESII-PT", "ASCOPE", "CARVER"].map(fw => (
+                <span key={fw} style={{ fontSize: "11px", fontWeight: 700, color: "#fff", background: "rgba(59,130,246,0.25)", padding: "4px 10px", borderRadius: "4px" }}>{fw}</span>
+              ))}
+            </div>
+            <div style={{ fontSize: "10px", fontWeight: 700, color: "#60a5fa", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "6px" }}>
+              Multi-Modal Data
+            </div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
+              {["Text", "Imagery", "Video", "Geospatial", "SIGACT", "Social"].map(src => (
+                <span key={src} style={{ fontSize: "9px", fontWeight: 600, color: "#fff", background: "rgba(255,255,255,0.08)", padding: "3px 6px", borderRadius: "4px" }}>{src}</span>
+              ))}
+            </div>
+          </div>
+
+          {/* Why This Methodology Works */}
+          <div style={{ 
+            flex: 1,
+            background: "linear-gradient(135deg, rgba(34,197,94,0.1) 0%, rgba(34,197,94,0.04) 100%)",
+            border: "2px solid rgba(34,197,94,0.3)",
+            borderRadius: "8px",
+            padding: "14px"
+          }}>
+            <div style={{ fontSize: "10px", fontWeight: 700, color: "#4ade80", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "8px" }}>
+              Why This Methodology Works
+            </div>
+            {[
+              { label: "Efficient", desc: "Integrated team, no handoffs" },
+              { label: "Accurate", desc: "Practitioner-validated outputs" },
+              { label: "Rapid", desc: "24-hour model update cycle" }
+            ].map(item => (
+              <div key={item.label} style={{ marginBottom: "6px" }}>
+                <div style={{ fontSize: "12px", fontWeight: 700, color: "#ffffff", display: "flex", alignItems: "center", gap: "5px" }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="10" fill="#22c55e" />
+                    <path d="M8 12l3 3 5-6" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  {item.label}
+                </div>
+                <div style={{ fontSize: "10px", color: "#a7f3d0", marginLeft: "17px" }}>{item.desc}</div>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Purpose Statement */}
