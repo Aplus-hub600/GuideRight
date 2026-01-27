@@ -94,9 +94,59 @@ export function DifferentiatorFinal() {
           position: "relative",
           marginBottom: "20px"
         }}>
+          
+          {/* Flow Arrows - Full Width SVG */}
+          <svg style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            pointerEvents: "none",
+            zIndex: 1
+          }} viewBox="0 0 1100 520" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="flowGradBlue" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.8" />
+                <stop offset="100%" stopColor="#60a5fa" stopOpacity="0.8" />
+              </linearGradient>
+              <linearGradient id="flowGradGreen" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#22c55e" stopOpacity="0.8" />
+                <stop offset="100%" stopColor="#4ade80" stopOpacity="0.8" />
+              </linearGradient>
+              <linearGradient id="flowGradPurple" x1="100%" y1="0%" x2="0%" y2="0%">
+                <stop offset="0%" stopColor="#22c55e" stopOpacity="0.6" />
+                <stop offset="50%" stopColor="#a855f7" stopOpacity="0.6" />
+                <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.6" />
+              </linearGradient>
+              <marker id="arrowBlue" markerWidth="12" markerHeight="8" refX="10" refY="4" orient="auto">
+                <polygon points="0 0, 12 4, 0 8" fill="#60a5fa" />
+              </marker>
+              <marker id="arrowGreen" markerWidth="12" markerHeight="8" refX="10" refY="4" orient="auto">
+                <polygon points="0 0, 12 4, 0 8" fill="#4ade80" />
+              </marker>
+              <marker id="arrowPurple" markerWidth="12" markerHeight="8" refX="10" refY="4" orient="auto">
+                <polygon points="0 0, 12 4, 0 8" fill="#a855f7" />
+              </marker>
+            </defs>
+            
+            {/* LEFT TO CENTER: Practitioner → Platform */}
+            <path d="M 250 180 C 320 180, 340 100, 380 100" fill="none" stroke="url(#flowGradBlue)" strokeWidth="3" strokeDasharray="8 4" markerEnd="url(#arrowBlue)" />
+            <path d="M 250 280 C 320 280, 360 220, 400 220" fill="none" stroke="url(#flowGradBlue)" strokeWidth="3" strokeDasharray="8 4" markerEnd="url(#arrowBlue)" />
+            <path d="M 250 380 C 320 380, 380 340, 420 340" fill="none" stroke="url(#flowGradBlue)" strokeWidth="3" strokeDasharray="8 4" markerEnd="url(#arrowBlue)" />
+            
+            {/* CENTER TO RIGHT: Platform → Outcomes */}
+            <path d="M 700 160 C 760 160, 780 120, 850 120" fill="none" stroke="url(#flowGradGreen)" strokeWidth="3" strokeDasharray="8 4" markerEnd="url(#arrowGreen)" />
+            <path d="M 700 260 C 760 260, 800 200, 850 200" fill="none" stroke="url(#flowGradGreen)" strokeWidth="3" strokeDasharray="8 4" markerEnd="url(#arrowGreen)" />
+            <path d="M 700 360 C 760 360, 800 300, 850 300" fill="none" stroke="url(#flowGradGreen)" strokeWidth="3" strokeDasharray="8 4" markerEnd="url(#arrowGreen)" />
+            
+            {/* FEEDBACK LOOP: Right back to Left */}
+            <path d="M 900 450 C 700 520, 400 520, 200 450" fill="none" stroke="url(#flowGradPurple)" strokeWidth="3" strokeDasharray="6 3" markerEnd="url(#arrowPurple)" />
+            <text x="550" y="510" fill="#a855f7" fontSize="13" fontWeight="700" textAnchor="middle" style={{ letterSpacing: "0.1em" }}>ITERATIVE FEEDBACK LOOP</text>
+          </svg>
 
           {/* Left Column - Team */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "14px", position: "relative", zIndex: 2 }}>
             
             {/* Industry Leadership */}
             <div style={{ 
@@ -218,46 +268,7 @@ export function DifferentiatorFinal() {
           </div>
 
           {/* Center - Process Flow */}
-          <div style={{ position: "relative" }}>
-            
-            {/* Flow SVG Background */}
-            <svg style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              width: "100%",
-              height: "100%",
-              pointerEvents: "none"
-            }} viewBox="0 0 600 480" preserveAspectRatio="none">
-              <defs>
-                <linearGradient id="flowGrad1" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.6" />
-                  <stop offset="100%" stopColor="#22c55e" stopOpacity="0.6" />
-                </linearGradient>
-                <linearGradient id="flowGrad2" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#a855f7" stopOpacity="0.6" />
-                  <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.6" />
-                </linearGradient>
-                <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-                  <polygon points="0 0, 10 3.5, 0 7" fill="#60a5fa" />
-                </marker>
-                <marker id="arrowheadGreen" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-                  <polygon points="0 0, 10 3.5, 0 7" fill="#4ade80" />
-                </marker>
-              </defs>
-              
-              {/* Left to center flow */}
-              <path d="M -20 120 Q 80 120 150 80" fill="none" stroke="url(#flowGrad1)" strokeWidth="3" strokeDasharray="8 4" markerEnd="url(#arrowhead)" />
-              <path d="M -20 240 Q 120 240 200 200" fill="none" stroke="url(#flowGrad1)" strokeWidth="3" strokeDasharray="8 4" markerEnd="url(#arrowhead)" />
-              
-              {/* Center to right flow */}
-              <path d="M 400 200 Q 480 160 620 120" fill="none" stroke="url(#flowGrad1)" strokeWidth="3" strokeDasharray="8 4" markerEnd="url(#arrowheadGreen)" />
-              <path d="M 400 280 Q 500 280 620 240" fill="none" stroke="url(#flowGrad1)" strokeWidth="3" strokeDasharray="8 4" markerEnd="url(#arrowheadGreen)" />
-              
-              {/* Feedback loop - bottom */}
-              <path d="M 500 400 Q 300 460 100 400" fill="none" stroke="url(#flowGrad2)" strokeWidth="2.5" strokeDasharray="6 3" opacity="0.7" />
-              <text x="300" y="450" fill="#a855f7" fontSize="11" fontWeight="600" textAnchor="middle">ITERATIVE FEEDBACK</text>
-            </svg>
+          <div style={{ position: "relative", zIndex: 2 }}>
 
             {/* Research Stage */}
             <div style={{
@@ -427,7 +438,7 @@ export function DifferentiatorFinal() {
           </div>
 
           {/* Right Column - Outcomes */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "14px", position: "relative", zIndex: 2 }}>
             
             {/* Transition Speed */}
             <div style={{ 
