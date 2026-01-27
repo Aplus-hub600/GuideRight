@@ -77,15 +77,20 @@ export function DifferentiatorFinal() {
               borderRadius: "8px",
               padding: "12px"
             }}>
-              <div style={{ fontSize: "10px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "8px" }}>
-                Project Team
+              <div style={{ fontSize: "10px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "6px" }}>
+                Industry Partners
               </div>
-              <div style={{ fontSize: "13px", fontWeight: 700, color: "#ffffff", marginBottom: "5px", display: "flex", alignItems: "center", gap: "8px" }}>
+              <div style={{ fontSize: "13px", fontWeight: 700, color: "#ffffff", marginBottom: "4px", display: "flex", alignItems: "center", gap: "8px" }}>
                 Aplus Capabilities LLC
                 <span style={{ fontSize: "9px", fontWeight: 700, color: "#22c55e", background: "rgba(34,197,94,0.15)", padding: "2px 6px", borderRadius: "4px", textTransform: "uppercase" }}>Lead</span>
               </div>
-              <div style={{ fontSize: "13px", fontWeight: 700, color: "#ffffff", marginBottom: "5px" }}>Offset3 LLC</div>
-              <div style={{ fontSize: "13px", fontWeight: 700, color: "#ffffff", marginBottom: "5px" }}>The Citadel</div>
+              <div style={{ fontSize: "13px", fontWeight: 700, color: "#ffffff", marginBottom: "6px" }}>Offset3 LLC</div>
+              <div style={{ fontSize: "10px", color: "#94a3b8", marginBottom: "8px" }}>Veteran-Led | Certified Professional Innovators</div>
+              
+              <div style={{ fontSize: "10px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "6px" }}>
+                Research Partners
+              </div>
+              <div style={{ fontSize: "13px", fontWeight: 700, color: "#ffffff", marginBottom: "4px" }}>The Citadel</div>
               <div style={{ fontSize: "13px", fontWeight: 700, color: "#ffffff" }}>University of Nebraska-Lincoln</div>
             </div>
 
