@@ -114,23 +114,23 @@ export function DifferentiatorFinal() {
           background: "linear-gradient(135deg, rgba(34,197,94,0.08) 0%, rgba(59,130,246,0.1) 50%, rgba(168,85,247,0.08) 100%)",
           border: "2px solid rgba(34,197,94,0.35)",
           borderRadius: "12px",
-          padding: "24px 20px 16px",
-          marginBottom: "16px",
-          position: "relative"
+          padding: "16px 20px",
+          marginBottom: "16px"
         }}>
-          {/* Badge */}
-          <div style={{ 
-            position: "absolute", top: "-12px", left: "50%", marginLeft: "-95px", width: "190px",
-            background: "linear-gradient(90deg, #22c55e, #3b82f6)",
-            padding: "5px 0", borderRadius: "20px", textAlign: "center"
-          }}>
-            <span style={{ fontSize: "14px", fontWeight: 700, color: "#ffffff", textTransform: "uppercase", letterSpacing: "0.12em" }}>
+          {/* Badge - Inside panel */}
+          <div style={{ textAlign: "center", marginBottom: "12px" }}>
+            <span style={{ 
+              display: "inline-block",
+              background: "linear-gradient(90deg, #22c55e, #3b82f6)",
+              padding: "6px 24px", borderRadius: "20px",
+              fontSize: "14px", fontWeight: 700, color: "#ffffff", textTransform: "uppercase", letterSpacing: "0.12em"
+            }}>
               What Makes Us Different
             </span>
           </div>
 
           {/* Three Pillars */}
-          <div style={{ textAlign: "center", marginTop: "8px" }}>
+          <div style={{ textAlign: "center" }}>
             
             {/* Pillar 1 */}
             <div style={pillarStyle}>
