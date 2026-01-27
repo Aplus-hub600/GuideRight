@@ -223,7 +223,7 @@ export function DifferentiatorFinal() {
                 <path d="M4 12C4 16.42 7.58 20 12 20C14.39 20 16.53 18.95 18 17.29" stroke="#f87171" strokeWidth="2" strokeLinecap="round" />
                 <polygon points="6 3, 3 7, 7 7" fill="#f87171" />
               </svg>
-              <span style={{ fontSize: "10px", fontWeight: 600, color: "#f87171" }}>24-Hour Feedback Loop Back to Development</span>
+              <span style={{ fontSize: "10px", fontWeight: 600, color: "#f87171" }}>Customer Discovery Feedback Drives Development</span>
             </div>
           </div>
         </div>
@@ -275,7 +275,7 @@ export function DifferentiatorFinal() {
                 { label: "Veteran Leadership", desc: "Military experience driving requirements" },
                 { label: "Lean & Agile", desc: "Small business speed, no bureaucracy" },
                 { label: "Certified Innovation", desc: "Professional innovators, proven methods" },
-                { label: "Continuous Feedback", desc: "24-hour model updates from field input" }
+                { label: "Continuous Feedback", desc: "Operator & analyst input drives iteration" }
               ].map(item => (
                 <div key={item.label} style={{ display: "flex", alignItems: "flex-start", gap: "6px" }}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ marginTop: "2px", flexShrink: 0 }}>
