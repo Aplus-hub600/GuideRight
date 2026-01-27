@@ -355,17 +355,6 @@ export function DifferentiatorFinal() {
             Purpose: Deliver transparent, explainable, confidence-qualified intelligence to support rapid decision-making in high-stakes operational environments.
           </div>
         </div>
-
-        {/* Footer */}
-        <div style={{ textAlign: "center" }}>
-          <span style={{
-            display: "inline-block",
-            fontSize: "12px", fontWeight: 700, color: "#22c55e", letterSpacing: "0.15em", textTransform: "uppercase",
-            padding: "5px 16px", border: "2px solid #22c55e", borderRadius: "4px"
-          }}>
-            UNCLASSIFIED
-          </span>
-        </div>
       </div>
     </div>
   )
