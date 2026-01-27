@@ -54,10 +54,10 @@ export function DifferentiatorFinal() {
               <path d="M34 24L42 24" stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round" />
             </svg>
             <div>
-              <h1 style={{ fontSize: "24px", fontWeight: 700, color: "#ffffff", letterSpacing: "-0.02em", margin: 0 }}>
+              <h1 style={{ fontSize: "28px", fontWeight: 700, color: "#ffffff", letterSpacing: "-0.02em", margin: 0 }}>
                 GuideRight Development Approach
               </h1>
-              <div style={{ fontSize: "13px", color: "#94a3b8", fontWeight: 500 }}>
+              <div style={{ fontSize: "15px", color: "#94a3b8", fontWeight: 500 }}>
                 Our Key Differentiator: A Credible, Practitioner-Grounded Methodology
               </div>
             </div>
@@ -78,7 +78,7 @@ export function DifferentiatorFinal() {
             background: "linear-gradient(90deg, #22c55e, #3b82f6)",
             padding: "5px 20px", borderRadius: "20px"
           }}>
-            <span style={{ fontSize: "12px", fontWeight: 700, color: "#ffffff", textTransform: "uppercase", letterSpacing: "0.12em" }}>
+            <span style={{ fontSize: "14px", fontWeight: 700, color: "#ffffff", textTransform: "uppercase", letterSpacing: "0.12em" }}>
               What Makes Us Different
             </span>
           </div>
@@ -98,11 +98,11 @@ export function DifferentiatorFinal() {
                   <path d="M4 20c0-4 4-6 8-6s8 2 8 6" stroke="#f87171" strokeWidth="2" strokeLinecap="round" />
                 </svg>
               </div>
-              <div style={{ fontSize: "14px", fontWeight: 700, color: "#f87171", marginBottom: "8px" }}>Customer Discovery</div>
-              <div style={{ fontSize: "12px", color: "#ffffff", fontWeight: 600, marginBottom: "4px" }}>Special Operators</div>
-              <div style={{ fontSize: "12px", color: "#ffffff", fontWeight: 600, marginBottom: "4px" }}>Intelligence Analysts</div>
-              <div style={{ fontSize: "12px", color: "#ffffff", fontWeight: 600, marginBottom: "6px" }}>Adjacent Users</div>
-              <div style={{ fontSize: "10px", color: "#94a3b8", fontStyle: "italic" }}>Real needs from real users</div>
+              <div style={{ fontSize: "16px", fontWeight: 700, color: "#f87171", marginBottom: "10px" }}>Customer Discovery</div>
+              <div style={{ fontSize: "14px", color: "#ffffff", fontWeight: 600, marginBottom: "5px" }}>Special Operators</div>
+              <div style={{ fontSize: "14px", color: "#ffffff", fontWeight: 600, marginBottom: "5px" }}>Intelligence Analysts</div>
+              <div style={{ fontSize: "14px", color: "#ffffff", fontWeight: 600, marginBottom: "8px" }}>Adjacent Users</div>
+              <div style={{ fontSize: "12px", color: "#94a3b8", fontStyle: "italic" }}>Real needs from real users</div>
             </div>
 
             {/* Pillar 2: Research Partners */}
@@ -119,10 +119,10 @@ export function DifferentiatorFinal() {
                   <path d="M12 12L4 7.5" stroke="#a855f7" strokeWidth="2" />
                 </svg>
               </div>
-              <div style={{ fontSize: "14px", fontWeight: 700, color: "#a855f7", marginBottom: "8px" }}>Research Partners</div>
-              <div style={{ fontSize: "12px", color: "#ffffff", fontWeight: 600, marginBottom: "4px" }}>The Citadel</div>
-              <div style={{ fontSize: "12px", color: "#ffffff", fontWeight: 600, marginBottom: "6px" }}>University of Nebraska-Lincoln</div>
-              <div style={{ fontSize: "10px", color: "#94a3b8", fontStyle: "italic" }}>Academic rigor & AI/ML research</div>
+              <div style={{ fontSize: "16px", fontWeight: 700, color: "#a855f7", marginBottom: "10px" }}>Research Partners</div>
+              <div style={{ fontSize: "14px", color: "#ffffff", fontWeight: 600, marginBottom: "5px" }}>The Citadel</div>
+              <div style={{ fontSize: "14px", color: "#ffffff", fontWeight: 600, marginBottom: "8px" }}>University of Nebraska-Lincoln</div>
+              <div style={{ fontSize: "12px", color: "#94a3b8", fontStyle: "italic" }}>Academic rigor & AI/ML research</div>
             </div>
 
             {/* Pillar 3: Industry Team - Combined */}
@@ -137,14 +137,14 @@ export function DifferentiatorFinal() {
                   <path d="M12 2L15 8L22 9L17 14L18 21L12 18L6 21L7 14L2 9L9 8L12 2Z" stroke="#4ade80" strokeWidth="2" strokeLinejoin="round" />
                 </svg>
               </div>
-              <div style={{ fontSize: "14px", fontWeight: 700, color: "#4ade80", marginBottom: "8px" }}>Industry Team</div>
-              <div style={{ fontSize: "12px", color: "#ffffff", fontWeight: 600, marginBottom: "4px" }}>Aplus Capabilities LLC <span style={{ fontSize: "9px", color: "#22c55e" }}>(Lead)</span></div>
-              <div style={{ fontSize: "12px", color: "#ffffff", fontWeight: 600, marginBottom: "6px" }}>Offset3 LLC</div>
-              <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "4px", marginBottom: "6px" }}>
-                <span style={{ fontSize: "9px", fontWeight: 600, color: "#4ade80", background: "rgba(34,197,94,0.15)", padding: "2px 6px", borderRadius: "4px" }}>Veteran-Led</span>
-                <span style={{ fontSize: "9px", fontWeight: 600, color: "#4ade80", background: "rgba(34,197,94,0.15)", padding: "2px 6px", borderRadius: "4px" }}>Certified Innovators</span>
+              <div style={{ fontSize: "16px", fontWeight: 700, color: "#4ade80", marginBottom: "10px" }}>Industry Team</div>
+              <div style={{ fontSize: "14px", color: "#ffffff", fontWeight: 600, marginBottom: "5px" }}>Aplus Capabilities LLC <span style={{ fontSize: "11px", color: "#22c55e" }}>(Lead)</span></div>
+              <div style={{ fontSize: "14px", color: "#ffffff", fontWeight: 600, marginBottom: "8px" }}>Offset3 LLC</div>
+              <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "6px", marginBottom: "8px" }}>
+                <span style={{ fontSize: "11px", fontWeight: 600, color: "#4ade80", background: "rgba(34,197,94,0.15)", padding: "3px 8px", borderRadius: "4px" }}>Veteran-Led</span>
+                <span style={{ fontSize: "11px", fontWeight: 600, color: "#4ade80", background: "rgba(34,197,94,0.15)", padding: "3px 8px", borderRadius: "4px" }}>Certified Innovators</span>
               </div>
-              <div style={{ fontSize: "10px", color: "#94a3b8", fontStyle: "italic" }}>Lean, agile small business</div>
+              <div style={{ fontSize: "12px", color: "#94a3b8", fontStyle: "italic" }}>Lean, agile small business</div>
             </div>
           </div>
 
@@ -160,10 +160,10 @@ export function DifferentiatorFinal() {
               <polygon points="18 3, 21 7, 17 7" fill="#a855f7" />
               <polygon points="6 21, 3 17, 7 17" fill="#a855f7" />
             </svg>
-            <span style={{ fontSize: "13px", fontWeight: 700, color: "#a855f7" }}>
+            <span style={{ fontSize: "15px", fontWeight: 700, color: "#a855f7" }}>
               Continuous Iterative Development
             </span>
-            <span style={{ fontSize: "11px", color: "#94a3b8" }}>
+            <span style={{ fontSize: "13px", color: "#94a3b8" }}>
               — Customer feedback drives every cycle
             </span>
           </div>
@@ -180,20 +180,20 @@ export function DifferentiatorFinal() {
             borderRadius: "8px",
             padding: "14px"
           }}>
-            <div style={{ fontSize: "10px", fontWeight: 700, color: "#60a5fa", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "8px" }}>
+            <div style={{ fontSize: "12px", fontWeight: 700, color: "#60a5fa", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "10px" }}>
               Doctrinal Frameworks
             </div>
-            <div style={{ display: "flex", gap: "6px", marginBottom: "10px" }}>
+            <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
               {["PMESII-PT", "ASCOPE", "CARVER"].map(fw => (
-                <span key={fw} style={{ fontSize: "11px", fontWeight: 700, color: "#fff", background: "rgba(59,130,246,0.25)", padding: "4px 10px", borderRadius: "4px" }}>{fw}</span>
+                <span key={fw} style={{ fontSize: "13px", fontWeight: 700, color: "#fff", background: "rgba(59,130,246,0.25)", padding: "5px 12px", borderRadius: "4px" }}>{fw}</span>
               ))}
             </div>
-            <div style={{ fontSize: "10px", fontWeight: 700, color: "#60a5fa", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "6px" }}>
+            <div style={{ fontSize: "12px", fontWeight: 700, color: "#60a5fa", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "8px" }}>
               Multi-Modal Data
             </div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
               {["Text", "Imagery", "Video", "Geospatial", "SIGACT", "Social"].map(src => (
-                <span key={src} style={{ fontSize: "9px", fontWeight: 600, color: "#fff", background: "rgba(255,255,255,0.08)", padding: "3px 6px", borderRadius: "4px" }}>{src}</span>
+                <span key={src} style={{ fontSize: "11px", fontWeight: 600, color: "#fff", background: "rgba(255,255,255,0.08)", padding: "4px 8px", borderRadius: "4px" }}>{src}</span>
               ))}
             </div>
           </div>
@@ -206,10 +206,10 @@ export function DifferentiatorFinal() {
             borderRadius: "8px",
             padding: "14px"
           }}>
-            <div style={{ fontSize: "10px", fontWeight: 700, color: "#4ade80", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "10px" }}>
+            <div style={{ fontSize: "12px", fontWeight: 700, color: "#4ade80", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "12px" }}>
               Why This Approach is Credible
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
               {[
                 { label: "Practitioner-First", desc: "Built with operators & analysts from day one" },
                 { label: "Academic Rigor", desc: "Research-backed AI/ML development" },
@@ -218,14 +218,14 @@ export function DifferentiatorFinal() {
                 { label: "Certified Innovation", desc: "Professional innovators, proven methods" },
                 { label: "Continuous Feedback", desc: "Operator & analyst input drives iteration" }
               ].map(item => (
-                <div key={item.label} style={{ display: "flex", alignItems: "flex-start", gap: "6px" }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ marginTop: "2px", flexShrink: 0 }}>
+                <div key={item.label} style={{ display: "flex", alignItems: "flex-start", gap: "8px" }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style={{ marginTop: "2px", flexShrink: 0 }}>
                     <circle cx="12" cy="12" r="10" fill="#22c55e" />
                     <path d="M8 12l3 3 5-6" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                   <div>
-                    <div style={{ fontSize: "11px", fontWeight: 700, color: "#ffffff" }}>{item.label}</div>
-                    <div style={{ fontSize: "9px", color: "#a7f3d0" }}>{item.desc}</div>
+                    <div style={{ fontSize: "13px", fontWeight: 700, color: "#ffffff" }}>{item.label}</div>
+                    <div style={{ fontSize: "11px", color: "#a7f3d0" }}>{item.desc}</div>
                   </div>
                 </div>
               ))}
@@ -243,7 +243,7 @@ export function DifferentiatorFinal() {
             flexDirection: "column",
             justifyContent: "center"
           }}>
-            <div style={{ fontSize: "10px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "10px" }}>
+            <div style={{ fontSize: "12px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "12px" }}>
               The Result
             </div>
             {[
@@ -251,11 +251,11 @@ export function DifferentiatorFinal() {
               { word: "Accurate", color: "#60a5fa" },
               { word: "Rapid", color: "#fbbf24" }
             ].map(item => (
-              <div key={item.word} style={{ fontSize: "16px", fontWeight: 700, color: item.color, marginBottom: "4px" }}>
+              <div key={item.word} style={{ fontSize: "18px", fontWeight: 700, color: item.color, marginBottom: "6px" }}>
                 {item.word}
               </div>
             ))}
-            <div style={{ fontSize: "10px", color: "#94a3b8", marginTop: "4px" }}>Transition from research to operations</div>
+            <div style={{ fontSize: "12px", color: "#94a3b8", marginTop: "6px" }}>Transition from research to operations</div>
           </div>
         </div>
 
@@ -268,10 +268,10 @@ export function DifferentiatorFinal() {
           textAlign: "center",
           marginBottom: "12px"
         }}>
-          <div style={{ fontSize: "12px", color: "#ffffff", fontWeight: 600 }}>
+          <div style={{ fontSize: "14px", color: "#ffffff", fontWeight: 600 }}>
             Purpose: Support human judgment in complex, uncertain operational environments.
           </div>
-          <div style={{ fontSize: "11px", color: "#fbbf24", fontWeight: 600, fontStyle: "italic", marginTop: "3px" }}>
+          <div style={{ fontSize: "13px", color: "#fbbf24", fontWeight: 600, fontStyle: "italic", marginTop: "4px" }}>
             Not autonomous. Not predictive. Not targeting.
           </div>
         </div>
@@ -279,8 +279,8 @@ export function DifferentiatorFinal() {
         {/* Footer */}
         <div style={{ display: "flex", justifyContent: "center" }}>
           <div style={{
-            fontSize: "10px", fontWeight: 700, color: "#22c55e", letterSpacing: "0.15em", textTransform: "uppercase",
-            padding: "4px 14px", border: "2px solid #22c55e", borderRadius: "4px"
+            fontSize: "12px", fontWeight: 700, color: "#22c55e", letterSpacing: "0.15em", textTransform: "uppercase",
+            padding: "6px 18px", border: "2px solid #22c55e", borderRadius: "4px"
           }}>
             UNCLASSIFIED
           </div>
