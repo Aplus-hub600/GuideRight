@@ -137,9 +137,9 @@ export function DifferentiatorFinal() {
               <div style={{ 
                 width: "56px", height: "56px", margin: "0 auto 8px",
                 background: "rgba(239,68,68,0.15)", border: "2px solid rgba(239,68,68,0.4)",
-                borderRadius: "50%", lineHeight: "52px", textAlign: "center"
+                borderRadius: "50%", position: "relative"
               }}>
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" style={{ verticalAlign: "middle" }}>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" style={{ position: "absolute", top: "14px", left: "14px" }}>
                   <circle cx="12" cy="8" r="4" stroke="#f87171" strokeWidth="2" />
                   <path d="M4 20c0-4 4-6 8-6s8 2 8 6" stroke="#f87171" strokeWidth="2" strokeLinecap="round" />
                 </svg>
@@ -156,9 +156,9 @@ export function DifferentiatorFinal() {
               <div style={{ 
                 width: "56px", height: "56px", margin: "0 auto 8px",
                 background: "rgba(168,85,247,0.15)", border: "2px solid rgba(168,85,247,0.4)",
-                borderRadius: "50%", lineHeight: "52px", textAlign: "center"
+                borderRadius: "50%", position: "relative"
               }}>
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" style={{ verticalAlign: "middle" }}>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" style={{ position: "absolute", top: "14px", left: "14px" }}>
                   <path d="M12 3L20 7.5V16.5L12 21L4 16.5V7.5L12 3Z" stroke="#a855f7" strokeWidth="2" strokeLinejoin="round" />
                   <path d="M12 12L20 7.5" stroke="#a855f7" strokeWidth="2" />
                   <path d="M12 12V21" stroke="#a855f7" strokeWidth="2" />
@@ -177,9 +177,9 @@ export function DifferentiatorFinal() {
                 width: "56px", height: "56px", margin: "0 auto 8px",
                 background: "linear-gradient(135deg, rgba(59,130,246,0.15) 0%, rgba(34,197,94,0.15) 100%)", 
                 border: "2px solid rgba(34,197,94,0.4)",
-                borderRadius: "50%", lineHeight: "52px", textAlign: "center"
+                borderRadius: "50%", position: "relative"
               }}>
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" style={{ verticalAlign: "middle" }}>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" style={{ position: "absolute", top: "14px", left: "14px" }}>
                   <path d="M12 2L15 8L22 9L17 14L18 21L12 18L6 21L7 14L2 9L9 8L12 2Z" stroke="#4ade80" strokeWidth="2" strokeLinejoin="round" />
                 </svg>
               </div>
