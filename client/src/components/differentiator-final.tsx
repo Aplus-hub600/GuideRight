@@ -147,6 +147,26 @@ export function DifferentiatorFinal() {
               <div style={{ fontSize: "10px", color: "#94a3b8", fontStyle: "italic" }}>Lean, agile small business</div>
             </div>
           </div>
+
+          {/* Continuous Iterative Banner */}
+          <div style={{ 
+            display: "flex", alignItems: "center", justifyContent: "center", gap: "10px",
+            marginTop: "16px", paddingTop: "14px",
+            borderTop: "1px dashed rgba(255,255,255,0.15)"
+          }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M4 12C4 7.58 7.58 4 12 4C14.39 4 16.53 5.05 18 6.71" stroke="#a855f7" strokeWidth="2.5" strokeLinecap="round" />
+              <path d="M20 12C20 16.42 16.42 20 12 20C9.61 20 7.47 18.95 6 17.29" stroke="#a855f7" strokeWidth="2.5" strokeLinecap="round" />
+              <polygon points="18 3, 21 7, 17 7" fill="#a855f7" />
+              <polygon points="6 21, 3 17, 7 17" fill="#a855f7" />
+            </svg>
+            <span style={{ fontSize: "13px", fontWeight: 700, color: "#a855f7" }}>
+              Continuous Iterative Development
+            </span>
+            <span style={{ fontSize: "11px", color: "#94a3b8" }}>
+              — Customer feedback drives every cycle
+            </span>
+          </div>
         </div>
 
         {/* Bottom: Capabilities + Credibility */}
