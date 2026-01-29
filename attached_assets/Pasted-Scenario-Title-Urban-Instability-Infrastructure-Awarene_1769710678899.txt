@@ -1,0 +1,63 @@
+Scenario Title
+
+Urban Instability & Infrastructure Awareness in a Complex Megacity
+
+Location
+
+Dhaka, Bangladesh
+
+Context (High-Level)
+
+Following a high-visibility political incident in mid-December, reporting indicates increased protest activity, localized disruptions, and heightened security posture across parts of Dhaka. Information is fragmented, uneven in quality, and varies significantly by source type and geographic coverage.
+
+An interagency analytic cell is tasked with maintaining situational awareness to support near-term risk monitoring and contingency planning in a dense urban environment. The tasking assumes no direct U.S. operational involvement and focuses exclusively on understanding the information environment.
+
+Core Analytic Question
+
+What is the current risk posture across Dhaka, how confident are we in what we know, and where should analytic attention be focused over the next 48–72 hours?
+
+Analytic Objectives
+
+Assess relative risk posture across the city (not absolute event counts)
+
+Identify infrastructure considerations that may affect access and movement (e.g., healthcare, transportation corridors)
+
+Represent human activity as spatial patterns and intensity rather than discrete claims
+
+Explicitly communicate confidence levels, data gaps, and uncertainty
+
+Support analyst-in-the-loop reasoning without generating predictions or recommendations
+
+Time Windows
+
+Baseline: Approximately 12 months prior to the incident
+
+Focused Window: ~30 days before and after the incident
+
+Recent Window: Last 7–14 days, depending on data availability
+
+What the Demo Emphasizes
+
+City-level and sub-area scope awareness where data coverage is defensible
+
+Infrastructure-first spatial context, reflecting stronger data reliability
+
+Pattern-based interpretation of activity rather than point claims
+
+Transparent indication of data sources, coverage, and uncertainty
+
+Concise analytic summaries designed to support analyst workflows
+
+What the Demo Explicitly Avoids
+
+Claims of precise protest or riot counts
+
+Hyper-local assertions without defensible sourcing
+
+Predictive or prescriptive outputs
+
+Feature-by-feature walkthroughs unrelated to the analytic question
+
+Intended Use
+
+This scenario is an analytic vignette, designed to evaluate how GuideRight supports reasoning under uncertainty and situational awareness in complex environments. It is reusable across regions and does not represent an operational plan, mission rehearsal, or targeting activity.
