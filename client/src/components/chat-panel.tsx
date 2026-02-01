@@ -528,12 +528,21 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, className }: ChatPan
     abortControllerRef.current = abortController
 
     try {
+      // Automatically include recent conversation history for follow-up context
+      const recentMessageIds = messages
+        .slice(-10) // Last 10 messages for context
+        .map(m => m.id)
+        .filter((id): id is string => id !== undefined)
+      
+      // Combine media context with conversation history
+      const allContextIds = [...(mediaContextIds || []), ...recentMessageIds]
+      
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           query: queryText,
-          contextIds: mediaContextIds || []
+          contextIds: allContextIds
         }),
         signal: abortController.signal
       })
