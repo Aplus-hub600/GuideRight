@@ -1,7 +1,7 @@
 # GuideRight Demo Script
 ## Urban Instability & Infrastructure Awareness in Dhaka, Bangladesh
 
-**Duration:** 15-20 minutes  
+**Duration:** 20-25 minutes  
 **Audience:** Analysts, Program Managers, Evaluators
 
 ---
@@ -108,17 +108,100 @@
 
 ---
 
-## Step 6: Analyst-in-the-Loop Queries (2 min)
+## Step 6: Interactive Follow-Up - Demonstrating System Agility (5 min)
 
-**Action:** Show conversational analysis capability
+**Purpose:** Show how an analyst iteratively refines their understanding through conversational follow-up. This demonstrates the system's ability to respond to evolving analytic needs in real-time.
 
-**Sample Queries to Demonstrate:**
-1. "Which areas of Dhaka show the highest infrastructure density?"
-2. "What transportation corridors connect the airport to the diplomatic quarter?"
-3. "Summarize the economic factors that could affect stability over the next 72 hours."
+---
+
+### Scenario: Analyst Drills Down on Infrastructure Concern
+
+**Context Setup:**
+> "Based on our initial PMESII analysis, the analyst notices the Infrastructure factor shows potential vulnerabilities in healthcare access. Let's watch how they use GuideRight to drill deeper."
+
+---
+
+**TURN 1 - Initial Follow-Up**
+
+**Analyst Query:**
+> "The infrastructure assessment mentioned healthcare facility constraints. Can you break down which hospitals in Dhaka have the highest capacity and their current accessibility status?"
+
+**System Response Highlights:**
+- Lists major facilities (Dhaka Medical College, BIRDEM, Apollo)
+- Shows accessibility factors (road access, proximity to protest areas)
+- Provides confidence level for each data point
+- Notes data gaps (e.g., "real-time capacity data unavailable")
 
 **Narrator:**
-> "GuideRight supports analyst workflows through natural language queries. The system provides structured responses with cited sources - it doesn't make recommendations or predictions. The analyst remains in control of interpretation and decision-making."
+> "Notice the system immediately pivots to the analyst's new focus area. It doesn't just repeat the original analysis - it provides targeted, relevant detail while maintaining transparency about what it doesn't know."
+
+---
+
+**TURN 2 - Refining the Question**
+
+**Analyst Query:**
+> "What about the routes between Hazrat Shahjalal Airport and these major hospitals? Are there any infrastructure chokepoints we should be aware of?"
+
+**System Response Highlights:**
+- Identifies key corridors (Airport Road, Mohakhali, Tejgaon)
+- Flags known congestion points and bridge dependencies
+- References transportation infrastructure reliability
+- Updates map to highlight relevant routes
+
+**Narrator:**
+> "The system maintains conversational context - it knows we're still focused on the healthcare accessibility thread. The map updates dynamically to reflect the analyst's current focus."
+
+---
+
+**TURN 3 - Pivoting to a New Dimension**
+
+**Analyst Query:**
+> "Shifting focus - what's the current information environment around these infrastructure concerns? Is there social media activity indicating public awareness of healthcare access issues?"
+
+**System Response Highlights:**
+- Pivots to Information (I) and Social (S) factors
+- Provides pattern-level assessment (elevated/baseline activity)
+- Notes source limitations for social media monitoring
+- Explicitly states confidence is LOWER for this assessment
+
+**Narrator:**
+> "Here's the agility - the analyst pivots from infrastructure to the information environment, and the system follows seamlessly. Critically, it adjusts confidence levels appropriately. Infrastructure data was HIGH confidence; social media patterns are MEDIUM-LOW. The system doesn't pretend to know more than it does."
+
+---
+
+**TURN 4 - Synthesis Request**
+
+**Analyst Query:**
+> "Based on everything we've discussed, what are the key areas where I should focus analytic attention over the next 48 hours?"
+
+**System Response Highlights:**
+- Synthesizes across the conversation thread
+- Identifies 3-4 priority focus areas with rationale
+- Links each to specific PMESII factors
+- Explicitly frames as "areas warranting attention" NOT predictions
+- Provides aggregate confidence assessment
+
+**Narrator:**
+> "The system synthesizes the entire conversation into actionable focus areas - but notice the language: 'areas warranting attention,' not 'this will happen.' GuideRight supports analyst judgment; it doesn't replace it."
+
+---
+
+### Key Agility Takeaways
+
+| Capability | What We Just Showed |
+|------------|---------------------|
+| **Contextual Memory** | System tracked the conversation thread across 4 turns |
+| **Dynamic Pivoting** | Analyst shifted from Infrastructure to Information seamlessly |
+| **Confidence Adaptation** | Confidence levels adjusted based on data quality for each topic |
+| **Map Integration** | Visualization updated to match conversational focus |
+| **Synthesis** | System combined insights without overstepping into prediction |
+
+---
+
+## Step 7: Analyst-in-the-Loop Summary (1 min)
+
+**Narrator:**
+> "GuideRight supports analyst workflows through natural language queries. The system provides structured responses with cited sources - it doesn't make recommendations or predictions. The analyst remains in control of interpretation and decision-making. What you just saw was a realistic workflow: initial broad assessment, targeted drill-down, cross-domain pivot, and synthesis."
 
 ---
 
