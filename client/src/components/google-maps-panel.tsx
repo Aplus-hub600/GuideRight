@@ -1,14 +1,11 @@
 import { useEffect, useState, useCallback } from "react"
 import { APIProvider, Map, AdvancedMarker, useMap, InfoWindow, useMapsLibrary } from "@vis.gl/react-google-maps"
 import { Button } from "@/components/ui/button"
-import { Navigation, Target, Layers, MapPin, Crosshair, ZoomIn, ZoomOut, Loader2 } from "lucide-react"
-import { useTranslation } from "react-i18next"
+import { Target, Layers, MapPin, Crosshair, ZoomIn, ZoomOut, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { ScenarioSelector } from "./scenario-selector"
-import { MapScopeBar, type DataCoverage } from "./map-scope-bar"
-import { MapLensSelector, LensLegend, type MapLens } from "./map-lens-selector"
 import { INFRASTRUCTURE_NODES, type InfrastructureNode } from "./map-infrastructure-layer"
-import { MapContextPanel } from "./map-context-panel"
+import type { MapLens } from "./map-lens-selector"
+import { MapLibrePanel } from "./maplibre-panel"
 
 interface AOI {
   name?: string
@@ -276,8 +273,7 @@ function GoogleMapsContent({
   zoomLevel,
   setZoomLevel,
   selectedInfraNode,
-  setSelectedInfraNode,
-  dynamicCoverage
+  setSelectedInfraNode
 }: GoogleMapsPanelProps & {
   mapStyle: "roadmap" | "satellite" | "hybrid"
   setMapStyle: (style: "roadmap" | "satellite" | "hybrid") => void
@@ -287,9 +283,7 @@ function GoogleMapsContent({
   setZoomLevel: (zoom: number) => void
   selectedInfraNode: InfrastructureNode | null
   setSelectedInfraNode: (node: InfrastructureNode | null) => void
-  dynamicCoverage: DataCoverage
 }) {
-  const { t } = useTranslation()
   const map = useMap()
   
   const handleZoomIn = useCallback(() => {
@@ -325,95 +319,63 @@ function GoogleMapsContent({
         onNodeClick={setSelectedInfraNode}
       />
       
-      <div className="absolute top-3 left-3 right-3 z-10">
-        <MapScopeBar
-          aoiName={aoi?.name || selectedODINCountry}
-          scope="metropolitan"
-          coverage={dynamicCoverage}
-          zoomLevel={zoomLevel}
-        />
-      </div>
-
-      <div className="absolute top-16 left-3 z-10 flex flex-col gap-2">
-        <MapLensSelector
-          activeLens={activeLens}
-          onLensChange={setActiveLens}
-        />
-        
-        <ScenarioSelector
-          selectedCountry={selectedODINCountry}
-          onScenarioChange={onODINCountryChange}
-        />
-
-        <div className="flex flex-col gap-0.5 bg-background/95 backdrop-blur-sm rounded-md border overflow-hidden">
+      {/* Top-left: Map style toggle only */}
+      <div className="absolute top-3 left-3 z-10">
+        <div className="flex gap-0.5 bg-background/95 backdrop-blur-sm rounded-md border overflow-hidden">
           <Button
             size="sm"
             variant={mapStyle === "roadmap" ? "default" : "ghost"}
             onClick={() => setMapStyle("roadmap")}
-            className="rounded-none justify-start gap-2 h-8"
+            className="rounded-none h-8 px-3"
             data-testid="button-map-streets"
           >
             <Layers className="h-3.5 w-3.5" />
-            <span className="text-xs">Streets</span>
           </Button>
           <Button
             size="sm"
             variant={mapStyle === "satellite" ? "default" : "ghost"}
             onClick={() => setMapStyle("satellite")}
-            className="rounded-none justify-start gap-2 h-8"
+            className="rounded-none h-8 px-3"
             data-testid="button-map-satellite"
           >
             <Target className="h-3.5 w-3.5" />
-            <span className="text-xs">Satellite</span>
           </Button>
           <Button
             size="sm"
             variant={mapStyle === "hybrid" ? "default" : "ghost"}
             onClick={() => setMapStyle("hybrid")}
-            className="rounded-none justify-start gap-2 h-8"
+            className="rounded-none h-8 px-3"
             data-testid="button-map-hybrid"
           >
             <MapPin className="h-3.5 w-3.5" />
-            <span className="text-xs">Hybrid</span>
           </Button>
         </div>
       </div>
-      
-      {/* Legend - flush bottom-right */}
-      <div className="absolute bottom-0 right-0 z-10">
-        <LensLegend activeLens={activeLens} mapStyle={mapStyle} className="rounded-br-none rounded-bl-none rounded-tr-none" />
-      </div>
-      
-      <div className="absolute top-16 right-3 bottom-3 w-80 z-10">
-        <div className="h-full bg-background/95 backdrop-blur-sm border rounded-md shadow-sm overflow-hidden">
-          <MapContextPanel
-            aoiName={aoi?.name || selectedODINCountry || "Dhaka"}
-            activeLens={activeLens}
-            selectedNode={selectedInfraNode}
-          />
-        </div>
-      </div>
 
-      <div className="absolute bottom-20 right-[22rem] z-10 flex flex-col gap-1">
-        <Button size="icon" variant="secondary" onClick={handleZoomIn} data-testid="button-zoom-in">
+      {/* Top-right: Zoom controls */}
+      <div className="absolute top-3 right-3 z-10 flex flex-col gap-1">
+        <Button size="icon" variant="secondary" onClick={handleZoomIn} className="h-8 w-8" data-testid="button-zoom-in">
           <ZoomIn className="h-4 w-4" />
         </Button>
-        <Button size="icon" variant="secondary" onClick={handleZoomOut} data-testid="button-zoom-out">
+        <Button size="icon" variant="secondary" onClick={handleZoomOut} className="h-8 w-8" data-testid="button-zoom-out">
           <ZoomOut className="h-4 w-4" />
         </Button>
         {aoi && (
-          <Button size="icon" variant="secondary" onClick={handleCenterOnAOI} data-testid="button-center-aoi">
+          <Button size="icon" variant="secondary" onClick={handleCenterOnAOI} className="h-8 w-8" data-testid="button-center-aoi">
             <Crosshair className="h-4 w-4" />
           </Button>
         )}
       </div>
 
-      {onMovementPlanRequest && (
-        <div className="absolute bottom-3 right-[22rem] z-10">
-          <Button size="sm" onClick={onMovementPlanRequest} data-testid="button-movement-plan">
-            <Navigation className="h-4 w-4 mr-1" />
-            Plan Route
-          </Button>
+      {/* Bottom-left: AOI info */}
+      {aoi?.name && (
+        <div className="absolute bottom-20 left-3 z-10">
+          <div className="bg-background/95 backdrop-blur-sm rounded-md border px-3 py-2 text-sm">
+            <span className="font-medium">{aoi.name}</span>
+            <span className="text-muted-foreground ml-2 text-xs">
+              {aoi.lat.toFixed(3)}, {aoi.lng.toFixed(3)}
+            </span>
+          </div>
         </div>
       )}
     </>
@@ -438,39 +400,6 @@ export function GoogleMapsPanel({
   const [activeLens, setActiveLens] = useState<MapLens>("infrastructure")
   const [zoomLevel, setZoomLevel] = useState(10)
   const [selectedInfraNode, setSelectedInfraNode] = useState<InfrastructureNode | null>(null)
-  
-  const getDataCoverage = (zoom: number, lens: MapLens): DataCoverage => {
-    switch (lens) {
-      case "infrastructure":
-        return {
-          infrastructure: zoom >= 12 ? "high" : zoom >= 9 ? "medium" : "low",
-          humanActivity: "sparse",
-          temporal: zoom >= 10 ? "current" : "recent"
-        }
-      case "human-activity":
-        return {
-          infrastructure: "sparse",
-          humanActivity: zoom >= 14 ? "high" : zoom >= 11 ? "medium" : "low",
-          temporal: zoom >= 12 ? "current" : zoom >= 8 ? "recent" : "limited"
-        }
-      case "risk-stress":
-        return {
-          infrastructure: "sparse",
-          humanActivity: zoom >= 12 ? "medium" : "low",
-          temporal: zoom >= 10 ? "current" : "recent"
-        }
-      case "logistics":
-        return {
-          infrastructure: zoom >= 10 ? "medium" : "low",
-          humanActivity: "sparse",
-          temporal: zoom >= 8 ? "current" : "limited"
-        }
-      default:
-        return { infrastructure: "low", humanActivity: "low", temporal: "limited" }
-    }
-  }
-  
-  const dynamicCoverage = getDataCoverage(zoomLevel, activeLens)
   
   useEffect(() => {
     const fetchApiKey = async () => {
@@ -505,22 +434,15 @@ export function GoogleMapsPanel({
   }
   
   if (error || !apiKey) {
+    // Fallback to OpenStreetMap when Google Maps unavailable
     return (
-      <div className={cn("relative w-full h-full flex items-center justify-center bg-muted", className)}>
-        <div className="text-center p-8 max-w-md">
-          <div className="text-6xl mb-4 opacity-50">
-            <MapPin className="h-16 w-16 mx-auto text-muted-foreground" />
-          </div>
-          <h3 className="text-lg font-semibold mb-2">Map Unavailable</h3>
-          <p className="text-sm text-muted-foreground mb-4">
-            {error || "Google Maps API key not configured"}
-          </p>
-          <div className="text-xs text-muted-foreground bg-background/50 rounded-md p-3 border">
-            <strong>Current AOI:</strong> {aoi?.name || selectedODINCountry || "Dhaka, Bangladesh"}<br/>
-            <strong>Coordinates:</strong> {(aoi?.lat || 23.8103).toFixed(4)}, {(aoi?.lng || 90.4125).toFixed(4)}
-          </div>
-        </div>
-      </div>
+      <MapLibrePanel
+        aoi={aoi}
+        onAOIChange={onAOIChange}
+        activeLens="infrastructure"
+        hideLensSelector={true}
+        className={className}
+      />
     )
   }
 
@@ -553,7 +475,6 @@ export function GoogleMapsPanel({
             setZoomLevel={setZoomLevel}
             selectedInfraNode={selectedInfraNode}
             setSelectedInfraNode={setSelectedInfraNode}
-            dynamicCoverage={dynamicCoverage}
           />
         </Map>
       </APIProvider>
