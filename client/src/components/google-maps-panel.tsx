@@ -353,7 +353,7 @@ function GoogleMapsContent({
       </div>
 
       {/* Bottom-left: Smart Map Controls with innovative zoom */}
-      <div className="absolute bottom-20 left-3 z-10">
+      <div className="absolute bottom-3 left-3 z-10">
         <SmartMapControls
           zoomLevel={zoomLevel}
           onZoomIn={handleZoomIn}
@@ -365,11 +365,10 @@ function GoogleMapsContent({
       </div>
 
       {/* Bottom-right: Legend */}
-      <div className="absolute bottom-0 right-0 z-10">
+      <div className="absolute bottom-3 right-3 z-10">
         <LensLegend 
           activeLens={activeLens} 
           mapStyle={mapStyle === "roadmap" ? "streets" : mapStyle}
-          className="rounded-br-none rounded-bl-none rounded-tr-none" 
         />
       </div>
     </>
