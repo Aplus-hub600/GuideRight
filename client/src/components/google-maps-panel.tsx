@@ -39,6 +39,8 @@ interface GoogleMapsPanelProps {
   onMovementPlanRequest?: () => void
   selectedODINCountry?: string
   onODINCountryChange?: (country: string) => void
+  activeLens?: MapLens
+  onLensChange?: (lens: MapLens) => void
   className?: string
 }
 
@@ -384,15 +386,21 @@ export function GoogleMapsPanel({
   onMovementPlanRequest,
   selectedODINCountry,
   onODINCountryChange,
+  activeLens: propActiveLens,
+  onLensChange,
   className
 }: GoogleMapsPanelProps) {
   const [apiKey, setApiKey] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [mapStyle, setMapStyle] = useState<"roadmap" | "satellite" | "hybrid">("roadmap")
-  const [activeLens, setActiveLens] = useState<MapLens>("infrastructure")
+  const [internalLens, setInternalLens] = useState<MapLens>("infrastructure")
   const [zoomLevel, setZoomLevel] = useState(10)
   const [selectedInfraNode, setSelectedInfraNode] = useState<InfrastructureNode | null>(null)
+  
+  // Use prop if provided, otherwise use internal state
+  const activeLens = propActiveLens ?? internalLens
+  const setActiveLens = onLensChange ?? setInternalLens
   
   useEffect(() => {
     const fetchApiKey = async () => {

@@ -173,6 +173,8 @@ function App() {
                             <GoogleMapsPanel
                               aoi={currentAOI}
                               onAOIChange={setCurrentAOI}
+                              activeLens={activeLens}
+                              onLensChange={setActiveLens}
                               className="h-full w-full"
                             />
                             
@@ -240,6 +242,8 @@ function App() {
                           <GoogleMapsPanel
                             aoi={currentAOI}
                             onAOIChange={setCurrentAOI}
+                            activeLens={activeLens}
+                            onLensChange={setActiveLens}
                             className="h-full w-full"
                           />
                           <div className="absolute bottom-0 left-1/2 -translate-x-1/2 z-10">
