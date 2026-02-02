@@ -2633,6 +2633,100 @@ Return realistic intelligence-style events based on your knowledge of the region
     }
   });
 
+  // ============================================
+  // Google Earth Engine - Population & Socioeconomic Data
+  // ============================================
+  
+  // POST /api/intel/earth-engine/population - Get population density data
+  app.post("/api/intel/earth-engine/population", async (req, res) => {
+    try {
+      const { queryEarthEngine } = await import("./services/earth-engine");
+      
+      const { lat, lon, radiusKm = 50, resolution = 'medium' } = req.body;
+      
+      if (lat === undefined || lon === undefined) {
+        return res.status(400).json({
+          success: false,
+          error: "lat and lon are required"
+        });
+      }
+      
+      const result = await queryEarthEngine({
+        lat: parseFloat(lat),
+        lon: parseFloat(lon),
+        radiusKm: parseFloat(radiusKm),
+        resolution
+      });
+      
+      res.json({
+        success: true,
+        ...result
+      });
+    } catch (error) {
+      console.error("[Earth Engine] Error:", error);
+      res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+  
+  // ============================================
+  // Google Threat Intelligence - Cyber Threat Data
+  // ============================================
+  
+  // POST /api/intel/threat/assessment - Get regional threat assessment
+  app.post("/api/intel/threat/assessment", async (req, res) => {
+    try {
+      const { queryThreatIntelligence } = await import("./services/threat-intel");
+      
+      const { country, region, sectors, timeWindowDays = 30 } = req.body;
+      
+      if (!country) {
+        return res.status(400).json({
+          success: false,
+          error: "country is required"
+        });
+      }
+      
+      const result = await queryThreatIntelligence({
+        country,
+        region,
+        sectors,
+        timeWindowDays
+      });
+      
+      res.json({
+        success: true,
+        ...result
+      });
+    } catch (error) {
+      console.error("[Threat Intel] Error:", error);
+      res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+  
+  // GET /api/intel/threat/status - Check if GTI API is configured
+  app.get("/api/intel/threat/status", async (req, res) => {
+    try {
+      const { isGTIConfigured } = await import("./services/threat-intel");
+      
+      res.json({
+        success: true,
+        configured: isGTIConfigured(),
+        source: isGTIConfigured() ? 'Google Threat Intelligence API' : 'Simulated Data (Demo)'
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
   // Gemini Integration Routes
   
   // Location-based intelligence query with Google Maps grounding

@@ -8,6 +8,7 @@ import { INFRASTRUCTURE_NODES, type InfrastructureNode } from "./map-infrastruct
 import { LensLegend, SmartMapControls, type MapLens } from "./map-lens-selector"
 import { SmartIntelLegend, GOLDSTEIN_CATEGORIES, type GoldsteinCategory, type GdeltEvent, type GdeltDoc } from "./map-intel-layer"
 import { MapLibrePanel } from "./maplibre-panel"
+import { PopulationHeatmapMarkers, PopulationLegend } from "./population-heatmap"
 
 interface AOI {
   name?: string
@@ -448,6 +449,29 @@ function GoogleMapsContent({
     refetchOnWindowFocus: false
   })
   
+  // Fetch population data when human lens is active
+  const { data: populationData, refetch: refetchPopulation, isLoading: populationLoading } = useQuery({
+    queryKey: ["/api/intel/earth-engine/population", aoi?.lat, aoi?.lng],
+    queryFn: async () => {
+      if (!aoi) return null
+      const response = await fetch("/api/intel/earth-engine/population", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          lat: aoi.lat,
+          lon: aoi.lng,
+          radiusKm: 30,
+          resolution: 'low'
+        })
+      })
+      if (!response.ok) throw new Error("Failed to fetch population data")
+      return response.json()
+    },
+    enabled: !!aoi && activeLens === "human-activity",
+    staleTime: 1000 * 60 * 10,
+    refetchOnWindowFocus: false
+  })
+  
   const gdeltEvents: GdeltEvent[] = intelData?.events || []
   const gdeltDocs: GdeltDoc[] = intelData?.docs || []
   
@@ -499,6 +523,10 @@ function GoogleMapsContent({
         events={gdeltEvents}
         visible={activeLens === "intel"}
         hiddenCategories={hiddenCategories}
+      />
+      <PopulationHeatmapMarkers
+        cells={populationData?.population?.gridCells || []}
+        visible={activeLens === "human-activity"}
       />
       
       {/* Top-left: Map style toggle only */}
@@ -557,6 +585,13 @@ function GoogleMapsContent({
             onToggleCategory={toggleCategory}
             onRefresh={() => refetchIntel()}
             isLoading={intelLoading}
+            mapStyle={mapStyle === "roadmap" ? "streets" : mapStyle}
+          />
+        ) : activeLens === "human-activity" ? (
+          <PopulationLegend
+            data={populationData}
+            isLoading={populationLoading}
+            onRefresh={() => refetchPopulation()}
             mapStyle={mapStyle === "roadmap" ? "streets" : mapStyle}
           />
         ) : (

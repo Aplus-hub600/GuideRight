@@ -14,11 +14,13 @@ import {
   Target,
   Clock,
   MapPin,
-  RefreshCw
+  RefreshCw,
+  Cpu
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 import { queryClient } from "@/lib/queryClient"
+import { ThreatIntelPanel } from "./threat-intel-panel"
 
 interface AOI {
   name?: string
@@ -209,8 +211,12 @@ export function RiskAssessment({ aoi, className, onRiskUpdate }: RiskAssessmentP
 
       {/* Risk Factors and History */}
       <Tabs defaultValue="factors" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="factors" data-testid="tab-risk-factors">Risk Factors</TabsTrigger>
+          <TabsTrigger value="cyber" data-testid="tab-cyber-threats">
+            <Cpu className="h-3 w-3 mr-1" />
+            Cyber
+          </TabsTrigger>
           <TabsTrigger value="history" data-testid="tab-risk-history">History</TabsTrigger>
         </TabsList>
         
@@ -236,6 +242,10 @@ export function RiskAssessment({ aoi, className, onRiskUpdate }: RiskAssessmentP
               <p className="text-xs">Click "Assess Risk" to analyze this AOI</p>
             </div>
           )}
+        </TabsContent>
+        
+        <TabsContent value="cyber" className="mt-4">
+          <ThreatIntelPanel country="Bangladesh" region="Dhaka" />
         </TabsContent>
         
         <TabsContent value="history" className="space-y-3 mt-4">
