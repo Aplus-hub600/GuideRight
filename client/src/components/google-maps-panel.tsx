@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Target, Layers, MapPin, Crosshair, ZoomIn, ZoomOut, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { INFRASTRUCTURE_NODES, type InfrastructureNode } from "./map-infrastructure-layer"
-import type { MapLens } from "./map-lens-selector"
+import { LensLegend, SmartMapControls, type MapLens } from "./map-lens-selector"
 import { MapLibrePanel } from "./maplibre-panel"
 
 interface AOI {
@@ -352,32 +352,26 @@ function GoogleMapsContent({
         </div>
       </div>
 
-      {/* Top-right: Zoom controls */}
-      <div className="absolute top-3 right-3 z-10 flex flex-col gap-1">
-        <Button size="icon" variant="secondary" onClick={handleZoomIn} className="h-8 w-8" data-testid="button-zoom-in">
-          <ZoomIn className="h-4 w-4" />
-        </Button>
-        <Button size="icon" variant="secondary" onClick={handleZoomOut} className="h-8 w-8" data-testid="button-zoom-out">
-          <ZoomOut className="h-4 w-4" />
-        </Button>
-        {aoi && (
-          <Button size="icon" variant="secondary" onClick={handleCenterOnAOI} className="h-8 w-8" data-testid="button-center-aoi">
-            <Crosshair className="h-4 w-4" />
-          </Button>
-        )}
+      {/* Bottom-left: Smart Map Controls with innovative zoom */}
+      <div className="absolute bottom-20 left-3 z-10">
+        <SmartMapControls
+          zoomLevel={zoomLevel}
+          onZoomIn={handleZoomIn}
+          onZoomOut={handleZoomOut}
+          onCenterAOI={aoi ? handleCenterOnAOI : undefined}
+          aoiName={aoi?.name}
+          mapStyle={mapStyle === "roadmap" ? "streets" : mapStyle}
+        />
       </div>
 
-      {/* Bottom-left: AOI info */}
-      {aoi?.name && (
-        <div className="absolute bottom-20 left-3 z-10">
-          <div className="bg-background/95 backdrop-blur-sm rounded-md border px-3 py-2 text-sm">
-            <span className="font-medium">{aoi.name}</span>
-            <span className="text-muted-foreground ml-2 text-xs">
-              {aoi.lat.toFixed(3)}, {aoi.lng.toFixed(3)}
-            </span>
-          </div>
-        </div>
-      )}
+      {/* Bottom-right: Legend */}
+      <div className="absolute bottom-0 right-0 z-10">
+        <LensLegend 
+          activeLens={activeLens} 
+          mapStyle={mapStyle === "roadmap" ? "streets" : mapStyle}
+          className="rounded-br-none rounded-bl-none rounded-tr-none" 
+        />
+      </div>
     </>
   )
 }
