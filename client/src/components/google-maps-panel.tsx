@@ -104,7 +104,7 @@ function MapClickHandler({ onAOIChange }: { onAOIChange?: (aoi: AOI) => void }) 
   return null
 }
 
-function AOIMarker({ aoi }: { aoi: AOI }) {
+function AOIAdvancedMarker({ aoi }: { aoi: AOI }) {
   const [showInfo, setShowInfo] = useState(false)
   
   return (
@@ -143,7 +143,7 @@ function AOIMarker({ aoi }: { aoi: AOI }) {
   )
 }
 
-function SigActMarkers({ sigacts }: { sigacts: SigAct[] }) {
+function SigActAdvancedMarkers({ sigacts }: { sigacts: SigAct[] }) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
   
   return (
@@ -200,7 +200,7 @@ function SigActMarkers({ sigacts }: { sigacts: SigAct[] }) {
   )
 }
 
-function InfrastructureMarkers({ 
+function InfrastructureAdvancedMarkers({ 
   nodes, 
   visible, 
   onNodeClick 
@@ -311,9 +311,9 @@ function GoogleMapsContent({
       <ZoomController onZoomChange={setZoomLevel} />
       <MapClickHandler onAOIChange={onAOIChange} />
       
-      {aoi && <AOIMarker aoi={aoi} />}
-      <SigActMarkers sigacts={sigacts} />
-      <InfrastructureMarkers 
+      {aoi && <AOIAdvancedMarker aoi={aoi} />}
+      <SigActAdvancedMarkers sigacts={sigacts} />
+      <InfrastructureAdvancedMarkers 
         nodes={INFRASTRUCTURE_NODES} 
         visible={activeLens === "infrastructure"}
         onNodeClick={setSelectedInfraNode}
