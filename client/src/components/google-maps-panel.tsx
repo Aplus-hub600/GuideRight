@@ -1,10 +1,12 @@
 import { useEffect, useState, useCallback } from "react"
 import { APIProvider, Map, AdvancedMarker, useMap, InfoWindow, useMapsLibrary } from "@vis.gl/react-google-maps"
+import { useQuery } from "@tanstack/react-query"
 import { Button } from "@/components/ui/button"
 import { Target, Layers, MapPin, Crosshair, ZoomIn, ZoomOut, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { INFRASTRUCTURE_NODES, type InfrastructureNode } from "./map-infrastructure-layer"
 import { LensLegend, SmartMapControls, type MapLens } from "./map-lens-selector"
+import { SmartIntelLegend, GOLDSTEIN_CATEGORIES, type GoldsteinCategory, type GdeltEvent, type GdeltDoc } from "./map-intel-layer"
 import { MapLibrePanel } from "./maplibre-panel"
 
 interface AOI {
@@ -260,6 +262,137 @@ function CenterOnAOI({ aoi }: { aoi?: AOI }) {
   return null
 }
 
+function getGoldsteinColor(scale: number | null): string {
+  if (scale === null) return "#6b7280"
+  if (scale >= 5) return "#22c55e"
+  if (scale >= 2) return "#84cc16"
+  if (scale >= 0) return "#eab308"
+  if (scale >= -3) return "#f97316"
+  if (scale >= -6) return "#ef4444"
+  return "#dc2626"
+}
+
+function getGoldsteinCategory(scale: number | null): GoldsteinCategory {
+  if (scale === null) return "neutral"
+  if (scale >= 2) return "cooperation"
+  if (scale >= 0) return "neutral"
+  if (scale >= -3) return "tension"
+  if (scale >= -6) return "conflict"
+  return "severe"
+}
+
+function GdeltAdvancedMarkers({ 
+  events, 
+  visible,
+  hiddenCategories = new Set(),
+  onEventClick
+}: { 
+  events: GdeltEvent[]
+  visible: boolean
+  hiddenCategories?: Set<GoldsteinCategory>
+  onEventClick?: (event: GdeltEvent) => void
+}) {
+  const [selectedEvent, setSelectedEvent] = useState<GdeltEvent | null>(null)
+  
+  if (!visible) return null
+  
+  const visibleEvents = events.filter(event => {
+    if (!event.actionGeoLat || !event.actionGeoLon) return false
+    const category = getGoldsteinCategory(event.goldsteinScale)
+    return !hiddenCategories.has(category)
+  })
+  
+  return (
+    <>
+      {visibleEvents.map((event, index) => {
+        const color = getGoldsteinColor(event.goldsteinScale)
+        const size = Math.min(24, Math.max(16, (event.numMentions || 10) / 5 + 14))
+        
+        return (
+          <AdvancedMarker
+            key={event.globalEventId || index}
+            position={{ lat: event.actionGeoLat!, lng: event.actionGeoLon! }}
+            onClick={() => {
+              setSelectedEvent(event)
+              if (onEventClick) onEventClick(event)
+            }}
+          >
+            <div style={{
+              width: size,
+              height: size,
+              background: color,
+              border: "2px solid white",
+              borderRadius: "50%",
+              boxShadow: `0 2px 6px rgba(0,0,0,0.4), 0 0 0 2px ${color}40`,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center"
+            }}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+            </div>
+          </AdvancedMarker>
+        )
+      })}
+      
+      {selectedEvent && selectedEvent.actionGeoLat && selectedEvent.actionGeoLon && (
+        <InfoWindow
+          position={{ lat: selectedEvent.actionGeoLat, lng: selectedEvent.actionGeoLon }}
+          onCloseClick={() => setSelectedEvent(null)}
+        >
+          <div style={{ minWidth: 240, fontFamily: "system-ui, sans-serif" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+              <div style={{ 
+                width: 10, 
+                height: 10, 
+                borderRadius: "50%", 
+                background: getGoldsteinColor(selectedEvent.goldsteinScale) 
+              }} />
+              <span style={{ fontWeight: 600, fontSize: 11, color: getGoldsteinColor(selectedEvent.goldsteinScale) }}>
+                {selectedEvent.quadClass || "GDELT Event"}
+              </span>
+            </div>
+            
+            <div style={{ fontSize: 12, color: "#4b5563", marginBottom: 6 }}>
+              {selectedEvent.actor1Name && (
+                <div style={{ marginBottom: 4 }}>
+                  <span style={{ color: "#6b7280" }}>Actor 1:</span> {selectedEvent.actor1Name}
+                </div>
+              )}
+              {selectedEvent.actor2Name && (
+                <div>
+                  <span style={{ color: "#6b7280" }}>Actor 2:</span> {selectedEvent.actor2Name}
+                </div>
+              )}
+            </div>
+            
+            <div style={{ 
+              display: "flex", 
+              gap: 12, 
+              fontSize: 10, 
+              color: "#6b7280", 
+              borderTop: "1px solid #e5e7eb", 
+              paddingTop: 6 
+            }}>
+              <div><strong>{selectedEvent.numMentions || 0}</strong> mentions</div>
+              <div>Tone: <strong>{selectedEvent.avgTone?.toFixed(1) || "N/A"}</strong></div>
+              <div>GS: <strong>{selectedEvent.goldsteinScale?.toFixed(1) || "N/A"}</strong></div>
+            </div>
+            
+            <div style={{ fontSize: 10, color: "#9ca3af", marginTop: 4 }}>
+              {selectedEvent.actionGeoFullname || "Unknown location"}
+            </div>
+          </div>
+        </InfoWindow>
+      )}
+    </>
+  )
+}
+
 function GoogleMapsContent({
   aoi,
   sigacts = [],
@@ -287,6 +420,48 @@ function GoogleMapsContent({
   setSelectedInfraNode: (node: InfrastructureNode | null) => void
 }) {
   const map = useMap()
+  const [hiddenCategories, setHiddenCategories] = useState<Set<GoldsteinCategory>>(new Set())
+  
+  // Fetch GDELT data when intel lens is active
+  const { data: intelData, refetch: refetchIntel, isLoading: intelLoading } = useQuery({
+    queryKey: ["/api/intel/gdelt/query", aoi?.name, aoi?.lat, aoi?.lng],
+    queryFn: async () => {
+      if (!aoi) return null
+      const response = await fetch("/api/intel/gdelt/query", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          aoi: {
+            name: aoi.name || "Selected Area",
+            lat: aoi.lat,
+            lon: aoi.lng,
+            radiusKm: aoi.radiusKm || 50
+          },
+          timeWindowDays: 7
+        })
+      })
+      if (!response.ok) throw new Error("Failed to fetch intel data")
+      return response.json()
+    },
+    enabled: !!aoi && activeLens === "intel",
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false
+  })
+  
+  const gdeltEvents: GdeltEvent[] = intelData?.events || []
+  const gdeltDocs: GdeltDoc[] = intelData?.docs || []
+  
+  const toggleCategory = useCallback((category: GoldsteinCategory) => {
+    setHiddenCategories(prev => {
+      const next = new Set(prev)
+      if (next.has(category)) {
+        next.delete(category)
+      } else {
+        next.add(category)
+      }
+      return next
+    })
+  }, [])
   
   const handleZoomIn = useCallback(() => {
     if (map) {
@@ -319,6 +494,11 @@ function GoogleMapsContent({
         nodes={INFRASTRUCTURE_NODES} 
         visible={activeLens === "infrastructure"}
         onNodeClick={setSelectedInfraNode}
+      />
+      <GdeltAdvancedMarkers
+        events={gdeltEvents}
+        visible={activeLens === "intel"}
+        hiddenCategories={hiddenCategories}
       />
       
       {/* Top-left: Map style toggle only */}
@@ -366,12 +546,25 @@ function GoogleMapsContent({
         />
       </div>
 
-      {/* Bottom-right: Legend */}
+      {/* Bottom-right: Legend - switches based on active lens */}
       <div className="absolute bottom-3 right-3 z-10">
-        <LensLegend 
-          activeLens={activeLens} 
-          mapStyle={mapStyle === "roadmap" ? "streets" : mapStyle}
-        />
+        {activeLens === "intel" ? (
+          <SmartIntelLegend
+            events={gdeltEvents}
+            docs={gdeltDocs}
+            coverage={intelData?.coverage || null}
+            hiddenCategories={hiddenCategories}
+            onToggleCategory={toggleCategory}
+            onRefresh={() => refetchIntel()}
+            isLoading={intelLoading}
+            mapStyle={mapStyle === "roadmap" ? "streets" : mapStyle}
+          />
+        ) : (
+          <LensLegend 
+            activeLens={activeLens} 
+            mapStyle={mapStyle === "roadmap" ? "streets" : mapStyle}
+          />
+        )}
       </div>
     </>
   )
