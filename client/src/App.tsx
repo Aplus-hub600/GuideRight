@@ -14,7 +14,7 @@ import { useState, useCallback } from "react";
 import i18n from "./lib/i18n";
 import { Map } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { GoogleMapsPanel } from "./components/google-maps-panel";
+import { MapLibrePanel } from "./components/maplibre-panel";
 import { IntelligencePanel } from "./components/intelligence-panel";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import type { MapLens } from "./components/map-lens-selector";
@@ -170,9 +170,10 @@ function App() {
                           
                           {/* Map Canvas - fills remaining space */}
                           <div className="flex-1 min-h-0 relative">
-                            <GoogleMapsPanel
+                            <MapLibrePanel
                               aoi={currentAOI}
                               onAOIChange={setCurrentAOI}
+                              activeLens={activeLens}
                               className="h-full w-full"
                             />
                             
@@ -237,9 +238,10 @@ function App() {
                           </div>
                         </div>
                         <div className="flex-1 min-h-0 relative">
-                          <GoogleMapsPanel
+                          <MapLibrePanel
                             aoi={currentAOI}
                             onAOIChange={setCurrentAOI}
+                            activeLens={activeLens}
                             className="h-full w-full"
                           />
                           <div className="absolute bottom-0 left-1/2 -translate-x-1/2 z-10">
