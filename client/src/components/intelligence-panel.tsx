@@ -47,6 +47,7 @@ import type { NavSection } from "./bottom-nav-bar"
 import type { MapLens } from "./map-lens-selector"
 import type { ParsedQuery } from "./unified-search-bar"
 import type { DensitySample } from "./google-maps-panel"
+import { MissionClock, DataFreshness } from "./mission-clock"
 
 interface AOI {
   name?: string
@@ -217,17 +218,15 @@ export function IntelligencePanel({
 
   return (
     <div ref={panelRef} className={cn("flex flex-col overflow-hidden bg-card", className)}>
-      {/* Operational Status Bar */}
-      <div className="flex items-center justify-between px-3 py-1.5 bg-muted/60 border-b text-[11px] text-foreground/70 flex-shrink-0">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-1.5">
+      {/* Mission Status Bar with Zulu Time */}
+      <div className="flex items-center justify-between px-3 py-1.5 bg-muted/60 border-b text-[11px] flex-shrink-0">
+        <MissionClock compact />
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 text-foreground/70">
             <Shield className="h-3 w-3" />
-            <span>All queries logged for audit and OPSEC review</span>
+            <span>OPSEC</span>
           </div>
-        </div>
-        <div className="flex items-center gap-1.5 text-amber-600">
-          <WifiOff className="h-3 w-3" />
-          <span>Offline cache: Not available</span>
+          <DataFreshness lastUpdated={new Date()} />
         </div>
       </div>
 

@@ -51,10 +51,11 @@ interface ChatPanelProps {
 }
 
 const QUICK_ACTIONS = [
-  { id: "PMESII", label: "PMESII", icon: BarChart3, prompt: "Provide a comprehensive PMESII analysis for the current area of interest", color: "text-blue-400 bg-blue-500/10 border-blue-500/30 hover:bg-blue-500/20" },
-  { id: "RISK_BRIEF", label: "Risk Brief", icon: AlertTriangle, prompt: "Generate a tactical risk assessment briefing", color: "text-orange-400 bg-orange-500/10 border-orange-500/30 hover:bg-orange-500/20" },
-  { id: "SITREP", label: "SITREP", icon: FileText, prompt: "Create a situation report for current operations", color: "text-green-400 bg-green-500/10 border-green-500/30 hover:bg-green-500/20" },
-  { id: "MISSION", label: "Mission", icon: Briefcase, prompt: "Provide mission support analysis and recommendations", color: "text-purple-400 bg-purple-500/10 border-purple-500/30 hover:bg-purple-500/20" },
+  { id: "PMESII", label: "PMESII", icon: BarChart3, prompt: "Provide a comprehensive PMESII analysis for the current area of interest", color: "text-blue-400 bg-blue-500/10 border-blue-500/30 hover:bg-blue-500/20", shortcut: "1" },
+  { id: "THREAT", label: "Threats", icon: AlertTriangle, prompt: "What are the current security threats and force protection considerations in this area?", color: "text-red-400 bg-red-500/10 border-red-500/30 hover:bg-red-500/20", shortcut: "2" },
+  { id: "SITREP", label: "SITREP", icon: FileText, prompt: "Create a tactical situation report for current operations", color: "text-green-400 bg-green-500/10 border-green-500/30 hover:bg-green-500/20", shortcut: "3" },
+  { id: "INFRA", label: "Infra", icon: Target, prompt: "Identify critical infrastructure and key terrain in this area", color: "text-cyan-400 bg-cyan-500/10 border-cyan-500/30 hover:bg-cyan-500/20", shortcut: "4" },
+  { id: "HUMINT", label: "HUMINT", icon: Briefcase, prompt: "Analyze human terrain, social dynamics, and population considerations", color: "text-purple-400 bg-purple-500/10 border-purple-500/30 hover:bg-purple-500/20", shortcut: "5" },
 ]
 
 const RISK_COLORS = {
@@ -664,6 +665,28 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, className }: ChatPan
     setIsStreaming(false)
   }
 
+  // Keyboard shortcuts for quick actions (Alt+1-5)
+  useEffect(() => {
+    const handleKeyboardShortcuts = (e: KeyboardEvent) => {
+      if (e.altKey && !e.ctrlKey && !e.metaKey) {
+        const num = parseInt(e.key)
+        if (num >= 1 && num <= QUICK_ACTIONS.length) {
+          e.preventDefault()
+          const action = QUICK_ACTIONS[num - 1]
+          if (action && !isStreaming) {
+            handleQuickAction(action.prompt)
+          }
+        }
+      }
+      // Escape to clear input
+      if (e.key === 'Escape' && document.activeElement === textareaRef.current) {
+        setInput("")
+      }
+    }
+    window.addEventListener('keydown', handleKeyboardShortcuts)
+    return () => window.removeEventListener('keydown', handleKeyboardShortcuts)
+  }, [isStreaming])
+
   return (
     <Card className={cn("flex flex-col h-full overflow-hidden border-2 border-primary/20", className)}>
       <CardHeader className="flex flex-row items-center justify-between gap-4 px-4 py-3 border-b border-primary/10 bg-gradient-to-r from-primary/5 via-muted/30 to-transparent relative overflow-hidden">
@@ -736,7 +759,7 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, className }: ChatPan
                 </p>
                 
                 <div className="space-y-3">
-                  <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Quick Actions</p>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Quick Actions <span className="text-[10px] opacity-70">(Alt+1-5)</span></p>
                   <div className="flex flex-wrap justify-center gap-2">
                     {QUICK_ACTIONS.map((action) => {
                       const Icon = action.icon
@@ -744,13 +767,15 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, className }: ChatPan
                         <button
                           key={action.id}
                           onClick={() => handleQuickAction(action.prompt)}
+                          title={`Alt+${action.shortcut}: ${action.prompt}`}
                           className={cn(
-                            "flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border transition-all duration-200",
+                            "group flex items-center gap-2 px-3 py-2.5 text-sm font-semibold rounded-lg border transition-all duration-200",
                             action.color
                           )}
                         >
                           <Icon className="h-4 w-4" />
-                          {action.label}
+                          <span>{action.label}</span>
+                          <kbd className="hidden group-hover:inline-flex items-center justify-center h-4 w-4 text-[9px] font-mono bg-black/20 rounded">{action.shortcut}</kbd>
                         </button>
                       )
                     })}
