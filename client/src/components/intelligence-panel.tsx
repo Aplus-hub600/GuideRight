@@ -132,7 +132,7 @@ export function IntelligencePanel({
   className
 }: IntelligencePanelProps) {
   const [riskScore, setRiskScore] = useState(67)
-  const [chatHeight, setChatHeight] = useState(256)
+  const [chatHeight, setChatHeight] = useState(400)
   const isResizing = useRef(false)
   const panelRef = useRef<HTMLDivElement>(null)
 
@@ -155,9 +155,11 @@ export function IntelligencePanel({
     const startHeight = chatHeight
 
     const handleMouseMove = (moveEvent: MouseEvent) => {
-      if (!isResizing.current) return
+      if (!isResizing.current || !panelRef.current) return
       const deltaY = startY - moveEvent.clientY
-      const newHeight = Math.min(Math.max(startHeight + deltaY, 150), 500)
+      const panelHeight = panelRef.current.offsetHeight
+      const maxHeight = panelHeight - 120
+      const newHeight = Math.min(Math.max(startHeight + deltaY, 200), maxHeight)
       setChatHeight(newHeight)
     }
 
@@ -209,9 +211,9 @@ export function IntelligencePanel({
   };
 
   return (
-    <div className={cn("flex flex-col overflow-hidden", className)}>
+    <div ref={panelRef} className={cn("flex flex-col overflow-hidden bg-card", className)}>
       {/* Operational Status Bar */}
-      <div className="flex items-center justify-between px-3 py-1.5 bg-muted/50 border-b text-[10px] text-muted-foreground flex-shrink-0">
+      <div className="flex items-center justify-between px-3 py-1.5 bg-muted/60 border-b text-[11px] text-foreground/70 flex-shrink-0">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-1.5">
             <Shield className="h-3 w-3" />
@@ -225,12 +227,12 @@ export function IntelligencePanel({
       </div>
 
       {/* Header - matches map header padding (p-3) */}
-      <div className="flex-shrink-0 p-3 border-b bg-background space-y-3">
+      <div className="flex-shrink-0 p-3 border-b bg-card space-y-3">
         {/* Row 1: AOI + Risk Badge + Export */}
         <div className="flex items-center justify-between gap-2">
           <div className="min-w-0">
-            <h1 className="text-base font-semibold truncate">{currentAOI.name || "Area of Interest"}</h1>
-            <p className="text-xs text-muted-foreground">
+            <h1 className="text-lg font-semibold truncate text-foreground">{currentAOI.name || "Area of Interest"}</h1>
+            <p className="text-sm text-foreground/70">
               {currentAOI.lat.toFixed(4)}, {currentAOI.lng.toFixed(4)}
             </p>
           </div>
@@ -284,8 +286,8 @@ export function IntelligencePanel({
         
         {/* Row 3: Lens Selector - 2x2 grid */}
         <div>
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Analysis Lens</p>
-          <div className="grid grid-cols-2 gap-1.5">
+          <p className="text-sm font-medium text-foreground/80 uppercase tracking-wide mb-2">Analysis Lens</p>
+          <div className="grid grid-cols-2 gap-2">
             {LENS_OPTIONS.map((lens) => {
               const Icon = lens.icon
               const isActive = activeLens === lens.id
@@ -294,10 +296,10 @@ export function IntelligencePanel({
                   key={lens.id}
                   onClick={() => onLensChange(lens.id)}
                   className={cn(
-                    "flex items-center gap-2 px-2.5 py-2 rounded-md text-left transition-colors",
+                    "flex items-center gap-2 px-3 py-2.5 rounded-md text-left transition-colors",
                     isActive
                       ? "bg-primary text-primary-foreground"
-                      : "bg-muted/50 hover-elevate text-muted-foreground hover:text-foreground"
+                      : "bg-muted/60 hover-elevate text-foreground/80 hover:text-foreground"
                   )}
                   data-testid={`lens-${lens.id}`}
                 >

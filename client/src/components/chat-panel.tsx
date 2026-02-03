@@ -283,7 +283,7 @@ function IntelCard({ message }: { message: ChatMessage }) {
   
   if (!message.analysis) {
     return (
-      <div className="text-sm whitespace-pre-wrap leading-relaxed">
+      <div className="text-[15px] whitespace-pre-wrap leading-relaxed text-foreground">
         {message.role === "assistant" ? (
           <TypewriterText text={message.content} messageId={message.id} />
         ) : (
@@ -297,7 +297,7 @@ function IntelCard({ message }: { message: ChatMessage }) {
   
   return (
     <div className="space-y-3">
-      <div className="text-sm whitespace-pre-wrap leading-relaxed">
+      <div className="text-[15px] whitespace-pre-wrap leading-relaxed text-foreground">
         <TypewriterText text={message.content} messageId={message.id} />
       </div>
       
