@@ -67,9 +67,13 @@ function TacticalMapStatus({
   lastDataUpdate?: Date
 }) {
   const [zuluTime, setZuluTime] = useState(new Date())
+  const [, forceUpdate] = useState(0)
   
   useEffect(() => {
-    const interval = setInterval(() => setZuluTime(new Date()), 1000)
+    const interval = setInterval(() => {
+      setZuluTime(new Date())
+      forceUpdate(n => n + 1)
+    }, 1000)
     return () => clearInterval(interval)
   }, [])
   
@@ -89,6 +93,13 @@ function TacticalMapStatus({
   
   const dataAge = lastDataUpdate ? Math.floor((Date.now() - lastDataUpdate.getTime()) / 1000) : null
   const dataFresh = dataAge !== null && dataAge < 60
+  const dataStale = dataAge !== null && dataAge >= 60 && dataAge < 300
+  
+  const formatAge = (seconds: number) => {
+    if (seconds < 60) return `${seconds}s`
+    if (seconds < 3600) return `${Math.floor(seconds / 60)}m`
+    return `${Math.floor(seconds / 3600)}h`
+  }
   
   return (
     <div className="flex items-center gap-1 bg-background/95 backdrop-blur-sm border-l border-b px-2 py-1">
@@ -114,11 +125,28 @@ function TacticalMapStatus({
         <span className="font-mono text-xs">Z{zoomLevel}</span>
       </div>
       
-      {/* Active Layer */}
-      <Badge variant="outline" className="h-5 text-[10px] font-bold gap-1">
-        <Radio className={cn("h-2.5 w-2.5", dataFresh ? "text-green-500" : "text-amber-500")} />
-        {getLensLabel(activeLens)}
-      </Badge>
+      {/* Active Layer with Data Freshness */}
+      <div className="flex items-center gap-1.5">
+        <Badge variant="outline" className="h-5 text-[10px] font-bold gap-1">
+          <Radio className={cn(
+            "h-2.5 w-2.5",
+            dataFresh && "text-green-500",
+            dataStale && "text-amber-500",
+            !dataFresh && !dataStale && "text-red-500"
+          )} />
+          {getLensLabel(activeLens)}
+        </Badge>
+        {dataAge !== null && (
+          <span className={cn(
+            "font-mono text-[10px]",
+            dataFresh && "text-green-500",
+            dataStale && "text-amber-500",
+            !dataFresh && !dataStale && "text-red-500"
+          )}>
+            {formatAge(dataAge)}
+          </span>
+        )}
+      </div>
     </div>
   )
 }
@@ -542,6 +570,7 @@ function GoogleMapsContent({
 }) {
   const map = useMap()
   const [hiddenCategories, setHiddenCategories] = useState<Set<GoldsteinCategory>>(new Set())
+  const [lastDataUpdate, setLastDataUpdate] = useState<Date>(new Date())
   
   // Fetch GDELT data when intel lens is active
   const { data: intelData, refetch: refetchIntel, isLoading: intelLoading } = useQuery({
@@ -594,6 +623,13 @@ function GoogleMapsContent({
   
   const gdeltEvents: GdeltEvent[] = intelData?.events || []
   const gdeltDocs: GdeltDoc[] = intelData?.docs || []
+  
+  // Track when data was last updated
+  useEffect(() => {
+    if (intelData || populationData) {
+      setLastDataUpdate(new Date())
+    }
+  }, [intelData, populationData])
   
   const toggleCategory = useCallback((category: GoldsteinCategory) => {
     setHiddenCategories(prev => {
@@ -753,6 +789,7 @@ function GoogleMapsContent({
           aoi={aoi}
           zoomLevel={zoomLevel}
           activeLens={activeLens}
+          lastDataUpdate={lastDataUpdate}
         />
       </div>
 
