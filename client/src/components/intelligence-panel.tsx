@@ -250,15 +250,30 @@ export function IntelligencePanel({
               <Download className="h-3 w-3" />
               Export
             </Button>
-            <div className="flex flex-col items-end gap-0.5">
-              <Badge 
-                variant={riskScore >= 70 ? "destructive" : riskScore >= 40 ? "secondary" : "outline"}
-              >
-                Risk: {riskScore}%
-              </Badge>
-              {activeSearchFilters && (activeSearchFilters.timeRange || activeSearchFilters.events?.length) && (
-                <span className="text-[10px] text-muted-foreground">reflects current filter set</span>
-              )}
+            {/* Enhanced Threat Level Indicator */}
+            <div className={cn(
+              "flex items-center gap-2 px-3 py-1.5 rounded-md border-2",
+              riskScore >= 70 && "bg-red-500/15 border-red-500/50 animate-pulse",
+              riskScore >= 40 && riskScore < 70 && "bg-amber-500/15 border-amber-500/50",
+              riskScore < 40 && "bg-green-500/15 border-green-500/50"
+            )}>
+              <AlertTriangle className={cn(
+                "h-4 w-4",
+                riskScore >= 70 && "text-red-500",
+                riskScore >= 40 && riskScore < 70 && "text-amber-500",
+                riskScore < 40 && "text-green-500"
+              )} />
+              <div className="flex flex-col items-end">
+                <span className={cn(
+                  "text-xs font-bold uppercase tracking-wider",
+                  riskScore >= 70 && "text-red-500",
+                  riskScore >= 40 && riskScore < 70 && "text-amber-500",
+                  riskScore < 40 && "text-green-500"
+                )}>
+                  {riskScore >= 70 ? "HIGH RISK" : riskScore >= 40 ? "ELEVATED" : "LOW"}
+                </span>
+                <span className="text-[10px] text-muted-foreground font-mono">{riskScore}%</span>
+              </div>
             </div>
           </div>
         </div>
