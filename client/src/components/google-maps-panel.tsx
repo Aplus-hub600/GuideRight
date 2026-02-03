@@ -10,6 +10,7 @@ import { SmartIntelLegend, GOLDSTEIN_CATEGORIES, type GoldsteinCategory, type Gd
 import { MapLibrePanel } from "./maplibre-panel"
 import { PopulationHeatmapMarkers, PopulationLegend } from "./population-heatmap"
 import { TrafficLayer, TrafficLegend } from "./traffic-layer"
+import { IntelHeatmapLayer, IntelHeatmapLegend } from "./intel-heatmap"
 
 interface AOI {
   name?: string
@@ -530,6 +531,10 @@ function GoogleMapsContent({
         visible={activeLens === "human-activity"}
       />
       <TrafficLayer visible={activeLens === "logistics"} />
+      <IntelHeatmapLayer 
+        events={gdeltEvents} 
+        visible={activeLens === "intel"} 
+      />
       
       {/* Top-left: Map style toggle only */}
       <div className="absolute top-3 left-3 z-10">
@@ -579,14 +584,11 @@ function GoogleMapsContent({
       {/* Bottom-right: Legend - switches based on active lens */}
       <div className="absolute bottom-3 right-3 z-10">
         {activeLens === "intel" ? (
-          <SmartIntelLegend
-            events={gdeltEvents}
-            docs={gdeltDocs}
-            coverage={intelData?.coverage || null}
-            hiddenCategories={hiddenCategories}
-            onToggleCategory={toggleCategory}
-            onRefresh={() => refetchIntel()}
-            isLoading={intelLoading}
+          <IntelHeatmapLegend
+            eventCount={gdeltEvents.length}
+            conflictCount={gdeltEvents.filter(e => (e.goldsteinScale ?? 0) <= -3).length}
+            tensionCount={gdeltEvents.filter(e => (e.goldsteinScale ?? 0) < 0 && (e.goldsteinScale ?? 0) > -3).length}
+            cooperationCount={gdeltEvents.filter(e => (e.goldsteinScale ?? 0) >= 2).length}
             mapStyle={mapStyle === "roadmap" ? "streets" : mapStyle}
           />
         ) : activeLens === "human-activity" ? (
