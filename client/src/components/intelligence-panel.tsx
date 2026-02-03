@@ -46,6 +46,7 @@ import Analytics from "@/pages/analytics"
 import type { NavSection } from "./bottom-nav-bar"
 import type { MapLens } from "./map-lens-selector"
 import type { ParsedQuery } from "./unified-search-bar"
+import type { DensitySample } from "./google-maps-panel"
 
 interface AOI {
   name?: string
@@ -113,6 +114,8 @@ interface IntelligencePanelProps {
   onQuerySubmit: (query: string, contextIds?: string[]) => void
   mediaContextIds: string[]
   activeSearchFilters?: ParsedQuery
+  densitySample?: DensitySample | null
+  onClearDensitySample?: () => void
   className?: string
 }
 
@@ -129,6 +132,8 @@ export function IntelligencePanel({
   onQuerySubmit,
   mediaContextIds,
   activeSearchFilters,
+  densitySample,
+  onClearDensitySample,
   className
 }: IntelligencePanelProps) {
   const [riskScore, setRiskScore] = useState(67)
@@ -310,6 +315,65 @@ export function IntelligencePanel({
             })}
           </div>
         </div>
+
+        {/* Population Density Sample Display - Shows when clicking map in human-activity lens */}
+        {densitySample && activeLens === "human-activity" && (
+          <div className="p-3 bg-gradient-to-r from-green-500/10 via-yellow-500/10 to-red-500/10 border border-primary/20 rounded-md">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <Users className="h-4 w-4 text-primary" />
+                <span className="text-sm font-semibold text-foreground">Population Density Sample</span>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onClearDensitySample}
+                className="h-6 w-6 p-0"
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div>
+                <span className="text-muted-foreground">Location:</span>
+                <p className="font-mono text-foreground/90">
+                  {densitySample.lat.toFixed(4)}, {densitySample.lng.toFixed(4)}
+                </p>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Relative Density:</span>
+                <div className="flex items-center gap-2">
+                  <Badge 
+                    className={cn(
+                      "text-xs",
+                      densitySample.label === 'High' && "bg-red-500/20 text-red-400 border-red-500/30",
+                      densitySample.label === 'Medium' && "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
+                      densitySample.label === 'Low' && "bg-green-500/20 text-green-400 border-green-500/30"
+                    )}
+                  >
+                    {densitySample.label}
+                  </Badge>
+                  <span className="font-mono text-foreground">({densitySample.density.toFixed(2)})</span>
+                </div>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Est. Density:</span>
+                <p className="font-medium text-foreground">{densitySample.rawDensity.toLocaleString()}/km²</p>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Urban Level:</span>
+                <Badge variant="outline" className="text-xs capitalize">
+                  {densitySample.urbanLevel}
+                </Badge>
+              </div>
+            </div>
+            
+            <div className="mt-2 pt-2 border-t border-border/50 text-[10px] text-muted-foreground">
+              Source: {densitySample.source} · Sampled: {new Date(densitySample.timestamp).toLocaleTimeString()}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Content Area - proper flex layout, no absolute positioning */}

@@ -14,7 +14,7 @@ import { useState, useCallback } from "react";
 import i18n from "./lib/i18n";
 import { Map } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { GoogleMapsPanel } from "./components/google-maps-panel";
+import { GoogleMapsPanel, type DensitySample } from "./components/google-maps-panel";
 import { IntelligencePanel } from "./components/intelligence-panel";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import type { MapLens } from "./components/map-lens-selector";
@@ -44,6 +44,7 @@ function App() {
 
   const [mediaContextIds, setMediaContextIds] = useState<string[]>([])
   const [activeSearchFilters, setActiveSearchFilters] = useState<ParsedQuery | null>(null)
+  const [densitySample, setDensitySample] = useState<DensitySample | null>(null)
 
   const handleQuerySubmit = (query: string, contextIds?: string[]) => {
   }
@@ -175,6 +176,7 @@ function App() {
                               onAOIChange={setCurrentAOI}
                               activeLens={activeLens}
                               onLensChange={setActiveLens}
+                              onDensitySample={setDensitySample}
                               className="h-full w-full"
                             />
                             
@@ -209,6 +211,8 @@ function App() {
                             onQuerySubmit={handleQuerySubmit}
                             mediaContextIds={mediaContextIds}
                             activeSearchFilters={activeSearchFilters || undefined}
+                            densitySample={densitySample}
+                            onClearDensitySample={() => setDensitySample(null)}
                             className="flex-1 min-h-0"
                           />
                         </div>
@@ -244,6 +248,7 @@ function App() {
                             onAOIChange={setCurrentAOI}
                             activeLens={activeLens}
                             onLensChange={setActiveLens}
+                            onDensitySample={setDensitySample}
                             className="h-full w-full"
                           />
                           <div className="absolute bottom-0 left-1/2 -translate-x-1/2 z-10">
@@ -279,6 +284,8 @@ function App() {
                           onQuerySubmit={handleQuerySubmit}
                           mediaContextIds={mediaContextIds}
                           activeSearchFilters={activeSearchFilters || undefined}
+                          densitySample={densitySample}
+                          onClearDensitySample={() => setDensitySample(null)}
                           className="flex-1 min-h-0"
                         />
                       </div>
