@@ -8,7 +8,8 @@ import { INFRASTRUCTURE_NODES, type InfrastructureNode } from "./map-infrastruct
 import { LensLegend, SmartMapControls, type MapLens } from "./map-lens-selector"
 import { SmartIntelLegend, GOLDSTEIN_CATEGORIES, type GoldsteinCategory, type GdeltEvent, type GdeltDoc } from "./map-intel-layer"
 import { MapLibrePanel } from "./maplibre-panel"
-import { PopulationHeatmapMarkers, PopulationLegend } from "./population-heatmap"
+import { PopulationHeatmapLayer, PopulationLegend } from "./population-heatmap"
+import { getPopulationGrid, sampleDensityAtLocation, type PopulationGridData } from "@/lib/population-grid"
 import { TrafficLayer, TrafficLegend } from "./traffic-layer"
 import { IntelHeatmapLayer, IntelHeatmapLegend } from "./intel-heatmap"
 
@@ -46,6 +47,7 @@ interface GoogleMapsPanelProps {
   onODINCountryChange?: (country: string) => void
   activeLens?: MapLens
   onLensChange?: (lens: MapLens) => void
+  onDensitySample?: (sample: DensitySample) => void
   className?: string
 }
 
@@ -84,18 +86,63 @@ function ZoomController({ onZoomChange }: { onZoomChange: (zoom: number) => void
   return null
 }
 
-function MapClickHandler({ onAOIChange }: { onAOIChange?: (aoi: AOI) => void }) {
+export interface DensitySample {
+  lat: number
+  lng: number
+  density: number
+  rawDensity: number
+  urbanLevel: 'high' | 'medium' | 'low'
+  label: string
+  timestamp: string
+  source: string
+}
+
+function MapClickHandler({ 
+  onAOIChange,
+  onDensitySample,
+  activeLens
+}: { 
+  onAOIChange?: (aoi: AOI) => void
+  onDensitySample?: (sample: DensitySample) => void
+  activeLens?: MapLens
+}) {
   const map = useMap()
   const mapsLib = useMapsLibrary("maps")
   
   useEffect(() => {
-    if (!map || !onAOIChange || !mapsLib) return
+    if (!map || !mapsLib) return
     
     const listener = map.addListener("click", (e: { latLng?: { lat: () => number; lng: () => number } }) => {
-      if (e.latLng) {
+      if (!e.latLng) return
+      
+      const lat = e.latLng.lat()
+      const lng = e.latLng.lng()
+      
+      // When population density lens is active, sample density instead of changing AOI
+      if (activeLens === "human-activity" && onDensitySample) {
+        const grid = getPopulationGrid()
+        const sample = sampleDensityAtLocation(lat, lng, grid)
+        
+        if (sample) {
+          onDensitySample({
+            lat,
+            lng,
+            density: sample.density,
+            rawDensity: sample.rawDensity,
+            urbanLevel: sample.urbanLevel,
+            label: sample.label,
+            timestamp: grid.timestamp,
+            source: grid.source
+          })
+        }
+        return // Don't change AOI when sampling density
+      }
+      
+      // Default behavior: update AOI
+      if (onAOIChange) {
         onAOIChange({
-          lat: e.latLng.lat(),
-          lng: e.latLng.lng(),
+          lat,
+          lng,
           radiusKm: 5
         })
       }
@@ -106,7 +153,7 @@ function MapClickHandler({ onAOIChange }: { onAOIChange?: (aoi: AOI) => void }) 
         mapsLib.event.removeListener(listener)
       }
     }
-  }, [map, mapsLib, onAOIChange])
+  }, [map, mapsLib, onAOIChange, onDensitySample, activeLens])
   
   return null
 }
@@ -403,6 +450,7 @@ function GoogleMapsContent({
   selectedODINCountry,
   onODINCountryChange,
   onMovementPlanRequest,
+  onDensitySample,
   className,
   mapStyle,
   setMapStyle,
@@ -512,7 +560,11 @@ function GoogleMapsContent({
     <>
       <MapTypeController mapType={mapStyle} />
       <ZoomController onZoomChange={setZoomLevel} />
-      <MapClickHandler onAOIChange={onAOIChange} />
+      <MapClickHandler 
+        onAOIChange={onAOIChange} 
+        onDensitySample={onDensitySample}
+        activeLens={activeLens}
+      />
       
       {aoi && <AOIAdvancedMarker aoi={aoi} />}
       <SigActAdvancedMarkers sigacts={sigacts} />
@@ -526,8 +578,7 @@ function GoogleMapsContent({
         visible={activeLens === "intel"}
         hiddenCategories={hiddenCategories}
       />
-      <PopulationHeatmapMarkers
-        cells={populationData?.population?.gridCells || []}
+      <PopulationHeatmapLayer
         visible={activeLens === "human-activity"}
       />
       <TrafficLayer visible={activeLens === "logistics"} />
@@ -624,6 +675,7 @@ export function GoogleMapsPanel({
   onODINCountryChange,
   activeLens: propActiveLens,
   onLensChange,
+  onDensitySample,
   className
 }: GoogleMapsPanelProps) {
   const [apiKey, setApiKey] = useState<string | null>(null)
@@ -703,6 +755,7 @@ export function GoogleMapsPanel({
             selectedODINCountry={selectedODINCountry}
             onODINCountryChange={onODINCountryChange}
             onMovementPlanRequest={onMovementPlanRequest}
+            onDensitySample={onDensitySample}
             className={className}
             mapStyle={mapStyle}
             setMapStyle={setMapStyle}
