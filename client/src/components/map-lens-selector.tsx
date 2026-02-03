@@ -332,17 +332,17 @@ export function LensLegend({ activeLens, mapStyle = "streets", className }: Lens
         exit={{ opacity: 0, y: -8, scale: 0.98 }}
         transition={{ duration: 0.12, ease: "easeOut" }}
         className={cn(
-          "backdrop-blur-md border shadow-lg rounded-lg overflow-hidden",
-          "font-mono text-[11px] select-none",
+          "backdrop-blur-md border-l border-t overflow-hidden",
+          "font-mono text-[11px] select-none rounded-tl-md",
           isSatellite 
-            ? "bg-zinc-900/95 text-zinc-100 border-r-0 border-b-0" 
-            : "bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 border-r-0 border-b-0",
+            ? "bg-zinc-900/95 text-zinc-100" 
+            : "bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100",
           className
         )}
         style={{ 
           borderColor: colors.border,
-          minWidth: "220px",
-          maxWidth: "260px"
+          minWidth: "180px",
+          maxWidth: "220px"
         }}
       >
         {/* Smart Header with live stats */}
@@ -539,14 +539,14 @@ export function SmartMapControls({
       initial={{ opacity: 0, x: -8 }}
       animate={{ opacity: 1, x: 0 }}
       className={cn(
-        "backdrop-blur-md border shadow-lg rounded-lg overflow-hidden",
-        "font-mono text-[11px] select-none border-l-0 border-b-0",
+        "backdrop-blur-md border-r border-t overflow-hidden rounded-tr-md",
+        "font-mono text-[11px] select-none",
         isSatellite 
           ? "bg-zinc-900/95 text-zinc-100 border-zinc-700" 
           : "bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 border-zinc-300 dark:border-zinc-700",
         className
       )}
-      style={{ minWidth: "150px" }}
+      style={{ minWidth: "140px" }}
     >
       {/* Zoom Level Header */}
       <div className={cn(

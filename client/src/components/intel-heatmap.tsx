@@ -118,12 +118,12 @@ export function IntelHeatmapLegend({
   
   return (
     <div 
-      className={`rounded-md border overflow-hidden ${
+      className={`rounded-tl-md border-l border-t overflow-hidden ${
         isDark 
-          ? "bg-black/80 border-white/20 text-white" 
+          ? "bg-black/90 border-white/20 text-white" 
           : "bg-background/95 border-border text-foreground"
       } backdrop-blur-sm`}
-      style={{ minWidth: "200px" }}
+      style={{ minWidth: "180px" }}
     >
       <div className={`px-3 py-2 border-b ${isDark ? "border-white/10" : "border-border"}`}>
         <div className="flex items-center gap-2">

@@ -165,13 +165,16 @@ export function PopulationLegend({ data, isLoading, onRefresh, mapStyle }: Popul
   return (
     <div 
       style={{
-        backgroundColor: isDark ? 'rgba(0,0,0,0.85)' : 'rgba(255,255,255,0.95)',
+        backgroundColor: isDark ? 'rgba(0,0,0,0.9)' : 'rgba(255,255,255,0.95)',
         backdropFilter: 'blur(8px)',
-        borderRadius: 8,
+        borderTopLeftRadius: 6,
+        borderTopRightRadius: 0,
+        borderBottomLeftRadius: 0,
+        borderBottomRightRadius: 0,
         padding: 12,
-        minWidth: 200,
-        boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-        border: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.1)'
+        minWidth: 180,
+        borderLeft: isDark ? '1px solid rgba(255,255,255,0.15)' : '1px solid rgba(0,0,0,0.1)',
+        borderTop: isDark ? '1px solid rgba(255,255,255,0.15)' : '1px solid rgba(0,0,0,0.1)'
       }}
     >
       <div style={{ 

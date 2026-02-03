@@ -536,9 +536,9 @@ function GoogleMapsContent({
         visible={activeLens === "intel"} 
       />
       
-      {/* Top-left: Map style toggle only */}
-      <div className="absolute top-3 left-3 z-10">
-        <div className="flex gap-0.5 bg-background/95 backdrop-blur-sm rounded-md border overflow-hidden">
+      {/* Top-left: Map style toggle - flush to corner */}
+      <div className="absolute top-0 left-0 z-10">
+        <div className="flex bg-background/95 backdrop-blur-sm border-r border-b overflow-hidden">
           <Button
             size="sm"
             variant={mapStyle === "roadmap" ? "default" : "ghost"}
@@ -569,8 +569,8 @@ function GoogleMapsContent({
         </div>
       </div>
 
-      {/* Bottom-left: Smart Map Controls with innovative zoom */}
-      <div className="absolute bottom-3 left-3 z-10">
+      {/* Bottom-left: Smart Map Controls - flush to corner */}
+      <div className="absolute bottom-0 left-0 z-10">
         <SmartMapControls
           zoomLevel={zoomLevel}
           onZoomIn={handleZoomIn}
@@ -581,8 +581,8 @@ function GoogleMapsContent({
         />
       </div>
 
-      {/* Bottom-right: Legend - switches based on active lens */}
-      <div className="absolute bottom-3 right-3 z-10">
+      {/* Bottom-right: Legend - flush to corner */}
+      <div className="absolute bottom-0 right-0 z-10">
         {activeLens === "intel" ? (
           <IntelHeatmapLegend
             eventCount={gdeltEvents.length}
