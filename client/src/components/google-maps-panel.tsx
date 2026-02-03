@@ -1,8 +1,9 @@
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState, useCallback, useMemo } from "react"
 import { APIProvider, Map, AdvancedMarker, useMap, InfoWindow, useMapsLibrary } from "@vis.gl/react-google-maps"
 import { useQuery } from "@tanstack/react-query"
 import { Button } from "@/components/ui/button"
-import { Target, Layers, MapPin, Crosshair, ZoomIn, ZoomOut, Loader2 } from "lucide-react"
+import { Target, Layers, MapPin, Crosshair, ZoomIn, ZoomOut, Loader2, Clock, Navigation, Radio, Eye } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { INFRASTRUCTURE_NODES, type InfrastructureNode } from "./map-infrastructure-layer"
 import { LensLegend, SmartMapControls, type MapLens } from "./map-lens-selector"
@@ -52,6 +53,75 @@ interface GoogleMapsPanelProps {
 }
 
 const DHAKA_CENTER = { lat: 23.8103, lng: 90.4125 }
+
+// Tactical Status Bar for map - shows Zulu time, coordinates, zoom, and active layer
+function TacticalMapStatus({ 
+  aoi, 
+  zoomLevel, 
+  activeLens,
+  lastDataUpdate
+}: { 
+  aoi?: AOI
+  zoomLevel: number
+  activeLens: MapLens
+  lastDataUpdate?: Date
+}) {
+  const [zuluTime, setZuluTime] = useState(new Date())
+  
+  useEffect(() => {
+    const interval = setInterval(() => setZuluTime(new Date()), 1000)
+    return () => clearInterval(interval)
+  }, [])
+  
+  const formatZulu = (date: Date) => {
+    return date.toISOString().slice(11, 19) + "Z"
+  }
+  
+  const getLensLabel = (lens: MapLens) => {
+    switch (lens) {
+      case "intel": return "SIGINT"
+      case "infrastructure": return "INFRA"
+      case "human-activity": return "POP"
+      case "logistics": return "TRAFFIC"
+      default: return lens.toUpperCase()
+    }
+  }
+  
+  const dataAge = lastDataUpdate ? Math.floor((Date.now() - lastDataUpdate.getTime()) / 1000) : null
+  const dataFresh = dataAge !== null && dataAge < 60
+  
+  return (
+    <div className="flex items-center gap-1 bg-background/95 backdrop-blur-sm border-l border-b px-2 py-1">
+      {/* Zulu Time */}
+      <div className="flex items-center gap-1 px-2 border-r border-border/50">
+        <Clock className="h-3 w-3 text-muted-foreground" />
+        <span className="font-mono text-xs font-medium">{formatZulu(zuluTime)}</span>
+      </div>
+      
+      {/* Coordinates */}
+      {aoi && (
+        <div className="flex items-center gap-1 px-2 border-r border-border/50">
+          <Navigation className="h-3 w-3 text-muted-foreground" />
+          <span className="font-mono text-xs">
+            {aoi.lat.toFixed(4)}°, {aoi.lng.toFixed(4)}°
+          </span>
+        </div>
+      )}
+      
+      {/* Zoom Level */}
+      <div className="flex items-center gap-1 px-2 border-r border-border/50">
+        <Eye className="h-3 w-3 text-muted-foreground" />
+        <span className="font-mono text-xs">Z{zoomLevel}</span>
+      </div>
+      
+      {/* Active Layer */}
+      <Badge variant="outline" className="h-5 text-[10px] font-bold gap-1">
+        <Radio className={cn("h-2.5 w-2.5", dataFresh ? "text-green-500" : "text-amber-500")} />
+        {getLensLabel(activeLens)}
+      </Badge>
+    </div>
+  )
+}
 
 function MapTypeController({ mapType }: { mapType: "roadmap" | "satellite" | "hybrid" }) {
   const map = useMap()
@@ -556,6 +626,60 @@ function GoogleMapsContent({
     }
   }, [map, aoi])
 
+  // Map keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Skip if typing in input
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
+      
+      // Map style shortcuts (no modifier)
+      if (!e.altKey && !e.ctrlKey && !e.metaKey) {
+        switch (e.key.toLowerCase()) {
+          case 'm':
+            setMapStyle("roadmap")
+            break
+          case 's':
+            setMapStyle("satellite")
+            break
+          case 'h':
+            setMapStyle("hybrid")
+            break
+          case 'c':
+            if (aoi) handleCenterOnAOI()
+            break
+          case '+':
+          case '=':
+            handleZoomIn()
+            break
+          case '-':
+            handleZoomOut()
+            break
+        }
+      }
+      
+      // Layer shortcuts with Shift
+      if (e.shiftKey && !e.altKey && !e.ctrlKey && !e.metaKey) {
+        switch (e.key.toUpperCase()) {
+          case 'I':
+            setActiveLens("intel")
+            break
+          case 'P':
+            setActiveLens("human-activity")
+            break
+          case 'T':
+            setActiveLens("logistics")
+            break
+          case 'F':
+            setActiveLens("infrastructure")
+            break
+        }
+      }
+    }
+    
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [aoi, handleCenterOnAOI, handleZoomIn, handleZoomOut, setMapStyle, setActiveLens])
+
   return (
     <>
       <MapTypeController mapType={mapStyle} />
@@ -596,6 +720,7 @@ function GoogleMapsContent({
             onClick={() => setMapStyle("roadmap")}
             className="rounded-none h-8 px-3"
             data-testid="button-map-streets"
+            title="Streets (M)"
           >
             <Layers className="h-3.5 w-3.5" />
           </Button>
@@ -605,6 +730,7 @@ function GoogleMapsContent({
             onClick={() => setMapStyle("satellite")}
             className="rounded-none h-8 px-3"
             data-testid="button-map-satellite"
+            title="Satellite (S)"
           >
             <Target className="h-3.5 w-3.5" />
           </Button>
@@ -614,10 +740,20 @@ function GoogleMapsContent({
             onClick={() => setMapStyle("hybrid")}
             className="rounded-none h-8 px-3"
             data-testid="button-map-hybrid"
+            title="Hybrid (H)"
           >
             <MapPin className="h-3.5 w-3.5" />
           </Button>
         </div>
+      </div>
+
+      {/* Top-right: Tactical Status Bar */}
+      <div className="absolute top-0 right-0 z-10">
+        <TacticalMapStatus
+          aoi={aoi}
+          zoomLevel={zoomLevel}
+          activeLens={activeLens}
+        />
       </div>
 
       {/* Bottom-left: Smart Map Controls - flush to corner */}
