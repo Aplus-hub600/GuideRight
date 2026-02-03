@@ -54,31 +54,31 @@ interface GoogleMapsPanelProps {
 
 const DHAKA_CENTER = { lat: 23.8103, lng: 90.4125 }
 
+// Per-lens data update timestamps
+type LensDataTimestamps = Partial<Record<MapLens, Date>>
+
 // Tactical Status Bar for map - shows Zulu time, coordinates, zoom, and active layer
 function TacticalMapStatus({ 
   aoi, 
   zoomLevel, 
   activeLens,
-  lastDataUpdate
+  lensTimestamps
 }: { 
   aoi?: AOI
   zoomLevel: number
   activeLens: MapLens
-  lastDataUpdate?: Date
+  lensTimestamps: LensDataTimestamps
 }) {
-  const [zuluTime, setZuluTime] = useState(new Date())
-  const [, forceUpdate] = useState(0)
+  const [now, setNow] = useState(Date.now())
   
+  // Update time and data age every second
   useEffect(() => {
-    const interval = setInterval(() => {
-      setZuluTime(new Date())
-      forceUpdate(n => n + 1)
-    }, 1000)
+    const interval = setInterval(() => setNow(Date.now()), 1000)
     return () => clearInterval(interval)
   }, [])
   
-  const formatZulu = (date: Date) => {
-    return date.toISOString().slice(11, 19) + "Z"
+  const formatZulu = () => {
+    return new Date(now).toISOString().slice(11, 19) + "Z"
   }
   
   const getLensLabel = (lens: MapLens) => {
@@ -91,7 +91,9 @@ function TacticalMapStatus({
     }
   }
   
-  const dataAge = lastDataUpdate ? Math.floor((Date.now() - lastDataUpdate.getTime()) / 1000) : null
+  // Get timestamp for current active lens only
+  const lastDataUpdate = lensTimestamps[activeLens]
+  const dataAge = lastDataUpdate ? Math.floor((now - lastDataUpdate.getTime()) / 1000) : null
   const dataFresh = dataAge !== null && dataAge < 60
   const dataStale = dataAge !== null && dataAge >= 60 && dataAge < 300
   
@@ -106,7 +108,7 @@ function TacticalMapStatus({
       {/* Zulu Time */}
       <div className="flex items-center gap-1 px-2 border-r border-border/50">
         <Clock className="h-3 w-3 text-muted-foreground" />
-        <span className="font-mono text-xs font-medium">{formatZulu(zuluTime)}</span>
+        <span className="font-mono text-xs font-medium">{formatZulu()}</span>
       </div>
       
       {/* Coordinates */}
@@ -127,12 +129,13 @@ function TacticalMapStatus({
       
       {/* Active Layer with Data Freshness */}
       <div className="flex items-center gap-1.5">
-        <Badge variant="outline" className="h-5 text-[10px] font-bold gap-1">
+        <Badge variant="outline" className="text-[10px] font-bold gap-1">
           <Radio className={cn(
             "h-2.5 w-2.5",
             dataFresh && "text-green-500",
             dataStale && "text-amber-500",
-            !dataFresh && !dataStale && "text-red-500"
+            dataAge !== null && !dataFresh && !dataStale && "text-red-500",
+            dataAge === null && "text-muted-foreground"
           )} />
           {getLensLabel(activeLens)}
         </Badge>
@@ -570,7 +573,7 @@ function GoogleMapsContent({
 }) {
   const map = useMap()
   const [hiddenCategories, setHiddenCategories] = useState<Set<GoldsteinCategory>>(new Set())
-  const [lastDataUpdate, setLastDataUpdate] = useState<Date>(new Date())
+  const [lensTimestamps, setLensTimestamps] = useState<LensDataTimestamps>({ infrastructure: new Date() })
   
   // Fetch GDELT data when intel lens is active
   const { data: intelData, refetch: refetchIntel, isLoading: intelLoading } = useQuery({
@@ -624,12 +627,18 @@ function GoogleMapsContent({
   const gdeltEvents: GdeltEvent[] = intelData?.events || []
   const gdeltDocs: GdeltDoc[] = intelData?.docs || []
   
-  // Track when data was last updated
+  // Track when data was last updated per lens
   useEffect(() => {
-    if (intelData || populationData) {
-      setLastDataUpdate(new Date())
+    if (intelData) {
+      setLensTimestamps(prev => ({ ...prev, intel: new Date() }))
     }
-  }, [intelData, populationData])
+  }, [intelData])
+  
+  useEffect(() => {
+    if (populationData) {
+      setLensTimestamps(prev => ({ ...prev, "human-activity": new Date() }))
+    }
+  }, [populationData])
   
   const toggleCategory = useCallback((category: GoldsteinCategory) => {
     setHiddenCategories(prev => {
@@ -662,33 +671,52 @@ function GoogleMapsContent({
     }
   }, [map, aoi])
 
-  // Map keyboard shortcuts
+  // Map keyboard shortcuts - scoped to avoid conflicts with inputs
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Skip if typing in input
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
+      const target = e.target as HTMLElement
       
-      // Map style shortcuts (no modifier)
-      if (!e.altKey && !e.ctrlKey && !e.metaKey) {
+      // Skip if typing in any input-like element
+      if (
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        target instanceof HTMLSelectElement ||
+        target.isContentEditable ||
+        target.getAttribute('role') === 'textbox' ||
+        target.getAttribute('role') === 'combobox'
+      ) return
+      
+      // Map style shortcuts with Ctrl modifier to avoid text conflicts
+      if (e.ctrlKey && !e.altKey && !e.metaKey && !e.shiftKey) {
         switch (e.key.toLowerCase()) {
           case 'm':
+            e.preventDefault()
             setMapStyle("roadmap")
             break
           case 's':
+            e.preventDefault()
             setMapStyle("satellite")
             break
           case 'h':
+            e.preventDefault()
             setMapStyle("hybrid")
             break
-          case 'c':
-            if (aoi) handleCenterOnAOI()
-            break
+        }
+      }
+      
+      // Zoom and center shortcuts (no modifier needed for +/-/c)
+      if (!e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
+        switch (e.key) {
           case '+':
           case '=':
             handleZoomIn()
             break
           case '-':
             handleZoomOut()
+            break
+          case 'c':
+          case 'C':
+            if (aoi) handleCenterOnAOI()
             break
         }
       }
@@ -697,15 +725,19 @@ function GoogleMapsContent({
       if (e.shiftKey && !e.altKey && !e.ctrlKey && !e.metaKey) {
         switch (e.key.toUpperCase()) {
           case 'I':
+            e.preventDefault()
             setActiveLens("intel")
             break
           case 'P':
+            e.preventDefault()
             setActiveLens("human-activity")
             break
           case 'T':
+            e.preventDefault()
             setActiveLens("logistics")
             break
           case 'F':
+            e.preventDefault()
             setActiveLens("infrastructure")
             break
         }
@@ -756,7 +788,7 @@ function GoogleMapsContent({
             onClick={() => setMapStyle("roadmap")}
             className="rounded-none h-8 px-3"
             data-testid="button-map-streets"
-            title="Streets (M)"
+            title="Streets (Ctrl+M)"
           >
             <Layers className="h-3.5 w-3.5" />
           </Button>
@@ -766,7 +798,7 @@ function GoogleMapsContent({
             onClick={() => setMapStyle("satellite")}
             className="rounded-none h-8 px-3"
             data-testid="button-map-satellite"
-            title="Satellite (S)"
+            title="Satellite (Ctrl+S)"
           >
             <Target className="h-3.5 w-3.5" />
           </Button>
@@ -776,7 +808,7 @@ function GoogleMapsContent({
             onClick={() => setMapStyle("hybrid")}
             className="rounded-none h-8 px-3"
             data-testid="button-map-hybrid"
-            title="Hybrid (H)"
+            title="Hybrid (Ctrl+H)"
           >
             <MapPin className="h-3.5 w-3.5" />
           </Button>
@@ -789,7 +821,7 @@ function GoogleMapsContent({
           aoi={aoi}
           zoomLevel={zoomLevel}
           activeLens={activeLens}
-          lastDataUpdate={lastDataUpdate}
+          lensTimestamps={lensTimestamps}
         />
       </div>
 
