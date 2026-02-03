@@ -30,7 +30,7 @@ export function useGoogleMaps(options: UseGoogleMapsOptions = {}) {
         
         const apiKey = config.apiKey
         const language = options.language || 'en'
-        const libraries = options.libraries || ['geometry', 'places']
+        const libraries = options.libraries || ['geometry', 'places', 'visualization']
 
         // Check if Google Maps script exists with current language and region
         const existingScript = document.querySelector('script[src*="maps.googleapis.com"]')

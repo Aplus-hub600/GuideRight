@@ -1,13 +1,15 @@
 /**
  * Population Density Heatmap Layer
  * Uses Google Earth Engine / WorldPop data to display population density
+ * Renders as a smooth gradient heatmap using Google Maps Visualization library
  */
 
-import { useEffect, useState, useCallback } from "react"
-import { AdvancedMarker, useMap } from "@vis.gl/react-google-maps"
-import { useQuery } from "@tanstack/react-query"
-import { Loader2, Users, RefreshCw } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { useEffect, useRef } from "react"
+import { useMap } from "@vis.gl/react-google-maps"
+import { Loader2, Users, RefreshCw, Layers } from "lucide-react"
+
+// Using any for Google Maps types since they're loaded at runtime
+declare const google: any
 
 interface PopulationCell {
   lat: number
@@ -48,65 +50,86 @@ interface PopulationHeatmapProps {
   visible: boolean
 }
 
-// Get color based on population density
-function getDensityColor(density: number): string {
-  // Dhaka-calibrated density ranges (people per sq km)
-  if (density >= 40000) return 'rgba(139, 0, 0, 0.7)' // Dark red - extreme
-  if (density >= 25000) return 'rgba(220, 38, 38, 0.65)' // Red - very high
-  if (density >= 15000) return 'rgba(249, 115, 22, 0.6)' // Orange - high
-  if (density >= 8000) return 'rgba(234, 179, 8, 0.55)' // Yellow - medium-high
-  if (density >= 4000) return 'rgba(132, 204, 22, 0.5)' // Light green - medium
-  if (density >= 1500) return 'rgba(34, 197, 94, 0.45)' // Green - low-medium
-  return 'rgba(14, 165, 233, 0.4)' // Blue - low
-}
-
-// Get marker size based on density
-function getMarkerSize(density: number): number {
-  if (density >= 40000) return 18
-  if (density >= 25000) return 16
-  if (density >= 15000) return 14
-  if (density >= 8000) return 12
-  if (density >= 4000) return 10
-  return 8
-}
-
-function PopulationDensityMarker({ cell }: { cell: PopulationCell }) {
-  const color = getDensityColor(cell.density)
-  const size = getMarkerSize(cell.density)
+/**
+ * PopulationHeatmapLayer - Renders a smooth gradient heatmap using Google Maps Visualization
+ * This creates a proper heatmap overlay instead of individual markers
+ */
+export function PopulationHeatmapLayer({
+  cells,
+  visible
+}: PopulationHeatmapProps) {
+  const map = useMap()
+  const heatmapRef = useRef<any>(null)
   
-  return (
-    <AdvancedMarker position={{ lat: cell.lat, lng: cell.lng }}>
-      <div
-        style={{
-          width: size,
-          height: size,
-          borderRadius: '50%',
-          backgroundColor: color,
-          border: '1px solid rgba(255,255,255,0.3)',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
-        }}
-        title={`Density: ${cell.density.toLocaleString()}/km² | ${cell.urbanLevel}`}
-      />
-    </AdvancedMarker>
-  )
+  useEffect(() => {
+    if (!map || !window.google?.maps?.visualization) return
+    
+    // Create heatmap layer if it doesn't exist
+    if (!heatmapRef.current) {
+      heatmapRef.current = new google.maps.visualization.HeatmapLayer({
+        map: visible ? map : null,
+        radius: 25,
+        opacity: 0.7,
+        gradient: [
+          'rgba(0, 255, 255, 0)',
+          'rgba(0, 255, 255, 1)',
+          'rgba(0, 191, 255, 1)',
+          'rgba(0, 127, 255, 1)',
+          'rgba(0, 63, 255, 1)',
+          'rgba(0, 0, 255, 1)',
+          'rgba(0, 0, 223, 1)',
+          'rgba(0, 0, 191, 1)',
+          'rgba(0, 0, 159, 1)',
+          'rgba(0, 0, 127, 1)',
+          'rgba(63, 0, 91, 1)',
+          'rgba(127, 0, 63, 1)',
+          'rgba(191, 0, 31, 1)',
+          'rgba(255, 0, 0, 1)'
+        ]
+      })
+    }
+    
+    // Update visibility
+    heatmapRef.current.setMap(visible ? map : null)
+    
+    // Update data if visible
+    if (visible && cells && cells.length > 0) {
+      const heatmapData = cells.map(cell => ({
+        location: new google.maps.LatLng(cell.lat, cell.lng),
+        weight: Math.log10(cell.density + 1) * 10 // Log scale for better visualization
+      }))
+      heatmapRef.current.setData(heatmapData)
+    }
+    
+    return () => {
+      // Cleanup on unmount
+      if (heatmapRef.current) {
+        heatmapRef.current.setMap(null)
+      }
+    }
+  }, [map, cells, visible])
+  
+  // Update data when cells change
+  useEffect(() => {
+    if (!heatmapRef.current || !visible || !cells || cells.length === 0) return
+    
+    const heatmapData = cells.map(cell => ({
+      location: new google.maps.LatLng(cell.lat, cell.lng),
+      weight: Math.log10(cell.density + 1) * 10
+    }))
+    heatmapRef.current.setData(heatmapData)
+  }, [cells, visible])
+  
+  return null // This component renders via Google Maps API, not React DOM
 }
 
+// Also keep the markers version as an alternative
 export function PopulationHeatmapMarkers({
   cells,
   visible
 }: PopulationHeatmapProps) {
-  if (!visible || !cells || cells.length === 0) return null
-  
-  // Limit displayed cells for performance
-  const displayCells = cells.slice(0, 500)
-  
-  return (
-    <>
-      {displayCells.map((cell, idx) => (
-        <PopulationDensityMarker key={`pop-${idx}`} cell={cell} />
-      ))}
-    </>
-  )
+  // Use the heatmap layer instead of individual markers
+  return <PopulationHeatmapLayer cells={cells} visible={visible} />
 }
 
 // Population Legend component
