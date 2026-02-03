@@ -44,6 +44,14 @@ Preferred communication style: Simple, everyday language.
 - **Interactive Components**: Drag-and-drop file upload, voice controls, real-time chat interface
 - **Accessibility**: ARIA compliance and keyboard navigation support
 
+### Tactical UX Features
+- **Mission Clock**: Real-time Zulu (UTC) time, local time, and date display with LIVE indicator for ops coordination
+- **Data Freshness**: Intel age tracking with color-coded indicators (green=fresh <1m, yellow=stale <5m, red=old >5m)
+- **Risk Visualization**: Prominent threat level display with HIGH RISK (red, animated), ELEVATED (amber), LOW (green)
+- **Quick Actions**: PMESII, Threats, SITREP, Infra, HUMINT tactical queries with keyboard shortcuts (Alt+1-5)
+- **Keyboard Navigation**: Alt+1-5 for quick actions, Escape to clear input, optimized for fast-paced field environments
+- **Population Density Grid**: 40x40 deterministic grid with click-to-sample functionality for population analysis
+
 ### Security & Performance
 - **Environment Configuration**: Secure API key management through environment variables
 - **Error Handling**: Comprehensive error boundaries with user-friendly fallbacks
