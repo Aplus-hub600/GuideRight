@@ -56,8 +56,9 @@ const WORLDPOP_API = 'https://api.worldpop.org/v1'
 function generatePopulationGrid(lat: number, lon: number, radiusKm: number, resolution: string): PopulationCell[] {
   const cells: PopulationCell[] = []
   
-  // Grid density based on resolution
-  const gridSize = resolution === 'high' ? 0.01 : resolution === 'medium' ? 0.02 : 0.05
+  // Grid density based on resolution - much denser for visible heatmap
+  // 0.005 degrees ≈ 550m spacing (many points for clear visualization)
+  const gridSize = resolution === 'high' ? 0.003 : resolution === 'medium' ? 0.005 : 0.008
   const latRange = radiusKm / 111 // ~111km per degree latitude
   const lngRange = radiusKm / (111 * Math.cos(lat * Math.PI / 180))
   

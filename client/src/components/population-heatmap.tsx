@@ -62,29 +62,37 @@ export function PopulationHeatmapLayer({
   const heatmapRef = useRef<any>(null)
   
   useEffect(() => {
-    if (!map || !window.google?.maps?.visualization) return
+    if (!map) {
+      console.log('[Heatmap] Map not ready')
+      return
+    }
+    if (!window.google?.maps?.visualization) {
+      console.log('[Heatmap] Visualization library not loaded - need page reload')
+      return
+    }
+    
+    console.log('[Heatmap] Creating/updating heatmap layer, visible:', visible, 'cells:', cells?.length || 0)
     
     // Create heatmap layer if it doesn't exist
     if (!heatmapRef.current) {
       heatmapRef.current = new google.maps.visualization.HeatmapLayer({
         map: visible ? map : null,
-        radius: 25,
-        opacity: 0.7,
+        radius: 50, // Larger radius for more visible blobs
+        opacity: 0.8, // Higher opacity for clearer visibility
+        maxIntensity: 50, // Normalize intensity
+        dissipating: true, // Spread the heat
         gradient: [
-          'rgba(0, 255, 255, 0)',
-          'rgba(0, 255, 255, 1)',
-          'rgba(0, 191, 255, 1)',
-          'rgba(0, 127, 255, 1)',
-          'rgba(0, 63, 255, 1)',
-          'rgba(0, 0, 255, 1)',
-          'rgba(0, 0, 223, 1)',
-          'rgba(0, 0, 191, 1)',
-          'rgba(0, 0, 159, 1)',
-          'rgba(0, 0, 127, 1)',
-          'rgba(63, 0, 91, 1)',
-          'rgba(127, 0, 63, 1)',
-          'rgba(191, 0, 31, 1)',
-          'rgba(255, 0, 0, 1)'
+          // Classic traffic-light gradient: green (low) -> yellow (medium) -> red (high)
+          'rgba(0, 255, 0, 0)',      // transparent green
+          'rgba(0, 255, 0, 0.6)',    // green - low density
+          'rgba(128, 255, 0, 0.7)',  // lime
+          'rgba(255, 255, 0, 0.8)',  // yellow - medium density
+          'rgba(255, 200, 0, 0.85)', // gold
+          'rgba(255, 128, 0, 0.9)',  // orange
+          'rgba(255, 64, 0, 0.92)',  // red-orange
+          'rgba(255, 0, 0, 0.95)',   // red - high density
+          'rgba(200, 0, 0, 1)',      // dark red - very high
+          'rgba(128, 0, 0, 1)'       // maroon - extreme density
         ]
       })
     }
@@ -143,14 +151,15 @@ interface PopulationLegendProps {
 export function PopulationLegend({ data, isLoading, onRefresh, mapStyle }: PopulationLegendProps) {
   const isDark = mapStyle === 'satellite' || mapStyle === 'hybrid'
   
+  // Red-Yellow-Green gradient matching the heatmap
   const densityRanges = [
-    { label: '>40k/km²', color: 'rgba(139, 0, 0, 0.9)', desc: 'Extreme' },
-    { label: '25-40k', color: 'rgba(220, 38, 38, 0.85)', desc: 'Very High' },
-    { label: '15-25k', color: 'rgba(249, 115, 22, 0.8)', desc: 'High' },
-    { label: '8-15k', color: 'rgba(234, 179, 8, 0.75)', desc: 'Medium-High' },
-    { label: '4-8k', color: 'rgba(132, 204, 22, 0.7)', desc: 'Medium' },
-    { label: '1.5-4k', color: 'rgba(34, 197, 94, 0.65)', desc: 'Low-Medium' },
-    { label: '<1.5k', color: 'rgba(14, 165, 233, 0.6)', desc: 'Low' }
+    { label: '>40k/km²', color: 'rgba(128, 0, 0, 1)', desc: 'Extreme' },
+    { label: '25-40k', color: 'rgba(255, 0, 0, 0.95)', desc: 'Very High' },
+    { label: '15-25k', color: 'rgba(255, 128, 0, 0.9)', desc: 'High' },
+    { label: '8-15k', color: 'rgba(255, 200, 0, 0.85)', desc: 'Medium-High' },
+    { label: '4-8k', color: 'rgba(255, 255, 0, 0.8)', desc: 'Medium' },
+    { label: '1.5-4k', color: 'rgba(128, 255, 0, 0.7)', desc: 'Low-Medium' },
+    { label: '<1.5k', color: 'rgba(0, 255, 0, 0.6)', desc: 'Low' }
   ]
   
   return (

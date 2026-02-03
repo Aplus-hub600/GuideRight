@@ -32,31 +32,34 @@ export function useGoogleMaps(options: UseGoogleMapsOptions = {}) {
         const language = options.language || 'en'
         const libraries = options.libraries || ['geometry', 'places', 'visualization']
 
-        // Check if Google Maps script exists with current language and region
+        // Check if Google Maps script exists with required settings
         const existingScript = document.querySelector('script[src*="maps.googleapis.com"]')
         const currentScriptSrc = existingScript?.getAttribute('src')
         const hasLanguage = currentScriptSrc?.includes(`language=${language}`)
         const hasRegion = currentScriptSrc?.includes(`region=US`)
-        const hasCorrectSettings = hasLanguage && hasRegion
+        const hasVisualization = currentScriptSrc?.includes('visualization')
+        const hasCorrectSettings = hasLanguage && hasRegion && hasVisualization
 
         console.log('Google Maps script check:', {
-          scriptUrl: currentScriptSrc,
+          scriptUrl: currentScriptSrc?.replace(/key=[^&]+/, 'key=***'),
           hasLanguage,
           hasRegion,
+          hasVisualization,
           hasCorrectSettings,
-          googleLoaded: !!window.google?.maps
+          googleLoaded: !!window.google?.maps,
+          visualizationAvailable: !!window.google?.maps?.visualization
         })
 
-        // If script exists with correct settings and Maps is loaded, we're good
-        if (window.google && window.google.maps && hasCorrectSettings) {
-          console.log('Google Maps already loaded with correct settings')
+        // If script exists with correct settings and Maps+visualization is loaded, we're good
+        if (window.google && window.google.maps && window.google.maps.visualization && hasCorrectSettings) {
+          console.log('Google Maps already loaded with correct settings including visualization')
           setIsLoaded(true)
           return
         }
 
-        // If script exists but doesn't have correct settings, force page reload
+        // If script exists but doesn't have correct settings (including visualization), force page reload
         if (existingScript && !hasCorrectSettings) {
-          console.log('Google Maps script missing region=US, forcing reload...')
+          console.log('Google Maps script missing required libraries (visualization), forcing reload...')
           // Remove old script
           existingScript.remove()
           // Delete google object to force fresh load
