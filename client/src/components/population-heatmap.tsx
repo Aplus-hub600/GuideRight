@@ -128,8 +128,9 @@ interface PopulationLegendProps {
 export function PopulationLegend({ data, isLoading = false, onRefresh, mapStyle }: PopulationLegendProps) {
   const isDark = mapStyle === 'satellite' || mapStyle === 'hybrid'
   
-  // Get actual grid data if not provided
-  const gridData = data || getPopulationGrid()
+  // Always use the local grid data for accurate metadata display
+  // (API data may not have the same structure)
+  const gridData = getPopulationGrid()
   
   // Simplified density ranges matching the gradient
   const densityRanges = [
