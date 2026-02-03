@@ -9,6 +9,7 @@ import { LensLegend, SmartMapControls, type MapLens } from "./map-lens-selector"
 import { SmartIntelLegend, GOLDSTEIN_CATEGORIES, type GoldsteinCategory, type GdeltEvent, type GdeltDoc } from "./map-intel-layer"
 import { MapLibrePanel } from "./maplibre-panel"
 import { PopulationHeatmapMarkers, PopulationLegend } from "./population-heatmap"
+import { TrafficLayer, TrafficLegend } from "./traffic-layer"
 
 interface AOI {
   name?: string
@@ -528,6 +529,7 @@ function GoogleMapsContent({
         cells={populationData?.population?.gridCells || []}
         visible={activeLens === "human-activity"}
       />
+      <TrafficLayer visible={activeLens === "logistics"} />
       
       {/* Top-left: Map style toggle only */}
       <div className="absolute top-3 left-3 z-10">
@@ -592,6 +594,10 @@ function GoogleMapsContent({
             data={populationData}
             isLoading={populationLoading}
             onRefresh={() => refetchPopulation()}
+            mapStyle={mapStyle === "roadmap" ? "streets" : mapStyle}
+          />
+        ) : activeLens === "logistics" ? (
+          <TrafficLegend
             mapStyle={mapStyle === "roadmap" ? "streets" : mapStyle}
           />
         ) : (
@@ -679,7 +685,7 @@ export function GoogleMapsPanel({
 
   return (
     <div className={cn("relative w-full h-full", className)}>
-      <APIProvider apiKey={apiKey}>
+      <APIProvider apiKey={apiKey} libraries={['visualization', 'geometry', 'places']}>
         <Map
           defaultCenter={center}
           defaultZoom={10}
