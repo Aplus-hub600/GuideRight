@@ -16,15 +16,16 @@ interface PopulationHeatmapProps {
   onDataReady?: (data: PopulationGridData) => void
 }
 
-// 5-level tactical density classification with correct thresholds
-// Note: density values are normalized 0-1 where 1.0 = 54000/km² (max in our data)
-// Thresholds: CRITICAL >40k (0.74), HIGH 25-40k (0.46), MODERATE 12-25k (0.22), LOW 5-12k (0.09), MINIMAL <5k (0)
+// Whitepaper-aligned density classification using qualitative descriptors
+// Philosophy: "Represent human activity as spatial patterns and intensity rather than discrete claims"
+// Uses muted palette to convey uncertainty and avoid false precision
+// Thresholds define intensity bands, not precise classifications
 export const DENSITY_LEVELS = [
-  { id: 'critical', label: 'CRITICAL', threshold: 0.74, fill: 'rgba(220, 38, 38, 0.85)', border: 'rgba(153, 27, 27, 1)', value: '>40k/km²', tooltip: 'Extreme density - mass casualty risk' },
-  { id: 'high', label: 'HIGH', threshold: 0.46, fill: 'rgba(249, 115, 22, 0.8)', border: 'rgba(194, 65, 12, 0.95)', value: '25-40k/km²', tooltip: 'High density urban core' },
-  { id: 'moderate', label: 'MODERATE', threshold: 0.22, fill: 'rgba(250, 204, 21, 0.75)', border: 'rgba(202, 138, 4, 0.9)', value: '12-25k/km²', tooltip: 'Urban/commercial areas' },
-  { id: 'low', label: 'LOW', threshold: 0.09, fill: 'rgba(132, 204, 22, 0.65)', border: 'rgba(77, 124, 15, 0.8)', value: '5-12k/km²', tooltip: 'Suburban residential' },
-  { id: 'minimal', label: 'MINIMAL', threshold: 0, fill: 'rgba(34, 197, 94, 0.5)', border: 'rgba(22, 163, 74, 0.65)', value: '<5k/km²', tooltip: 'Low density/rural' }
+  { id: 'concentrated', label: 'Concentrated', threshold: 0.70, fill: 'rgba(127, 86, 96, 0.55)', border: 'rgba(127, 86, 96, 0.35)', value: 'Very High Activity', tooltip: 'Concentrated population activity observed' },
+  { id: 'elevated', label: 'Elevated', threshold: 0.45, fill: 'rgba(142, 108, 95, 0.50)', border: 'rgba(142, 108, 95, 0.30)', value: 'High Activity', tooltip: 'Elevated activity patterns detected' },
+  { id: 'moderate', label: 'Moderate', threshold: 0.25, fill: 'rgba(156, 133, 108, 0.45)', border: 'rgba(156, 133, 108, 0.25)', value: 'Moderate Activity', tooltip: 'Moderate activity levels' },
+  { id: 'dispersed', label: 'Dispersed', threshold: 0.10, fill: 'rgba(148, 153, 131, 0.40)', border: 'rgba(148, 153, 131, 0.20)', value: 'Low Activity', tooltip: 'Dispersed activity patterns' },
+  { id: 'sparse', label: 'Sparse', threshold: 0, fill: 'rgba(134, 148, 134, 0.30)', border: 'rgba(134, 148, 134, 0.15)', value: 'Minimal Activity', tooltip: 'Sparse or inferred activity' }
 ]
 
 // Get density level for a normalized value
@@ -98,14 +99,16 @@ export function PopulationHeatmapLayer({
     const halfStep = stepSize / 2
     const { north, south, east, west } = gridData.bounds
     
-    // Zoom-based rendering configuration
+    // Zoom-based rendering configuration - whitepaper aligned
+    // Uses softer stroke weights and lower opacity for pattern-based visualization
+    // Emphasizes spatial patterns rather than discrete boundaries
     const getZoomConfig = (zoom: number) => {
-      // At low zoom: skip cells, thinner borders, lower opacity
-      // At high zoom: full detail, thick borders, high opacity
-      if (zoom >= 13) return { skip: 1, threshold: 0.05, strokeWeight: 2, opacityMult: 1.0 }
-      if (zoom >= 11) return { skip: 1, threshold: 0.08, strokeWeight: 1.5, opacityMult: 0.9 }
-      if (zoom >= 9) return { skip: 2, threshold: 0.15, strokeWeight: 1, opacityMult: 0.8 }
-      return { skip: 4, threshold: 0.25, strokeWeight: 0.5, opacityMult: 0.6 }
+      // At low zoom: skip cells, minimal borders, soft opacity for gradient effect
+      // At high zoom: full detail but still soft borders to avoid false precision
+      if (zoom >= 13) return { skip: 1, threshold: 0.05, strokeWeight: 0.5, opacityMult: 1.0 }
+      if (zoom >= 11) return { skip: 1, threshold: 0.08, strokeWeight: 0.3, opacityMult: 0.85 }
+      if (zoom >= 9) return { skip: 2, threshold: 0.12, strokeWeight: 0.2, opacityMult: 0.75 }
+      return { skip: 4, threshold: 0.20, strokeWeight: 0, opacityMult: 0.6 }
     }
     
     // Render function for zoom-aware drawing
@@ -153,35 +156,39 @@ export function PopulationHeatmapLayer({
         cellCount++
       })
       
-      // Add major grid lines every 10 cells (4x4 major grid overlay)
+      // Add subtle reference grid lines every 10 cells (4x4 major grid overlay)
+      // Whitepaper: use subtle visual cues, not hard boundaries
       const majorStep = stepSize * 10
-      const gridLineColor = `rgba(255, 255, 255, ${0.4 * config.opacityMult})`
-      const gridLineWeight = config.strokeWeight
+      const gridLineColor = `rgba(255, 255, 255, ${0.15 * config.opacityMult})`
+      const gridLineWeight = Math.max(0.3, config.strokeWeight * 0.5)
       
-      // Vertical major grid lines
-      for (let lng = west; lng <= east + 0.001; lng += majorStep) {
-        const line = new google.maps.Polyline({
-          path: [{ lat: north, lng }, { lat: south, lng }],
-          map,
-          strokeColor: gridLineColor,
-          strokeOpacity: 1,
-          strokeWeight: gridLineWeight,
-          zIndex: 10
-        })
-        gridLinesRef.current.push(line)
-      }
-      
-      // Horizontal major grid lines
-      for (let lat = south; lat <= north + 0.001; lat += majorStep) {
-        const line = new google.maps.Polyline({
-          path: [{ lat, lng: west }, { lat, lng: east }],
-          map,
-          strokeColor: gridLineColor,
-          strokeOpacity: 1,
-          strokeWeight: gridLineWeight,
-          zIndex: 10
-        })
-        gridLinesRef.current.push(line)
+      // Only show grid lines at higher zoom for subtle reference
+      if (zoom >= 10) {
+        // Vertical major grid lines
+        for (let lng = west; lng <= east + 0.001; lng += majorStep) {
+          const line = new google.maps.Polyline({
+            path: [{ lat: north, lng }, { lat: south, lng }],
+            map,
+            strokeColor: gridLineColor,
+            strokeOpacity: 1,
+            strokeWeight: gridLineWeight,
+            zIndex: 2
+          })
+          gridLinesRef.current.push(line)
+        }
+        
+        // Horizontal major grid lines
+        for (let lat = south; lat <= north + 0.001; lat += majorStep) {
+          const line = new google.maps.Polyline({
+            path: [{ lat, lng: west }, { lat, lng: east }],
+            map,
+            strokeColor: gridLineColor,
+            strokeOpacity: 1,
+            strokeWeight: gridLineWeight,
+            zIndex: 2
+          })
+          gridLinesRef.current.push(line)
+        }
       }
       
       console.log('[PopGrid] Rendered', cellCount, 'cells +', gridLinesRef.current.length, 'grid lines (zoom:', zoom.toFixed(1), ')')
@@ -251,19 +258,19 @@ export function PopulationLegend({ data, isLoading = false, onRefresh, mapStyle 
   return (
     <div 
       style={{
-        backgroundColor: isDark ? 'rgba(0,0,0,0.92)' : 'rgba(255,255,255,0.95)',
+        backgroundColor: isDark ? 'rgba(0,0,0,0.88)' : 'rgba(255,255,255,0.92)',
         backdropFilter: 'blur(8px)',
         borderTopLeftRadius: 6,
         borderTopRightRadius: 0,
         borderBottomLeftRadius: 0,
         borderBottomRightRadius: 0,
         padding: 12,
-        minWidth: 190,
-        borderLeft: isDark ? '1px solid rgba(255,255,255,0.15)' : '1px solid rgba(0,0,0,0.1)',
-        borderTop: isDark ? '1px solid rgba(255,255,255,0.15)' : '1px solid rgba(0,0,0,0.1)'
+        minWidth: 180,
+        borderLeft: isDark ? '1px solid rgba(255,255,255,0.12)' : '1px solid rgba(0,0,0,0.08)',
+        borderTop: isDark ? '1px solid rgba(255,255,255,0.12)' : '1px solid rgba(0,0,0,0.08)'
       }}
     >
-      {/* Header with title */}
+      {/* Header with title - whitepaper aligned: restrained, analytical */}
       <div style={{ 
         display: 'flex', 
         alignItems: 'center', 
@@ -274,12 +281,13 @@ export function PopulationLegend({ data, isLoading = false, onRefresh, mapStyle 
           display: 'flex', 
           alignItems: 'center', 
           gap: 6,
-          color: isDark ? '#fff' : '#1f2937',
-          fontWeight: 600,
-          fontSize: 12
+          color: isDark ? 'rgba(255,255,255,0.85)' : '#374151',
+          fontWeight: 500,
+          fontSize: 11,
+          letterSpacing: '0.02em'
         }}>
-          <Users style={{ width: 14, height: 14 }} />
-          POPULATION DENSITY
+          <Users style={{ width: 13, height: 13, opacity: 0.8 }} />
+          Activity Density
         </div>
         {onRefresh && (
           <button
@@ -291,41 +299,43 @@ export function PopulationLegend({ data, isLoading = false, onRefresh, mapStyle 
               cursor: isLoading ? 'wait' : 'pointer',
               padding: 4,
               display: 'flex',
-              alignItems: 'center'
+              alignItems: 'center',
+              opacity: 0.6
             }}
           >
             {isLoading ? (
-              <Loader2 style={{ width: 14, height: 14, color: isDark ? '#9ca3af' : '#6b7280' }} className="animate-spin" />
+              <Loader2 style={{ width: 12, height: 12, color: isDark ? '#9ca3af' : '#6b7280' }} className="animate-spin" />
             ) : (
-              <RefreshCw style={{ width: 14, height: 14, color: isDark ? '#9ca3af' : '#6b7280' }} />
+              <RefreshCw style={{ width: 12, height: 12, color: isDark ? '#9ca3af' : '#6b7280' }} />
             )}
           </button>
         )}
       </div>
       
-      {/* Demo baseline label */}
+      {/* Pattern-based indicator note */}
       <div style={{
         display: 'flex',
         alignItems: 'center',
         gap: 4,
-        padding: '4px 6px',
+        padding: '3px 5px',
         marginBottom: 10,
-        backgroundColor: isDark ? 'rgba(59, 130, 246, 0.15)' : 'rgba(59, 130, 246, 0.1)',
-        borderRadius: 4,
-        border: isDark ? '1px solid rgba(59, 130, 246, 0.3)' : '1px solid rgba(59, 130, 246, 0.2)'
+        backgroundColor: isDark ? 'rgba(148, 163, 184, 0.12)' : 'rgba(100, 116, 139, 0.08)',
+        borderRadius: 3,
+        border: isDark ? '1px solid rgba(148, 163, 184, 0.15)' : '1px solid rgba(100, 116, 139, 0.12)'
       }}>
-        <Info style={{ width: 10, height: 10, color: isDark ? '#60a5fa' : '#3b82f6' }} />
+        <Info style={{ width: 9, height: 9, color: isDark ? '#94a3b8' : '#64748b', opacity: 0.7 }} />
         <span style={{ 
-          fontSize: 9, 
-          color: isDark ? '#93c5fd' : '#2563eb',
-          fontWeight: 500
+          fontSize: 8, 
+          color: isDark ? '#94a3b8' : '#64748b',
+          fontWeight: 400,
+          fontStyle: 'italic'
         }}>
-          Baseline layer (demo)
+          Pattern-based estimate
         </span>
       </div>
       
-      {/* 5-Level Discrete Density Scale */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+      {/* Intensity Bands - qualitative labels aligned with whitepaper */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
         {DENSITY_LEVELS.map((level) => (
           <div 
             key={level.id} 
@@ -333,29 +343,25 @@ export function PopulationLegend({ data, isLoading = false, onRefresh, mapStyle 
             title={level.tooltip}
           >
             <div style={{
-              width: 16,
-              height: 16,
-              borderRadius: 2,
+              width: 14,
+              height: 14,
+              borderRadius: 3,
               backgroundColor: level.fill,
-              border: `2px solid ${level.border}`,
-              boxShadow: '0 1px 2px rgba(0,0,0,0.2)'
+              border: `1px solid ${level.border}`,
+              boxShadow: 'none'
             }} />
             <span style={{ 
               fontSize: 10, 
-              color: level.id === 'critical' ? (isDark ? '#fca5a5' : '#dc2626') :
-                     level.id === 'high' ? (isDark ? '#fdba74' : '#ea580c') :
-                     level.id === 'moderate' ? (isDark ? '#fde047' : '#ca8a04') :
-                     level.id === 'low' ? (isDark ? '#bef264' : '#65a30d') :
-                     (isDark ? '#86efac' : '#16a34a'),
-              fontWeight: 600,
-              minWidth: 65,
-              letterSpacing: '0.02em'
+              color: isDark ? 'rgba(255,255,255,0.75)' : '#4b5563',
+              fontWeight: 500,
+              minWidth: 70
             }}>
               {level.label}
             </span>
             <span style={{ 
               fontSize: 9, 
-              color: isDark ? '#9ca3af' : '#6b7280'
+              color: isDark ? 'rgba(255,255,255,0.45)' : '#9ca3af',
+              fontStyle: 'italic'
             }}>
               {level.value}
             </span>
@@ -363,29 +369,18 @@ export function PopulationLegend({ data, isLoading = false, onRefresh, mapStyle 
         ))}
       </div>
       
-      {/* Grid Info */}
+      {/* Coverage note - emphasizing uncertainty per whitepaper */}
       <div style={{
         marginTop: 10,
         paddingTop: 8,
-        borderTop: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.1)',
-        fontSize: 9,
-        color: isDark ? '#6b7280' : '#9ca3af'
+        borderTop: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.06)',
+        fontSize: 8,
+        color: isDark ? 'rgba(255,255,255,0.4)' : '#9ca3af'
       }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
-          <span>Grid:</span>
-          <span style={{ color: isDark ? '#9ca3af' : '#6b7280', fontFamily: 'monospace' }}>
-            40×40 (~750m cells)
-          </span>
+        <div style={{ marginBottom: 4, fontStyle: 'italic' }}>
+          Coverage varies by source availability
         </div>
-        {gridData && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
-            <span>Avg Density:</span>
-            <span style={{ color: isDark ? '#9ca3af' : '#6b7280' }}>
-              {gridData.metadata.avgDensity.toLocaleString()}/km²
-            </span>
-          </div>
-        )}
-        <div style={{ marginTop: 4, fontSize: 8, color: isDark ? '#4b5563' : '#9ca3af' }}>
+        <div style={{ opacity: 0.7 }}>
           {gridData?.source || 'WorldPop / VIIRS Estimate'}
         </div>
       </div>

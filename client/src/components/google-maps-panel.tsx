@@ -408,10 +408,10 @@ function PinnedSampleMarker({
                 <span style={{ fontWeight: 600 }}>Location:</span> {sample.lat.toFixed(4)}, {sample.lng.toFixed(4)}
               </div>
               <div style={{ marginBottom: 4 }}>
-                <span style={{ fontWeight: 600 }}>Density:</span> {sample.rawDensity.toLocaleString()}/km²
+                <span style={{ fontWeight: 600 }}>Activity:</span> {sample.label}
               </div>
-              <div style={{ marginBottom: 4 }}>
-                <span style={{ fontWeight: 600 }}>Level:</span> {sample.label} ({sample.urbanLevel})
+              <div style={{ marginBottom: 4, fontSize: 10, fontStyle: 'italic', color: '#888' }}>
+                Pattern-based estimate
               </div>
               <div style={{ fontSize: 10, color: '#999' }}>
                 Sampled: {new Date(sample.timestamp).toLocaleTimeString()}
@@ -876,7 +876,7 @@ function GoogleMapsContent({
     setPinnedSamples(prev => [...prev, lastSample])
     toast({
       title: `Pin #${pinnedSamples.length + 1} added`,
-      description: `${lastSample.rawDensity.toLocaleString()}/km² at ${lastSample.lat.toFixed(4)}, ${lastSample.lng.toFixed(4)}`
+      description: `${lastSample.label} activity at ${lastSample.lat.toFixed(4)}, ${lastSample.lng.toFixed(4)}`
     })
   }, [lastSample, pinnedSamples, toast])
   

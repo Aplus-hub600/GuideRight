@@ -246,9 +246,9 @@ function TacticalDensitySample({
           </span>
         </div>
         <div className="bg-background/50 rounded p-2">
-          <span className="text-muted-foreground block text-[10px]">EST. DENSITY</span>
+          <span className="text-muted-foreground block text-[10px]">ACTIVITY LEVEL</span>
           <span className="font-mono text-foreground font-bold">
-            {sample.rawDensity.toLocaleString()}/km²
+            {sample.label}
           </span>
         </div>
       </div>

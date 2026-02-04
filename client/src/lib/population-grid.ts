@@ -113,11 +113,13 @@ function calculateDensity(
 }
 
 /**
- * Classifies density into urban levels
+ * Classifies density into activity levels (whitepaper-aligned qualitative labels)
+ * Uses descriptive terms that avoid implying false precision
  */
 function classifyUrbanLevel(density: number): 'high' | 'medium' | 'low' {
-  if (density >= 20000) return 'high'
-  if (density >= 8000) return 'medium'
+  // Keep interface compatible but use more conservative thresholds
+  if (density >= 25000) return 'high'
+  if (density >= 10000) return 'medium'
   return 'low'
 }
 
@@ -244,14 +246,19 @@ export function sampleDensityAtLocation(
   
   const urbanLevel = classifyUrbanLevel(rawDensity)
   
-  // Generate human-readable label
+  // Generate qualitative label (whitepaper: avoid false precision)
+  // Uses intensity-band language instead of precise classifications
   let label: string
-  if (density >= 0.7) {
-    label = 'High'
-  } else if (density >= 0.35) {
-    label = 'Medium'
+  if (density >= 0.70) {
+    label = 'Concentrated'
+  } else if (density >= 0.45) {
+    label = 'Elevated'
+  } else if (density >= 0.25) {
+    label = 'Moderate'
+  } else if (density >= 0.10) {
+    label = 'Dispersed'
   } else {
-    label = 'Low'
+    label = 'Sparse'
   }
   
   return {
