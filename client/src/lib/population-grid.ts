@@ -12,6 +12,14 @@ const GRID_SIZE = 40 // 40x40 = 1600 points
 // Approximate conversion: 1 degree ≈ 111km at equator
 const KM_TO_DEG = 1 / 111
 
+// Grid configuration - exported for grid cell rendering
+export const GRID_CONFIG = {
+  center: DHAKA_CENTER,
+  radiusKm: AOI_RADIUS_KM,
+  gridSize: GRID_SIZE,
+  stepSize: (AOI_RADIUS_KM * 2 * KM_TO_DEG) / GRID_SIZE // ~0.0075 degrees per cell (~750m)
+}
+
 export interface PopulationGridPoint {
   lat: number
   lng: number

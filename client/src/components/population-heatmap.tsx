@@ -1,13 +1,13 @@
 /**
- * Population Density Heatmap Layer
- * Uses a dense 40x40 grid to display population density as a smooth gradient heatmap
+ * Population Density Grid Layer
+ * Uses a 40x40 grid with discrete rectangular cells for clear visual representation
  * Data source: WorldPop / VIIRS (Demo Baseline)
  */
 
 import { useEffect, useRef } from "react"
 import { useMap } from "@vis.gl/react-google-maps"
 import { Loader2, Users, RefreshCw, Info } from "lucide-react"
-import { getPopulationGrid, type PopulationGridData } from "@/lib/population-grid"
+import { getPopulationGrid, type PopulationGridData, GRID_CONFIG } from "@/lib/population-grid"
 
 declare const google: any
 
@@ -16,80 +16,99 @@ interface PopulationHeatmapProps {
   onDataReady?: (data: PopulationGridData) => void
 }
 
+// Get color for density level (0-1 normalized)
+function getDensityColor(density: number): string {
+  // 5-level tactical color scheme with clear boundaries
+  if (density >= 0.8) return 'rgba(185, 28, 28, 0.65)' // Dark red - CRITICAL
+  if (density >= 0.6) return 'rgba(239, 68, 68, 0.55)' // Red - HIGH
+  if (density >= 0.4) return 'rgba(245, 158, 11, 0.45)' // Amber - MODERATE
+  if (density >= 0.2) return 'rgba(34, 197, 94, 0.35)' // Green - LOW
+  return 'rgba(34, 197, 94, 0.15)' // Light green - MINIMAL
+}
+
+// Get border color for density level
+function getDensityBorder(density: number): string {
+  if (density >= 0.8) return 'rgba(127, 29, 29, 0.8)'
+  if (density >= 0.6) return 'rgba(185, 28, 28, 0.7)'
+  if (density >= 0.4) return 'rgba(180, 83, 9, 0.6)'
+  if (density >= 0.2) return 'rgba(21, 128, 61, 0.5)'
+  return 'rgba(21, 128, 61, 0.3)'
+}
+
 /**
- * PopulationHeatmapLayer - Renders AOI-wide smooth gradient heatmap
- * Uses 40x40 grid (1600 points) for continuous field appearance
+ * PopulationHeatmapLayer - Renders AOI-wide grid with discrete cells
+ * Uses 40x40 grid (1600 cells) with clear rectangular boundaries
  */
 export function PopulationHeatmapLayer({
   visible,
   onDataReady
 }: PopulationHeatmapProps) {
   const map = useMap()
-  const heatmapRef = useRef<any>(null)
+  const rectanglesRef = useRef<any[]>([])
   const gridDataRef = useRef<PopulationGridData | null>(null)
   
   useEffect(() => {
     if (!map) {
-      console.log('[PopHeatmap] Map not ready')
+      console.log('[PopGrid] Map not ready')
       return
     }
-    if (!window.google?.maps?.visualization) {
-      console.log('[PopHeatmap] Visualization library not loaded')
+    
+    // Cleanup existing rectangles
+    const cleanup = () => {
+      rectanglesRef.current.forEach(rect => rect.setMap(null))
+      rectanglesRef.current = []
+    }
+    
+    if (!visible) {
+      cleanup()
       return
     }
     
     // Get or generate the population grid
     if (!gridDataRef.current) {
       gridDataRef.current = getPopulationGrid()
-      console.log('[PopHeatmap] Grid generated:', gridDataRef.current.metadata)
+      console.log('[PopGrid] Grid generated:', gridDataRef.current.metadata)
       if (onDataReady) {
         onDataReady(gridDataRef.current)
       }
     }
     
     const gridData = gridDataRef.current
+    const stepSize = GRID_CONFIG.stepSize
+    const halfStep = stepSize / 2
     
-    // Create heatmap layer if it doesn't exist
-    if (!heatmapRef.current) {
-      heatmapRef.current = new google.maps.visualization.HeatmapLayer({
-        map: visible ? map : null,
-        radius: 25, // Smaller radius for denser grid = smoother appearance
-        opacity: 0.7,
-        maxIntensity: 1, // Normalized data
-        dissipating: true,
-        gradient: [
-          // Smooth gradient: green (low) -> yellow (medium) -> red (high)
-          'rgba(34, 197, 94, 0)',       // transparent green
-          'rgba(34, 197, 94, 0.4)',     // green - low density
-          'rgba(74, 222, 128, 0.5)',    // light green
-          'rgba(163, 230, 53, 0.55)',   // lime
-          'rgba(234, 179, 8, 0.6)',     // yellow - medium density
-          'rgba(251, 146, 60, 0.65)',   // orange
-          'rgba(249, 115, 22, 0.7)',    // dark orange
-          'rgba(239, 68, 68, 0.75)',    // red - high density
-          'rgba(220, 38, 38, 0.8)',     // dark red
-          'rgba(153, 27, 27, 0.85)'     // very dark red - extreme
-        ]
-      })
-    }
+    // Create grid cells as rectangles
+    cleanup()
     
-    // Update visibility
-    heatmapRef.current.setMap(visible ? map : null)
-    
-    // Update data if visible
-    if (visible && gridData.points.length > 0) {
-      const heatmapData = gridData.points.map(point => ({
-        location: new google.maps.LatLng(point.lat, point.lng),
-        weight: point.density // Already normalized 0-1
-      }))
-      heatmapRef.current.setData(heatmapData)
-    }
-    
-    return () => {
-      if (heatmapRef.current) {
-        heatmapRef.current.setMap(null)
+    gridData.points.forEach(point => {
+      // Only render cells with meaningful density (>5% of max)
+      if (point.density < 0.05) return
+      
+      const bounds = {
+        north: point.lat + halfStep,
+        south: point.lat - halfStep,
+        east: point.lng + halfStep,
+        west: point.lng - halfStep
       }
-    }
+      
+      const rect = new google.maps.Rectangle({
+        bounds,
+        map,
+        strokeColor: getDensityBorder(point.density),
+        strokeOpacity: 1,
+        strokeWeight: 0.5,
+        fillColor: getDensityColor(point.density),
+        fillOpacity: 1,
+        clickable: false,
+        zIndex: 1
+      })
+      
+      rectanglesRef.current.push(rect)
+    })
+    
+    console.log('[PopGrid] Rendered', rectanglesRef.current.length, 'grid cells')
+    
+    return cleanup
   }, [map, visible, onDataReady])
   
   return null
