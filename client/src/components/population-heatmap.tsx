@@ -140,14 +140,16 @@ export function PopulationHeatmapLayer({
           west: point.lng - halfStep * (config.skip > 1 ? config.skip / 2 : 1)
         }
         
+        // Whitepaper: Remove hard cell boundaries for gradient-like pattern visualization
+        // No borders, just soft fills to show spatial patterns
         const rect = new google.maps.Rectangle({
           bounds,
           map,
-          strokeColor: getDensityBorder(point.density),
-          strokeOpacity: config.opacityMult,
-          strokeWeight: config.strokeWeight,
+          strokeColor: 'transparent',
+          strokeOpacity: 0,
+          strokeWeight: 0,
           fillColor: getDensityColor(point.density),
-          fillOpacity: config.opacityMult,
+          fillOpacity: config.opacityMult * 0.9, // Slightly lower opacity for softer blending
           clickable: false,
           zIndex: 1
         })

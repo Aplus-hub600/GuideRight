@@ -104,7 +104,8 @@ const LENS_OPTIONS: LensConfig[] = [
 
 /**
  * Calculate tactical operational context from population density
- * Provides estimates for crowd potential, evacuation time, and movement difficulty
+ * Whitepaper-aligned: Uses qualitative descriptors to avoid false precision
+ * Provides pattern-based assessments, not precise estimates
  */
 function getTacticalContext(sample: DensitySample): {
   crowdPotential: { level: string; estimate: string; description: string }
@@ -112,63 +113,60 @@ function getTacticalContext(sample: DensitySample): {
   movementDifficulty: { level: string; rating: number; description: string }
   opsRecommendation: string
 } {
-  const density = sample.rawDensity
-  
-  // Crowd potential: people per km² in a 500m radius observation area (~0.8 km²)
-  const observationArea = 0.8 // km²
-  const potentialCrowd = Math.round(density * observationArea)
+  // Use normalized density (0-1) for qualitative bands instead of raw numbers
+  const normalizedDensity = sample.density
   
   let crowdPotential: { level: string; estimate: string; description: string }
   let evacuationTime: { level: string; estimate: string; description: string }
   let movementDifficulty: { level: string; rating: number; description: string }
   let opsRecommendation: string
   
-  if (density >= 20000) {
-    // High density - urban core
+  if (normalizedDensity >= 0.70) {
+    // Concentrated activity - qualitative assessment
     crowdPotential = {
-      level: "CRITICAL",
-      estimate: `${(potentialCrowd / 1000).toFixed(1)}K+`,
-      description: "Mass gathering potential"
+      level: "CONCENTRATED",
+      estimate: "Very High",
+      description: "Dense activity patterns observed"
     }
     evacuationTime = {
       level: "EXTENDED",
-      estimate: "45-90 min",
-      description: "Congested routes, multiple choke points"
+      estimate: "Prolonged",
+      description: "Expect significant congestion"
     }
     movementDifficulty = {
       level: "RESTRICTED",
       rating: 4,
       description: "Vehicle movement severely limited"
     }
-    opsRecommendation = "Recommend foot patrol only. Plan multiple egress routes. High signature risk."
-  } else if (density >= 10000) {
-    // Medium-high density
+    opsRecommendation = "Foot patrol recommended. Plan multiple egress routes. High signature environment."
+  } else if (normalizedDensity >= 0.45) {
+    // Elevated activity
     crowdPotential = {
-      level: "HIGH",
-      estimate: `${(potentialCrowd / 1000).toFixed(1)}K`,
-      description: "Significant crowd potential"
+      level: "ELEVATED",
+      estimate: "High",
+      description: "Elevated activity patterns"
     }
     evacuationTime = {
       level: "MODERATE",
-      estimate: "20-45 min",
-      description: "Traffic delays expected"
+      estimate: "Delayed",
+      description: "Expect traffic delays"
     }
     movementDifficulty = {
       level: "DIFFICULT",
       rating: 3,
       description: "Limited vehicle options"
     }
-    opsRecommendation = "Mixed patrol viable. Pre-plan primary and alternate routes. Medium signature."
-  } else if (density >= 5000) {
-    // Medium density
+    opsRecommendation = "Mixed patrol viable. Pre-plan primary and alternate routes."
+  } else if (normalizedDensity >= 0.25) {
+    // Moderate activity
     crowdPotential = {
       level: "MODERATE",
-      estimate: `${potentialCrowd.toLocaleString()}`,
-      description: "Moderate crowd gatherings possible"
+      estimate: "Moderate",
+      description: "Moderate activity levels"
     }
     evacuationTime = {
       level: "STANDARD",
-      estimate: "10-20 min",
+      estimate: "Normal",
       description: "Normal traffic conditions"
     }
     movementDifficulty = {
@@ -176,25 +174,43 @@ function getTacticalContext(sample: DensitySample): {
       rating: 2,
       description: "Standard vehicle movement"
     }
-    opsRecommendation = "Vehicle patrol effective. Standard security posture. Low-medium signature."
-  } else {
-    // Low density
+    opsRecommendation = "Vehicle patrol effective. Standard security posture."
+  } else if (normalizedDensity >= 0.10) {
+    // Dispersed activity
     crowdPotential = {
-      level: "LOW",
-      estimate: `${potentialCrowd.toLocaleString()}`,
-      description: "Minimal crowd risk"
+      level: "DISPERSED",
+      estimate: "Low",
+      description: "Dispersed activity patterns"
+    }
+    evacuationTime = {
+      level: "QUICK",
+      estimate: "Minimal",
+      description: "Routes generally clear"
+    }
+    movementDifficulty = {
+      level: "LIGHT",
+      rating: 1,
+      description: "Full vehicle access likely"
+    }
+    opsRecommendation = "All movement types viable. Good observation lines."
+  } else {
+    // Sparse activity
+    crowdPotential = {
+      level: "SPARSE",
+      estimate: "Minimal",
+      description: "Minimal activity observed"
     }
     evacuationTime = {
       level: "RAPID",
-      estimate: "<10 min",
+      estimate: "Quick",
       description: "Clear routes available"
     }
     movementDifficulty = {
       level: "UNRESTRICTED",
       rating: 1,
-      description: "Full vehicle access"
+      description: "Unrestricted access"
     }
-    opsRecommendation = "All movement types viable. Good observation lines. Low signature environment."
+    opsRecommendation = "Low signature environment. Full operational flexibility."
   }
   
   return { crowdPotential, evacuationTime, movementDifficulty, opsRecommendation }
@@ -213,19 +229,15 @@ function TacticalDensitySample({
   const tactical = getTacticalContext(sample)
   
   return (
-    <div className="p-3 bg-gradient-to-r from-green-500/10 via-yellow-500/10 to-red-500/10 border border-primary/20 rounded-md">
-      {/* Header */}
+    <div className="p-3 bg-muted/30 border border-muted-foreground/20 rounded-md">
+      {/* Header - Whitepaper aligned: muted, restrained styling */}
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
-          <Users className="h-4 w-4 text-primary" />
-          <span className="text-sm font-bold text-foreground">POPULATION SAMPLE</span>
+          <Users className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm font-medium text-foreground/80">Activity Sample</span>
           <Badge 
-            className={cn(
-              "text-[10px] uppercase",
-              sample.label === 'High' && "bg-red-500/20 text-red-400 border-red-500/30",
-              sample.label === 'Medium' && "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
-              sample.label === 'Low' && "bg-green-500/20 text-green-400 border-green-500/30"
-            )}
+            variant="outline"
+            className="text-[10px] border-muted-foreground/30 text-muted-foreground"
           >
             {sample.label}
           </Badge>
@@ -270,41 +282,36 @@ function TacticalDensitySample({
               variant="outline" 
               className={cn(
                 "text-[10px] w-full justify-center",
-                tactical.crowdPotential.level === "CRITICAL" && "border-red-500/50 text-red-400",
-                tactical.crowdPotential.level === "HIGH" && "border-orange-500/50 text-orange-400",
-                tactical.crowdPotential.level === "MODERATE" && "border-yellow-500/50 text-yellow-400",
-                tactical.crowdPotential.level === "LOW" && "border-green-500/50 text-green-400"
+                tactical.crowdPotential.level === "CONCENTRATED" && "border-muted-foreground/40 text-muted-foreground",
+                tactical.crowdPotential.level === "ELEVATED" && "border-muted-foreground/35 text-muted-foreground",
+                tactical.crowdPotential.level === "MODERATE" && "border-muted-foreground/30 text-muted-foreground",
+                tactical.crowdPotential.level === "DISPERSED" && "border-muted-foreground/25 text-muted-foreground",
+                tactical.crowdPotential.level === "SPARSE" && "border-muted-foreground/20 text-muted-foreground"
               )}
             >
               {tactical.crowdPotential.estimate}
             </Badge>
           </div>
           
-          {/* Evacuation Time */}
+          {/* Evacuation Time - Whitepaper: muted styling */}
           <div className="bg-background/50 rounded p-2">
             <div className="flex items-center gap-1 mb-1">
               <Clock className="h-3 w-3 text-muted-foreground" />
-              <span className="text-[9px] text-muted-foreground">EVAC TIME</span>
+              <span className="text-[9px] text-muted-foreground">EGRESS</span>
             </div>
             <Badge 
               variant="outline" 
-              className={cn(
-                "text-[10px] w-full justify-center",
-                tactical.evacuationTime.level === "EXTENDED" && "border-red-500/50 text-red-400",
-                tactical.evacuationTime.level === "MODERATE" && "border-yellow-500/50 text-yellow-400",
-                tactical.evacuationTime.level === "STANDARD" && "border-blue-500/50 text-blue-400",
-                tactical.evacuationTime.level === "RAPID" && "border-green-500/50 text-green-400"
-              )}
+              className="text-[10px] w-full justify-center border-muted-foreground/30 text-muted-foreground"
             >
               {tactical.evacuationTime.estimate}
             </Badge>
           </div>
           
-          {/* Movement Difficulty */}
+          {/* Movement Difficulty - Whitepaper: muted bar indicator */}
           <div className="bg-background/50 rounded p-2">
             <div className="flex items-center gap-1 mb-1">
               <Truck className="h-3 w-3 text-muted-foreground" />
-              <span className="text-[9px] text-muted-foreground">MOVEMENT</span>
+              <span className="text-[9px] text-muted-foreground">ACCESS</span>
             </div>
             <div className="flex gap-0.5 justify-center">
               {[1, 2, 3, 4].map((level) => (
@@ -313,14 +320,8 @@ function TacticalDensitySample({
                   className={cn(
                     "w-3 h-3 rounded-sm",
                     level <= tactical.movementDifficulty.rating 
-                      ? tactical.movementDifficulty.rating >= 4 
-                        ? "bg-red-500" 
-                        : tactical.movementDifficulty.rating >= 3 
-                          ? "bg-orange-500" 
-                          : tactical.movementDifficulty.rating >= 2 
-                            ? "bg-yellow-500" 
-                            : "bg-green-500"
-                      : "bg-muted/50"
+                      ? "bg-muted-foreground/60"
+                      : "bg-muted/30"
                   )}
                 />
               ))}
@@ -329,10 +330,10 @@ function TacticalDensitySample({
         </div>
       </div>
       
-      {/* Ops Recommendation */}
-      <div className="bg-primary/5 border border-primary/20 rounded p-2 text-xs">
-        <div className="text-[9px] font-semibold text-primary mb-1">OPS ASSESSMENT</div>
-        <p className="text-foreground/90 leading-relaxed">{tactical.opsRecommendation}</p>
+      {/* Ops Recommendation - Whitepaper: muted, restrained styling */}
+      <div className="bg-muted/20 border border-muted-foreground/15 rounded p-2 text-xs">
+        <div className="text-[9px] font-medium text-muted-foreground mb-1">Context Note</div>
+        <p className="text-foreground/70 leading-relaxed italic">{tactical.opsRecommendation}</p>
       </div>
       
       {/* Footer */}
