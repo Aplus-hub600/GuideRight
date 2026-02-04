@@ -105,54 +105,54 @@ function TacticalMapStatus({
   }
   
   return (
-    <div className="flex items-center gap-3 bg-background/95 backdrop-blur-sm border-l border-b px-3 py-1.5 rounded-bl-md">
+    <div className="flex items-center gap-3 bg-black/80 backdrop-blur-sm border-l border-b border-white/20 px-3 py-1.5 rounded-bl-md">
       {/* Zulu Time */}
       <div className="flex items-center gap-1.5">
-        <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-        <span className="font-mono text-sm font-medium">{formatZulu()}</span>
+        <Clock className="h-3.5 w-3.5 text-white/70" />
+        <span className="font-mono text-sm font-medium text-white">{formatZulu()}</span>
       </div>
       
-      <div className="w-px h-4 bg-border" />
+      <div className="w-px h-4 bg-white/30" />
       
       {/* Coordinates */}
       {aoi && (
         <>
           <div className="flex items-center gap-1.5">
-            <Navigation className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className="font-mono text-sm">
+            <Navigation className="h-3.5 w-3.5 text-white/70" />
+            <span className="font-mono text-sm text-white">
               {aoi.lat.toFixed(4)}°, {aoi.lng.toFixed(4)}°
             </span>
           </div>
-          <div className="w-px h-4 bg-border" />
+          <div className="w-px h-4 bg-white/30" />
         </>
       )}
       
       {/* Zoom Level */}
       <div className="flex items-center gap-1.5">
-        <Eye className="h-3.5 w-3.5 text-muted-foreground" />
-        <span className="font-mono text-sm">Z{zoomLevel}</span>
+        <Eye className="h-3.5 w-3.5 text-white/70" />
+        <span className="font-mono text-sm text-white">Z{zoomLevel}</span>
       </div>
       
-      <div className="w-px h-4 bg-border" />
+      <div className="w-px h-4 bg-white/30" />
       
       {/* Active Layer with Data Freshness */}
       <div className="flex items-center gap-2">
-        <Badge variant="outline" className="text-xs font-bold gap-1.5 px-2 py-0.5">
+        <Badge variant="outline" className="text-xs font-bold gap-1.5 px-2 py-0.5 border-white/40 text-white bg-white/10">
           <Radio className={cn(
             "h-3 w-3",
-            dataFresh && "text-green-500",
-            dataStale && "text-amber-500",
-            dataAge !== null && !dataFresh && !dataStale && "text-red-500",
-            dataAge === null && "text-muted-foreground"
+            dataFresh && "text-green-400",
+            dataStale && "text-amber-400",
+            dataAge !== null && !dataFresh && !dataStale && "text-red-400",
+            dataAge === null && "text-white/70"
           )} />
           {getLensLabel(activeLens)}
         </Badge>
         {dataAge !== null && (
           <span className={cn(
             "font-mono text-sm font-medium",
-            dataFresh && "text-green-500",
-            dataStale && "text-amber-500",
-            !dataFresh && !dataStale && "text-red-500"
+            dataFresh && "text-green-400",
+            dataStale && "text-amber-400",
+            !dataFresh && !dataStale && "text-red-400"
           )}>
             {formatAge(dataAge)}
           </span>
