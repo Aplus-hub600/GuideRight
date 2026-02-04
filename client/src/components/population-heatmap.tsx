@@ -267,25 +267,6 @@ export function PopulationLegend({ data, isLoading = false, onRefresh, mapStyle 
         <span>High</span>
       </div>
       
-      {/* Keyboard Shortcuts */}
-      <div style={{
-        marginTop: 8,
-        paddingTop: 8,
-        borderTop: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.1)',
-        fontSize: 9,
-        color: isDark ? '#9ca3af' : '#6b7280'
-      }}>
-        <div style={{ fontWeight: 600, marginBottom: 4, fontSize: 8, color: isDark ? '#60a5fa' : '#3b82f6' }}>
-          KEYBOARD SHORTCUTS
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-          <span>G</span><span style={{ textAlign: 'right' }}>Crosshair</span>
-          <span>Arrows</span><span style={{ textAlign: 'right' }}>Move</span>
-          <span>Enter</span><span style={{ textAlign: 'right' }}>Sample</span>
-          <span>Alt+P</span><span style={{ textAlign: 'right' }}>Pin</span>
-        </div>
-      </div>
-      
       {/* Metadata */}
       {gridData && (
         <div style={{ 
