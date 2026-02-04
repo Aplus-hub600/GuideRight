@@ -105,34 +105,41 @@ function TacticalMapStatus({
   }
   
   return (
-    <div className="flex items-center gap-1 bg-background/95 backdrop-blur-sm border-l border-b px-2 py-1">
+    <div className="flex items-center gap-3 bg-background/95 backdrop-blur-sm border-l border-b px-3 py-1.5 rounded-bl-md">
       {/* Zulu Time */}
-      <div className="flex items-center gap-1 px-2 border-r border-border/50">
-        <Clock className="h-3 w-3 text-muted-foreground" />
-        <span className="font-mono text-xs font-medium">{formatZulu()}</span>
+      <div className="flex items-center gap-1.5">
+        <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+        <span className="font-mono text-sm font-medium">{formatZulu()}</span>
       </div>
+      
+      <div className="w-px h-4 bg-border" />
       
       {/* Coordinates */}
       {aoi && (
-        <div className="flex items-center gap-1 px-2 border-r border-border/50">
-          <Navigation className="h-3 w-3 text-muted-foreground" />
-          <span className="font-mono text-xs">
-            {aoi.lat.toFixed(4)}°, {aoi.lng.toFixed(4)}°
-          </span>
-        </div>
+        <>
+          <div className="flex items-center gap-1.5">
+            <Navigation className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="font-mono text-sm">
+              {aoi.lat.toFixed(4)}°, {aoi.lng.toFixed(4)}°
+            </span>
+          </div>
+          <div className="w-px h-4 bg-border" />
+        </>
       )}
       
       {/* Zoom Level */}
-      <div className="flex items-center gap-1 px-2 border-r border-border/50">
-        <Eye className="h-3 w-3 text-muted-foreground" />
-        <span className="font-mono text-xs">Z{zoomLevel}</span>
+      <div className="flex items-center gap-1.5">
+        <Eye className="h-3.5 w-3.5 text-muted-foreground" />
+        <span className="font-mono text-sm">Z{zoomLevel}</span>
       </div>
       
+      <div className="w-px h-4 bg-border" />
+      
       {/* Active Layer with Data Freshness */}
-      <div className="flex items-center gap-1.5">
-        <Badge variant="outline" className="text-[10px] font-bold gap-1">
+      <div className="flex items-center gap-2">
+        <Badge variant="outline" className="text-xs font-bold gap-1.5 px-2 py-0.5">
           <Radio className={cn(
-            "h-2.5 w-2.5",
+            "h-3 w-3",
             dataFresh && "text-green-500",
             dataStale && "text-amber-500",
             dataAge !== null && !dataFresh && !dataStale && "text-red-500",
@@ -142,7 +149,7 @@ function TacticalMapStatus({
         </Badge>
         {dataAge !== null && (
           <span className={cn(
-            "font-mono text-[10px]",
+            "font-mono text-sm font-medium",
             dataFresh && "text-green-500",
             dataStale && "text-amber-500",
             !dataFresh && !dataStale && "text-red-500"
