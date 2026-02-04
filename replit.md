@@ -51,6 +51,9 @@ Preferred communication style: Simple, everyday language.
 - **Quick Actions**: PMESII, Threats, SITREP, Infra, HUMINT tactical queries with keyboard shortcuts (Alt+1-5)
 - **Keyboard Navigation**: Alt+1-5 for quick actions, Escape to clear input, optimized for fast-paced field environments
 - **Population Density Grid**: 40x40 deterministic grid with click-to-sample functionality for population analysis
+- **Tactical Density Sample**: Operational context display showing crowd potential (CRITICAL/HIGH/MODERATE/LOW), evacuation time estimates, movement difficulty rating (4-bar visual), and ops recommendations
+- **Grid Crosshair Navigation**: Keyboard-navigable crosshair (G to toggle, Arrow keys to move, Shift+Arrow for 3x speed, Enter to sample) for precise population density sampling
+- **Sample Pinning**: Alt+P to pin density samples (max 10 pins) with numbered markers, info popups, and toast feedback for briefing preparation
 
 ### Security & Performance
 - **Environment Configuration**: Secure API key management through environment variables
