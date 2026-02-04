@@ -102,6 +102,248 @@ const LENS_OPTIONS: LensConfig[] = [
   }
 ]
 
+/**
+ * Calculate tactical operational context from population density
+ * Provides estimates for crowd potential, evacuation time, and movement difficulty
+ */
+function getTacticalContext(sample: DensitySample): {
+  crowdPotential: { level: string; estimate: string; description: string }
+  evacuationTime: { level: string; estimate: string; description: string }
+  movementDifficulty: { level: string; rating: number; description: string }
+  opsRecommendation: string
+} {
+  const density = sample.rawDensity
+  
+  // Crowd potential: people per km² in a 500m radius observation area (~0.8 km²)
+  const observationArea = 0.8 // km²
+  const potentialCrowd = Math.round(density * observationArea)
+  
+  let crowdPotential: { level: string; estimate: string; description: string }
+  let evacuationTime: { level: string; estimate: string; description: string }
+  let movementDifficulty: { level: string; rating: number; description: string }
+  let opsRecommendation: string
+  
+  if (density >= 20000) {
+    // High density - urban core
+    crowdPotential = {
+      level: "CRITICAL",
+      estimate: `${(potentialCrowd / 1000).toFixed(1)}K+`,
+      description: "Mass gathering potential"
+    }
+    evacuationTime = {
+      level: "EXTENDED",
+      estimate: "45-90 min",
+      description: "Congested routes, multiple choke points"
+    }
+    movementDifficulty = {
+      level: "RESTRICTED",
+      rating: 4,
+      description: "Vehicle movement severely limited"
+    }
+    opsRecommendation = "Recommend foot patrol only. Plan multiple egress routes. High signature risk."
+  } else if (density >= 10000) {
+    // Medium-high density
+    crowdPotential = {
+      level: "HIGH",
+      estimate: `${(potentialCrowd / 1000).toFixed(1)}K`,
+      description: "Significant crowd potential"
+    }
+    evacuationTime = {
+      level: "MODERATE",
+      estimate: "20-45 min",
+      description: "Traffic delays expected"
+    }
+    movementDifficulty = {
+      level: "DIFFICULT",
+      rating: 3,
+      description: "Limited vehicle options"
+    }
+    opsRecommendation = "Mixed patrol viable. Pre-plan primary and alternate routes. Medium signature."
+  } else if (density >= 5000) {
+    // Medium density
+    crowdPotential = {
+      level: "MODERATE",
+      estimate: `${potentialCrowd.toLocaleString()}`,
+      description: "Moderate crowd gatherings possible"
+    }
+    evacuationTime = {
+      level: "STANDARD",
+      estimate: "10-20 min",
+      description: "Normal traffic conditions"
+    }
+    movementDifficulty = {
+      level: "MANAGEABLE",
+      rating: 2,
+      description: "Standard vehicle movement"
+    }
+    opsRecommendation = "Vehicle patrol effective. Standard security posture. Low-medium signature."
+  } else {
+    // Low density
+    crowdPotential = {
+      level: "LOW",
+      estimate: `${potentialCrowd.toLocaleString()}`,
+      description: "Minimal crowd risk"
+    }
+    evacuationTime = {
+      level: "RAPID",
+      estimate: "<10 min",
+      description: "Clear routes available"
+    }
+    movementDifficulty = {
+      level: "UNRESTRICTED",
+      rating: 1,
+      description: "Full vehicle access"
+    }
+    opsRecommendation = "All movement types viable. Good observation lines. Low signature environment."
+  }
+  
+  return { crowdPotential, evacuationTime, movementDifficulty, opsRecommendation }
+}
+
+/**
+ * TacticalDensitySample - Enhanced density display with operational context
+ */
+function TacticalDensitySample({ 
+  sample, 
+  onClose 
+}: { 
+  sample: DensitySample
+  onClose?: () => void 
+}) {
+  const tactical = getTacticalContext(sample)
+  
+  return (
+    <div className="p-3 bg-gradient-to-r from-green-500/10 via-yellow-500/10 to-red-500/10 border border-primary/20 rounded-md">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <Users className="h-4 w-4 text-primary" />
+          <span className="text-sm font-bold text-foreground">POPULATION SAMPLE</span>
+          <Badge 
+            className={cn(
+              "text-[10px] uppercase",
+              sample.label === 'High' && "bg-red-500/20 text-red-400 border-red-500/30",
+              sample.label === 'Medium' && "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
+              sample.label === 'Low' && "bg-green-500/20 text-green-400 border-green-500/30"
+            )}
+          >
+            {sample.label}
+          </Badge>
+        </div>
+        {onClose && (
+          <Button variant="ghost" size="sm" onClick={onClose} className="h-6 w-6 p-0">
+            <X className="h-3 w-3" />
+          </Button>
+        )}
+      </div>
+      
+      {/* Core Metrics */}
+      <div className="grid grid-cols-2 gap-2 text-xs mb-3">
+        <div className="bg-background/50 rounded p-2">
+          <span className="text-muted-foreground block text-[10px]">GRID REF</span>
+          <span className="font-mono text-foreground">
+            {sample.lat.toFixed(4)}N, {sample.lng.toFixed(4)}E
+          </span>
+        </div>
+        <div className="bg-background/50 rounded p-2">
+          <span className="text-muted-foreground block text-[10px]">EST. DENSITY</span>
+          <span className="font-mono text-foreground font-bold">
+            {sample.rawDensity.toLocaleString()}/km²
+          </span>
+        </div>
+      </div>
+      
+      {/* Tactical Context - Operational Implications */}
+      <div className="border-t border-border/50 pt-2 mb-2">
+        <div className="text-[10px] font-semibold text-muted-foreground mb-2 flex items-center gap-1">
+          <Shield className="h-3 w-3" />
+          OPERATIONAL CONTEXT
+        </div>
+        <div className="grid grid-cols-3 gap-2 text-xs">
+          {/* Crowd Potential */}
+          <div className="bg-background/50 rounded p-2">
+            <div className="flex items-center gap-1 mb-1">
+              <Users className="h-3 w-3 text-muted-foreground" />
+              <span className="text-[9px] text-muted-foreground">CROWD POT.</span>
+            </div>
+            <Badge 
+              variant="outline" 
+              className={cn(
+                "text-[10px] w-full justify-center",
+                tactical.crowdPotential.level === "CRITICAL" && "border-red-500/50 text-red-400",
+                tactical.crowdPotential.level === "HIGH" && "border-orange-500/50 text-orange-400",
+                tactical.crowdPotential.level === "MODERATE" && "border-yellow-500/50 text-yellow-400",
+                tactical.crowdPotential.level === "LOW" && "border-green-500/50 text-green-400"
+              )}
+            >
+              {tactical.crowdPotential.estimate}
+            </Badge>
+          </div>
+          
+          {/* Evacuation Time */}
+          <div className="bg-background/50 rounded p-2">
+            <div className="flex items-center gap-1 mb-1">
+              <Clock className="h-3 w-3 text-muted-foreground" />
+              <span className="text-[9px] text-muted-foreground">EVAC TIME</span>
+            </div>
+            <Badge 
+              variant="outline" 
+              className={cn(
+                "text-[10px] w-full justify-center",
+                tactical.evacuationTime.level === "EXTENDED" && "border-red-500/50 text-red-400",
+                tactical.evacuationTime.level === "MODERATE" && "border-yellow-500/50 text-yellow-400",
+                tactical.evacuationTime.level === "STANDARD" && "border-blue-500/50 text-blue-400",
+                tactical.evacuationTime.level === "RAPID" && "border-green-500/50 text-green-400"
+              )}
+            >
+              {tactical.evacuationTime.estimate}
+            </Badge>
+          </div>
+          
+          {/* Movement Difficulty */}
+          <div className="bg-background/50 rounded p-2">
+            <div className="flex items-center gap-1 mb-1">
+              <Truck className="h-3 w-3 text-muted-foreground" />
+              <span className="text-[9px] text-muted-foreground">MOVEMENT</span>
+            </div>
+            <div className="flex gap-0.5 justify-center">
+              {[1, 2, 3, 4].map((level) => (
+                <div 
+                  key={level}
+                  className={cn(
+                    "w-3 h-3 rounded-sm",
+                    level <= tactical.movementDifficulty.rating 
+                      ? tactical.movementDifficulty.rating >= 4 
+                        ? "bg-red-500" 
+                        : tactical.movementDifficulty.rating >= 3 
+                          ? "bg-orange-500" 
+                          : tactical.movementDifficulty.rating >= 2 
+                            ? "bg-yellow-500" 
+                            : "bg-green-500"
+                      : "bg-muted/50"
+                  )}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {/* Ops Recommendation */}
+      <div className="bg-primary/5 border border-primary/20 rounded p-2 text-xs">
+        <div className="text-[9px] font-semibold text-primary mb-1">OPS ASSESSMENT</div>
+        <p className="text-foreground/90 leading-relaxed">{tactical.opsRecommendation}</p>
+      </div>
+      
+      {/* Footer */}
+      <div className="mt-2 pt-2 border-t border-border/50 text-[9px] text-muted-foreground flex items-center justify-between">
+        <span>Source: {sample.source}</span>
+        <span>Sampled: {new Date(sample.timestamp).toLocaleTimeString()}</span>
+      </div>
+    </div>
+  )
+}
+
 interface IntelligencePanelProps {
   currentAOI: AOI
   activeTopPanel: NavSection | null
@@ -330,63 +572,12 @@ export function IntelligencePanel({
           </div>
         </div>
 
-        {/* Population Density Sample Display - Shows when clicking map in human-activity lens */}
+        {/* Tactical Population Density Sample - Enhanced with operational context */}
         {densitySample && activeLens === "human-activity" && (
-          <div className="p-3 bg-gradient-to-r from-green-500/10 via-yellow-500/10 to-red-500/10 border border-primary/20 rounded-md">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <Users className="h-4 w-4 text-primary" />
-                <span className="text-sm font-semibold text-foreground">Population Density Sample</span>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onClearDensitySample}
-                className="h-6 w-6 p-0"
-              >
-                <X className="h-3 w-3" />
-              </Button>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div>
-                <span className="text-muted-foreground">Location:</span>
-                <p className="font-mono text-foreground/90">
-                  {densitySample.lat.toFixed(4)}, {densitySample.lng.toFixed(4)}
-                </p>
-              </div>
-              <div>
-                <span className="text-muted-foreground">Relative Density:</span>
-                <div className="flex items-center gap-2">
-                  <Badge 
-                    className={cn(
-                      "text-xs",
-                      densitySample.label === 'High' && "bg-red-500/20 text-red-400 border-red-500/30",
-                      densitySample.label === 'Medium' && "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
-                      densitySample.label === 'Low' && "bg-green-500/20 text-green-400 border-green-500/30"
-                    )}
-                  >
-                    {densitySample.label}
-                  </Badge>
-                  <span className="font-mono text-foreground">({densitySample.density.toFixed(2)})</span>
-                </div>
-              </div>
-              <div>
-                <span className="text-muted-foreground">Est. Density:</span>
-                <p className="font-medium text-foreground">{densitySample.rawDensity.toLocaleString()}/km²</p>
-              </div>
-              <div>
-                <span className="text-muted-foreground">Urban Level:</span>
-                <Badge variant="outline" className="text-xs capitalize">
-                  {densitySample.urbanLevel}
-                </Badge>
-              </div>
-            </div>
-            
-            <div className="mt-2 pt-2 border-t border-border/50 text-[10px] text-muted-foreground">
-              Source: {densitySample.source} · Sampled: {new Date(densitySample.timestamp).toLocaleTimeString()}
-            </div>
-          </div>
+          <TacticalDensitySample 
+            sample={densitySample} 
+            onClose={onClearDensitySample}
+          />
         )}
       </div>
 

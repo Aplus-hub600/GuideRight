@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Target, Layers, MapPin, Crosshair, ZoomIn, ZoomOut, Loader2, Clock, Navigation, Radio, Eye } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
+import { useToast } from "@/hooks/use-toast"
 import { INFRASTRUCTURE_NODES, type InfrastructureNode } from "./map-infrastructure-layer"
 import { LensLegend, SmartMapControls, type MapLens } from "./map-lens-selector"
 import { SmartIntelLegend, GOLDSTEIN_CATEGORIES, type GoldsteinCategory, type GdeltEvent, type GdeltDoc } from "./map-intel-layer"
@@ -196,6 +197,259 @@ export interface DensitySample {
   label: string
   timestamp: string
   source: string
+}
+
+/**
+ * GridCrosshair - Keyboard-navigable crosshair for precise grid sampling
+ * G to toggle, Arrow keys to move (Shift for fast), Enter to sample, Escape to hide
+ */
+function GridCrosshair({
+  visible,
+  onSample,
+  initialPosition
+}: {
+  visible: boolean
+  onSample: (sample: DensitySample) => void
+  initialPosition?: { lat: number; lng: number }
+}) {
+  const map = useMap()
+  const [crosshairPosition, setCrosshairPosition] = useState<{ lat: number; lng: number } | null>(null)
+  const [showCrosshair, setShowCrosshair] = useState(false)
+  
+  // Grid step size based on 40x40 grid over ~30km area
+  const GRID_STEP = 0.0075 // approximately 750m
+  
+  // Initialize crosshair position from map center or initial position
+  useEffect(() => {
+    if (visible && map && !crosshairPosition) {
+      const center = map.getCenter()
+      if (center) {
+        setCrosshairPosition(initialPosition || { lat: center.lat(), lng: center.lng() })
+      }
+    }
+  }, [visible, map, crosshairPosition, initialPosition])
+  
+  // Keyboard handler for crosshair navigation
+  useEffect(() => {
+    if (!visible || !map) return
+    
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Skip if in interactive element
+      const target = e.target as HTMLElement
+      const tagName = target.tagName.toLowerCase()
+      if (tagName === 'input' || tagName === 'textarea' || tagName === 'select' || 
+          target.isContentEditable || 
+          target.getAttribute('role') === 'textbox' ||
+          target.getAttribute('role') === 'combobox') {
+        return
+      }
+      
+      // Toggle crosshair with G key
+      if (e.key.toLowerCase() === 'g' && !e.ctrlKey && !e.altKey && !e.shiftKey) {
+        e.preventDefault()
+        setShowCrosshair(prev => !prev)
+        if (!crosshairPosition && map) {
+          const center = map.getCenter()
+          if (center) {
+            setCrosshairPosition({ lat: center.lat(), lng: center.lng() })
+          }
+        }
+        return
+      }
+      
+      if (!showCrosshair || !crosshairPosition) return
+      
+      // Arrow key navigation
+      if (e.key === 'ArrowUp' || e.key === 'ArrowDown' || e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+        e.preventDefault()
+        const step = e.shiftKey ? GRID_STEP * 3 : GRID_STEP // Shift for faster movement
+        
+        setCrosshairPosition(prev => {
+          if (!prev) return prev
+          let newLat = prev.lat
+          let newLng = prev.lng
+          
+          switch (e.key) {
+            case 'ArrowUp': newLat += step; break
+            case 'ArrowDown': newLat -= step; break
+            case 'ArrowRight': newLng += step; break
+            case 'ArrowLeft': newLng -= step; break
+          }
+          
+          // Pan map to keep crosshair visible
+          if (map) {
+            const bounds = map.getBounds()
+            if (bounds && !bounds.contains({ lat: newLat, lng: newLng })) {
+              map.panTo({ lat: newLat, lng: newLng })
+            }
+          }
+          
+          return { lat: newLat, lng: newLng }
+        })
+        return
+      }
+      
+      // Enter to sample
+      if (e.key === 'Enter' && crosshairPosition) {
+        e.preventDefault()
+        const grid = getPopulationGrid()
+        const sample = sampleDensityAtLocation(crosshairPosition.lat, crosshairPosition.lng, grid)
+        if (sample) {
+          onSample({
+            lat: crosshairPosition.lat,
+            lng: crosshairPosition.lng,
+            density: sample.density,
+            rawDensity: sample.rawDensity,
+            urbanLevel: sample.urbanLevel,
+            label: sample.label,
+            timestamp: grid.timestamp,
+            source: grid.source
+          })
+        }
+        return
+      }
+      
+      // Escape to hide crosshair
+      if (e.key === 'Escape') {
+        setShowCrosshair(false)
+        return
+      }
+    }
+    
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [visible, map, showCrosshair, crosshairPosition, onSample])
+  
+  if (!visible || !showCrosshair || !crosshairPosition) return null
+  
+  return (
+    <AdvancedMarker position={crosshairPosition}>
+      <div className="relative flex items-center justify-center">
+        {/* Crosshair reticle */}
+        <div className="absolute w-12 h-12 flex items-center justify-center">
+          <div className="absolute w-12 h-0.5 bg-cyan-400 shadow-lg shadow-cyan-400/50" />
+          <div className="absolute w-0.5 h-12 bg-cyan-400 shadow-lg shadow-cyan-400/50" />
+          <div className="absolute w-6 h-6 border-2 border-cyan-400 rounded-full animate-pulse" />
+          <div className="absolute w-2 h-2 bg-cyan-400 rounded-full" />
+        </div>
+        {/* Position indicator */}
+        <div 
+          className="absolute top-14 left-1/2 -translate-x-1/2 whitespace-nowrap bg-black/90 text-cyan-400 px-2 py-1 rounded text-xs font-mono"
+          style={{ minWidth: 120, textAlign: 'center' }}
+        >
+          {crosshairPosition.lat.toFixed(4)}, {crosshairPosition.lng.toFixed(4)}
+        </div>
+      </div>
+    </AdvancedMarker>
+  )
+}
+
+/**
+ * PinnedSampleMarker - Displays a pinned density sample on the map
+ */
+function PinnedSampleMarker({ 
+  sample, 
+  index, 
+  onRemove 
+}: { 
+  sample: DensitySample
+  index: number
+  onRemove: () => void 
+}) {
+  const [showInfo, setShowInfo] = useState(false)
+  
+  const bgColor = sample.label === 'High' 
+    ? 'bg-red-500' 
+    : sample.label === 'Medium' 
+      ? 'bg-yellow-500' 
+      : 'bg-green-500'
+  
+  return (
+    <>
+      <AdvancedMarker 
+        position={{ lat: sample.lat, lng: sample.lng }}
+        onClick={() => setShowInfo(true)}
+      >
+        <div className="relative">
+          <div className={cn(
+            "w-6 h-6 rounded-full border-2 border-white shadow-lg flex items-center justify-center text-white text-xs font-bold",
+            bgColor
+          )}>
+            {index + 1}
+          </div>
+          <div className="absolute -top-1 -right-1 w-3 h-3 bg-primary rounded-full border border-white" />
+        </div>
+      </AdvancedMarker>
+      {showInfo && (
+        <InfoWindow
+          position={{ lat: sample.lat, lng: sample.lng }}
+          onCloseClick={() => setShowInfo(false)}
+        >
+          <div style={{ padding: 8, fontFamily: "system-ui", minWidth: 180 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+              <strong style={{ fontSize: 12 }}>PIN #{index + 1}</strong>
+              <button 
+                onClick={onRemove}
+                style={{ 
+                  background: '#ef4444', 
+                  color: 'white', 
+                  border: 'none', 
+                  padding: '2px 6px', 
+                  borderRadius: 4, 
+                  fontSize: 10,
+                  cursor: 'pointer'
+                }}
+              >
+                Remove
+              </button>
+            </div>
+            <div style={{ fontSize: 11, color: '#666' }}>
+              <div style={{ marginBottom: 4 }}>
+                <span style={{ fontWeight: 600 }}>Location:</span> {sample.lat.toFixed(4)}, {sample.lng.toFixed(4)}
+              </div>
+              <div style={{ marginBottom: 4 }}>
+                <span style={{ fontWeight: 600 }}>Density:</span> {sample.rawDensity.toLocaleString()}/km²
+              </div>
+              <div style={{ marginBottom: 4 }}>
+                <span style={{ fontWeight: 600 }}>Level:</span> {sample.label} ({sample.urbanLevel})
+              </div>
+              <div style={{ fontSize: 10, color: '#999' }}>
+                Sampled: {new Date(sample.timestamp).toLocaleTimeString()}
+              </div>
+            </div>
+          </div>
+        </InfoWindow>
+      )}
+    </>
+  )
+}
+
+/**
+ * PinnedSamplesLayer - Manages and displays pinned density samples
+ */
+function PinnedSamplesLayer({
+  visible,
+  pinnedSamples,
+  onRemoveSample
+}: {
+  visible: boolean
+  pinnedSamples: DensitySample[]
+  onRemoveSample: (index: number) => void
+}) {
+  if (!visible || pinnedSamples.length === 0) return null
+  
+  return (
+    <>
+      {pinnedSamples.map((sample, index) => (
+        <PinnedSampleMarker
+          key={`${sample.lat}-${sample.lng}-${index}`}
+          sample={sample}
+          index={index}
+          onRemove={() => onRemoveSample(index)}
+        />
+      ))}
+    </>
+  )
 }
 
 function MapClickHandler({ 
@@ -572,8 +826,64 @@ function GoogleMapsContent({
   setSelectedInfraNode: (node: InfrastructureNode | null) => void
 }) {
   const map = useMap()
+  const { toast } = useToast()
   const [hiddenCategories, setHiddenCategories] = useState<Set<GoldsteinCategory>>(new Set())
   const [lensTimestamps, setLensTimestamps] = useState<LensDataTimestamps>({ infrastructure: new Date() })
+  const [pinnedSamples, setPinnedSamples] = useState<DensitySample[]>([])
+  const [lastSample, setLastSample] = useState<DensitySample | null>(null)
+  
+  // Handle density sample and track last sample for pinning
+  const handleDensitySample = useCallback((sample: DensitySample) => {
+    setLastSample(sample)
+    if (onDensitySample) {
+      onDensitySample(sample)
+    }
+  }, [onDensitySample])
+  
+  // Pin sample handler with toast feedback
+  const handlePinSample = useCallback(() => {
+    if (!lastSample) {
+      toast({
+        title: "No sample to pin",
+        description: "Click on the map or use crosshair (G) to sample first",
+        variant: "destructive"
+      })
+      return
+    }
+    
+    if (pinnedSamples.length >= 10) {
+      toast({
+        title: "Max pins reached",
+        description: "Remove existing pins to add new ones (max 10)",
+        variant: "destructive"
+      })
+      return
+    }
+    
+    // Check if already pinned at this location
+    const alreadyPinned = pinnedSamples.some(
+      s => Math.abs(s.lat - lastSample.lat) < 0.0001 && Math.abs(s.lng - lastSample.lng) < 0.0001
+    )
+    
+    if (alreadyPinned) {
+      toast({
+        title: "Already pinned",
+        description: "This location is already pinned"
+      })
+      return
+    }
+    
+    setPinnedSamples(prev => [...prev, lastSample])
+    toast({
+      title: `Pin #${pinnedSamples.length + 1} added`,
+      description: `${lastSample.rawDensity.toLocaleString()}/km² at ${lastSample.lat.toFixed(4)}, ${lastSample.lng.toFixed(4)}`
+    })
+  }, [lastSample, pinnedSamples, toast])
+  
+  // Remove pinned sample
+  const handleRemovePinnedSample = useCallback((index: number) => {
+    setPinnedSamples(prev => prev.filter((_, i) => i !== index))
+  }, [])
   
   // Fetch GDELT data when intel lens is active
   const { data: intelData, refetch: refetchIntel, isLoading: intelLoading } = useQuery({
@@ -721,6 +1031,14 @@ function GoogleMapsContent({
         }
       }
       
+      // Alt+P to pin current sample (when in human-activity lens)
+      if (e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey && e.key.toUpperCase() === 'P') {
+        if (activeLens === "human-activity") {
+          e.preventDefault()
+          handlePinSample()
+        }
+      }
+      
       // Layer shortcuts with Shift
       if (e.shiftKey && !e.altKey && !e.ctrlKey && !e.metaKey) {
         switch (e.key.toUpperCase()) {
@@ -746,7 +1064,7 @@ function GoogleMapsContent({
     
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [aoi, handleCenterOnAOI, handleZoomIn, handleZoomOut, setMapStyle, setActiveLens])
+  }, [aoi, handleCenterOnAOI, handleZoomIn, handleZoomOut, setMapStyle, setActiveLens, activeLens, handlePinSample])
 
   return (
     <>
@@ -754,7 +1072,7 @@ function GoogleMapsContent({
       <ZoomController onZoomChange={setZoomLevel} />
       <MapClickHandler 
         onAOIChange={onAOIChange} 
-        onDensitySample={onDensitySample}
+        onDensitySample={handleDensitySample}
         activeLens={activeLens}
       />
       
@@ -772,6 +1090,16 @@ function GoogleMapsContent({
       />
       <PopulationHeatmapLayer
         visible={activeLens === "human-activity"}
+      />
+      <GridCrosshair
+        visible={activeLens === "human-activity"}
+        onSample={handleDensitySample}
+        initialPosition={aoi ? { lat: aoi.lat, lng: aoi.lng } : undefined}
+      />
+      <PinnedSamplesLayer
+        visible={activeLens === "human-activity"}
+        pinnedSamples={pinnedSamples}
+        onRemoveSample={handleRemovePinnedSample}
       />
       <TrafficLayer visible={activeLens === "logistics"} />
       <IntelHeatmapLayer 
