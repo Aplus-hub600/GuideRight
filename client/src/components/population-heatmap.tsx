@@ -16,13 +16,15 @@ interface PopulationHeatmapProps {
   onDataReady?: (data: PopulationGridData) => void
 }
 
-// 5-level tactical density classification
+// 5-level tactical density classification with correct thresholds
+// Note: density values are normalized 0-1 where 1.0 = 54000/km² (max in our data)
+// Thresholds: CRITICAL >40k (0.74), HIGH 25-40k (0.46), MODERATE 12-25k (0.22), LOW 5-12k (0.09), MINIMAL <5k (0)
 export const DENSITY_LEVELS = [
-  { id: 'critical', label: 'CRITICAL', threshold: 0.8, fill: 'rgba(127, 29, 29, 0.75)', border: 'rgba(69, 10, 10, 0.9)', value: '>40k/km²', tooltip: 'Extreme density - mass casualty risk' },
-  { id: 'high', label: 'HIGH', threshold: 0.6, fill: 'rgba(185, 28, 28, 0.7)', border: 'rgba(127, 29, 29, 0.85)', value: '25-40k/km²', tooltip: 'High density urban core' },
-  { id: 'moderate', label: 'MODERATE', threshold: 0.4, fill: 'rgba(217, 119, 6, 0.65)', border: 'rgba(180, 83, 9, 0.8)', value: '12-25k/km²', tooltip: 'Urban/commercial areas' },
-  { id: 'low', label: 'LOW', threshold: 0.2, fill: 'rgba(22, 163, 74, 0.55)', border: 'rgba(21, 128, 61, 0.7)', value: '5-12k/km²', tooltip: 'Suburban residential' },
-  { id: 'minimal', label: 'MINIMAL', threshold: 0, fill: 'rgba(34, 197, 94, 0.4)', border: 'rgba(22, 163, 74, 0.55)', value: '<5k/km²', tooltip: 'Low density/rural' }
+  { id: 'critical', label: 'CRITICAL', threshold: 0.74, fill: 'rgba(220, 38, 38, 0.85)', border: 'rgba(153, 27, 27, 1)', value: '>40k/km²', tooltip: 'Extreme density - mass casualty risk' },
+  { id: 'high', label: 'HIGH', threshold: 0.46, fill: 'rgba(249, 115, 22, 0.8)', border: 'rgba(194, 65, 12, 0.95)', value: '25-40k/km²', tooltip: 'High density urban core' },
+  { id: 'moderate', label: 'MODERATE', threshold: 0.22, fill: 'rgba(250, 204, 21, 0.75)', border: 'rgba(202, 138, 4, 0.9)', value: '12-25k/km²', tooltip: 'Urban/commercial areas' },
+  { id: 'low', label: 'LOW', threshold: 0.09, fill: 'rgba(132, 204, 22, 0.65)', border: 'rgba(77, 124, 15, 0.8)', value: '5-12k/km²', tooltip: 'Suburban residential' },
+  { id: 'minimal', label: 'MINIMAL', threshold: 0, fill: 'rgba(34, 197, 94, 0.5)', border: 'rgba(22, 163, 74, 0.65)', value: '<5k/km²', tooltip: 'Low density/rural' }
 ]
 
 // Get density level for a normalized value
@@ -341,8 +343,9 @@ export function PopulationLegend({ data, isLoading = false, onRefresh, mapStyle 
             <span style={{ 
               fontSize: 10, 
               color: level.id === 'critical' ? (isDark ? '#fca5a5' : '#dc2626') :
-                     level.id === 'high' ? (isDark ? '#fca5a5' : '#dc2626') :
-                     level.id === 'moderate' ? (isDark ? '#fcd34d' : '#d97706') :
+                     level.id === 'high' ? (isDark ? '#fdba74' : '#ea580c') :
+                     level.id === 'moderate' ? (isDark ? '#fde047' : '#ca8a04') :
+                     level.id === 'low' ? (isDark ? '#bef264' : '#65a30d') :
                      (isDark ? '#86efac' : '#16a34a'),
               fontWeight: 600,
               minWidth: 65,
