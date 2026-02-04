@@ -461,27 +461,12 @@ export function IntelligencePanel({
 
   return (
     <div ref={panelRef} className={cn("flex flex-col overflow-hidden bg-card", className)}>
-      {/* Mission Status Bar with Zulu Time */}
-      <div className="flex items-center justify-between px-3 py-1.5 bg-muted/60 border-b text-[11px] flex-shrink-0">
-        <MissionClock compact />
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5 text-foreground/70">
-            <Shield className="h-3 w-3" />
-            <span>OPSEC</span>
-          </div>
-          <DataFreshness lastUpdated={new Date()} />
-        </div>
-      </div>
-
-      {/* Header - matches map header padding (p-3) */}
+      {/* Header - clean, no duplicate info from map status bar */}
       <div className="flex-shrink-0 p-3 border-b bg-card space-y-3">
         {/* Row 1: AOI + Risk Badge + Export */}
         <div className="flex items-center justify-between gap-2">
           <div className="min-w-0">
             <h1 className="text-lg font-semibold truncate text-foreground">{currentAOI.name || "Area of Interest"}</h1>
-            <p className="text-sm text-foreground/70">
-              {currentAOI.lat.toFixed(4)}, {currentAOI.lng.toFixed(4)}
-            </p>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             <Button 
