@@ -278,3 +278,98 @@ export function getPopulationGrid(): PopulationGridData {
   }
   return cachedGrid
 }
+
+/**
+ * Route Exposure Analysis
+ * Calculates exposure level along a route based on activity density
+ * Returns qualitative assessment per whitepaper philosophy
+ */
+export interface RouteExposureAnalysis {
+  exposureLevel: 'lower' | 'moderate' | 'elevated' | 'higher'
+  avgDensity: number
+  maxDensity: number
+  samples: number
+  description: string
+  recommendation: string
+}
+
+export function analyzeRouteExposure(
+  coordinates: [number, number][], // [lng, lat] format
+  grid: PopulationGridData
+): RouteExposureAnalysis {
+  if (coordinates.length < 2) {
+    return {
+      exposureLevel: 'lower',
+      avgDensity: 0,
+      maxDensity: 0,
+      samples: 0,
+      description: 'Insufficient route data',
+      recommendation: 'Unable to assess'
+    }
+  }
+  
+  // Sample density at multiple points along the route
+  const densities: number[] = []
+  
+  for (let i = 0; i < coordinates.length - 1; i++) {
+    const [lng1, lat1] = coordinates[i]
+    const [lng2, lat2] = coordinates[i + 1]
+    
+    // Sample start, middle, and end of each segment
+    for (let t = 0; t <= 1; t += 0.25) {
+      const lat = lat1 + (lat2 - lat1) * t
+      const lng = lng1 + (lng2 - lng1) * t
+      
+      const sample = sampleDensityAtLocation(lat, lng, grid)
+      if (sample) {
+        densities.push(sample.density)
+      }
+    }
+  }
+  
+  if (densities.length === 0) {
+    return {
+      exposureLevel: 'lower',
+      avgDensity: 0,
+      maxDensity: 0,
+      samples: 0,
+      description: 'Route outside coverage area',
+      recommendation: 'No activity data available'
+    }
+  }
+  
+  const avgDensity = densities.reduce((a, b) => a + b, 0) / densities.length
+  const maxDensity = Math.max(...densities)
+  
+  // Determine exposure level using qualitative bands
+  let exposureLevel: 'lower' | 'moderate' | 'elevated' | 'higher'
+  let description: string
+  let recommendation: string
+  
+  if (avgDensity >= 0.55 || maxDensity >= 0.70) {
+    exposureLevel = 'higher'
+    description = 'Route passes through concentrated activity areas'
+    recommendation = 'Consider alternate corridor if available'
+  } else if (avgDensity >= 0.35 || maxDensity >= 0.50) {
+    exposureLevel = 'elevated'
+    description = 'Route has elevated activity exposure'
+    recommendation = 'Maintain situational awareness'
+  } else if (avgDensity >= 0.18 || maxDensity >= 0.30) {
+    exposureLevel = 'moderate'
+    description = 'Route shows moderate activity levels'
+    recommendation = 'Standard movement posture'
+  } else {
+    exposureLevel = 'lower'
+    description = 'Route through lower activity areas'
+    recommendation = 'Favorable movement corridor'
+  }
+  
+  return {
+    exposureLevel,
+    avgDensity: Math.round(avgDensity * 100) / 100,
+    maxDensity: Math.round(maxDensity * 100) / 100,
+    samples: densities.length,
+    description,
+    recommendation
+  }
+}

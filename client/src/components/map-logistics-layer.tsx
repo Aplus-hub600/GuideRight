@@ -1,7 +1,9 @@
 import { useEffect, useRef } from "react"
 import maplibregl from "maplibre-gl"
+import { getPopulationGrid, analyzeRouteExposure, type RouteExposureAnalysis } from "@/lib/population-grid"
 
 export type RouteStatus = "clear" | "congested" | "blocked" | "restricted"
+export type ExposureLevel = "lower" | "moderate" | "elevated" | "higher"
 export type SupplyType = "fuel" | "medical" | "food" | "general"
 
 export interface LogisticsRoute {
@@ -10,6 +12,7 @@ export interface LogisticsRoute {
   status: RouteStatus
   coordinates: [number, number][]
   notes?: string
+  exposure?: RouteExposureAnalysis
 }
 
 export interface SupplyPoint {
@@ -114,11 +117,29 @@ const SUPPLY_POINTS: SupplyPoint[] = [
   }
 ]
 
+// Legacy status colors (kept for compatibility)
 const routeColors: Record<RouteStatus, string> = {
   clear: "#22c55e",
   congested: "#f59e0b",
   blocked: "#ef4444",
   restricted: "#8b5cf6"
+}
+
+// Muted exposure-based colors (whitepaper aligned - restrained palette)
+const exposureColors: Record<ExposureLevel, string> = {
+  lower: "rgba(134, 148, 134, 0.9)",      // Muted sage green
+  moderate: "rgba(156, 133, 108, 0.9)",   // Muted tan
+  elevated: "rgba(142, 108, 95, 0.9)",    // Muted brown
+  higher: "rgba(127, 86, 96, 0.9)"        // Muted mauve
+}
+
+// Helper to analyze routes with exposure data
+function getRoutesWithExposure(): (LogisticsRoute & { exposure: RouteExposureAnalysis })[] {
+  const grid = getPopulationGrid()
+  return LOGISTICS_ROUTES.map(route => ({
+    ...route,
+    exposure: analyzeRouteExposure(route.coordinates, grid)
+  }))
 }
 
 const supplyIcons: Record<SupplyType, string> = {
@@ -160,12 +181,13 @@ export function useMapLogisticsLayer({
     
     const cleanupLayers = () => {
       if (!isMapValid(map)) return
-      for (let i = 1; i <= 4; i++) {
-        const layerId = `logistics-layer-route-${i}`
-        const sourceId = `logistics-route-route-${i}`
+      // Clean up layers using actual route IDs
+      LOGISTICS_ROUTES.forEach((route) => {
+        const layerId = `logistics-layer-${route.id}`
+        const sourceId = `logistics-route-${route.id}`
         if (map.getLayer(layerId)) map.removeLayer(layerId)
         if (map.getSource(sourceId)) map.removeSource(sourceId)
-      }
+      })
     }
     
     cleanupLayers()
@@ -173,27 +195,32 @@ export function useMapLogisticsLayer({
     if (!visible) return
     
     if (isMapValid(map)) {
-      LOGISTICS_ROUTES.forEach((route) => {
+      // Use exposure-analyzed routes for muted, whitepaper-aligned coloring
+      const routesWithExposure = getRoutesWithExposure()
+      
+      routesWithExposure.forEach((route) => {
         if (!isMapValid(map)) return
         const sourceId = `logistics-route-${route.id}`
         const layerId = `logistics-layer-${route.id}`
-        const color = routeColors[route.status]
+        // Use exposure-based color (muted palette) instead of status color
+        const color = exposureColors[route.exposure.exposureLevel]
         
         if (!map.getSource(sourceId)) {
           map.addSource(sourceId, {
             type: "geojson",
             data: {
               type: "Feature",
-              properties: { status: route.status },
+              properties: { 
+                status: route.status,
+                exposure: route.exposure.exposureLevel,
+                description: route.exposure.description
+              },
               geometry: {
                 type: "LineString",
                 coordinates: route.coordinates
               }
             }
           })
-          
-          const dashArray = route.status === "restricted" ? [4, 4] :
-                            route.status === "blocked" ? [2, 2] : undefined
           
           map.addLayer({
             id: layerId,
@@ -205,12 +232,67 @@ export function useMapLogisticsLayer({
             },
             paint: {
               "line-color": color,
-              "line-width": 4,
-              "line-opacity": 0.8,
-              ...(dashArray ? { "line-dasharray": dashArray } : {})
+              "line-width": 5,
+              "line-opacity": 0.85
             }
           })
         }
+        
+        // Add route label marker at midpoint with exposure info
+        const midIdx = Math.floor(route.coordinates.length / 2)
+        const midpoint = route.coordinates[midIdx]
+        
+        const exposureLabel = route.exposure.exposureLevel.charAt(0).toUpperCase() + 
+                              route.exposure.exposureLevel.slice(1)
+        
+        const routeEl = document.createElement("div")
+        routeEl.innerHTML = `
+          <div style="
+            padding: 4px 8px;
+            background: ${color};
+            border: 1px solid rgba(255,255,255,0.5);
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+            color: white;
+            white-space: nowrap;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+          ">
+            ${exposureLabel}
+          </div>
+        `
+        
+        const routePopup = new maplibregl.Popup({ offset: 15, closeButton: false }).setHTML(`
+          <div style="padding: 12px; font-family: system-ui; max-width: 220px;">
+            <strong style="color: #1a1a1a; font-size: 13px;">${route.name}</strong>
+            <div style="
+              margin-top: 8px; 
+              padding: 8px; 
+              background: #f5f5f5; 
+              border-radius: 4px;
+              border-left: 3px solid ${color};
+            ">
+              <div style="font-size: 11px; font-weight: 600; color: #555; text-transform: uppercase; margin-bottom: 4px;">
+                Exposure: ${exposureLabel}
+              </div>
+              <div style="font-size: 11px; color: #666; line-height: 1.4;">
+                ${route.exposure.description}
+              </div>
+            </div>
+            <div style="font-size: 10px; color: #888; margin-top: 8px; font-style: italic;">
+              ${route.exposure.recommendation}
+            </div>
+            ${route.notes ? `<div style="font-size: 10px; color: #999; margin-top: 6px; padding-top: 6px; border-top: 1px solid #eee;">${route.notes}</div>` : ""}
+          </div>
+        `)
+        
+        const routeMarker = new maplibregl.Marker({ element: routeEl })
+          .setLngLat(midpoint)
+          .setPopup(routePopup)
+          .addTo(map)
+        
+        markersRef.current.push(routeMarker)
       })
       
       SUPPLY_POINTS.forEach((point) => {
