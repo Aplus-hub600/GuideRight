@@ -16,28 +16,37 @@ interface PopulationHeatmapProps {
   onDataReady?: (data: PopulationGridData) => void
 }
 
+// 5-level tactical density classification
+export const DENSITY_LEVELS = [
+  { id: 'critical', label: 'CRITICAL', threshold: 0.8, fill: 'rgba(127, 29, 29, 0.75)', border: 'rgba(69, 10, 10, 0.9)', value: '>40k/km²', tooltip: 'Extreme density - mass casualty risk' },
+  { id: 'high', label: 'HIGH', threshold: 0.6, fill: 'rgba(185, 28, 28, 0.7)', border: 'rgba(127, 29, 29, 0.85)', value: '25-40k/km²', tooltip: 'High density urban core' },
+  { id: 'moderate', label: 'MODERATE', threshold: 0.4, fill: 'rgba(217, 119, 6, 0.65)', border: 'rgba(180, 83, 9, 0.8)', value: '12-25k/km²', tooltip: 'Urban/commercial areas' },
+  { id: 'low', label: 'LOW', threshold: 0.2, fill: 'rgba(22, 163, 74, 0.55)', border: 'rgba(21, 128, 61, 0.7)', value: '5-12k/km²', tooltip: 'Suburban residential' },
+  { id: 'minimal', label: 'MINIMAL', threshold: 0, fill: 'rgba(34, 197, 94, 0.4)', border: 'rgba(22, 163, 74, 0.55)', value: '<5k/km²', tooltip: 'Low density/rural' }
+]
+
+// Get density level for a normalized value
+function getDensityLevel(density: number) {
+  for (const level of DENSITY_LEVELS) {
+    if (density >= level.threshold) return level
+  }
+  return DENSITY_LEVELS[DENSITY_LEVELS.length - 1]
+}
+
 // Get color for density level (0-1 normalized)
 function getDensityColor(density: number): string {
-  // 5-level tactical color scheme with clear boundaries
-  if (density >= 0.8) return 'rgba(185, 28, 28, 0.65)' // Dark red - CRITICAL
-  if (density >= 0.6) return 'rgba(239, 68, 68, 0.55)' // Red - HIGH
-  if (density >= 0.4) return 'rgba(245, 158, 11, 0.45)' // Amber - MODERATE
-  if (density >= 0.2) return 'rgba(34, 197, 94, 0.35)' // Green - LOW
-  return 'rgba(34, 197, 94, 0.15)' // Light green - MINIMAL
+  return getDensityLevel(density).fill
 }
 
 // Get border color for density level
 function getDensityBorder(density: number): string {
-  if (density >= 0.8) return 'rgba(127, 29, 29, 0.8)'
-  if (density >= 0.6) return 'rgba(185, 28, 28, 0.7)'
-  if (density >= 0.4) return 'rgba(180, 83, 9, 0.6)'
-  if (density >= 0.2) return 'rgba(21, 128, 61, 0.5)'
-  return 'rgba(21, 128, 61, 0.3)'
+  return getDensityLevel(density).border
 }
 
 /**
  * PopulationHeatmapLayer - Renders AOI-wide grid with discrete cells
  * Uses 40x40 grid (1600 cells) with clear rectangular boundaries
+ * Includes zoom-based optimization and major grid lines
  */
 export function PopulationHeatmapLayer({
   visible,
@@ -45,7 +54,10 @@ export function PopulationHeatmapLayer({
 }: PopulationHeatmapProps) {
   const map = useMap()
   const rectanglesRef = useRef<any[]>([])
+  const gridLinesRef = useRef<any[]>([])
   const gridDataRef = useRef<PopulationGridData | null>(null)
+  const zoomListenerRef = useRef<any>(null)
+  const lastZoomRef = useRef<number>(0)
   
   useEffect(() => {
     if (!map) {
@@ -53,14 +65,20 @@ export function PopulationHeatmapLayer({
       return
     }
     
-    // Cleanup existing rectangles
+    // Cleanup existing elements
     const cleanup = () => {
       rectanglesRef.current.forEach(rect => rect.setMap(null))
       rectanglesRef.current = []
+      gridLinesRef.current.forEach(line => line.setMap(null))
+      gridLinesRef.current = []
     }
     
     if (!visible) {
       cleanup()
+      if (zoomListenerRef.current) {
+        google.maps.event.removeListener(zoomListenerRef.current)
+        zoomListenerRef.current = null
+      }
       return
     }
     
@@ -76,39 +94,117 @@ export function PopulationHeatmapLayer({
     const gridData = gridDataRef.current
     const stepSize = GRID_CONFIG.stepSize
     const halfStep = stepSize / 2
+    const { north, south, east, west } = gridData.bounds
     
-    // Create grid cells as rectangles
-    cleanup()
+    // Zoom-based rendering configuration
+    const getZoomConfig = (zoom: number) => {
+      // At low zoom: skip cells, thinner borders, lower opacity
+      // At high zoom: full detail, thick borders, high opacity
+      if (zoom >= 13) return { skip: 1, threshold: 0.05, strokeWeight: 2, opacityMult: 1.0 }
+      if (zoom >= 11) return { skip: 1, threshold: 0.08, strokeWeight: 1.5, opacityMult: 0.9 }
+      if (zoom >= 9) return { skip: 2, threshold: 0.15, strokeWeight: 1, opacityMult: 0.8 }
+      return { skip: 4, threshold: 0.25, strokeWeight: 0.5, opacityMult: 0.6 }
+    }
     
-    gridData.points.forEach(point => {
-      // Only render cells with meaningful density (>5% of max)
-      if (point.density < 0.05) return
+    // Render function for zoom-aware drawing
+    const renderGrid = () => {
+      cleanup()
       
-      const bounds = {
-        north: point.lat + halfStep,
-        south: point.lat - halfStep,
-        east: point.lng + halfStep,
-        west: point.lng - halfStep
+      const zoom = (map as any).getZoom?.() || 10
+      const config = getZoomConfig(zoom)
+      
+      // Track if zoom changed significantly (by integer level)
+      const zoomLevel = Math.floor(zoom)
+      if (zoomLevel === lastZoomRef.current && rectanglesRef.current.length > 0) {
+        return // Skip re-render if zoom level unchanged
       }
+      lastZoomRef.current = zoomLevel
       
-      const rect = new google.maps.Rectangle({
-        bounds,
-        map,
-        strokeColor: getDensityBorder(point.density),
-        strokeOpacity: 1,
-        strokeWeight: 0.5,
-        fillColor: getDensityColor(point.density),
-        fillOpacity: 1,
-        clickable: false,
-        zIndex: 1
+      // Render density cells with zoom-aware optimization
+      let cellCount = 0
+      gridData.points.forEach((point, idx) => {
+        // Skip cells based on zoom level for performance
+        if (config.skip > 1 && idx % config.skip !== 0) return
+        // Apply density threshold
+        if (point.density < config.threshold) return
+        
+        const bounds = {
+          north: point.lat + halfStep * (config.skip > 1 ? config.skip / 2 : 1),
+          south: point.lat - halfStep * (config.skip > 1 ? config.skip / 2 : 1),
+          east: point.lng + halfStep * (config.skip > 1 ? config.skip / 2 : 1),
+          west: point.lng - halfStep * (config.skip > 1 ? config.skip / 2 : 1)
+        }
+        
+        const rect = new google.maps.Rectangle({
+          bounds,
+          map,
+          strokeColor: getDensityBorder(point.density),
+          strokeOpacity: config.opacityMult,
+          strokeWeight: config.strokeWeight,
+          fillColor: getDensityColor(point.density),
+          fillOpacity: config.opacityMult,
+          clickable: false,
+          zIndex: 1
+        })
+        
+        rectanglesRef.current.push(rect)
+        cellCount++
       })
       
-      rectanglesRef.current.push(rect)
-    })
+      // Add major grid lines every 10 cells (4x4 major grid overlay)
+      const majorStep = stepSize * 10
+      const gridLineColor = `rgba(255, 255, 255, ${0.4 * config.opacityMult})`
+      const gridLineWeight = config.strokeWeight
+      
+      // Vertical major grid lines
+      for (let lng = west; lng <= east + 0.001; lng += majorStep) {
+        const line = new google.maps.Polyline({
+          path: [{ lat: north, lng }, { lat: south, lng }],
+          map,
+          strokeColor: gridLineColor,
+          strokeOpacity: 1,
+          strokeWeight: gridLineWeight,
+          zIndex: 10
+        })
+        gridLinesRef.current.push(line)
+      }
+      
+      // Horizontal major grid lines
+      for (let lat = south; lat <= north + 0.001; lat += majorStep) {
+        const line = new google.maps.Polyline({
+          path: [{ lat, lng: west }, { lat, lng: east }],
+          map,
+          strokeColor: gridLineColor,
+          strokeOpacity: 1,
+          strokeWeight: gridLineWeight,
+          zIndex: 10
+        })
+        gridLinesRef.current.push(line)
+      }
+      
+      console.log('[PopGrid] Rendered', cellCount, 'cells +', gridLinesRef.current.length, 'grid lines (zoom:', zoom.toFixed(1), ')')
+    }
     
-    console.log('[PopGrid] Rendered', rectanglesRef.current.length, 'grid cells')
+    // Initial render
+    renderGrid()
     
-    return cleanup
+    // Add zoom listener for dynamic re-rendering
+    if (!zoomListenerRef.current) {
+      let debounceTimeout: any = null
+      zoomListenerRef.current = (map as any).addListener?.('zoom_changed', () => {
+        // Debounce zoom changes to avoid excessive re-renders
+        if (debounceTimeout) clearTimeout(debounceTimeout)
+        debounceTimeout = setTimeout(renderGrid, 150)
+      })
+    }
+    
+    return () => {
+      cleanup()
+      if (zoomListenerRef.current) {
+        google.maps.event.removeListener(zoomListenerRef.current)
+        zoomListenerRef.current = null
+      }
+    }
   }, [map, visible, onDataReady])
   
   return null
@@ -148,32 +244,24 @@ export function PopulationLegend({ data, isLoading = false, onRefresh, mapStyle 
   const isDark = mapStyle === 'satellite' || mapStyle === 'hybrid'
   
   // Always use the local grid data for accurate metadata display
-  // (API data may not have the same structure)
   const gridData = getPopulationGrid()
-  
-  // Simplified density ranges matching the gradient
-  const densityRanges = [
-    { label: 'High', color: 'rgba(220, 38, 38, 0.85)', value: '>20,000/km²', tooltip: 'Dense urban core' },
-    { label: 'Medium', color: 'rgba(234, 179, 8, 0.7)', value: '8-20k/km²', tooltip: 'Urban/suburban areas' },
-    { label: 'Low', color: 'rgba(34, 197, 94, 0.5)', value: '<8,000/km²', tooltip: 'Suburban/rural areas' }
-  ]
   
   return (
     <div 
       style={{
-        backgroundColor: isDark ? 'rgba(0,0,0,0.9)' : 'rgba(255,255,255,0.95)',
+        backgroundColor: isDark ? 'rgba(0,0,0,0.92)' : 'rgba(255,255,255,0.95)',
         backdropFilter: 'blur(8px)',
         borderTopLeftRadius: 6,
         borderTopRightRadius: 0,
         borderBottomLeftRadius: 0,
         borderBottomRightRadius: 0,
         padding: 12,
-        minWidth: 180,
+        minWidth: 190,
         borderLeft: isDark ? '1px solid rgba(255,255,255,0.15)' : '1px solid rgba(0,0,0,0.1)',
         borderTop: isDark ? '1px solid rgba(255,255,255,0.15)' : '1px solid rgba(0,0,0,0.1)'
       }}
     >
-      {/* Header with title and demo label */}
+      {/* Header with title */}
       <div style={{ 
         display: 'flex', 
         alignItems: 'center', 
@@ -219,7 +307,7 @@ export function PopulationLegend({ data, isLoading = false, onRefresh, mapStyle 
         alignItems: 'center',
         gap: 4,
         padding: '4px 6px',
-        marginBottom: 8,
+        marginBottom: 10,
         backgroundColor: isDark ? 'rgba(59, 130, 246, 0.15)' : 'rgba(59, 130, 246, 0.1)',
         borderRadius: 4,
         border: isDark ? '1px solid rgba(59, 130, 246, 0.3)' : '1px solid rgba(59, 130, 246, 0.2)'
@@ -234,84 +322,70 @@ export function PopulationLegend({ data, isLoading = false, onRefresh, mapStyle 
         </span>
       </div>
       
-      {/* Density scale with tooltips */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-        {densityRanges.map((range, idx) => (
+      {/* 5-Level Discrete Density Scale */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        {DENSITY_LEVELS.map((level) => (
           <div 
-            key={idx} 
+            key={level.id} 
             style={{ display: 'flex', alignItems: 'center', gap: 8 }}
-            title={range.tooltip}
+            title={level.tooltip}
           >
             <div style={{
-              width: 14,
-              height: 14,
-              borderRadius: 3,
-              backgroundColor: range.color,
-              border: '1px solid rgba(255,255,255,0.2)'
+              width: 16,
+              height: 16,
+              borderRadius: 2,
+              backgroundColor: level.fill,
+              border: `2px solid ${level.border}`,
+              boxShadow: '0 1px 2px rgba(0,0,0,0.2)'
             }} />
             <span style={{ 
-              fontSize: 11, 
-              color: isDark ? '#e5e7eb' : '#374151',
-              fontWeight: 500,
-              minWidth: 50
+              fontSize: 10, 
+              color: level.id === 'critical' ? (isDark ? '#fca5a5' : '#dc2626') :
+                     level.id === 'high' ? (isDark ? '#fca5a5' : '#dc2626') :
+                     level.id === 'moderate' ? (isDark ? '#fcd34d' : '#d97706') :
+                     (isDark ? '#86efac' : '#16a34a'),
+              fontWeight: 600,
+              minWidth: 65,
+              letterSpacing: '0.02em'
             }}>
-              {range.label}
+              {level.label}
             </span>
             <span style={{ 
-              fontSize: 10, 
+              fontSize: 9, 
               color: isDark ? '#9ca3af' : '#6b7280'
             }}>
-              {range.value}
+              {level.value}
             </span>
           </div>
         ))}
       </div>
       
-      {/* Gradient bar for visual reference */}
+      {/* Grid Info */}
       <div style={{
-        marginTop: 8,
-        height: 8,
-        borderRadius: 4,
-        background: 'linear-gradient(to right, rgba(34, 197, 94, 0.6), rgba(234, 179, 8, 0.7), rgba(239, 68, 68, 0.8), rgba(153, 27, 27, 0.85))',
-        border: '1px solid rgba(255,255,255,0.1)'
-      }} />
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        fontSize: 8,
-        color: isDark ? '#6b7280' : '#9ca3af',
-        marginTop: 2
+        marginTop: 10,
+        paddingTop: 8,
+        borderTop: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.1)',
+        fontSize: 9,
+        color: isDark ? '#6b7280' : '#9ca3af'
       }}>
-        <span>Low</span>
-        <span>High</span>
-      </div>
-      
-      {/* Metadata */}
-      {gridData && (
-        <div style={{ 
-          marginTop: 8, 
-          paddingTop: 8, 
-          borderTop: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.1)',
-          fontSize: 9,
-          color: isDark ? '#6b7280' : '#9ca3af'
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
-            <span>Grid Points:</span>
-            <span style={{ color: isDark ? '#9ca3af' : '#6b7280' }}>
-              {gridData.metadata.totalPoints.toLocaleString()}
-            </span>
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
+          <span>Grid:</span>
+          <span style={{ color: isDark ? '#9ca3af' : '#6b7280', fontFamily: 'monospace' }}>
+            40×40 (~750m cells)
+          </span>
+        </div>
+        {gridData && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
             <span>Avg Density:</span>
             <span style={{ color: isDark ? '#9ca3af' : '#6b7280' }}>
               {gridData.metadata.avgDensity.toLocaleString()}/km²
             </span>
           </div>
-          <div style={{ marginTop: 4, fontSize: 8, color: isDark ? '#4b5563' : '#9ca3af' }}>
-            {gridData.source}
-          </div>
+        )}
+        <div style={{ marginTop: 4, fontSize: 8, color: isDark ? '#4b5563' : '#9ca3af' }}>
+          {gridData?.source || 'WorldPop / VIIRS Estimate'}
         </div>
-      )}
+      </div>
     </div>
   )
 }
