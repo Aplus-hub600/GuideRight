@@ -1,7 +1,7 @@
 # GuideRight Demo Script
 ## Urban Instability & Infrastructure Awareness in Dhaka, Bangladesh
 
-**Duration:** 20-25 minutes  
+**Duration:** 25-30 minutes  
 **Audience:** Analysts, Program Managers, Evaluators
 
 ---
@@ -29,9 +29,57 @@
 
 ---
 
-## Step 2: PMESII Analysis (5 min)
+## Step 2: Map Visualization & Satellite Imagery (3 min)
 
-**Action:** Run PMESII analysis via chat or analysis panel
+**Action:** Demonstrate map style switching
+
+**Show:**
+- Click **Map** button for standard road view
+- Click **Satellite** for pure satellite imagery
+- Click **Hybrid** for satellite with street labels
+
+**Narrator:**
+> "GuideRight integrates satellite imagery for enhanced terrain awareness. Notice how all tactical overlays - activity density, threat markers, and infrastructure indicators - automatically adapt their styling for visibility against both light and dark map backgrounds."
+
+**Key Point:** Satellite view provides terrain context that street maps cannot - building density, open spaces, vegetation, and natural chokepoints become immediately visible.
+
+---
+
+## Step 3: Population Activity Density Grid (4 min)
+
+**Action:** Enable the Population Density overlay and demonstrate click-to-sample
+
+**Show the 40x40 Activity Grid:**
+1. Enable the population layer from the lens selector
+2. Point out the muted, earthy color palette
+3. Explain the qualitative intensity bands
+
+**Narrator:**
+> "This activity density visualization represents human presence as spatial patterns and intensity - not discrete population counts. Notice we use qualitative descriptors rather than precise numbers: Concentrated, Elevated, Moderate, Dispersed, and Sparse. The muted color palette deliberately signals uncertainty - we're showing patterns, not claims."
+
+**Click-to-Sample Demonstration:**
+1. Click on a high-density cell in the grid
+2. Walk through the Activity Sample panel:
+   - **Grid Reference** - Coarse location indicator
+   - **Activity Level** - Qualitative assessment (e.g., "Elevated")
+   - **Egress** - Movement time estimates (qualitative)
+   - **Access** - Vehicle movement difficulty (visual bar indicator)
+   - **Context Note** - Operational considerations in restrained, advisory tone
+
+**Narrator:**
+> "When an analyst clicks any grid cell, GuideRight provides operational context - but notice the language: 'Context Note,' not 'Recommendation.' The system informs judgment without prescribing action. All indicators use muted styling to reinforce that these are estimates based on pattern analysis, not ground truth."
+
+**Keyboard Navigation (Optional):**
+- Press **G** to activate grid crosshair
+- Use **Arrow keys** to navigate (Shift+Arrow for 3x speed)
+- Press **Enter** to sample the current cell
+- Press **Alt+P** to pin samples for briefing preparation
+
+---
+
+## Step 4: PMESII Analysis (5 min)
+
+**Action:** Run PMESII analysis via chat or quick action buttons
 
 **Sample Query:**
 > "Provide a PMESII analysis for Dhaka, Bangladesh focusing on current stability indicators and infrastructure considerations following recent political unrest."
@@ -43,7 +91,7 @@
 | **Political (P)** | Government response posture, opposition activity levels, institutional stability indicators |
 | **Military (M)** | Security force deployments, law enforcement posture, paramilitary presence |
 | **Economic (E)** | Market disruptions, business closures, garment industry status, port operations |
-| **Social (S)** | Protest activity patterns, civil society response, population movement indicators |
+| **Social (S)** | Activity patterns, civil society response, population movement indicators |
 | **Information (I)** | Media coverage, social media activity levels, information environment assessment |
 | **Infrastructure (I)** | Healthcare facility status, transportation corridor access, telecommunications, utilities |
 
@@ -54,7 +102,7 @@
 
 ---
 
-## Step 3: Risk Assessment (3 min)
+## Step 5: Risk Assessment (3 min)
 
 **Action:** Run risk assessment for the AOI
 
@@ -72,7 +120,7 @@
 
 ---
 
-## Step 4: Infrastructure Context (3 min)
+## Step 6: Infrastructure Context (3 min)
 
 **Action:** Show infrastructure layer on map
 
@@ -90,14 +138,14 @@
 
 ---
 
-## Step 5: Confidence & Uncertainty (3 min)
+## Step 7: Confidence & Uncertainty (3 min)
 
 **Action:** Demonstrate confidence scoring details
 
 **Show:**
 - Evidence source types contributing to analysis
 - Source diversity metrics
-- Data freshness indicators
+- Data freshness indicators (color-coded: green=fresh, yellow=stale, red=old)
 - Explicit gaps identified
 
 **Narrator:**
@@ -108,81 +156,64 @@
 
 ---
 
-## Step 6: Interactive Follow-Up - Demonstrating System Agility (5 min)
+## Step 8: Interactive Follow-Up - Demonstrating System Agility (5 min)
 
-**Purpose:** Show how an analyst iteratively refines their understanding through conversational follow-up. This demonstrates the system's ability to respond to evolving analytic needs in real-time.
+**Purpose:** Show how an analyst iteratively refines their understanding through conversational follow-up.
 
 ---
 
-### Scenario: Analyst Drills Down on Infrastructure Concern
+### Scenario: Analyst Drills Down on Activity Patterns
 
 **Context Setup:**
-> "Based on our initial PMESII analysis, the analyst notices the Infrastructure factor shows potential vulnerabilities in healthcare access. Let's watch how they use GuideRight to drill deeper."
+> "Based on our activity density visualization, the analyst notices elevated patterns near the government complex. Let's watch how they use GuideRight to understand the context."
 
 ---
 
 **TURN 1 - Initial Follow-Up**
 
 **Analyst Query:**
-> "The infrastructure assessment mentioned healthcare facility constraints. Can you break down which hospitals in Dhaka have the highest capacity and their current accessibility status?"
+> "I'm seeing elevated activity patterns near Motijheel. What factors might be contributing to this concentration?"
 
 **System Response Highlights:**
-- Lists major facilities (Dhaka Medical College, BIRDEM, Apollo)
-- Shows accessibility factors (road access, proximity to protest areas)
-- Provides confidence level for each data point
-- Notes data gaps (e.g., "real-time capacity data unavailable")
+- References commercial district activity
+- Notes government complex proximity
+- Provides pattern-level context (not crowd counts)
+- Acknowledges uncertainty in real-time activity assessment
 
 **Narrator:**
-> "Notice the system immediately pivots to the analyst's new focus area. It doesn't just repeat the original analysis - it provides targeted, relevant detail while maintaining transparency about what it doesn't know."
+> "Notice the system responds with context, not claims. It doesn't say '15,000 people are gathered' - it describes patterns and contributing factors while acknowledging uncertainty."
 
 ---
 
-**TURN 2 - Refining the Question**
+**TURN 2 - Pivoting to Infrastructure**
 
 **Analyst Query:**
-> "What about the routes between Hazrat Shahjalal Airport and these major hospitals? Are there any infrastructure chokepoints we should be aware of?"
+> "What about egress routes from that area? If we needed to understand movement options, what would the infrastructure support?"
 
 **System Response Highlights:**
-- Identifies key corridors (Airport Road, Mohakhali, Tejgaon)
-- Flags known congestion points and bridge dependencies
-- References transportation infrastructure reliability
-- Updates map to highlight relevant routes
+- Identifies key corridors and chokepoints
+- References bridge dependencies
+- Notes infrastructure reliability vs. real-time traffic uncertainty
+- Updates map focus to relevant area
 
 **Narrator:**
-> "The system maintains conversational context - it knows we're still focused on the healthcare accessibility thread. The map updates dynamically to reflect the analyst's current focus."
+> "The system maintains context while pivoting topics. Infrastructure data is higher confidence, so the response reflects that - more definitive on routes, less certain on current conditions."
 
 ---
 
-**TURN 3 - Pivoting to a New Dimension**
+**TURN 3 - Synthesis Request**
 
 **Analyst Query:**
-> "Shifting focus - what's the current information environment around these infrastructure concerns? Is there social media activity indicating public awareness of healthcare access issues?"
+> "Based on the activity patterns and infrastructure context, where should I focus attention for the next 48 hours?"
 
 **System Response Highlights:**
-- Pivots to Information (I) and Social (S) factors
-- Provides pattern-level assessment (elevated/baseline activity)
-- Notes source limitations for social media monitoring
-- Explicitly states confidence is LOWER for this assessment
-
-**Narrator:**
-> "Here's the agility - the analyst pivots from infrastructure to the information environment, and the system follows seamlessly. Critically, it adjusts confidence levels appropriately. Infrastructure data was HIGH confidence; social media patterns are MEDIUM-LOW. The system doesn't pretend to know more than it does."
-
----
-
-**TURN 4 - Synthesis Request**
-
-**Analyst Query:**
-> "Based on everything we've discussed, what are the key areas where I should focus analytic attention over the next 48 hours?"
-
-**System Response Highlights:**
-- Synthesizes across the conversation thread
-- Identifies 3-4 priority focus areas with rationale
+- Synthesizes activity patterns with infrastructure context
+- Identifies areas warranting attention (not predictions)
 - Links each to specific PMESII factors
-- Explicitly frames as "areas warranting attention" NOT predictions
 - Provides aggregate confidence assessment
 
 **Narrator:**
-> "The system synthesizes the entire conversation into actionable focus areas - but notice the language: 'areas warranting attention,' not 'this will happen.' GuideRight supports analyst judgment; it doesn't replace it."
+> "The system synthesizes without overstepping. 'Areas warranting attention,' not 'this will happen.' GuideRight supports analyst judgment; it doesn't replace it."
 
 ---
 
@@ -190,18 +221,26 @@
 
 | Capability | What We Just Showed |
 |------------|---------------------|
-| **Contextual Memory** | System tracked the conversation thread across 4 turns |
-| **Dynamic Pivoting** | Analyst shifted from Infrastructure to Information seamlessly |
+| **Contextual Memory** | System tracked the conversation thread across turns |
+| **Dynamic Pivoting** | Analyst shifted from activity patterns to infrastructure seamlessly |
 | **Confidence Adaptation** | Confidence levels adjusted based on data quality for each topic |
 | **Map Integration** | Visualization updated to match conversational focus |
-| **Synthesis** | System combined insights without overstepping into prediction |
+| **Pattern Language** | Consistent use of qualitative descriptors, not false precision |
 
 ---
 
-## Step 7: Analyst-in-the-Loop Summary (1 min)
+## Step 9: Tactical UX Features (2 min)
+
+**Action:** Highlight operational interface elements
+
+**Demonstrate:**
+- **Mission Clock** - Real-time Zulu (UTC) and local time display
+- **Data Freshness Indicators** - Color-coded intel age tracking
+- **Quick Action Buttons** - Alt+1 through Alt+5 for PMESII, Threats, SITREP, Infra, HUMINT
+- **Keyboard Shortcuts** - Escape to clear, Enter to send
 
 **Narrator:**
-> "GuideRight supports analyst workflows through natural language queries. The system provides structured responses with cited sources - it doesn't make recommendations or predictions. The analyst remains in control of interpretation and decision-making. What you just saw was a realistic workflow: initial broad assessment, targeted drill-down, cross-domain pivot, and synthesis."
+> "The interface is designed for fast-paced operational environments. Large readable fonts, keyboard navigation, and prominent status indicators keep analysts focused on the intelligence, not the interface."
 
 ---
 
@@ -210,11 +249,13 @@
 **Narrator:**
 > "To summarize what we've demonstrated:
 > 
-> 1. **City-level situational awareness** with defensible data coverage
-> 2. **PMESII-structured analysis** for systematic factor assessment
-> 3. **Infrastructure-first context** reflecting higher data reliability
-> 4. **Explicit confidence levels** and uncertainty communication
-> 5. **Analyst-in-the-loop reasoning** without predictive or prescriptive outputs
+> 1. **City-level situational awareness** with satellite imagery integration
+> 2. **Activity density visualization** using qualitative patterns, not false precision
+> 3. **PMESII-structured analysis** for systematic factor assessment
+> 4. **Infrastructure-first context** reflecting higher data reliability
+> 5. **Explicit confidence levels** and uncertainty communication
+> 6. **Analyst-in-the-loop reasoning** without predictive or prescriptive outputs
+> 7. **Tactical keyboard navigation** for field and garrison environments
 >
 > GuideRight delivers transparent, explainable, confidence-qualified intelligence to support rapid decision-making in high-stakes operational environments."
 
@@ -222,9 +263,10 @@
 
 ## What This Demo Explicitly Avoided
 
-- Claims of precise protest or riot counts
+- Precise population counts or crowd size claims
 - Hyper-local assertions without defensible sourcing
 - Predictive or prescriptive outputs
+- Bright, alarm-colored visualizations implying false certainty
 - Feature walkthroughs unrelated to the analytic question
 
 ---
@@ -235,10 +277,37 @@
 - [ ] Verify OpenAI API key is configured
 - [ ] Verify Google Maps API key is configured (for satellite imagery)
 - [ ] Test PMESII analysis endpoint is responding
+- [ ] Confirm population density overlay renders correctly
+- [ ] Test click-to-sample functionality on the grid
+- [ ] Verify keyboard shortcuts work (G for grid, Alt+1-5 for quick actions)
 - [ ] Pre-cache Dhaka AOI analysis if needed for smooth demo
+
+**Key Demo Points to Emphasize:**
+- Muted color palette = uncertainty acknowledgment
+- Qualitative labels = avoiding false precision
+- "Context Note" not "Recommendation" = analyst-in-the-loop
+- Pattern-based language throughout
 
 **Fallback Options:**
 - If API latency is high, use pre-generated analysis screenshots
 - Map can fall back to OpenStreetMap if Google Maps unavailable
+- Population grid works offline with deterministic generation
 
-**Recommended Browser:** Chrome or Firefox, 1920x1080 resolution
+**Recommended Browser:** Chrome or Firefox, 1920x1080 resolution minimum
+
+---
+
+## Appendix: Keyboard Shortcuts Reference
+
+| Shortcut | Action |
+|----------|--------|
+| Alt+1 | Quick PMESII query |
+| Alt+2 | Quick Threats query |
+| Alt+3 | Quick SITREP query |
+| Alt+4 | Quick Infrastructure query |
+| Alt+5 | Quick HUMINT query |
+| G | Toggle grid crosshair navigation |
+| Arrow Keys | Move crosshair (Shift for 3x speed) |
+| Enter | Sample current grid cell |
+| Alt+P | Pin current sample |
+| Escape | Clear input / close panels |
