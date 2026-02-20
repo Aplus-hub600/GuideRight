@@ -302,13 +302,14 @@ function GridCrosshair({
   return (
     <AdvancedMarker position={crosshairPosition}>
       <div className="relative flex items-center justify-center">
-        <div className="absolute w-8 h-8 flex items-center justify-center">
-          <div className="absolute w-8 h-px bg-cyan-400/60" />
-          <div className="absolute w-px h-8 bg-cyan-400/60" />
-          <div className="absolute w-1.5 h-1.5 bg-cyan-400/80 rounded-full" />
+        <div className="absolute w-10 h-10 flex items-center justify-center">
+          <div className="absolute w-10 h-0.5 bg-cyan-400/70" />
+          <div className="absolute w-0.5 h-10 bg-cyan-400/70" />
+          <div className="absolute w-5 h-5 border border-cyan-400/50 rounded-full" />
+          <div className="absolute w-2 h-2 bg-cyan-400 rounded-full" />
         </div>
         <div 
-          className="absolute top-10 left-1/2 -translate-x-1/2 whitespace-nowrap bg-black/70 text-cyan-400/80 px-1.5 py-0.5 rounded text-[9px] font-mono"
+          className="absolute top-12 left-1/2 -translate-x-1/2 whitespace-nowrap bg-black/80 text-cyan-400 px-2 py-0.5 rounded text-[10px] font-mono"
         >
           {crosshairPosition.lat.toFixed(4)}, {crosshairPosition.lng.toFixed(4)}
         </div>
@@ -332,10 +333,16 @@ function PinnedSampleMarker({
   const [showInfo, setShowInfo] = useState(false)
   
   const bgColor = sample.label === 'High' 
-    ? 'bg-red-500/70' 
+    ? 'bg-red-500' 
     : sample.label === 'Medium' 
-      ? 'bg-yellow-500/70' 
-      : 'bg-green-500/70'
+      ? 'bg-yellow-500' 
+      : 'bg-green-500'
+
+  const shadowColor = sample.label === 'High' 
+    ? 'shadow-red-500/40' 
+    : sample.label === 'Medium' 
+      ? 'shadow-yellow-500/40' 
+      : 'shadow-green-500/40'
   
   return (
     <>
@@ -344,8 +351,8 @@ function PinnedSampleMarker({
         onClick={() => setShowInfo(true)}
       >
         <div className={cn(
-          "w-4 h-4 rounded-full border border-white/70 shadow-sm flex items-center justify-center text-white text-[8px] font-medium",
-          bgColor
+          "w-6 h-6 rounded-full border-2 border-white shadow-md flex items-center justify-center text-white text-[10px] font-bold",
+          bgColor, shadowColor
         )}>
           {index + 1}
         </div>
@@ -492,18 +499,32 @@ function AOIAdvancedMarker({ aoi }: { aoi: AOI }) {
         position={{ lat: aoi.lat, lng: aoi.lng }}
         onClick={() => setShowInfo(true)}
       >
-        <div 
-          style={{
-            width: 14,
-            height: 14,
-            background: "#3b82f6",
-            border: "2px solid white",
+        <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{
+            position: "absolute",
+            width: 36,
+            height: 36,
+            background: "rgba(59,130,246,0.15)",
             borderRadius: "50%",
-            boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
-            cursor: "pointer",
-            opacity: 0.85
-          }}
-        />
+            border: "1px solid rgba(59,130,246,0.3)",
+          }} />
+          <div 
+            style={{
+              width: 20,
+              height: 20,
+              background: "#3b82f6",
+              border: "2.5px solid white",
+              borderRadius: "50%",
+              boxShadow: "0 2px 6px rgba(59,130,246,0.4)",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <div style={{ width: 6, height: 6, background: "white", borderRadius: "50%" }} />
+          </div>
+        </div>
       </AdvancedMarker>
       {showInfo && (
         <InfoWindow
@@ -541,19 +562,19 @@ function SigActAdvancedMarkers({ sigacts }: { sigacts: SigAct[] }) {
             onClick={() => setSelectedIndex(index)}
           >
             <div style={{
-              width: 14,
-              height: 14,
+              width: 22,
+              height: 22,
               background: confidenceColor,
-              border: "1.5px solid white",
+              border: "2.5px solid white",
               borderRadius: "50%",
-              boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+              boxShadow: `0 2px 8px ${confidenceColor}66`,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               color: "white",
-              fontSize: 8,
-              fontWeight: "bold",
-              opacity: 0.85
+              fontSize: 11,
+              fontWeight: "700",
+              letterSpacing: "-0.5px",
             }}>
               {index + 1}
             </div>
@@ -602,27 +623,48 @@ function InfrastructureAdvancedMarkers({
       default: return "#6b7280"
     }
   }
+
+  const getNodeSymbol = (category: string) => {
+    switch (category) {
+      case "hospital": return "+"
+      case "transport": return "T"
+      case "government": return "G"
+      case "utility": return "U"
+      case "education": return "E"
+      default: return "?"
+    }
+  }
   
   return (
     <>
-      {nodes.map((node, index) => (
-        <AdvancedMarker
-          key={index}
-          position={{ lat: node.lat, lng: node.lng }}
-          onClick={() => onNodeClick(node)}
-        >
-          <div style={{
-            width: 10,
-            height: 10,
-            background: getNodeColor(node.category),
-            border: "1.5px solid rgba(255,255,255,0.8)",
-            borderRadius: "50%",
-            boxShadow: "0 1px 2px rgba(0,0,0,0.15)",
-            cursor: "pointer",
-            opacity: 0.8
-          }} />
-        </AdvancedMarker>
-      ))}
+      {nodes.map((node, index) => {
+        const color = getNodeColor(node.category)
+        return (
+          <AdvancedMarker
+            key={index}
+            position={{ lat: node.lat, lng: node.lng }}
+            onClick={() => onNodeClick(node)}
+          >
+            <div style={{
+              width: 18,
+              height: 18,
+              background: color,
+              border: "2px solid white",
+              borderRadius: 4,
+              boxShadow: `0 2px 6px ${color}55`,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "white",
+              fontSize: 10,
+              fontWeight: "800",
+            }}>
+              {getNodeSymbol(node.category)}
+            </div>
+          </AdvancedMarker>
+        )
+      })}
     </>
   )
 }
@@ -684,7 +726,7 @@ function GdeltAdvancedMarkers({
     <>
       {visibleEvents.map((event, index) => {
         const color = getGoldsteinColor(event.goldsteinScale)
-        const size = Math.min(14, Math.max(8, (event.numMentions || 10) / 8 + 7))
+        const size = Math.min(22, Math.max(14, (event.numMentions || 10) / 5 + 12))
         
         return (
           <AdvancedMarker
@@ -699,11 +741,11 @@ function GdeltAdvancedMarkers({
               width: size,
               height: size,
               background: color,
-              border: "1px solid rgba(255,255,255,0.7)",
+              border: "2px solid rgba(255,255,255,0.85)",
               borderRadius: "50%",
-              boxShadow: "0 1px 2px rgba(0,0,0,0.15)",
+              boxShadow: `0 2px 6px ${color}55`,
               cursor: "pointer",
-              opacity: 0.75
+              opacity: 0.9
             }} />
           </AdvancedMarker>
         )
