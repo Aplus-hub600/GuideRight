@@ -64,17 +64,17 @@ export function IntelHeatmapLayer({ events, visible }: IntelHeatmapProps) {
       heatmapRef.current = new visualizationLib.HeatmapLayer({
         data: heatmapData,
         map: map,
-        radius: 60,
-        opacity: 0.75,
+        radius: 45,
+        opacity: 0.45,
         gradient: [
           "rgba(0, 0, 0, 0)",
-          "rgba(34, 197, 94, 0.4)",
-          "rgba(132, 204, 22, 0.5)",
-          "rgba(234, 179, 8, 0.6)",
-          "rgba(249, 115, 22, 0.7)",
-          "rgba(239, 68, 68, 0.8)",
-          "rgba(220, 38, 38, 0.9)",
-          "rgba(185, 28, 28, 1)"
+          "rgba(34, 197, 94, 0.25)",
+          "rgba(132, 204, 22, 0.3)",
+          "rgba(234, 179, 8, 0.35)",
+          "rgba(249, 115, 22, 0.4)",
+          "rgba(239, 68, 68, 0.5)",
+          "rgba(220, 38, 38, 0.6)",
+          "rgba(185, 28, 28, 0.7)"
         ]
       })
     }

@@ -105,59 +105,29 @@ function TacticalMapStatus({
   }
   
   return (
-    <div className="flex items-center gap-3 bg-black/80 backdrop-blur-sm border-l border-b border-white/20 px-3 py-1.5 rounded-bl-md">
-      {/* Zulu Time */}
-      <div className="flex items-center gap-1.5">
-        <Clock className="h-3.5 w-3.5 text-white/70" />
-        <span className="font-mono text-sm font-medium text-white">{formatZulu()}</span>
-      </div>
-      
-      <div className="w-px h-4 bg-white/30" />
-      
-      {/* Coordinates */}
-      {aoi && (
+    <div className="flex items-center gap-2 bg-black/60 backdrop-blur-sm px-2.5 py-1 rounded-bl-md">
+      <span className="font-mono text-[10px] text-white/70">{formatZulu()}</span>
+      <div className="w-px h-3 bg-white/20" />
+      <span className="font-mono text-[10px] text-white/60">{getLensLabel(activeLens)}</span>
+      {dataAge !== null && (
         <>
-          <div className="flex items-center gap-1.5">
-            <Navigation className="h-3.5 w-3.5 text-white/70" />
-            <span className="font-mono text-sm text-white">
-              {aoi.lat.toFixed(4)}°, {aoi.lng.toFixed(4)}°
-            </span>
-          </div>
-          <div className="w-px h-4 bg-white/30" />
+          <div className={cn(
+            "w-1.5 h-1.5 rounded-full",
+            dataFresh && "bg-green-400",
+            dataStale && "bg-amber-400",
+            !dataFresh && !dataStale && "bg-red-400"
+          )} />
+          <span className="font-mono text-[10px] text-white/50">{formatAge(dataAge)}</span>
         </>
       )}
-      
-      {/* Zoom Level */}
-      <div className="flex items-center gap-1.5">
-        <Eye className="h-3.5 w-3.5 text-white/70" />
-        <span className="font-mono text-sm text-white">Z{zoomLevel}</span>
-      </div>
-      
-      <div className="w-px h-4 bg-white/30" />
-      
-      {/* Active Layer with Data Freshness */}
-      <div className="flex items-center gap-2">
-        <Badge variant="outline" className="text-xs font-bold gap-1.5 px-2 py-0.5 border-white/40 text-white bg-white/10">
-          <Radio className={cn(
-            "h-3 w-3",
-            dataFresh && "text-green-400",
-            dataStale && "text-amber-400",
-            dataAge !== null && !dataFresh && !dataStale && "text-red-400",
-            dataAge === null && "text-white/70"
-          )} />
-          {getLensLabel(activeLens)}
-        </Badge>
-        {dataAge !== null && (
-          <span className={cn(
-            "font-mono text-sm font-medium",
-            dataFresh && "text-green-400",
-            dataStale && "text-amber-400",
-            !dataFresh && !dataStale && "text-red-400"
-          )}>
-            {formatAge(dataAge)}
+      {aoi && (
+        <>
+          <div className="w-px h-3 bg-white/20" />
+          <span className="font-mono text-[10px] text-white/50">
+            {aoi.lat.toFixed(3)}°, {aoi.lng.toFixed(3)}°
           </span>
-        )}
-      </div>
+        </>
+      )}
     </div>
   )
 }
@@ -332,17 +302,13 @@ function GridCrosshair({
   return (
     <AdvancedMarker position={crosshairPosition}>
       <div className="relative flex items-center justify-center">
-        {/* Crosshair reticle */}
-        <div className="absolute w-12 h-12 flex items-center justify-center">
-          <div className="absolute w-12 h-0.5 bg-cyan-400 shadow-lg shadow-cyan-400/50" />
-          <div className="absolute w-0.5 h-12 bg-cyan-400 shadow-lg shadow-cyan-400/50" />
-          <div className="absolute w-6 h-6 border-2 border-cyan-400 rounded-full animate-pulse" />
-          <div className="absolute w-2 h-2 bg-cyan-400 rounded-full" />
+        <div className="absolute w-8 h-8 flex items-center justify-center">
+          <div className="absolute w-8 h-px bg-cyan-400/60" />
+          <div className="absolute w-px h-8 bg-cyan-400/60" />
+          <div className="absolute w-1.5 h-1.5 bg-cyan-400/80 rounded-full" />
         </div>
-        {/* Position indicator */}
         <div 
-          className="absolute top-14 left-1/2 -translate-x-1/2 whitespace-nowrap bg-black/90 text-cyan-400 px-2 py-1 rounded text-xs font-mono"
-          style={{ minWidth: 120, textAlign: 'center' }}
+          className="absolute top-10 left-1/2 -translate-x-1/2 whitespace-nowrap bg-black/70 text-cyan-400/80 px-1.5 py-0.5 rounded text-[9px] font-mono"
         >
           {crosshairPosition.lat.toFixed(4)}, {crosshairPosition.lng.toFixed(4)}
         </div>
@@ -366,10 +332,10 @@ function PinnedSampleMarker({
   const [showInfo, setShowInfo] = useState(false)
   
   const bgColor = sample.label === 'High' 
-    ? 'bg-red-500' 
+    ? 'bg-red-500/70' 
     : sample.label === 'Medium' 
-      ? 'bg-yellow-500' 
-      : 'bg-green-500'
+      ? 'bg-yellow-500/70' 
+      : 'bg-green-500/70'
   
   return (
     <>
@@ -377,14 +343,11 @@ function PinnedSampleMarker({
         position={{ lat: sample.lat, lng: sample.lng }}
         onClick={() => setShowInfo(true)}
       >
-        <div className="relative">
-          <div className={cn(
-            "w-6 h-6 rounded-full border-2 border-white shadow-lg flex items-center justify-center text-white text-xs font-bold",
-            bgColor
-          )}>
-            {index + 1}
-          </div>
-          <div className="absolute -top-1 -right-1 w-3 h-3 bg-primary rounded-full border border-white" />
+        <div className={cn(
+          "w-4 h-4 rounded-full border border-white/70 shadow-sm flex items-center justify-center text-white text-[8px] font-medium",
+          bgColor
+        )}>
+          {index + 1}
         </div>
       </AdvancedMarker>
       {showInfo && (
@@ -531,13 +494,14 @@ function AOIAdvancedMarker({ aoi }: { aoi: AOI }) {
       >
         <div 
           style={{
-            width: 24,
-            height: 24,
+            width: 14,
+            height: 14,
             background: "#3b82f6",
-            border: "3px solid white",
+            border: "2px solid white",
             borderRadius: "50%",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
-            cursor: "pointer"
+            boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+            cursor: "pointer",
+            opacity: 0.85
           }}
         />
       </AdvancedMarker>
@@ -577,18 +541,19 @@ function SigActAdvancedMarkers({ sigacts }: { sigacts: SigAct[] }) {
             onClick={() => setSelectedIndex(index)}
           >
             <div style={{
-              width: 20,
-              height: 20,
+              width: 14,
+              height: 14,
               background: confidenceColor,
-              border: "2px solid white",
+              border: "1.5px solid white",
               borderRadius: "50%",
-              boxShadow: "0 2px 6px rgba(0,0,0,0.3)",
+              boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               color: "white",
-              fontSize: 10,
-              fontWeight: "bold"
+              fontSize: 8,
+              fontWeight: "bold",
+              opacity: 0.85
             }}>
               {index + 1}
             </div>
@@ -647,13 +612,14 @@ function InfrastructureAdvancedMarkers({
           onClick={() => onNodeClick(node)}
         >
           <div style={{
-            width: 16,
-            height: 16,
+            width: 10,
+            height: 10,
             background: getNodeColor(node.category),
-            border: "2px solid white",
+            border: "1.5px solid rgba(255,255,255,0.8)",
             borderRadius: "50%",
-            boxShadow: "0 1px 4px rgba(0,0,0,0.3)",
-            cursor: "pointer"
+            boxShadow: "0 1px 2px rgba(0,0,0,0.15)",
+            cursor: "pointer",
+            opacity: 0.8
           }} />
         </AdvancedMarker>
       ))}
@@ -718,7 +684,7 @@ function GdeltAdvancedMarkers({
     <>
       {visibleEvents.map((event, index) => {
         const color = getGoldsteinColor(event.goldsteinScale)
-        const size = Math.min(24, Math.max(16, (event.numMentions || 10) / 5 + 14))
+        const size = Math.min(14, Math.max(8, (event.numMentions || 10) / 8 + 7))
         
         return (
           <AdvancedMarker
@@ -733,20 +699,12 @@ function GdeltAdvancedMarkers({
               width: size,
               height: size,
               background: color,
-              border: "2px solid white",
+              border: "1px solid rgba(255,255,255,0.7)",
               borderRadius: "50%",
-              boxShadow: `0 2px 6px rgba(0,0,0,0.4), 0 0 0 2px ${color}40`,
+              boxShadow: "0 1px 2px rgba(0,0,0,0.15)",
               cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center"
-            }}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
-                <circle cx="12" cy="12" r="10"/>
-                <line x1="12" y1="8" x2="12" y2="12"/>
-                <line x1="12" y1="16" x2="12.01" y2="16"/>
-              </svg>
-            </div>
+              opacity: 0.75
+            }} />
           </AdvancedMarker>
         )
       })}
@@ -1114,39 +1072,33 @@ function GoogleMapsContent({
         visible={activeLens === "intel"} 
       />
       
-      {/* Top-left: Map style toggle - flush to corner */}
+      {/* Top-left: Map style toggle - minimal */}
       <div className="absolute top-0 left-0 z-10">
-        <div className="flex bg-background/95 backdrop-blur-sm border-r border-b overflow-hidden">
-          <Button
-            size="sm"
-            variant={mapStyle === "roadmap" ? "default" : "ghost"}
+        <div className="flex bg-black/50 backdrop-blur-sm overflow-hidden rounded-br-md">
+          <button
             onClick={() => setMapStyle("roadmap")}
-            className="rounded-none h-8 px-3"
+            className={cn("px-2 py-1 text-[10px] font-medium transition-colors", mapStyle === "roadmap" ? "bg-white/20 text-white" : "text-white/50 hover:text-white/70")}
             data-testid="button-map-streets"
             title="Streets (Ctrl+M)"
           >
-            <Layers className="h-3.5 w-3.5" />
-          </Button>
-          <Button
-            size="sm"
-            variant={mapStyle === "satellite" ? "default" : "ghost"}
+            Map
+          </button>
+          <button
             onClick={() => setMapStyle("satellite")}
-            className="rounded-none h-8 px-3"
+            className={cn("px-2 py-1 text-[10px] font-medium transition-colors", mapStyle === "satellite" ? "bg-white/20 text-white" : "text-white/50 hover:text-white/70")}
             data-testid="button-map-satellite"
             title="Satellite (Ctrl+S)"
           >
-            <Target className="h-3.5 w-3.5" />
-          </Button>
-          <Button
-            size="sm"
-            variant={mapStyle === "hybrid" ? "default" : "ghost"}
+            Sat
+          </button>
+          <button
             onClick={() => setMapStyle("hybrid")}
-            className="rounded-none h-8 px-3"
+            className={cn("px-2 py-1 text-[10px] font-medium transition-colors", mapStyle === "hybrid" ? "bg-white/20 text-white" : "text-white/50 hover:text-white/70")}
             data-testid="button-map-hybrid"
             title="Hybrid (Ctrl+H)"
           >
-            <MapPin className="h-3.5 w-3.5" />
-          </Button>
+            Hyb
+          </button>
         </div>
       </div>
 

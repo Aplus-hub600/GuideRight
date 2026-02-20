@@ -103,12 +103,10 @@ export function PopulationHeatmapLayer({
     // Uses softer stroke weights and lower opacity for pattern-based visualization
     // Emphasizes spatial patterns rather than discrete boundaries
     const getZoomConfig = (zoom: number) => {
-      // At low zoom: skip cells, minimal borders, soft opacity for gradient effect
-      // At high zoom: full detail but still soft borders to avoid false precision
-      if (zoom >= 13) return { skip: 1, threshold: 0.05, strokeWeight: 0.5, opacityMult: 1.0 }
-      if (zoom >= 11) return { skip: 1, threshold: 0.08, strokeWeight: 0.3, opacityMult: 0.85 }
-      if (zoom >= 9) return { skip: 2, threshold: 0.12, strokeWeight: 0.2, opacityMult: 0.75 }
-      return { skip: 4, threshold: 0.20, strokeWeight: 0, opacityMult: 0.6 }
+      if (zoom >= 13) return { skip: 1, threshold: 0.10, strokeWeight: 0, opacityMult: 0.55 }
+      if (zoom >= 11) return { skip: 1, threshold: 0.12, strokeWeight: 0, opacityMult: 0.45 }
+      if (zoom >= 9) return { skip: 2, threshold: 0.15, strokeWeight: 0, opacityMult: 0.38 }
+      return { skip: 4, threshold: 0.22, strokeWeight: 0, opacityMult: 0.30 }
     }
     
     // Render function for zoom-aware drawing
@@ -149,7 +147,7 @@ export function PopulationHeatmapLayer({
           strokeOpacity: 0,
           strokeWeight: 0,
           fillColor: getDensityColor(point.density),
-          fillOpacity: config.opacityMult * 0.9, // Slightly lower opacity for softer blending
+          fillOpacity: config.opacityMult * 0.7,
           clickable: false,
           zIndex: 1
         })
@@ -158,42 +156,7 @@ export function PopulationHeatmapLayer({
         cellCount++
       })
       
-      // Add subtle reference grid lines every 10 cells (4x4 major grid overlay)
-      // Whitepaper: use subtle visual cues, not hard boundaries
-      const majorStep = stepSize * 10
-      const gridLineColor = `rgba(255, 255, 255, ${0.15 * config.opacityMult})`
-      const gridLineWeight = Math.max(0.3, config.strokeWeight * 0.5)
-      
-      // Only show grid lines at higher zoom for subtle reference
-      if (zoom >= 10) {
-        // Vertical major grid lines
-        for (let lng = west; lng <= east + 0.001; lng += majorStep) {
-          const line = new google.maps.Polyline({
-            path: [{ lat: north, lng }, { lat: south, lng }],
-            map,
-            strokeColor: gridLineColor,
-            strokeOpacity: 1,
-            strokeWeight: gridLineWeight,
-            zIndex: 2
-          })
-          gridLinesRef.current.push(line)
-        }
-        
-        // Horizontal major grid lines
-        for (let lat = south; lat <= north + 0.001; lat += majorStep) {
-          const line = new google.maps.Polyline({
-            path: [{ lat, lng: west }, { lat, lng: east }],
-            map,
-            strokeColor: gridLineColor,
-            strokeOpacity: 1,
-            strokeWeight: gridLineWeight,
-            zIndex: 2
-          })
-          gridLinesRef.current.push(line)
-        }
-      }
-      
-      console.log('[PopGrid] Rendered', cellCount, 'cells +', gridLinesRef.current.length, 'grid lines (zoom:', zoom.toFixed(1), ')')
+      console.log('[PopGrid] Rendered', cellCount, 'cells (zoom:', zoom.toFixed(1), ')')
     }
     
     // Initial render
