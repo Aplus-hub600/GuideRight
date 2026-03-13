@@ -603,18 +603,51 @@ function SigActAdvancedMarkers({ sigacts }: { sigacts: SigAct[] }) {
   )
 }
 
-const INFRA_STYLES: Record<string, { color: string; glow: string; symbol: string; label: string }> = {
-  hospital:   { color: "#ef4444", glow: "rgba(239,68,68,0.55)",   symbol: "+", label: "Medical"    },
-  transport:  { color: "#3b82f6", glow: "rgba(59,130,246,0.55)",  symbol: "T", label: "Transport"  },
-  government: { color: "#a855f7", glow: "rgba(168,85,247,0.55)",  symbol: "G", label: "Government" },
-  utility:    { color: "#f59e0b", glow: "rgba(245,158,11,0.55)",  symbol: "U", label: "Utility"    },
-  education:  { color: "#06b6d4", glow: "rgba(6,182,212,0.55)",   symbol: "E", label: "Education"  },
+const INFRA_PALETTE: Record<string, { color: string; glow: string }> = {
+  hospital:   { color: "#ef4444", glow: "rgba(239,68,68,0.6)"  },
+  transport:  { color: "#3b82f6", glow: "rgba(59,130,246,0.6)" },
+  government: { color: "#a855f7", glow: "rgba(168,85,247,0.6)" },
+  utility:    { color: "#f59e0b", glow: "rgba(245,158,11,0.6)" },
+  education:  { color: "#06b6d4", glow: "rgba(6,182,212,0.6)"  },
 }
 
-const CONFIDENCE_STYLE: Record<string, { opacity: number; borderStyle: string; borderWidth: number }> = {
-  verified:      { opacity: 1.00, borderStyle: "solid",  borderWidth: 2.5 },
-  "single-source": { opacity: 0.80, borderStyle: "dashed", borderWidth: 2   },
-  inferred:      { opacity: 0.55, borderStyle: "dotted", borderWidth: 2   },
+// SVG icons per category/subCategory — designed to be legible at 12-14px
+function getInfraIconSvg(category: string, subCategory?: string): string {
+  switch (category) {
+    case "hospital":
+      // Medical cross — universally understood
+      return `<svg width="13" height="13" viewBox="0 0 13 13" fill="white"><rect x="5" y="1" width="3" height="11" rx="0.8"/><rect x="1" y="5" width="11" height="3" rx="0.8"/></svg>`
+    case "transport":
+      if (subCategory?.includes("airport") || subCategory?.includes("air"))
+        // Simplified plane silhouette
+        return `<svg width="13" height="13" viewBox="0 0 13 13" fill="white"><path d="M6.5 1 L10 7 H8 L8 10 H5 L5 7 H3 L6.5 1Z"/><rect x="2" y="11" width="9" height="1.2" rx="0.6"/></svg>`
+      if (subCategory?.includes("rail") || subCategory?.includes("train"))
+        // Railroad tracks
+        return `<svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="white" stroke-width="1.4" stroke-linecap="round"><line x1="4" y1="2" x2="3.2" y2="11"/><line x1="9" y1="2" x2="9.8" y2="11"/><line x1="3.8" y1="4.5" x2="9.2" y2="4.5"/><line x1="3.5" y1="7.5" x2="9.5" y2="7.5"/></svg>`
+      // Water/port — anchor
+      return `<svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="white" stroke-width="1.4" stroke-linecap="round"><circle cx="6.5" cy="3.5" r="1.5"/><line x1="6.5" y1="5" x2="6.5" y2="11"/><path d="M3 7 Q6.5 11 10 7"/><line x1="3" y1="7" x2="3" y2="9"/><line x1="10" y1="7" x2="10" y2="9"/></svg>`
+    case "utility":
+      if (subCategory?.includes("water"))
+        // Water drop
+        return `<svg width="13" height="13" viewBox="0 0 13 13" fill="white"><path d="M6.5 1 C6.5 1 2 6.5 2 8.5 C2 10.5 4.1 12 6.5 12 C8.9 12 11 10.5 11 8.5 C11 6.5 6.5 1 6.5 1Z"/></svg>`
+      // Lightning bolt — power
+      return `<svg width="13" height="13" viewBox="0 0 13 13" fill="white"><path d="M7.5 1 L3 7.5 H6.5 L5.5 12 L10 5.5 H6.5 L7.5 1Z"/></svg>`
+    case "government":
+      // Classical columns / building
+      return `<svg width="13" height="13" viewBox="0 0 13 13" fill="white"><rect x="1" y="10.5" width="11" height="1.5"/><rect x="1" y="4" width="11" height="1.5"/><polygon points="6.5,1 1,4 12,4"/><rect x="2.5" y="5.5" width="1.5" height="5"/><rect x="5.75" y="5.5" width="1.5" height="5"/><rect x="9" y="5.5" width="1.5" height="5"/></svg>`
+    case "education":
+      // Graduation cap
+      return `<svg width="13" height="13" viewBox="0 0 13 13" fill="white"><polygon points="6.5,2 12,5 6.5,8 1,5"/><path d="M3.5 6.2 L3.5 9.5 Q3.5 11 6.5 11 Q9.5 11 9.5 9.5 L9.5 6.2"/><line x1="11" y1="5" x2="11" y2="8.5" stroke="white" stroke-width="1.2"/></svg>`
+    default:
+      return `<svg width="13" height="13" viewBox="0 0 13 13" fill="white"><circle cx="6.5" cy="6.5" r="4"/></svg>`
+  }
+}
+
+// Confidence drives size, glow intensity, and label opacity — not border style
+const INFRA_CONFIDENCE: Record<string, { size: number; glowMult: number; labelOpacity: number; markerOpacity: number }> = {
+  verified:        { size: 26, glowMult: 1.0, labelOpacity: 0.95, markerOpacity: 1.00 },
+  "single-source": { size: 20, glowMult: 0.5, labelOpacity: 0.75, markerOpacity: 0.85 },
+  inferred:        { size: 15, glowMult: 0.2, labelOpacity: 0.55, markerOpacity: 0.60 },
 }
 
 function InfrastructureAdvancedMarkers({ 
@@ -631,9 +664,10 @@ function InfrastructureAdvancedMarkers({
   return (
     <>
       {nodes.map((node, index) => {
-        const style  = INFRA_STYLES[node.category] ?? INFRA_STYLES.utility
-        const conf   = CONFIDENCE_STYLE[node.confidence] ?? CONFIDENCE_STYLE.inferred
-        const showLabel = node.confidence === "verified"
+        const palette = INFRA_PALETTE[node.category] ?? INFRA_PALETTE.utility
+        const conf    = INFRA_CONFIDENCE[node.confidence] ?? INFRA_CONFIDENCE.inferred
+        const glow    = conf.glowMult
+        const iconSvg = getInfraIconSvg(node.category, node.subCategory)
 
         return (
           <AdvancedMarker
@@ -641,48 +675,52 @@ function InfrastructureAdvancedMarkers({
             position={{ lat: node.lat, lng: node.lng }}
             onClick={() => onNodeClick(node)}
           >
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, cursor: "pointer", opacity: conf.opacity }}>
-              {/* Icon square */}
+            <div style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 3,
+              cursor: "pointer",
+            }}>
+              {/* Circle marker — universally understood POI shape */}
               <div style={{
-                width: 22,
-                height: 22,
-                background: style.color,
-                border: `${conf.borderWidth}px ${conf.borderStyle} rgba(255,255,255,0.9)`,
-                borderRadius: 5,
-                boxShadow: `0 0 10px ${style.glow}, 0 0 20px ${style.glow}, 0 2px 4px rgba(0,0,0,0.5)`,
+                width: conf.size,
+                height: conf.size,
+                background: palette.color,
+                borderRadius: "50%",
+                border: `2px solid rgba(255,255,255,${0.5 + glow * 0.5})`,
+                boxShadow: [
+                  `0 0 ${Math.round(8 * glow + 4)}px ${palette.glow}`,
+                  `0 0 ${Math.round(18 * glow + 4)}px ${palette.glow}`,
+                  `0 2px 6px rgba(0,0,0,0.65)`,
+                ].join(", "),
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                color: "white",
-                fontSize: 11,
-                fontWeight: "900",
-                fontFamily: "monospace",
-                letterSpacing: 0,
-              }}>
-                {style.symbol}
-              </div>
+                opacity: conf.markerOpacity,
+                flexShrink: 0,
+              }}
+                dangerouslySetInnerHTML={{ __html: iconSvg }}
+              />
 
-              {/* Name label — verified nodes only, keeps map clean */}
-              {showLabel && (
-                <div style={{
-                  background: "rgba(0,0,0,0.82)",
-                  border: `1px solid ${style.color}`,
-                  borderRadius: 3,
-                  padding: "2px 5px",
-                  fontSize: 9,
-                  fontWeight: 600,
-                  color: "rgba(255,255,255,0.90)",
-                  fontFamily: "monospace",
-                  whiteSpace: "nowrap",
-                  maxWidth: 120,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  boxShadow: `0 0 6px ${style.glow}`,
-                  letterSpacing: "0.02em",
-                }}>
-                  {node.name}
-                </div>
-              )}
+              {/* Label shown for all nodes — size and opacity vary with confidence */}
+              <div style={{
+                background: "rgba(0,0,0,0.82)",
+                borderLeft: `2.5px solid ${palette.color}`,
+                padding: "1px 5px 1px 4px",
+                fontSize: node.confidence === "verified" ? 9 : 8,
+                fontWeight: node.confidence === "verified" ? 700 : 500,
+                color: `rgba(255,255,255,${conf.labelOpacity})`,
+                fontFamily: "monospace",
+                letterSpacing: "0.02em",
+                whiteSpace: "nowrap",
+                maxWidth: 115,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                boxShadow: glow > 0.4 ? `0 0 5px ${palette.glow}` : "none",
+              }}>
+                {node.name}
+              </div>
             </div>
           </AdvancedMarker>
         )
