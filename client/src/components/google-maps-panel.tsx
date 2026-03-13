@@ -491,7 +491,7 @@ function MapClickHandler({
   return null
 }
 
-function AOIAdvancedMarker({ aoi }: { aoi: AOI }) {
+function AOIAdvancedMarker({ aoi, dim }: { aoi: AOI; dim?: boolean }) {
   const [showInfo, setShowInfo] = useState(false)
   
   return (
@@ -500,7 +500,7 @@ function AOIAdvancedMarker({ aoi }: { aoi: AOI }) {
         position={{ lat: aoi.lat, lng: aoi.lng }}
         onClick={() => setShowInfo(true)}
       >
-        <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center", opacity: dim ? 0.2 : 1, transition: "opacity 0.3s ease" }}>
           <div style={{
             position: "absolute",
             width: 36,
@@ -545,7 +545,7 @@ function AOIAdvancedMarker({ aoi }: { aoi: AOI }) {
   )
 }
 
-function SigActAdvancedMarkers({ sigacts }: { sigacts: SigAct[] }) {
+function SigActAdvancedMarkers({ sigacts, dim }: { sigacts: SigAct[]; dim?: boolean }) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
   
   return (
@@ -576,6 +576,8 @@ function SigActAdvancedMarkers({ sigacts }: { sigacts: SigAct[] }) {
               fontSize: 11,
               fontWeight: "700",
               letterSpacing: "-0.5px",
+              opacity: dim ? 0.2 : 1,
+              transition: "opacity 0.3s ease",
             }}>
               {index + 1}
             </div>
@@ -645,9 +647,9 @@ function getInfraIconSvg(category: string, subCategory?: string): string {
 
 // Confidence drives size, glow intensity, and label opacity — not border style
 const INFRA_CONFIDENCE: Record<string, { size: number; glowMult: number; labelOpacity: number; markerOpacity: number }> = {
-  verified:        { size: 26, glowMult: 1.0, labelOpacity: 0.95, markerOpacity: 1.00 },
-  "single-source": { size: 20, glowMult: 0.5, labelOpacity: 0.75, markerOpacity: 0.85 },
-  inferred:        { size: 15, glowMult: 0.2, labelOpacity: 0.55, markerOpacity: 0.60 },
+  verified:        { size: 32, glowMult: 1.0, labelOpacity: 0.95, markerOpacity: 1.00 },
+  "single-source": { size: 22, glowMult: 0.5, labelOpacity: 0.75, markerOpacity: 0.85 },
+  inferred:        { size: 16, glowMult: 0.2, labelOpacity: 0.55, markerOpacity: 0.60 },
 }
 
 function InfrastructureAdvancedMarkers({ 
@@ -663,11 +665,17 @@ function InfrastructureAdvancedMarkers({
   
   return (
     <>
-      {/* Hover-reveal CSS — label always rendered (no layout shift), visible only on parent hover */}
+      {/* Hover-reveal + pulse animation CSS */}
       <style>{`
         .infra-pin { position: relative; cursor: pointer; }
         .infra-pin .infra-label { visibility: hidden; }
         .infra-pin:hover .infra-label { visibility: visible; }
+        @keyframes infra-pulse {
+          0%   { box-shadow: var(--infra-shadow), 0 0 0 0 var(--infra-glow-color); }
+          60%  { box-shadow: var(--infra-shadow), 0 0 0 10px transparent; }
+          100% { box-shadow: var(--infra-shadow), 0 0 0 0 transparent; }
+        }
+        .infra-verified { animation: infra-pulse 2.4s ease-out infinite; }
       `}</style>
 
       {nodes.map((node, index) => {
@@ -684,22 +692,31 @@ function InfrastructureAdvancedMarkers({
           >
             <div className="infra-pin">
               {/* Circle icon — only thing visible by default */}
-              <div style={{
-                width: conf.size,
-                height: conf.size,
-                background: palette.color,
-                borderRadius: "50%",
-                border: `2px solid rgba(255,255,255,${0.5 + glow * 0.5})`,
-                boxShadow: [
-                  `0 0 ${Math.round(8 * glow + 4)}px ${palette.glow}`,
-                  `0 0 ${Math.round(18 * glow + 4)}px ${palette.glow}`,
-                  `0 2px 6px rgba(0,0,0,0.65)`,
-                ].join(", "),
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                opacity: conf.markerOpacity,
-              }}
+              <div
+                className={node.confidence === "verified" ? "infra-verified" : undefined}
+                style={{
+                  width: conf.size,
+                  height: conf.size,
+                  background: palette.color,
+                  borderRadius: "50%",
+                  border: `2.5px solid rgba(255,255,255,${0.5 + glow * 0.5})`,
+                  // CSS vars feed the pulse keyframe so glow color matches category
+                  ["--infra-shadow" as string]: [
+                    `0 0 ${Math.round(10 * glow + 4)}px ${palette.glow}`,
+                    `0 0 ${Math.round(22 * glow + 4)}px ${palette.glow}`,
+                    `0 3px 8px rgba(0,0,0,0.7)`,
+                  ].join(", "),
+                  ["--infra-glow-color" as string]: palette.glow,
+                  boxShadow: [
+                    `0 0 ${Math.round(10 * glow + 4)}px ${palette.glow}`,
+                    `0 0 ${Math.round(22 * glow + 4)}px ${palette.glow}`,
+                    `0 3px 8px rgba(0,0,0,0.7)`,
+                  ].join(", "),
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  opacity: conf.markerOpacity,
+                }}
                 dangerouslySetInnerHTML={{ __html: iconSvg }}
               />
 
@@ -1153,8 +1170,8 @@ function GoogleMapsContent({
         activeLens={activeLens}
       />
       
-      {aoi && <AOIAdvancedMarker aoi={aoi} />}
-      <SigActAdvancedMarkers sigacts={sigacts} />
+      {aoi && <AOIAdvancedMarker aoi={aoi} dim={activeLens === "infrastructure"} />}
+      <SigActAdvancedMarkers sigacts={sigacts} dim={activeLens === "infrastructure"} />
       <InfrastructureAdvancedMarkers 
         nodes={INFRASTRUCTURE_NODES} 
         visible={activeLens === "infrastructure"}
