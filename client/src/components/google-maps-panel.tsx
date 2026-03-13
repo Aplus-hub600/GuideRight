@@ -603,6 +603,20 @@ function SigActAdvancedMarkers({ sigacts }: { sigacts: SigAct[] }) {
   )
 }
 
+const INFRA_STYLES: Record<string, { color: string; glow: string; symbol: string; label: string }> = {
+  hospital:   { color: "#ef4444", glow: "rgba(239,68,68,0.55)",   symbol: "+", label: "Medical"    },
+  transport:  { color: "#3b82f6", glow: "rgba(59,130,246,0.55)",  symbol: "T", label: "Transport"  },
+  government: { color: "#a855f7", glow: "rgba(168,85,247,0.55)",  symbol: "G", label: "Government" },
+  utility:    { color: "#f59e0b", glow: "rgba(245,158,11,0.55)",  symbol: "U", label: "Utility"    },
+  education:  { color: "#06b6d4", glow: "rgba(6,182,212,0.55)",   symbol: "E", label: "Education"  },
+}
+
+const CONFIDENCE_STYLE: Record<string, { opacity: number; borderStyle: string; borderWidth: number }> = {
+  verified:      { opacity: 1.00, borderStyle: "solid",  borderWidth: 2.5 },
+  "single-source": { opacity: 0.80, borderStyle: "dashed", borderWidth: 2   },
+  inferred:      { opacity: 0.55, borderStyle: "dotted", borderWidth: 2   },
+}
+
 function InfrastructureAdvancedMarkers({ 
   nodes, 
   visible, 
@@ -614,54 +628,61 @@ function InfrastructureAdvancedMarkers({
 }) {
   if (!visible) return null
   
-  const getNodeColor = (category: string) => {
-    switch (category) {
-      case "hospital": return "#ef4444"
-      case "transport": return "#3b82f6"
-      case "government": return "#8b5cf6"
-      case "utility": return "#f59e0b"
-      case "education": return "#06b6d4"
-      default: return "#6b7280"
-    }
-  }
-
-  const getNodeSymbol = (category: string) => {
-    switch (category) {
-      case "hospital": return "+"
-      case "transport": return "T"
-      case "government": return "G"
-      case "utility": return "U"
-      case "education": return "E"
-      default: return "?"
-    }
-  }
-  
   return (
     <>
       {nodes.map((node, index) => {
-        const color = getNodeColor(node.category)
+        const style  = INFRA_STYLES[node.category] ?? INFRA_STYLES.utility
+        const conf   = CONFIDENCE_STYLE[node.confidence] ?? CONFIDENCE_STYLE.inferred
+        const showLabel = node.confidence === "verified"
+
         return (
           <AdvancedMarker
             key={index}
             position={{ lat: node.lat, lng: node.lng }}
             onClick={() => onNodeClick(node)}
           >
-            <div style={{
-              width: 18,
-              height: 18,
-              background: color,
-              border: "2px solid white",
-              borderRadius: 4,
-              boxShadow: `0 2px 6px ${color}55`,
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "white",
-              fontSize: 10,
-              fontWeight: "800",
-            }}>
-              {getNodeSymbol(node.category)}
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, cursor: "pointer", opacity: conf.opacity }}>
+              {/* Icon square */}
+              <div style={{
+                width: 22,
+                height: 22,
+                background: style.color,
+                border: `${conf.borderWidth}px ${conf.borderStyle} rgba(255,255,255,0.9)`,
+                borderRadius: 5,
+                boxShadow: `0 0 10px ${style.glow}, 0 0 20px ${style.glow}, 0 2px 4px rgba(0,0,0,0.5)`,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "white",
+                fontSize: 11,
+                fontWeight: "900",
+                fontFamily: "monospace",
+                letterSpacing: 0,
+              }}>
+                {style.symbol}
+              </div>
+
+              {/* Name label — verified nodes only, keeps map clean */}
+              {showLabel && (
+                <div style={{
+                  background: "rgba(0,0,0,0.82)",
+                  border: `1px solid ${style.color}`,
+                  borderRadius: 3,
+                  padding: "2px 5px",
+                  fontSize: 9,
+                  fontWeight: 600,
+                  color: "rgba(255,255,255,0.90)",
+                  fontFamily: "monospace",
+                  whiteSpace: "nowrap",
+                  maxWidth: 120,
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  boxShadow: `0 0 6px ${style.glow}`,
+                  letterSpacing: "0.02em",
+                }}>
+                  {node.name}
+                </div>
+              )}
             </div>
           </AdvancedMarker>
         )
