@@ -16,16 +16,16 @@ interface PopulationHeatmapProps {
   onDataReady?: (data: PopulationGridData) => void
 }
 
-// Whitepaper-aligned density classification using qualitative descriptors
+// Density classification — spatial pattern visualization
 // Philosophy: "Represent human activity as spatial patterns and intensity rather than discrete claims"
-// Uses muted palette to convey uncertainty and avoid false precision
+// Vivid heat ramp so the layer reads clearly on both terrain and satellite views
 // Thresholds define intensity bands, not precise classifications
 export const DENSITY_LEVELS = [
-  { id: 'concentrated', label: 'Concentrated', threshold: 0.70, fill: 'rgba(127, 86, 96, 0.55)', border: 'rgba(127, 86, 96, 0.35)', value: 'Very High Activity', tooltip: 'Concentrated population activity observed' },
-  { id: 'elevated', label: 'Elevated', threshold: 0.45, fill: 'rgba(142, 108, 95, 0.50)', border: 'rgba(142, 108, 95, 0.30)', value: 'High Activity', tooltip: 'Elevated activity patterns detected' },
-  { id: 'moderate', label: 'Moderate', threshold: 0.25, fill: 'rgba(156, 133, 108, 0.45)', border: 'rgba(156, 133, 108, 0.25)', value: 'Moderate Activity', tooltip: 'Moderate activity levels' },
-  { id: 'dispersed', label: 'Dispersed', threshold: 0.10, fill: 'rgba(148, 153, 131, 0.40)', border: 'rgba(148, 153, 131, 0.20)', value: 'Low Activity', tooltip: 'Dispersed activity patterns' },
-  { id: 'sparse', label: 'Sparse', threshold: 0, fill: 'rgba(134, 148, 134, 0.30)', border: 'rgba(134, 148, 134, 0.15)', value: 'Minimal Activity', tooltip: 'Sparse or inferred activity' }
+  { id: 'concentrated', label: 'Concentrated', threshold: 0.70, fill: '#c0152a', fillOpacity: 0.78, border: '#e53e3e', value: 'Very High Activity', tooltip: 'Concentrated population activity observed' },
+  { id: 'elevated',    label: 'Elevated',    threshold: 0.45, fill: '#d4681a', fillOpacity: 0.68, border: '#f97316', value: 'High Activity',      tooltip: 'Elevated activity patterns detected' },
+  { id: 'moderate',   label: 'Moderate',    threshold: 0.25, fill: '#b58a08', fillOpacity: 0.58, border: '#eab308', value: 'Moderate Activity', tooltip: 'Moderate activity levels' },
+  { id: 'dispersed',  label: 'Dispersed',   threshold: 0.10, fill: '#2d7a3a', fillOpacity: 0.46, border: '#4ade80', value: 'Low Activity',       tooltip: 'Dispersed activity patterns' },
+  { id: 'sparse',     label: 'Sparse',      threshold: 0,    fill: '#0e5a7a', fillOpacity: 0.30, border: '#22d3ee', value: 'Minimal Activity',   tooltip: 'Sparse or inferred activity' }
 ]
 
 // Get density level for a normalized value
@@ -34,16 +34,6 @@ function getDensityLevel(density: number) {
     if (density >= level.threshold) return level
   }
   return DENSITY_LEVELS[DENSITY_LEVELS.length - 1]
-}
-
-// Get color for density level (0-1 normalized)
-function getDensityColor(density: number): string {
-  return getDensityLevel(density).fill
-}
-
-// Get border color for density level
-function getDensityBorder(density: number): string {
-  return getDensityLevel(density).border
 }
 
 /**
@@ -99,14 +89,13 @@ export function PopulationHeatmapLayer({
     const halfStep = stepSize / 2
     const { north, south, east, west } = gridData.bounds
     
-    // Zoom-based rendering configuration - whitepaper aligned
-    // Uses softer stroke weights and lower opacity for pattern-based visualization
-    // Emphasizes spatial patterns rather than discrete boundaries
+    // Zoom-based rendering configuration
+    // opacityMult scales each level's per-density fillOpacity for zoom context
     const getZoomConfig = (zoom: number) => {
-      if (zoom >= 13) return { skip: 1, threshold: 0.10, strokeWeight: 0, opacityMult: 0.55 }
-      if (zoom >= 11) return { skip: 1, threshold: 0.12, strokeWeight: 0, opacityMult: 0.45 }
-      if (zoom >= 9) return { skip: 2, threshold: 0.15, strokeWeight: 0, opacityMult: 0.38 }
-      return { skip: 4, threshold: 0.22, strokeWeight: 0, opacityMult: 0.30 }
+      if (zoom >= 13) return { skip: 1, threshold: 0.10, opacityMult: 1.00 }
+      if (zoom >= 11) return { skip: 1, threshold: 0.12, opacityMult: 0.90 }
+      if (zoom >= 9)  return { skip: 2, threshold: 0.15, opacityMult: 0.80 }
+      return              { skip: 4, threshold: 0.22, opacityMult: 0.70 }
     }
     
     // Render function for zoom-aware drawing
@@ -138,16 +127,16 @@ export function PopulationHeatmapLayer({
           west: point.lng - halfStep * (config.skip > 1 ? config.skip / 2 : 1)
         }
         
-        // Whitepaper: Remove hard cell boundaries for gradient-like pattern visualization
-        // No borders, just soft fills to show spatial patterns
+        // Per-level fill: hex color + per-density opacity scaled by zoom
+        const level = getDensityLevel(point.density)
         const rect = new google.maps.Rectangle({
           bounds,
           map,
           strokeColor: 'transparent',
           strokeOpacity: 0,
           strokeWeight: 0,
-          fillColor: getDensityColor(point.density),
-          fillOpacity: config.opacityMult * 0.7,
+          fillColor: level.fill,
+          fillOpacity: level.fillOpacity * config.opacityMult,
           clickable: false,
           zIndex: 1
         })
