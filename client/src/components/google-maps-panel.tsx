@@ -14,6 +14,7 @@ import { PopulationHeatmapLayer, PopulationLegend } from "./population-heatmap"
 import { getPopulationGrid, sampleDensityAtLocation, type PopulationGridData } from "@/lib/population-grid"
 import { TrafficLayer, TrafficLegend } from "./traffic-layer"
 import { IntelHeatmapLayer, IntelHeatmapLegend } from "./intel-heatmap"
+import { RiskZoneLayer } from "./risk-zone-layer"
 
 interface AOI {
   name?: string
@@ -1117,6 +1118,7 @@ function GoogleMapsContent({
         events={gdeltEvents} 
         visible={activeLens === "intel"} 
       />
+      <RiskZoneLayer visible={activeLens === "risk-stress"} />
       
       {/* Top-left: Map style toggle - minimal */}
       <div className="absolute top-0 left-0 z-10">
