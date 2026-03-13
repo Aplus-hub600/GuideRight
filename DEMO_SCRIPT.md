@@ -66,7 +66,7 @@
 - Click an event for details (actors, event type, mentions)
 - *Say:* "These are real-time events from the GDELT global event database. Color-coded by the Goldstein conflict-cooperation scale. Each marker is sized by media mention volume - bigger dots mean more coverage."
 
-### Logistics Lens
+### Logistics Lens (Shift+L)
 - Supply routes and access points
 - *Say:* "Route exposure analysis uses qualitative assessments rather than precise risk scores. Movement corridors are color-coded from green through amber to red."
 
@@ -146,6 +146,7 @@ Demonstrate the one-key tactical queries:
 | Shift+I | Live Intel lens |
 | Shift+P | Human Activity lens |
 | Shift+T | Risk & Stress lens |
+| Shift+L | Logistics lens |
 | Shift+F | Infrastructure lens |
 | +/- | Zoom in/out |
 | C | Center on AOI |

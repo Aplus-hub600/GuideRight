@@ -1059,6 +1059,10 @@ function GoogleMapsContent({
             break
           case 'T':
             e.preventDefault()
+            setActiveLens("risk-stress")
+            break
+          case 'L':
+            e.preventDefault()
             setActiveLens("logistics")
             break
           case 'F':
