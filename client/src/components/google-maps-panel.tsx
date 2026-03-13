@@ -663,6 +663,13 @@ function InfrastructureAdvancedMarkers({
   
   return (
     <>
+      {/* Hover-reveal CSS — label always rendered (no layout shift), visible only on parent hover */}
+      <style>{`
+        .infra-pin { position: relative; cursor: pointer; }
+        .infra-pin .infra-label { visibility: hidden; }
+        .infra-pin:hover .infra-label { visibility: visible; }
+      `}</style>
+
       {nodes.map((node, index) => {
         const palette = INFRA_PALETTE[node.category] ?? INFRA_PALETTE.utility
         const conf    = INFRA_CONFIDENCE[node.confidence] ?? INFRA_CONFIDENCE.inferred
@@ -675,14 +682,8 @@ function InfrastructureAdvancedMarkers({
             position={{ lat: node.lat, lng: node.lng }}
             onClick={() => onNodeClick(node)}
           >
-            <div style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: 3,
-              cursor: "pointer",
-            }}>
-              {/* Circle marker — universally understood POI shape */}
+            <div className="infra-pin">
+              {/* Circle icon — only thing visible by default */}
               <div style={{
                 width: conf.size,
                 height: conf.size,
@@ -698,27 +699,32 @@ function InfrastructureAdvancedMarkers({
                 alignItems: "center",
                 justifyContent: "center",
                 opacity: conf.markerOpacity,
-                flexShrink: 0,
               }}
                 dangerouslySetInnerHTML={{ __html: iconSvg }}
               />
 
-              {/* Label shown for all nodes — size and opacity vary with confidence */}
-              <div style={{
-                background: "rgba(0,0,0,0.82)",
-                borderLeft: `2.5px solid ${palette.color}`,
-                padding: "1px 5px 1px 4px",
-                fontSize: node.confidence === "verified" ? 9 : 8,
-                fontWeight: node.confidence === "verified" ? 700 : 500,
-                color: `rgba(255,255,255,${conf.labelOpacity})`,
-                fontFamily: "monospace",
-                letterSpacing: "0.02em",
-                whiteSpace: "nowrap",
-                maxWidth: 115,
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                boxShadow: glow > 0.4 ? `0 0 5px ${palette.glow}` : "none",
-              }}>
+              {/* Label — absolutely positioned, revealed on hover, no layout shift */}
+              <div
+                className="infra-label"
+                style={{
+                  position: "absolute",
+                  top: "calc(100% + 4px)",
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  background: "rgba(0,0,0,0.88)",
+                  borderLeft: `2.5px solid ${palette.color}`,
+                  padding: "2px 6px 2px 5px",
+                  fontSize: 9,
+                  fontWeight: 600,
+                  color: "rgba(255,255,255,0.92)",
+                  fontFamily: "monospace",
+                  letterSpacing: "0.02em",
+                  whiteSpace: "nowrap",
+                  boxShadow: `0 1px 6px rgba(0,0,0,0.7), 0 0 5px ${palette.glow}`,
+                  pointerEvents: "none",
+                  zIndex: 10,
+                }}
+              >
                 {node.name}
               </div>
             </div>
