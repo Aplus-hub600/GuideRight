@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo } from "react"
+import { useEffect, useRef, useState, useCallback, useMemo } from "react"
 import { APIProvider, Map, AdvancedMarker, useMap, InfoWindow, useMapsLibrary } from "@vis.gl/react-google-maps"
 import { useQuery } from "@tanstack/react-query"
 import { Button } from "@/components/ui/button"
@@ -142,6 +142,39 @@ function MapTypeController({ mapType }: { mapType: "roadmap" | "satellite" | "hy
     }
   }, [map, mapType])
   
+  return null
+}
+
+// When the infrastructure lens is active, auto-switch to satellite so the base map
+// renders zero city/neighborhood/road labels — giving infra markers a clean visual field.
+// Restores the previous map style on lens change.
+function MapLabelController({
+  activeLens,
+  mapStyle,
+  setMapStyle,
+}: {
+  activeLens: MapLens
+  mapStyle: "roadmap" | "satellite" | "hybrid"
+  setMapStyle: (s: "roadmap" | "satellite" | "hybrid") => void
+}) {
+  const prevStyleRef = useRef<"roadmap" | "satellite" | "hybrid">(mapStyle)
+
+  useEffect(() => {
+    if (activeLens === "infrastructure") {
+      // Save whatever the user had before and go label-free
+      if (mapStyle !== "satellite") {
+        prevStyleRef.current = mapStyle
+        setMapStyle("satellite")
+      }
+    } else {
+      // Restore what the user had (only if we were the ones who changed it)
+      if (prevStyleRef.current && mapStyle === "satellite") {
+        setMapStyle(prevStyleRef.current)
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeLens])
+
   return null
 }
 
@@ -1163,6 +1196,7 @@ function GoogleMapsContent({
   return (
     <>
       <MapTypeController mapType={mapStyle} />
+      <MapLabelController activeLens={activeLens} mapStyle={mapStyle} setMapStyle={setMapStyle} />
       <ZoomController onZoomChange={setZoomLevel} />
       <MapClickHandler 
         onAOIChange={onAOIChange} 
