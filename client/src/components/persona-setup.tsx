@@ -8,6 +8,7 @@ import {
   type Role, type ExperienceLevel, type MissionContext, type UserPersona,
   savePersona
 } from "@/lib/persona"
+import { InitializationSequence } from "./initialization-sequence"
 
 interface PersonaSetupProps {
   onComplete: (persona: UserPersona) => void
@@ -44,6 +45,7 @@ export function PersonaSetup({ onComplete }: PersonaSetupProps) {
   const [role, setRole] = useState<Role | null>(null)
   const [experienceLevel, setExperienceLevel] = useState<ExperienceLevel | null>(null)
   const [missionContext, setMissionContext] = useState<MissionContext | null>(null)
+  const [initializing, setInitializing] = useState<UserPersona | null>(null)
 
   const handleComplete = () => {
     if (!role || !experienceLevel || !missionContext) return
@@ -54,7 +56,16 @@ export function PersonaSetup({ onComplete }: PersonaSetupProps) {
       missionContext,
     }
     savePersona(persona)
-    onComplete(persona)
+    setInitializing(persona)
+  }
+
+  if (initializing) {
+    return (
+      <InitializationSequence
+        persona={initializing}
+        onComplete={() => onComplete(initializing)}
+      />
+    )
   }
 
   return (
