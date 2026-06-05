@@ -115,7 +115,7 @@ export function PersonaSetup({ onComplete }: PersonaSetupProps) {
                 placeholder="e.g. Sheriff, Archer, Delta-6..."
                 maxLength={32}
                 autoFocus
-                className="w-full px-3 py-2 text-sm bg-muted border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary placeholder:text-muted-foreground/50"
+                className="w-full px-3 py-2 text-sm text-foreground bg-muted border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary placeholder:text-muted-foreground/50"
               />
               <p className="text-xs text-muted-foreground/60 mt-1">Optional — leave blank to proceed as "Analyst"</p>
             </div>
