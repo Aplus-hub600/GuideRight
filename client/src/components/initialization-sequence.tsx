@@ -39,56 +39,56 @@ function buildBootLines(persona: UserPersona): BootLine[] {
       value: persona.callsign.toUpperCase(),
       status: "VERIFIED",
       statusColor: "text-green-400",
-      delay: 0.35,
+      delay: 0.5,
     },
     {
       label: "ROLE MODULE",
       value: persona.role.toUpperCase(),
       status: "LOADED",
       statusColor: "text-green-400",
-      delay: 0.65,
+      delay: 1.0,
     },
     {
       label: "EXPERIENCE MODIFIER",
       value: persona.experienceLevel.toUpperCase(),
       status: "CALIBRATED",
       statusColor: "text-green-400",
-      delay: 0.95,
+      delay: 1.5,
     },
     {
       label: "MISSION CONTEXT",
       value: persona.missionContext.toUpperCase(),
       status: "ACTIVE",
       statusColor: "text-amber-400",
-      delay: 1.25,
+      delay: 2.0,
     },
     {
       label: "INTELLIGENCE FILTERS",
       value: filterMap[persona.role] ?? "ADAPTIVE",
       status: "ENABLED",
       statusColor: "text-green-400",
-      delay: 1.55,
+      delay: 2.5,
     },
     {
       label: "QUICK ACTIONS",
       value: actionLabels,
       status: "READY",
       statusColor: "text-green-400",
-      delay: 1.85,
+      delay: 3.0,
     },
     {
       label: "ADAPTIVE PROMPT ENGINE",
       value: "COMPILED",
       status: "OK",
       statusColor: "text-green-400",
-      delay: 2.1,
+      delay: 3.5,
     },
     {
       label: "SYSTEM INTEGRITY",
       value: "ALL CHECKS PASSED",
       status: "PASS",
       statusColor: "text-green-400",
-      delay: 2.3,
+      delay: 4.0,
     },
   ]
 }
@@ -131,9 +131,9 @@ export function InitializationSequence({ persona, onComplete }: InitializationSe
   const [exiting, setExiting] = useState(false)
 
   useEffect(() => {
-    // Progress bar: 0→100% over 2.8s
+    // Progress bar: 0→100% over 5.5s
     const start = Date.now()
-    const duration = 2800
+    const duration = 5500
     const raf = requestAnimationFrame(function tick() {
       const elapsed = Date.now() - start
       const pct = Math.min(100, (elapsed / duration) * 100)
@@ -141,12 +141,12 @@ export function InitializationSequence({ persona, onComplete }: InitializationSe
       if (pct < 100) requestAnimationFrame(tick)
     })
 
-    const t1 = setTimeout(() => setShowComplete(true), 2500)
-    const t2 = setTimeout(() => setShowWelcome(true), 2850)
+    const t1 = setTimeout(() => setShowComplete(true), 5200)
+    const t2 = setTimeout(() => setShowWelcome(true), 5800)
     const t3 = setTimeout(() => {
       setExiting(true)
-      setTimeout(onComplete, 600)
-    }, 4000)
+      setTimeout(onComplete, 700)
+    }, 8500)
 
     return () => {
       cancelAnimationFrame(raf)
