@@ -404,7 +404,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Chat endpoint with streaming support
   app.post("/api/chat", async (req, res) => {
     try {
-      const { query, contextIds } = chatQuerySchema.parse(req.body);
+      const { query, contextIds, persona } = chatQuerySchema.parse(req.body);
       
       // AUDIT LOG: Log all chat queries for OPSEC review
       console.log(`[AUDIT] Chat query logged | timestamp=${new Date().toISOString()} | query="${query.substring(0, 100)}${query.length > 100 ? '...' : ''}" | contextIds=${contextIds?.length || 0} | ip=${req.ip}`);
@@ -463,8 +463,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         query.toLowerCase().includes(keyword)
       );
 
-      // Process the tactical query
-      const analysis = await processTacticalQuery(query, contextStrings);
+      // Process the tactical query with persona context
+      const analysis = await processTacticalQuery(query, contextStrings, persona);
       
       // Format assistant response content (consistent with frontend display)
       let assistantContent = analysis.summary;

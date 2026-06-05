@@ -772,10 +772,18 @@ export const socialMediaQuerySchema = z.object({
 export type SocialMediaQuery = z.infer<typeof socialMediaQuerySchema>;
 
 // API Request/Response types
+export const personaSchema = z.object({
+  callsign: z.string().default("Analyst"),
+  role: z.string().default("Intelligence Analyst"),
+  experienceLevel: z.string().default("Intermediate"),
+  missionContext: z.string().default("Deployment"),
+}).optional();
+
 export const chatQuerySchema = z.object({
   query: z.string().min(1),
   contextIds: z.array(z.string()).default([]),
-  odinCountry: z.string().optional(), // Selected ODIN scenario country for contextual intelligence
+  odinCountry: z.string().optional(),
+  persona: personaSchema,
 });
 
 export const geminiLocationQuerySchema = z.object({

@@ -13,6 +13,8 @@ import { ScenarioProvider } from "./context/scenario-context";
 import { useState, useCallback } from "react";
 import i18n from "./lib/i18n";
 import { Map } from "lucide-react";
+import { PersonaSetup } from "./components/persona-setup";
+import { loadPersona, type UserPersona } from "./lib/persona";
 import { cn } from "@/lib/utils";
 import { GoogleMapsPanel, type DensitySample } from "./components/google-maps-panel";
 import { IntelligencePanel } from "./components/intelligence-panel";
@@ -34,6 +36,7 @@ function App() {
   const [isChatOpen, setIsChatOpen] = useState(false)
   const [mobileView, setMobileView] = useState<"map" | "intel">("map")
   const [activeLens, setActiveLens] = useState<MapLens>("infrastructure")
+  const [showPersonaSetup, setShowPersonaSetup] = useState<boolean>(() => !loadPersona())
   
   const [currentAOI, setCurrentAOI] = useState<AOI>({
     name: "Dhaka",
@@ -130,6 +133,11 @@ function App() {
     })
   }
 
+  const handlePersonaComplete = (persona: UserPersona) => {
+    setShowPersonaSetup(false)
+    window.dispatchEvent(new CustomEvent("guideright:persona-updated"))
+  }
+
   return (
     <QueryClientProvider client={queryClient}>
       <I18nextProvider i18n={i18n}>
@@ -137,6 +145,9 @@ function App() {
           <ScenarioProvider>
             <SystemStatusProvider>
               <TooltipProvider>
+                {showPersonaSetup && (
+                  <PersonaSetup onComplete={handlePersonaComplete} />
+                )}
                 <Switch>
                   <Route path="/scout-card">
                     <ScoutCardPage />

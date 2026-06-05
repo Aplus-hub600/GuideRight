@@ -3,8 +3,9 @@ import {
   Send, Loader2, Globe, Paperclip, Shield, 
   BarChart3, AlertTriangle, FileText, Briefcase, 
   Sparkles, ChevronRight, Zap, Target, Languages,
-  Brain, GitBranch, Info
+  Brain, GitBranch, Info, Settings2
 } from "lucide-react"
+import { loadPersona, getQuickActionsForRole, getWelcomeMessage, type UserPersona } from "@/lib/persona"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardHeader, CardContent } from "@/components/ui/card"
@@ -50,13 +51,26 @@ interface ChatPanelProps {
   className?: string
 }
 
-const QUICK_ACTIONS = [
-  { id: "PMESII", label: "PMESII", icon: BarChart3, prompt: "Provide a comprehensive PMESII analysis for the current area of interest", color: "text-blue-400 bg-blue-500/10 border-blue-500/30 hover:bg-blue-500/20", shortcut: "1" },
-  { id: "THREAT", label: "Threats", icon: AlertTriangle, prompt: "What are the current security threats and force protection considerations in this area?", color: "text-red-400 bg-red-500/10 border-red-500/30 hover:bg-red-500/20", shortcut: "2" },
-  { id: "SITREP", label: "SITREP", icon: FileText, prompt: "Create a tactical situation report for current operations", color: "text-green-400 bg-green-500/10 border-green-500/30 hover:bg-green-500/20", shortcut: "3" },
-  { id: "INFRA", label: "Infra", icon: Target, prompt: "Identify critical infrastructure and key terrain in this area", color: "text-cyan-400 bg-cyan-500/10 border-cyan-500/30 hover:bg-cyan-500/20", shortcut: "4" },
-  { id: "HUMINT", label: "HUMINT", icon: Briefcase, prompt: "Analyze human terrain, social dynamics, and population considerations", color: "text-purple-400 bg-purple-500/10 border-purple-500/30 hover:bg-purple-500/20", shortcut: "5" },
-]
+const ICON_MAP: Record<string, React.ElementType> = {
+  BarChart3, AlertTriangle, FileText, Briefcase, Target,
+  Shield, Brain, Zap, Globe, GitBranch, Sparkles, Loader2
+}
+
+function getIconForAction(id: string): React.ElementType {
+  const mapping: Record<string, React.ElementType> = {
+    PMESII: BarChart3, THREAT: AlertTriangle, SITREP: FileText,
+    INFRA: Target, HUMINT: Briefcase, SOURCES: Globe, GAPS: Brain,
+    ROUTE: Zap, BLUF: Shield, OPTIONS: GitBranch, RISK: AlertTriangle,
+    DECISION: Target, HUMANTERRAIN: Globe, KEYLEADERS: Briefcase,
+    IMPACT: Sparkles, NARRATIVES: Brain, SENTIMENT: BarChart3,
+    INFLUENCERS: Globe, MESSAGES: FileText, COA: GitBranch,
+    WARGAME: Target, LOGISTIC: Briefcase, PARTNER: Shield,
+    ENGAGEMENT: Zap, FACILITY: Target, PROTEST: AlertTriangle,
+    ADVANCE: Zap, VESSEL: Globe, YARD: Target, GATE: Zap,
+    LABOR: Briefcase, DISRUPTION: AlertTriangle,
+  }
+  return mapping[id] ?? Target
+}
 
 const RISK_COLORS = {
   LOW: "bg-green-500/20 text-green-300 border-green-500/40",
@@ -489,6 +503,25 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, className }: ChatPan
   const abortControllerRef = useRef<AbortController | null>(null)
   const isClearedRef = useRef(false)
 
+  const [persona, setPersona] = useState<UserPersona | null>(() => loadPersona())
+
+  // Re-read persona when storage changes (e.g. after setup completes)
+  useEffect(() => {
+    const handler = () => setPersona(loadPersona())
+    window.addEventListener("guideright:persona-updated", handler)
+    return () => window.removeEventListener("guideright:persona-updated", handler)
+  }, [])
+
+  const quickActions = useMemo(
+    () => persona ? getQuickActionsForRole(persona.role) : getQuickActionsForRole("Intelligence Analyst"),
+    [persona]
+  )
+
+  const welcomeMessage = useMemo(
+    () => persona ? getWelcomeMessage(persona) : null,
+    [persona]
+  )
+
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [])
@@ -543,7 +576,13 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, className }: ChatPan
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           query: queryText,
-          contextIds: allContextIds
+          contextIds: allContextIds,
+          persona: persona ? {
+            callsign: persona.callsign,
+            role: persona.role,
+            experienceLevel: persona.experienceLevel,
+            missionContext: persona.missionContext,
+          } : undefined
         }),
         signal: abortController.signal
       })
@@ -746,36 +785,62 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, className }: ChatPan
                   />
                   <Sparkles className="h-10 w-10 text-primary" />
                 </div>
-                <h3 className="text-xl font-bold mb-2 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-                  GuideRight Intelligence Assistant
-                </h3>
-                <div className="flex items-center justify-center gap-2 mb-3">
-                  <Badge className="text-[10px] font-mono px-2 bg-blue-500/10 text-blue-400 border-blue-500/30">TACTICAL</Badge>
-                  <Badge className="text-[10px] font-mono px-2 bg-purple-500/10 text-purple-400 border-purple-500/30">PMESII</Badge>
-                  <Badge className="text-[10px] font-mono px-2 bg-green-500/10 text-green-400 border-green-500/30">BANGLADESH</Badge>
-                </div>
+
+                {persona ? (
+                  <>
+                    <h3 className="text-xl font-bold mb-1 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                      {welcomeMessage}
+                    </h3>
+                    <div className="flex items-center justify-center gap-2 mb-3">
+                      <Badge className="text-[10px] font-mono px-2 bg-primary/10 text-primary border-primary/30">{persona.role.toUpperCase()}</Badge>
+                      <Badge className="text-[10px] font-mono px-2 bg-amber-500/10 text-amber-400 border-amber-500/30">{persona.experienceLevel.toUpperCase()}</Badge>
+                      <Badge className="text-[10px] font-mono px-2 bg-green-500/10 text-green-400 border-green-500/30">{persona.missionContext.toUpperCase()}</Badge>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <h3 className="text-xl font-bold mb-2 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                      GuideRight Intelligence Assistant
+                    </h3>
+                    <div className="flex items-center justify-center gap-2 mb-3">
+                      <Badge className="text-[10px] font-mono px-2 bg-blue-500/10 text-blue-400 border-blue-500/30">TACTICAL</Badge>
+                      <Badge className="text-[10px] font-mono px-2 bg-purple-500/10 text-purple-400 border-purple-500/30">PMESII</Badge>
+                      <Badge className="text-[10px] font-mono px-2 bg-green-500/10 text-green-400 border-green-500/30">BANGLADESH</Badge>
+                    </div>
+                  </>
+                )}
+
                 <p className="text-sm text-muted-foreground mb-6">
-                  Query intelligence sources, analyze threats, or request situational assessments
+                  {persona
+                    ? `Adapted for ${persona.role} — ${persona.missionContext} context`
+                    : "Query intelligence sources, analyze threats, or request situational assessments"}
                 </p>
                 
                 <div className="space-y-3">
                   <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Quick Actions <span className="text-[10px] opacity-70">(Alt+1-5)</span></p>
                   <div className="flex flex-wrap justify-center gap-2">
-                    {QUICK_ACTIONS.map((action) => {
-                      const Icon = action.icon
+                    {quickActions.map((action, idx) => {
+                      const Icon = getIconForAction(action.id)
+                      const colors = [
+                        "text-blue-400 bg-blue-500/10 border-blue-500/30 hover:bg-blue-500/20",
+                        "text-red-400 bg-red-500/10 border-red-500/30 hover:bg-red-500/20",
+                        "text-green-400 bg-green-500/10 border-green-500/30 hover:bg-green-500/20",
+                        "text-cyan-400 bg-cyan-500/10 border-cyan-500/30 hover:bg-cyan-500/20",
+                        "text-purple-400 bg-purple-500/10 border-purple-500/30 hover:bg-purple-500/20",
+                      ]
                       return (
                         <button
                           key={action.id}
                           onClick={() => handleQuickAction(action.prompt)}
-                          title={`Alt+${action.shortcut}: ${action.prompt}`}
+                          title={`Alt+${idx + 1}: ${action.prompt}`}
                           className={cn(
                             "group flex items-center gap-2 px-3 py-2.5 text-sm font-semibold rounded-lg border transition-all duration-200",
-                            action.color
+                            colors[idx % colors.length]
                           )}
                         >
                           <Icon className="h-4 w-4" />
                           <span>{action.label}</span>
-                          <kbd className="hidden group-hover:inline-flex items-center justify-center h-4 w-4 text-[9px] font-mono bg-black/20 rounded">{action.shortcut}</kbd>
+                          <kbd className="hidden group-hover:inline-flex items-center justify-center h-4 w-4 text-[9px] font-mono bg-black/20 rounded">{idx + 1}</kbd>
                         </button>
                       )
                     })}

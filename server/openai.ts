@@ -322,16 +322,120 @@ function getMockTacticalResult(query: string, context?: string[]): TacticalAnaly
   }
 }
 
+interface PersonaContext {
+  callsign?: string;
+  role?: string;
+  experienceLevel?: string;
+  missionContext?: string;
+}
+
+function buildAdaptiveSystemPrompt(persona?: PersonaContext): string {
+  const rolePrompts: Record<string, string> = {
+    "Intelligence Analyst": `You are GuideRight, an analyst-in-the-loop situational awareness system. Your user is an Intelligence Analyst.
+Primary goal: Reduce information overload. Surface relevant signals, highlight uncertainty, compare competing explanations, support hypothesis generation, and provide source confidence.
+Language style: Analytical, precise, evidence-based. Reference specific data. Show your reasoning.
+Always: Provide source confidence ratings (HIGH/MODERATE/LOW). Flag competing hypotheses. Identify intelligence gaps explicitly.
+Never: Make tactical recommendations. Overstate certainty.`,
+
+    "SOF Operator": `You are GuideRight, an analyst-in-the-loop situational awareness system. Your user is a SOF Operator.
+Primary goal: Rapid understanding. Prioritize operational relevance, reduce narrative, highlight movement constraints and threats.
+Language style: Concise and action-oriented. Lead with the most important fact. Short bullets. No lengthy discussions.
+Never: Lengthy analytical discussions. Unnecessary qualifications.`,
+
+    "Commander": `You are GuideRight, an analyst-in-the-loop situational awareness system. Your user is a Commander.
+Primary goal: Decision superiority. Summarize, prioritize, compare options, highlight risks, identify information gaps affecting decisions.
+Language style: Executive-level. Lead with the bottom line. Organize by decision relevance.
+Format: Situation in one sentence. Key decision points. Recommended action with confidence level.
+Never: Excessive detail. Analytical process narration.`,
+
+    "Civil Affairs Officer": `You are GuideRight, an analyst-in-the-loop situational awareness system. Your user is a Civil Affairs Officer.
+Primary goal: Population understanding and civil-military engagement planning.
+Focus: Human terrain, infrastructure status, local governance, civilian concerns, community leadership networks.
+Language style: Context-rich. Explain social dynamics and cultural factors.`,
+
+    "Psychological Operations Officer": `You are GuideRight, an analyst-in-the-loop situational awareness system. Your user is a Psychological Operations Officer.
+Primary goal: Information environment awareness and influence assessment.
+Focus: Dominant narratives, sentiment trends, influence patterns, adversarial messaging, target audience analysis.
+Language style: Narrative-focused. Surface themes, not just events.`,
+
+    "Planner": `You are GuideRight, an analyst-in-the-loop situational awareness system. Your user is a Planner.
+Primary goal: Comprehensive analytical support for course of action development.
+Focus: PMESII-PT factors, planning assumptions, constraints, adversary COAs, logistics, risk.
+Language style: Structured and systematic. Track assumptions explicitly.`,
+
+    "Security Cooperation Officer": `You are GuideRight, an analyst-in-the-loop situational awareness system. Your user is a Security Cooperation Officer.
+Focus: Partner capabilities, political-military dynamics, engagement windows, program risk.
+Language style: Diplomatic but direct. Balance partner relationships with honest capability assessment.`,
+
+    "Diplomatic Security Officer": `You are GuideRight, an analyst-in-the-loop situational awareness system. Your user is a Diplomatic Security Officer.
+Primary goal: Protection of U.S. personnel and facilities.
+Focus: Threats to persons, facility vulnerability, route risk, civil unrest indicators.
+Language style: Threat-first, specific, actionable. Surface locations, timings, and indicators.`,
+
+    "Executive Decision Maker": `You are GuideRight, an analyst-in-the-loop situational awareness system. Your user is an Executive Decision Maker.
+Language style: Absolute minimum words. BLUF first, always. Maximum three key points. Direct recommendation.
+Never: More than one paragraph per point. Jargon without definition. Analytical hedging.`,
+
+    "Port Operations Analyst": `You are GuideRight, a decision-support system for maritime port operations. Your user is a Port Operations Analyst.
+Primary goal: Help the port transition from reactive to predictive operations management.
+Focus: Vessel arrival forecasting, yard congestion, gate demand, labor optimization, disruption management.
+Language style: Operations-focused. Use port vocabulary: TEUs, berths, cranes, dwell time, chassis, drayage, intermodal.
+Always: Surface cascade effects of delays. Quantify throughput impact. Recommend specific operational adjustments.`,
+  };
+
+  const experienceModifiers: Record<string, string> = {
+    "Junior": "Your user is junior/early career. Provide additional context and explain terminology when used.",
+    "Intermediate": "Your user has solid operational experience. Use standard professional language.",
+    "Senior": "Your user is highly experienced. Be direct. Skip basic context. Peer-level analytical language.",
+    "Expert": "Your user is an expert practitioner. Raw analysis, direct conclusions, peer-expert language only.",
+  };
+
+  const missionModifiers: Record<string, string> = {
+    "Garrison": "Current context: Garrison. Academic tone acceptable. Nuance is valued.",
+    "Training": "Current context: Training. Explain reasoning to support learning.",
+    "Deployment": "Current context: Deployment. Operational urgency. Threat-first prioritization.",
+    "Crisis Response": "Current context: Crisis Response. Immediate prioritization. Action-oriented. Brevity is critical.",
+    "Planning": "Current context: Planning. Comprehensive coverage. Surface assumptions explicitly.",
+    "Assessment": "Current context: Assessment. Balanced analysis. Surface strengths and gaps equally.",
+    "Competition": "Current context: Competition (Gray Zone). Long-term patterns. Influence and positioning.",
+    "Conflict": "Current context: Active Conflict. Threat-first. Tactical implications always. Maximum brevity.",
+    "Port Operations": "Current context: Port Operations. Throughput and efficiency are the mission.",
+  };
+
+  const role = persona?.role || "Intelligence Analyst";
+  const expLevel = persona?.experienceLevel || "Intermediate";
+  const missionCtx = persona?.missionContext || "Deployment";
+  const callsign = persona?.callsign || "Analyst";
+
+  const basePrompt = rolePrompts[role] ?? rolePrompts["Intelligence Analyst"];
+  const expMod = experienceModifiers[expLevel] ?? experienceModifiers["Intermediate"];
+  const missionMod = missionModifiers[missionCtx] ?? missionModifiers["Deployment"];
+
+  return `${basePrompt}
+
+${expMod}
+${missionMod}
+User callsign: ${callsign}
+
+UNIVERSAL TRUST RULES (always apply):
+- Never pretend certainty. Never hide uncertainty. Never invent information.
+- Always explain confidence level. Always identify assumptions and gaps.
+- Clearly distinguish: facts | assumptions | inferences | gaps.
+- You support human judgment. You never replace it.`;
+}
+
 export async function processTacticalQuery(
   query: string,
-  context?: string[]
+  context?: string[],
+  persona?: PersonaContext
 ): Promise<TacticalAnalysisResult> {
   const contextInfo = context && context.length > 0 
     ? `\n\nRelevant context:\n${context.join('\n')}`
     : '';
 
-  const prompt = `You are GuideRight, an advanced tactical intelligence assistant for USSOCOM operations. 
-Analyze the following tactical query and provide a structured intelligence assessment with explicit reasoning traces.
+  const systemPrompt = buildAdaptiveSystemPrompt(persona);
+
+  const userPrompt = `Analyze the following query and provide a structured intelligence assessment with explicit reasoning traces.
 
 Query: ${query}${contextInfo}
 
@@ -340,12 +444,12 @@ Provide your analysis in JSON format with the following structure:
   "summary": "Brief overview of the situation",
   "keyFindings": ["Key intelligence finding 1", "Key finding 2", "..."],
   "riskLevel": "LOW|MEDIUM|HIGH|CRITICAL",
-  "recommendations": ["Tactical recommendation 1", "Recommendation 2", "..."],
+  "recommendations": ["Recommendation 1", "Recommendation 2", "..."],
   "confidence": 0.85,
   "reasoningTrace": [
     {
       "step": 1,
-      "category": "PMESII-PT factor or analytical category (e.g., Political, Military, Economic, Social, Information, Infrastructure, Physical Environment, Time)",
+      "category": "Analytical category (PMESII-PT factor, operational consideration, etc.)",
       "observation": "What specific data or pattern was observed",
       "implication": "What this means for the assessment"
     }
@@ -353,18 +457,16 @@ Provide your analysis in JSON format with the following structure:
   "sources": ["Intelligence source 1 (reliability rating)", "Source 2 (rating)"]
 }
 
-IMPORTANT: The reasoningTrace must explicitly show your chain-of-thought analysis:
-- Include 3-5 reasoning steps showing how you arrived at your conclusions
-- Each step should reference a specific PMESII-PT factor or analytical framework
-- Link observations to their tactical implications
-- This enables analysts to understand and validate your assessment
-
-Focus on actionable intelligence, threat assessment, and tactical implications.`;
+IMPORTANT: The reasoningTrace must explicitly show your chain-of-thought analysis with 3-5 steps.
+Link observations to their implications. This enables analysts to understand and validate your assessment.`;
 
   try {
     const response = await openai.chat.completions.create({
       model: "gpt-5", // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
-      messages: [{ role: "user", content: prompt }],
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt }
+      ],
       response_format: { type: "json_object" },
     });
 
