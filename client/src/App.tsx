@@ -10,7 +10,7 @@ import { SystemStatusBanner } from "./components/system-status-banner";
 import { SystemStatusProvider } from "./lib/system-status";
 import { ClassificationBanner } from "./components/classification-banner";
 import { ScenarioProvider } from "./context/scenario-context";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import i18n from "./lib/i18n";
 import { Map } from "lucide-react";
 import { PersonaSetup } from "./components/persona-setup";
@@ -132,6 +132,12 @@ function App() {
       radiusKm: 5
     })
   }
+
+  useEffect(() => {
+    const handler = () => setShowPersonaSetup(true)
+    window.addEventListener("guideright:show-persona-setup", handler)
+    return () => window.removeEventListener("guideright:show-persona-setup", handler)
+  }, [])
 
   const handlePersonaComplete = (persona: UserPersona) => {
     setShowPersonaSetup(false)

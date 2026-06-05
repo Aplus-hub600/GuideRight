@@ -51,11 +51,6 @@ interface ChatPanelProps {
   className?: string
 }
 
-const ICON_MAP: Record<string, React.ElementType> = {
-  BarChart3, AlertTriangle, FileText, Briefcase, Target,
-  Shield, Brain, Zap, Globe, GitBranch, Sparkles, Loader2
-}
-
 function getIconForAction(id: string): React.ElementType {
   const mapping: Record<string, React.ElementType> = {
     PMESII: BarChart3, THREAT: AlertTriangle, SITREP: FileText,
@@ -709,9 +704,9 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, className }: ChatPan
     const handleKeyboardShortcuts = (e: KeyboardEvent) => {
       if (e.altKey && !e.ctrlKey && !e.metaKey) {
         const num = parseInt(e.key)
-        if (num >= 1 && num <= QUICK_ACTIONS.length) {
+        if (num >= 1 && num <= quickActions.length) {
           e.preventDefault()
-          const action = QUICK_ACTIONS[num - 1]
+          const action = quickActions[num - 1]
           if (action && !isStreaming) {
             handleQuickAction(action.prompt)
           }
@@ -736,13 +731,17 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, className }: ChatPan
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-bold tracking-wide bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">GIA</span>
+              <span className="text-sm font-bold tracking-wide bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                {persona ? persona.callsign : "GIA"}
+              </span>
               <Badge className="text-[10px] font-mono h-5 gap-1.5 px-2 bg-green-500/15 text-green-400 border-green-500/30">
                 <PulsingIndicator />
                 <span>ONLINE</span>
               </Badge>
             </div>
-            <p className="text-[11px] text-muted-foreground font-medium">GuideRight Intelligence Assistant</p>
+            <p className="text-[11px] text-muted-foreground font-medium">
+              {persona ? `${persona.role} · ${persona.missionContext}` : "GuideRight Intelligence Assistant"}
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-2 relative z-10">
@@ -752,6 +751,15 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, className }: ChatPan
               PROCESSING
             </Badge>
           )}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => window.dispatchEvent(new CustomEvent("guideright:show-persona-setup"))}
+            title="Reconfigure mission profile"
+            className="text-muted-foreground/60 hover:text-muted-foreground"
+          >
+            <Settings2 className="h-4 w-4" />
+          </Button>
           {messages.length > 0 && (
             <Button 
               variant="ghost" 
