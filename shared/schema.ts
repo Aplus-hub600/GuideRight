@@ -777,6 +777,7 @@ export const personaSchema = z.object({
   role: z.string().default("Intelligence Analyst"),
   experienceLevel: z.string().default("Intermediate"),
   missionContext: z.string().default("Deployment"),
+  temporalHorizon: z.string().optional(),
 }).optional();
 
 export const chatQuerySchema = z.object({

@@ -450,6 +450,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Send typing indicator
       res.write(`data: ${JSON.stringify({ type: 'typing', data: { isTyping: true } })}\n\n`);
 
+      // Fetch individual query history for this operator (personalization layer)
+      const priorQueries = persona?.callsign
+        ? await storage.getQueryHistoryForCallsign(persona.callsign, 8)
+        : [];
+
       // Detect if query is location-based (for Gemini Google Maps grounding)
       const locationKeywords = [
         'restaurant', 'hotel', 'hospital', 'school', 'pharmacy', 'gas station',
@@ -463,8 +468,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         query.toLowerCase().includes(keyword)
       );
 
-      // Process the tactical query with persona context
-      const analysis = await processTacticalQuery(query, contextStrings, persona);
+      // Build persona with role-default temporal horizon if not explicitly set
+      const resolvedPersona = persona ? {
+        ...persona,
+        temporalHorizon: persona.temporalHorizon ?? (
+          persona.role === "SOF Operator" ? "6h" :
+          persona.role === "Commander" ? "24h" :
+          persona.role === "Diplomatic Security Officer" ? "24h" :
+          persona.role === "Executive Decision Maker" ? "24h" :
+          persona.role === "Port Operations Analyst" ? "72h" :
+          persona.role === "Civil Affairs Officer" ? "7d" :
+          persona.role === "Psychological Operations Officer" ? "14d" :
+          persona.role === "Planner" ? "30d" :
+          persona.role === "Security Cooperation Officer" ? "90d" : "72h"
+        )
+      } : undefined;
+
+      // Process the tactical query with persona context + individual query history
+      const analysis = await processTacticalQuery(query, contextStrings, resolvedPersona, priorQueries);
       
       // Format assistant response content (consistent with frontend display)
       let assistantContent = analysis.summary;
@@ -485,13 +506,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         role: "assistant",
         contextIds: []
       });
+
+      // Save to individual query history for callsign-level personalization
+      if (persona?.callsign) {
+        const topic = analysis.summary
+          ? analysis.summary.split(/[.!?]/)[0]?.trim().substring(0, 100)
+          : undefined;
+        storage.saveQueryHistory({
+          callsign: persona.callsign,
+          role: persona.role ?? "Intelligence Analyst",
+          query: query.substring(0, 200),
+          topic
+        }).catch(() => {}); // fire-and-forget, non-blocking
+      }
       
       // Send assistant response with analysis data
       res.write(`data: ${JSON.stringify({ 
         type: 'assistant_message', 
         data: { 
           message: assistantMessage,
-          analysis
+          analysis,
+          priorQueryCount: priorQueries.length
         }
       })}\n\n`);
       

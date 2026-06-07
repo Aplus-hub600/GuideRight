@@ -3,9 +3,9 @@ import {
   Send, Loader2, Globe, Paperclip, Shield, 
   BarChart3, AlertTriangle, FileText, Briefcase, 
   Sparkles, ChevronRight, Zap, Target, Languages,
-  Brain, GitBranch, Info, Settings2
+  Brain, GitBranch, Info, Settings2, Clock
 } from "lucide-react"
-import { loadPersona, getQuickActionsForRole, getWelcomeMessage, type UserPersona } from "@/lib/persona"
+import { loadPersona, getQuickActionsForRole, getWelcomeMessage, getTemporalHorizonForPersona, TEMPORAL_HORIZON_LABELS, type UserPersona } from "@/lib/persona"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardHeader, CardContent } from "@/components/ui/card"
@@ -577,6 +577,7 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, className }: ChatPan
             role: persona.role,
             experienceLevel: persona.experienceLevel,
             missionContext: persona.missionContext,
+            temporalHorizon: persona.temporalHorizon,
           } : undefined
         }),
         signal: abortController.signal
@@ -742,6 +743,14 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, className }: ChatPan
             <p className="text-[11px] text-muted-foreground font-medium">
               {persona ? `${persona.role} · ${persona.missionContext}` : "GuideRight Intelligence Assistant"}
             </p>
+            {persona && (
+              <div className="flex items-center gap-2 mt-0.5">
+                <Badge className="text-[9px] font-mono h-4 px-1.5 gap-1 bg-blue-500/10 text-blue-400/80 border-blue-500/20 no-default-active-elevate">
+                  <Clock className="h-2.5 w-2.5" />
+                  {TEMPORAL_HORIZON_LABELS[getTemporalHorizonForPersona(persona)]}
+                </Badge>
+              </div>
+            )}
           </div>
         </div>
         <div className="flex items-center gap-2 relative z-10">

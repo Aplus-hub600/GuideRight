@@ -28,12 +28,41 @@ export const MISSION_CONTEXTS = [
 export type Role = (typeof ROLES)[number];
 export type ExperienceLevel = (typeof EXPERIENCE_LEVELS)[number];
 export type MissionContext = (typeof MISSION_CONTEXTS)[number];
+export type TemporalHorizon = "6h" | "24h" | "72h" | "7d" | "14d" | "30d" | "90d";
+
+export const TEMPORAL_HORIZON_DEFAULTS: Record<Role, TemporalHorizon> = {
+  "SOF Operator": "6h",
+  "Diplomatic Security Officer": "24h",
+  "Commander": "24h",
+  "Executive Decision Maker": "24h",
+  "Intelligence Analyst": "72h",
+  "Port Operations Analyst": "72h",
+  "Civil Affairs Officer": "7d",
+  "Psychological Operations Officer": "14d",
+  "Planner": "30d",
+  "Security Cooperation Officer": "90d",
+};
+
+export const TEMPORAL_HORIZON_LABELS: Record<TemporalHorizon, string> = {
+  "6h": "6-hour window",
+  "24h": "24-hour window",
+  "72h": "72-hour window",
+  "7d": "7-day window",
+  "14d": "14-day window",
+  "30d": "30-day window",
+  "90d": "90-day window",
+};
+
+export function getTemporalHorizonForPersona(persona: UserPersona): TemporalHorizon {
+  return persona.temporalHorizon ?? TEMPORAL_HORIZON_DEFAULTS[persona.role] ?? "72h";
+}
 
 export interface UserPersona {
   callsign: string;
   role: Role;
   experienceLevel: ExperienceLevel;
   missionContext: MissionContext;
+  temporalHorizon?: TemporalHorizon;
   lastActive?: string;
 }
 

@@ -327,6 +327,13 @@ interface PersonaContext {
   role?: string;
   experienceLevel?: string;
   missionContext?: string;
+  temporalHorizon?: string;
+}
+
+interface PriorQuery {
+  query: string;
+  topic?: string;
+  timestamp: Date;
 }
 
 function buildAdaptiveSystemPrompt(persona?: PersonaContext): string {
@@ -406,15 +413,30 @@ Always: Surface cascade effects of delays. Quantify throughput impact. Recommend
   const expLevel = persona?.experienceLevel || "Intermediate";
   const missionCtx = persona?.missionContext || "Deployment";
   const callsign = persona?.callsign || "Analyst";
+  const temporalHorizon = persona?.temporalHorizon || null;
+
+  const temporalLabels: Record<string, string> = {
+    "6h": "the last 6 hours",
+    "24h": "the last 24 hours",
+    "72h": "the last 72 hours",
+    "7d": "the last 7 days",
+    "14d": "the last 14 days",
+    "30d": "the last 30 days",
+    "90d": "the last 90 days",
+  };
 
   const basePrompt = rolePrompts[role] ?? rolePrompts["Intelligence Analyst"];
   const expMod = experienceModifiers[expLevel] ?? experienceModifiers["Intermediate"];
   const missionMod = missionModifiers[missionCtx] ?? missionModifiers["Deployment"];
+  const temporalMod = temporalHorizon
+    ? `TEMPORAL SCOPE: Prioritize intelligence and data from ${temporalLabels[temporalHorizon] ?? temporalHorizon}. Treat older information as historical background only unless it directly establishes a pattern or trajectory relevant to the current query.`
+    : `TEMPORAL SCOPE: Use the most recent available intelligence. Weight recent data more heavily than historical.`;
 
   return `${basePrompt}
 
 ${expMod}
 ${missionMod}
+${temporalMod}
 User callsign: ${callsign}
 
 UNIVERSAL TRUST RULES (always apply):
@@ -427,7 +449,8 @@ UNIVERSAL TRUST RULES (always apply):
 export async function processTacticalQuery(
   query: string,
   context?: string[],
-  persona?: PersonaContext
+  persona?: PersonaContext,
+  priorQueries?: PriorQuery[]
 ): Promise<TacticalAnalysisResult> {
   const contextInfo = context && context.length > 0 
     ? `\n\nRelevant context:\n${context.join('\n')}`
@@ -435,9 +458,16 @@ export async function processTacticalQuery(
 
   const systemPrompt = buildAdaptiveSystemPrompt(persona);
 
+  // Build prior query context block for individual-level personalization
+  const priorQueryBlock = priorQueries && priorQueries.length > 0
+    ? `\n\nOPERATOR HISTORY — ${priorQueries.length} prior ${priorQueries.length === 1 ? "query" : "queries"} this session:
+${priorQueries.map((q, i) => `${i + 1}. "${q.topic ?? q.query.substring(0, 90)}"`).join('\n')}
+Acknowledge analytical continuity where relevant. Surface connections between this query and prior topics if they exist.`
+    : '';
+
   const userPrompt = `Analyze the following query and provide a structured intelligence assessment with explicit reasoning traces.
 
-Query: ${query}${contextInfo}
+Query: ${query}${contextInfo}${priorQueryBlock}
 
 Provide your analysis in JSON format with the following structure:
 {

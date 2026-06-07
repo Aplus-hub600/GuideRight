@@ -150,7 +150,19 @@ export interface IStorage {
   createRefreshRun(run: InsertIntelRefreshRun): Promise<IntelRefreshRun>;
   updateRefreshRun(id: string, updates: Partial<InsertIntelRefreshRun>): Promise<IntelRefreshRun | null>;
   getRecentRefreshRuns(limit?: number): Promise<IntelRefreshRun[]>;
+
+  // Query history operations (individual-level personalization)
+  saveQueryHistory(entry: { callsign: string; role: string; query: string; topic?: string }): Promise<void>;
+  getQueryHistoryForCallsign(callsign: string, limit?: number): Promise<Array<{ callsign: string; role: string; query: string; topic?: string; timestamp: Date }>>;
 }
+
+export type QueryHistoryEntry = {
+  callsign: string;
+  role: string;
+  query: string;
+  topic?: string;
+  timestamp: Date;
+};
 
 export class MemStorage implements IStorage {
   private users: Map<string, User>;
@@ -168,6 +180,7 @@ export class MemStorage implements IStorage {
   private assistantSessions: AssistantSession[];
   private assistantMessages: AssistantMessage[];
   private assistantRuns: AssistantRun[];
+  private queryHistory: Map<string, QueryHistoryEntry[]>;
 
   constructor() {
     this.users = new Map();
@@ -185,6 +198,7 @@ export class MemStorage implements IStorage {
     this.assistantSessions = [];
     this.assistantMessages = [];
     this.assistantRuns = [];
+    this.queryHistory = new Map();
     
     // Initialize with external intelligence sources and sample weather data
     this.initializeExternalIntelligence();
@@ -226,6 +240,19 @@ export class MemStorage implements IStorage {
     };
     this.chatMessages.push(message);
     return message;
+  }
+
+  async saveQueryHistory(entry: { callsign: string; role: string; query: string; topic?: string }): Promise<void> {
+    const existing = this.queryHistory.get(entry.callsign) ?? [];
+    existing.push({ ...entry, timestamp: new Date() });
+    // Keep last 50 queries per callsign
+    if (existing.length > 50) existing.splice(0, existing.length - 50);
+    this.queryHistory.set(entry.callsign, existing);
+  }
+
+  async getQueryHistoryForCallsign(callsign: string, limit: number = 10): Promise<QueryHistoryEntry[]> {
+    const entries = this.queryHistory.get(callsign) ?? [];
+    return entries.slice(-limit).reverse(); // most recent first
   }
 
   async getAnalysisResults(fileId?: string): Promise<AnalysisResult[]> {
