@@ -778,6 +778,8 @@ export const personaSchema = z.object({
   experienceLevel: z.string().default("Intermediate"),
   missionContext: z.string().default("Deployment"),
   temporalHorizon: z.string().optional(),
+  responseDepth: z.string().optional(),
+  priorityLenses: z.array(z.string()).optional(),
 }).optional();
 
 export const chatQuerySchema = z.object({

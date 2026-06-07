@@ -25,9 +25,24 @@ export const MISSION_CONTEXTS = [
   "Port Operations",
 ] as const;
 
+export const RESPONSE_DEPTHS = ["Executive Summary", "Balanced", "Deep Analysis"] as const;
+
+export const PRIORITY_LENSES = [
+  "Threat Activity",
+  "Human Activity",
+  "Infrastructure",
+  "Logistics",
+  "Information Environment",
+  "Political Activity",
+  "Economic Activity",
+  "Weather / Environmental",
+] as const;
+
 export type Role = (typeof ROLES)[number];
 export type ExperienceLevel = (typeof EXPERIENCE_LEVELS)[number];
 export type MissionContext = (typeof MISSION_CONTEXTS)[number];
+export type ResponseDepth = (typeof RESPONSE_DEPTHS)[number];
+export type PriorityLens = (typeof PRIORITY_LENSES)[number];
 export type TemporalHorizon = "6h" | "24h" | "72h" | "7d" | "14d" | "30d" | "90d";
 
 export const TEMPORAL_HORIZON_DEFAULTS: Record<Role, TemporalHorizon> = {
@@ -53,8 +68,116 @@ export const TEMPORAL_HORIZON_LABELS: Record<TemporalHorizon, string> = {
   "90d": "90-day window",
 };
 
+export const PRIORITY_LENS_DEFAULTS: Record<Role, PriorityLens[]> = {
+  "Intelligence Analyst": ["Threat Activity", "Information Environment", "Infrastructure"],
+  "SOF Operator": ["Threat Activity", "Logistics", "Human Activity"],
+  "Commander": ["Threat Activity", "Infrastructure", "Political Activity"],
+  "Civil Affairs Officer": ["Human Activity", "Infrastructure", "Political Activity"],
+  "Psychological Operations Officer": ["Information Environment", "Political Activity", "Human Activity"],
+  "Planner": ["Infrastructure", "Logistics", "Threat Activity"],
+  "Security Cooperation Officer": ["Political Activity", "Infrastructure", "Human Activity"],
+  "Diplomatic Security Officer": ["Threat Activity", "Infrastructure", "Logistics"],
+  "Executive Decision Maker": ["Threat Activity", "Political Activity", "Infrastructure"],
+  "Port Operations Analyst": ["Logistics", "Infrastructure", "Economic Activity"],
+};
+
+export const ROLE_OPTIMIZATIONS: Record<Role, string[]> = {
+  "Intelligence Analyst": [
+    "Source traceability and confidence scoring",
+    "Competing hypotheses and analytical gaps",
+    "PMESII-PT factor breakdown",
+    "Evidence-grounded uncertainty framing",
+  ],
+  "SOF Operator": [
+    "Operationally relevant threats and immediate changes",
+    "Movement constraints and route exposure",
+    "High-signal, concise summaries",
+    "Force protection indicators",
+  ],
+  "Commander": [
+    "Executive synthesis and decision implications",
+    "COA comparison and risk framing",
+    "Key information gaps affecting decisions",
+    "Bottom-line-up-front structure",
+  ],
+  "Civil Affairs Officer": [
+    "Population impacts and human terrain",
+    "Infrastructure service status",
+    "Community stability indicators",
+    "Civil-military engagement planning",
+  ],
+  "Psychological Operations Officer": [
+    "Dominant narratives and sentiment shifts",
+    "Information environment amplification patterns",
+    "Influence indicators and adversarial messaging",
+    "Target audience analysis",
+  ],
+  "Planner": [
+    "Constraints, dependencies, and planning assumptions",
+    "Scenario comparison and COA development",
+    "Logistics and timeline analysis",
+    "Risk identification and mitigation options",
+  ],
+  "Security Cooperation Officer": [
+    "Partner capacity and capability assessment",
+    "Stability indicators and engagement windows",
+    "Political-military dynamics",
+    "Program risk and regional context",
+  ],
+  "Diplomatic Security Officer": [
+    "Threats to personnel and facilities",
+    "Route risk and mobility constraints",
+    "Civil unrest indicators and triggers",
+    "Advance work and facility proximity risk",
+  ],
+  "Executive Decision Maker": [
+    "Top-line risk with likelihood and impact",
+    "Strategic implications and key tradeoffs",
+    "Concise recommended areas for attention",
+    "Confidence level in one sentence",
+  ],
+  "Port Operations Analyst": [
+    "Vessel arrival forecasting and disruption",
+    "Yard congestion and dwell time analysis",
+    "Gate demand and labor optimization",
+    "Cascade effects of delays on throughput",
+  ],
+};
+
+export const ROLE_DESCRIPTIONS: Record<Role, string> = {
+  "Intelligence Analyst": "Signal detection, source analysis, PMESII",
+  "SOF Operator": "Direct action, rapid SA, movement analysis",
+  "Commander": "Decision support, COA comparison, risk",
+  "Civil Affairs Officer": "Human terrain, infrastructure, engagement",
+  "Psychological Operations Officer": "Narratives, influence, sentiment",
+  "Planner": "COA development, wargaming, logistics",
+  "Security Cooperation Officer": "Partner forces, engagement windows",
+  "Diplomatic Security Officer": "Threat to persons, facility security",
+  "Executive Decision Maker": "BLUF only, top-line decisions",
+  "Port Operations Analyst": "Vessel flow, yard, gate, disruption",
+};
+
+export const CONTEXT_DESCRIPTIONS: Record<MissionContext, string> = {
+  "Garrison": "Steady-state, home station",
+  "Training": "Exercise or academic environment",
+  "Deployment": "Forward-deployed, operational",
+  "Crisis Response": "Immediate crisis, heightened urgency",
+  "Planning": "Pre-mission or campaign planning",
+  "Assessment": "Evaluation or survey mission",
+  "Competition": "Gray zone, below threshold",
+  "Conflict": "Active conflict environment",
+  "Port Operations": "Terminal or logistics hub operations",
+};
+
 export function getTemporalHorizonForPersona(persona: UserPersona): TemporalHorizon {
   return persona.temporalHorizon ?? TEMPORAL_HORIZON_DEFAULTS[persona.role] ?? "72h";
+}
+
+export function getEffectiveLenses(persona: UserPersona): PriorityLens[] {
+  if (persona.priorityLenses && persona.priorityLenses.length > 0) {
+    return persona.priorityLenses;
+  }
+  return PRIORITY_LENS_DEFAULTS[persona.role] ?? [];
 }
 
 export interface UserPersona {
@@ -63,6 +186,8 @@ export interface UserPersona {
   experienceLevel: ExperienceLevel;
   missionContext: MissionContext;
   temporalHorizon?: TemporalHorizon;
+  responseDepth?: ResponseDepth;
+  priorityLenses?: PriorityLens[];
   lastActive?: string;
 }
 
@@ -100,6 +225,27 @@ export function savePersona(persona: UserPersona): void {
 
 export function clearPersona(): void {
   localStorage.removeItem(STORAGE_KEY);
+}
+
+export function getWelcomeMessage(persona: UserPersona): string {
+  const timeOfDay = new Date().getHours();
+  const greeting = timeOfDay < 12 ? "Good morning" : timeOfDay < 17 ? "Good afternoon" : "Good evening";
+  const callsign = persona.callsign || "Analyst";
+
+  const roleMessages: Record<Role, string> = {
+    "Intelligence Analyst": `${greeting}, ${callsign}. Ready for analysis. Your workspace is configured for ${persona.missionContext} context — source-traced, gap-aware, and uncertainty-explicit.`,
+    "SOF Operator": `${greeting}, ${callsign}. Systems up. ${persona.missionContext} posture active — threat-first, concise, operationally relevant.`,
+    "Commander": `${greeting}, ${callsign}. GuideRight ready. Decision-support mode active for ${persona.missionContext} environment.`,
+    "Civil Affairs Officer": `${greeting}, ${callsign}. Human terrain and infrastructure analysis ready for ${persona.missionContext} context.`,
+    "Psychological Operations Officer": `${greeting}, ${callsign}. Information environment analysis ready. Narrative tracking and sentiment monitoring active.`,
+    "Planner": `${greeting}, ${callsign}. Planning support ready. PMESII, COA, and constraints analysis available for ${persona.missionContext}.`,
+    "Security Cooperation Officer": `${greeting}, ${callsign}. Partner capacity and engagement analysis ready for ${persona.missionContext} context.`,
+    "Diplomatic Security Officer": `${greeting}, ${callsign}. Security analysis ready. Threat-to-persons and facility risk tracking active.`,
+    "Executive Decision Maker": `${greeting}, ${callsign}. GuideRight ready. BLUF mode active — top-line decisions only.`,
+    "Port Operations Analyst": `${greeting}, ${callsign}. Port operations support ready. Vessel forecasting and throughput optimization available.`,
+  };
+
+  return roleMessages[persona.role] ?? `${greeting}, ${callsign}. GuideRight ready.`;
 }
 
 export function getQuickActionsForRole(role: Role): QuickAction[] {
@@ -172,158 +318,9 @@ export function getQuickActionsForRole(role: Role): QuickAction[] {
       { id: "YARD", label: "Yard Status", prompt: "Assess current yard congestion. Identify hotspots, dwell time issues, and recommended repositioning actions.", shortcut: "2", colorClass: "text-amber-400 bg-amber-500/10 border-amber-500/30" },
       { id: "GATE", label: "Gate Demand", prompt: "Forecast gate demand by time of day and carrier. Recommend appointment adjustments to smooth flow.", shortcut: "3", colorClass: "text-cyan-400 bg-cyan-500/10 border-cyan-500/30" },
       { id: "LABOR", label: "Labor Opt.", prompt: "Optimize labor shift assignments based on forecasted inbound volume. Identify overtime risk.", shortcut: "4", colorClass: "text-green-400 bg-green-500/10 border-green-500/30" },
-      { id: "DISRUPTION", label: "Disruption", prompt: "Model a disruption scenario: what happens if the two largest vessels slip 18 hours? Show cascade effects across berths, yard, and gate.", shortcut: "5", colorClass: "text-red-400 bg-red-500/10 border-red-500/30" },
+      { id: "DISRUPT", label: "Disruption", prompt: "What disruptions are active or likely in the next 48 hours? Assess cascade effects on terminal throughput.", shortcut: "5", colorClass: "text-red-400 bg-red-500/10 border-red-500/30" },
     ],
   };
+
   return sets[role] ?? sets["Intelligence Analyst"];
-}
-
-export function buildSystemPrompt(persona: UserPersona): string {
-  const rolePrompts: Record<Role, string> = {
-    "Intelligence Analyst": `You are GuideRight, an analyst-in-the-loop situational awareness system. Your user is an Intelligence Analyst.
-Primary goal: Reduce information overload. Surface relevant signals, highlight uncertainty, compare competing explanations, support hypothesis generation, and provide source confidence.
-Language style: Analytical, precise, evidence-based. Reference specific data. Show your reasoning.
-Always: Provide source confidence ratings (HIGH/MODERATE/LOW). Flag competing hypotheses. Identify intelligence gaps explicitly.
-Never: Make tactical recommendations. Overstate certainty.
-Example language: "Three reporting streams indicate elevated activity in Sector 4. Confidence is moderate due to limited corroboration from independent sources."`,
-
-    "SOF Operator": `You are GuideRight, an analyst-in-the-loop situational awareness system. Your user is a SOF Operator.
-Primary goal: Rapid understanding. Prioritize operational relevance, reduce narrative, increase visual/spatial information, highlight movement constraints, flag threats and opportunities.
-Language style: Concise and action-oriented. Lead with the most important fact. No lengthy analytical discussions.
-Format: Use short bullets. Prioritize by operational impact. Include specific grid references or landmarks where relevant.
-Never: Lengthy analytical discussions. Unnecessary qualifications.
-Example language: "Sector 4 remains navigable. Elevated activity on primary route — recommend monitoring. Two chokepoints identified at northern and southern approaches."`,
-
-    "Commander": `You are GuideRight, an analyst-in-the-loop situational awareness system. Your user is a Commander.
-Primary goal: Decision superiority. Summarize, prioritize, compare options, highlight risks, identify information gaps that affect decisions.
-Language style: Executive-level. Lead with the bottom line. Organize by decision relevance, not analytical sequence.
-Format: Start with the situation in one sentence. Follow with the key decision points. Close with the recommended action and confidence level.
-Never: Excessive detail. Analytical process narration.
-Example language: "Current conditions support continued operations. Primary risk: transportation disruption in the eastern corridor (moderate confidence). Recommend maintaining current posture pending additional reporting."`,
-
-    "Civil Affairs Officer": `You are GuideRight, an analyst-in-the-loop situational awareness system. Your user is a Civil Affairs Officer.
-Primary goal: Population understanding and civil-military engagement planning.
-Focus: Human terrain, infrastructure status, local governance, civilian concerns, community leadership networks.
-Language style: Context-rich. Explain social dynamics and cultural factors. Surface non-obvious community relationships.
-Always: Identify key leaders and influencers. Assess civilian impact of military activity. Flag infrastructure gaps as engagement opportunities.
-Example language: "Population density is highest around transportation hubs. Local reporting indicates increasing concerns about service interruptions — potential engagement opportunity for civil affairs programming."`,
-
-    "Psychological Operations Officer": `You are GuideRight, an analyst-in-the-loop situational awareness system. Your user is a Psychological Operations Officer.
-Primary goal: Information environment awareness and influence assessment.
-Focus: Dominant narratives, sentiment trends, influence patterns, amplification vectors, adversarial messaging, target audience analysis.
-Language style: Narrative-focused. Surface themes, not just events. Connect information patterns to behavioral implications.
-Always: Identify information amplifiers and credible voices. Distinguish organic sentiment from manufactured narratives.
-Example language: "Reporting indicates growing circulation of anti-government messaging across multiple information channels. Primary amplifier: local radio networks. Adversarial framing focuses on economic grievances."`,
-
-    "Planner": `You are GuideRight, an analyst-in-the-loop situational awareness system. Your user is a Planner.
-Primary goal: Comprehensive analytical support for course of action development.
-Focus: PMESII-PT factors, planning assumptions, constraints, restraints, adversary COAs, logistics, risk identification.
-Language style: Structured and systematic. Surface planning factors explicitly. Track assumptions and flag where they are weak.
-Always: Identify key planning assumptions. List constraints and restraints. Present options, not just assessments.
-Format: Use structured formats (numbered lists, assumptions logs, COA comparisons) when appropriate.`,
-
-    "Security Cooperation Officer": `You are GuideRight, an analyst-in-the-loop situational awareness system. Your user is a Security Cooperation Officer.
-Primary goal: Partner nation engagement and security assistance planning.
-Focus: Partner capabilities and limitations, political-military dynamics, engagement windows, interoperability considerations, program risk.
-Language style: Diplomatic but direct. Balance partner relationship considerations with honest capability assessment.
-Always: Assess partner motivation and political will alongside capability. Surface reputational and political risks to U.S. programs.`,
-
-    "Diplomatic Security Officer": `You are GuideRight, an analyst-in-the-loop situational awareness system. Your user is a Diplomatic Security Officer.
-Primary goal: Protection of U.S. personnel and facilities.
-Focus: Threats to persons, facility vulnerability, route risk, civil unrest indicators, surveillance detection, advance work planning.
-Language style: Threat-first, specific, actionable. Surface locations, timings, and indicators — not just general risk levels.
-Always: Prioritize by likelihood and severity. Include early warning indicators. Recommend specific protective measures.
-Never: General risk statements without location and timing specifics.`,
-
-    "Executive Decision Maker": `You are GuideRight, an analyst-in-the-loop situational awareness system. Your user is an Executive Decision Maker.
-Primary goal: Decision support at the executive level.
-Language style: Absolute minimum words. Lead with the bottom line. No analytical process narrative.
-Format: BLUF first, always. Maximum three key points. Close with a direct recommendation.
-Never: More than one paragraph per point. Analytical hedging that obscures the recommendation. Jargon without definition.
-Example language: "Bottom line: this situation requires a decision within 48 hours. Primary risk is inaction. Recommended: Option B, with a reassessment trigger at 24 hours."`,
-
-    "Port Operations Analyst": `You are GuideRight, a decision-support system for maritime port operations. Your user is a Port Operations Analyst at a major container terminal.
-Primary goal: Help the port transition from reactive to predictive operations management.
-Focus: Vessel arrival/departure forecasting, yard congestion prediction, gate demand smoothing, labor optimization, supply chain coordination, disruption management.
-Language style: Operations-focused, data-driven, specific to maritime logistics. Use port vocabulary: TEUs, berths, cranes, dwell time, chassis, drayage, intermodal, TOS.
-Always: Surface cascade effects of delays. Quantify throughput impact where possible. Recommend specific operational adjustments.
-Example language: "Vessel CV Charleston delayed 18 hours. Projected cascade: crane idle window 0600-1200, labor surplus of 14 crane operators, gate surge delayed by 6 hours. Recommend: adjust shift 3 start time, pre-position chassis at Gate 3."`,
-  };
-
-  const experienceModifiers: Record<ExperienceLevel, string> = {
-    "Junior": "Your user is junior/early career. Provide additional context and explain terminology when used. Structure responses clearly.",
-    "Intermediate": "Your user has solid operational experience. Use standard professional language without over-explaining.",
-    "Senior": "Your user is highly experienced. Be direct. Skip basic context. Peer-level analytical language.",
-    "Expert": "Your user is an expert practitioner. No hand-holding. Raw analysis, direct conclusions, peer-expert language.",
-  };
-
-  const missionModifiers: Record<MissionContext, string> = {
-    "Garrison": "Current context: Garrison. Academic tone is acceptable. Nuance is valued.",
-    "Training": "Current context: Training. Explain reasoning to support learning.",
-    "Deployment": "Current context: Deployment. Operational urgency. Threat-first prioritization.",
-    "Crisis Response": "Current context: Crisis Response. Immediate prioritization. Action-oriented. Every second matters.",
-    "Planning": "Current context: Planning. Comprehensive coverage. Surface assumptions explicitly.",
-    "Assessment": "Current context: Assessment. Balanced analysis. Surface strengths and gaps equally.",
-    "Competition": "Current context: Competition (Gray Zone). Long-term patterns. Influence and positioning.",
-    "Conflict": "Current context: Active Conflict. Threat-first. Tactical implications always. Brevity.",
-    "Port Operations": "Current context: Port Operations. Throughput and efficiency are the mission. Operational tempo matters.",
-  };
-
-  const base = rolePrompts[persona.role] ?? rolePrompts["Intelligence Analyst"];
-  const expMod = experienceModifiers[persona.experienceLevel];
-  const missionMod = missionModifiers[persona.missionContext];
-
-  return `${base}
-
-${expMod}
-${missionMod}
-
-The user's callsign is: ${persona.callsign}
-
-UNIVERSAL TRUST RULES — always apply regardless of role:
-- Never pretend certainty. Never hide uncertainty. Never invent information.
-- Always explain confidence level. Always show sources. Always identify assumptions.
-- Clearly distinguish: facts | assumptions | inferences | gaps.
-- You support human judgment. You never replace it.`;
-}
-
-export function getWelcomeMessage(persona: UserPersona): string {
-  const lastActive = persona.lastActive
-    ? new Date(persona.lastActive)
-    : null;
-
-  const timeAgo = lastActive
-    ? formatTimeAgo(lastActive)
-    : null;
-
-  const roleGreetings: Record<Role, string> = {
-    "Intelligence Analyst": "Analytical picture is ready.",
-    "SOF Operator": "Situational awareness is up.",
-    "Commander": "Decision support is standing by.",
-    "Civil Affairs Officer": "Human terrain picture is ready.",
-    "Psychological Operations Officer": "Information environment is mapped.",
-    "Planner": "Planning support is standing by.",
-    "Security Cooperation Officer": "Engagement picture is ready.",
-    "Diplomatic Security Officer": "Threat picture is up.",
-    "Executive Decision Maker": "Ready for your query.",
-    "Port Operations Analyst": "Terminal picture is live.",
-  };
-
-  const greeting = roleGreetings[persona.role] ?? "Standing by.";
-
-  if (timeAgo) {
-    return `Welcome back, ${persona.callsign}. ${greeting} Last session: ${timeAgo}.`;
-  }
-  return `GuideRight initialized for ${persona.callsign} | ${persona.role} | ${persona.missionContext}. ${greeting}`;
-}
-
-function formatTimeAgo(date: Date): string {
-  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
-  if (seconds < 60) return "just now";
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  return `${days}d ago`;
 }

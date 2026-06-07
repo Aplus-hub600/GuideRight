@@ -328,6 +328,8 @@ interface PersonaContext {
   experienceLevel?: string;
   missionContext?: string;
   temporalHorizon?: string;
+  responseDepth?: string;
+  priorityLenses?: string[];
 }
 
 interface PriorQuery {
@@ -414,6 +416,14 @@ Always: Surface cascade effects of delays. Quantify throughput impact. Recommend
   const missionCtx = persona?.missionContext || "Deployment";
   const callsign = persona?.callsign || "Analyst";
   const temporalHorizon = persona?.temporalHorizon || null;
+  const responseDepth = persona?.responseDepth || "Balanced";
+  const priorityLenses = persona?.priorityLenses ?? [];
+
+  const responseDepthModifiers: Record<string, string> = {
+    "Executive Summary": "RESPONSE DEPTH: Executive Summary. Maximum one paragraph. BLUF first. Key judgment + top risk only. No analytical narration.",
+    "Balanced": "RESPONSE DEPTH: Balanced. Structured summary with key evidence, confidence level, and identified gaps. Avoid excessive brevity and excessive length.",
+    "Deep Analysis": "RESPONSE DEPTH: Deep Analysis. Full reasoning chain required. Include competing hypotheses, source evaluation, confidence factors, and analytical gaps.",
+  };
 
   const temporalLabels: Record<string, string> = {
     "6h": "the last 6 hours",
@@ -431,12 +441,17 @@ Always: Surface cascade effects of delays. Quantify throughput impact. Recommend
   const temporalMod = temporalHorizon
     ? `TEMPORAL SCOPE: Prioritize intelligence and data from ${temporalLabels[temporalHorizon] ?? temporalHorizon}. Treat older information as historical background only unless it directly establishes a pattern or trajectory relevant to the current query.`
     : `TEMPORAL SCOPE: Use the most recent available intelligence. Weight recent data more heavily than historical.`;
+  const depthMod = responseDepthModifiers[responseDepth] ?? responseDepthModifiers["Balanced"];
+  const lensesMod = priorityLenses.length > 0
+    ? `PRIORITY LENSES: Emphasize these analytic dimensions above others: ${priorityLenses.join(', ')}. Surface these factors prominently in every response where they are relevant.`
+    : "";
 
   return `${basePrompt}
 
 ${expMod}
 ${missionMod}
 ${temporalMod}
+${depthMod}${lensesMod ? `\n${lensesMod}` : ""}
 User callsign: ${callsign}
 
 UNIVERSAL TRUST RULES (always apply):

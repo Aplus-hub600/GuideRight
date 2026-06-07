@@ -1,0 +1,349 @@
+Implement a premium “Mission Profile Setup” and role-aware adaptive response system for GuideRight.
+
+Objective:
+GuideRight should adapt the user experience based on mission role, experience level, mission context, time horizon, and priority analytic lenses before the main dashboard loads. This should make the system feel more operationally mature, intuitive, and relationship-aware while preserving analyst-in-the-loop decision support. Do not make it feel like a consumer chatbot or generic AI assistant.
+
+Core concept:
+Same data, different user needs. GuideRight should not change facts. It should change how information is prioritized, explained, summarized, and displayed based on who the user is and what they are trying to accomplish.
+
+Add a first-time setup screen / mission profile wizard that appears before the main dashboard.
+
+Required setup fields:
+
+1. Mission Role
+Required.
+Options:
+- Intelligence Analyst
+- SOF Operator
+- Commander
+- Civil Affairs
+- Psychological Operations
+- Diplomatic Security
+- Planner
+- Security Cooperation
+- Executive Decision Maker
+- Other
+
+2. Experience Level
+Required.
+Options:
+- Junior
+- Intermediate
+- Senior
+- Expert
+
+3. Mission Context
+Required.
+Options:
+- Garrison
+- Training
+- Planning
+- Crisis Response
+- Competition
+- Deployment
+- Assessment
+
+4. Response Depth
+Required.
+Options:
+- Executive Summary
+- Balanced
+- Deep Analysis
+
+5. Default Time Horizon
+Required.
+Options:
+- Last 24 Hours
+- Last 7 Days
+- Last 30 Days
+- Mission Adaptive
+
+6. Priority Lenses
+Required. Allow user to select up to 3.
+Options:
+- Threat Activity
+- Human Activity
+- Infrastructure
+- Logistics
+- Information Environment
+- Political Activity
+- Economic Activity
+- Weather / Environmental Conditions
+
+Design requirements:
+- The setup screen must look premium, calm, and operationally mature.
+- No flashy AI gradients, no cartoon icons, no excessive glow.
+- Use a restrained dark/slate operational UI with clean spacing, strong typography, and clear hierarchy.
+- The user should feel this is a serious national security decision-support system.
+- Use short helper text under each section.
+- Show a right-side “Profile Preview” card that updates as selections are made.
+- The preview should say what GuideRight will optimize for based on the profile.
+- Include a final button: “Enter GuideRight Workspace”.
+- Add an option: “Use Recommended Profile” that defaults to:
+  Role: Intelligence Analyst
+  Experience: Senior
+  Mission Context: Crisis Response
+  Response Depth: Balanced
+  Time Horizon: Mission Adaptive
+  Priority Lenses: Threat Activity, Infrastructure, Human Activity
+
+Persistence:
+- Store the mission profile in local state and localStorage for now.
+- Add a small profile indicator in the dashboard header showing:
+  Role | Experience | Mission Context
+Example:
+  Intelligence Analyst | Senior | Crisis Response
+- Add an “Edit Mission Profile” button in the dashboard header or settings menu.
+- If no profile exists, show the setup screen before the dashboard.
+- If a profile exists, load the dashboard normally.
+
+Adaptive behavior requirements:
+
+Create a profile adapter utility that maps the mission profile to:
+- default dashboard emphasis
+- response style
+- default temporal window
+- confidence explanation style
+- source citation preference
+- recommended lens ordering
+- chat assistant system behavior
+
+Role-based behavior:
+
+Intelligence Analyst:
+- Prioritize source traceability, confidence, competing explanations, gaps, and analytic rigor.
+- Prefer detailed summaries with evidence and uncertainty.
+- Avoid tactical recommendations.
+- Default lens priority: Threat Activity, Information Environment, Infrastructure.
+
+SOF Operator:
+- Prioritize operational relevance, movement constraints, immediate changes, infrastructure access, and high-signal alerts.
+- Prefer concise summaries.
+- Avoid long analytic theory.
+- Default lens priority: Threat Activity, Logistics, Human Activity.
+
+Commander:
+- Prioritize executive synthesis, decision implications, major risks, and information gaps.
+- Prefer concise key judgments.
+- Default lens priority: Threat Activity, Infrastructure, Political Activity.
+
+Civil Affairs:
+- Prioritize population impacts, infrastructure services, local concerns, community effects, and stability indicators.
+- Prefer contextual summaries.
+- Default lens priority: Human Activity, Infrastructure, Political Activity.
+
+Psychological Operations:
+- Prioritize narratives, sentiment changes, amplification patterns, information environment, and influence indicators.
+- Default lens priority: Information Environment, Political Activity, Human Activity.
+
+Diplomatic Security:
+- Prioritize personnel security, facility risk, mobility, public unrest indicators, and proximity to critical infrastructure.
+- Default lens priority: Threat Activity, Infrastructure, Logistics.
+
+Planner:
+- Prioritize scenario comparison, constraints, assumptions, options, dependencies, and timeline.
+- Default lens priority: Infrastructure, Logistics, Threat Activity.
+
+Security Cooperation:
+- Prioritize partner capacity, stability indicators, infrastructure dependencies, and regional context.
+- Default lens priority: Political Activity, Infrastructure, Human Activity.
+
+Executive Decision Maker:
+- Prioritize top-line risk, strategic implications, confidence, and concise recommended areas for attention.
+- Default lens priority: Threat Activity, Political Activity, Infrastructure.
+
+Experience-level behavior:
+
+Junior:
+- Provide more explanation and context.
+- Define analytic terms when useful.
+- Explain why confidence is high, moderate, or low.
+- Suggest follow-up questions.
+- Provide structured guidance.
+
+Intermediate:
+- Provide balanced context and concise explanation.
+- Include assumptions and gaps.
+- Suggest reasonable next analytic steps.
+
+Senior:
+- Be concise.
+- Emphasize evidence, confidence, gaps, and implications.
+- Avoid over-explaining.
+- Provide direct summaries and allow drill-down.
+
+Expert:
+- Be very concise.
+- Provide source-linked evidence, confidence, and uncertainty.
+- Avoid definitions unless asked.
+- Surface anomalies and changes quickly.
+
+Mission context behavior:
+
+Garrison:
+- Emphasize monitoring, trend analysis, and routine awareness.
+
+Training:
+- Emphasize learning, evaluation, scenario replay, and explanation.
+
+Planning:
+- Emphasize constraints, dependencies, assumptions, and options.
+
+Crisis Response:
+- Emphasize recency, escalation indicators, infrastructure impact, and decision speed.
+
+Competition:
+- Emphasize long-term trends, influence, political activity, and strategic positioning.
+
+Deployment:
+- Emphasize operational relevance, movement, logistics, threat activity, and infrastructure.
+
+Assessment:
+- Emphasize evidence, confidence, validation, gaps, and after-action learning.
+
+Temporal reasoning:
+Use the mission profile to determine how much data should be used to generate answers.
+
+Default temporal logic:
+- Commander / Executive: prioritize last 24–72 hours unless user asks otherwise.
+- SOF Operator: prioritize last 24–72 hours and route/mobility-relevant signals.
+- Intelligence Analyst: prioritize last 7–30 days, with ability to compare baseline trends.
+- Civil Affairs: prioritize last 30–180 days when population or infrastructure effects matter.
+- PSYOP: prioritize last 7–30 days, plus narrative trend comparison.
+- Diplomatic Security: prioritize last 24 hours to 14 days depending on crisis context.
+- Planner: prioritize mission-defined window and compare constraints over time.
+
+If user selects “Mission Adaptive,” the system should choose the time window based on Role + Mission Context + Query Type and display the selected window in the response.
+
+Example:
+“Using last 14 days based on Senior Intelligence Analyst / Crisis Response profile.”
+
+Confidence and source behavior:
+Adjust how confidence is presented, but do not manipulate truth.
+
+For analysts:
+- Show source diversity, corroboration, recency, and gaps.
+
+For operators:
+- Show confidence level and operational relevance.
+- Keep explanations concise.
+
+For commanders/executives:
+- Show confidence level and key reason in one sentence.
+
+For junior users:
+- Explain what confidence means.
+
+For senior/expert users:
+- Provide confidence and evidence trail without extra teaching.
+
+Chat assistant integration:
+Modify /api/chat behavior so missionProfile is included in the chat request payload and injected into the system prompt.
+
+The chat assistant must:
+- Adapt tone and depth based on profile.
+- Preserve human judgment.
+- Never present itself as autonomous.
+- Never make unsupported predictions.
+- Clearly distinguish facts, assumptions, confidence, and gaps.
+- Use role-aware language.
+
+Add suggested quick actions in the chat assistant based on profile.
+
+Examples:
+Intelligence Analyst:
+- “Compare competing explanations”
+- “Show confidence drivers”
+- “List source gaps”
+
+SOF Operator:
+- “Summarize operationally relevant changes”
+- “Show movement constraints”
+- “Highlight high-density risk areas”
+
+Commander:
+- “Generate key judgments”
+- “Summarize top risks”
+- “Show decision-relevant gaps”
+
+Civil Affairs:
+- “Assess population impact”
+- “Show infrastructure service concerns”
+- “Summarize community stability indicators”
+
+PSYOP:
+- “Summarize narrative shifts”
+- “Show sentiment indicators”
+- “Identify amplification patterns”
+
+Diplomatic Security:
+- “Show personnel security concerns”
+- “Summarize facility proximity risks”
+- “Highlight mobility constraints”
+
+Dashboard behavior:
+After setup, dashboard should reflect the profile:
+- Reorder lens buttons based on priority lenses.
+- Default selected lens should be the first priority lens.
+- Intelligence panel heading should reflect role context.
+Example:
+“Senior Intelligence Analyst View”
+“SOF Operator View”
+“Commander View”
+- Summaries should match selected response depth.
+- Time window selector should default based on the profile.
+
+Add a “Profile-aware response” note subtly in the chat or intel panel:
+“Response tailored for: Senior Intelligence Analyst / Crisis Response”
+Do not overdo this. It should be subtle.
+
+Data rendering:
+Keep the existing population density heatmap, but ensure labels are mature:
+- “Population Density Baseline”
+- “Relative density index”
+- “AOI comparison”
+- “Baseline layer (demo)”
+Do not use “estimated density per km²” unless backed by authoritative data.
+Clicking should interrogate the layer, not create bubbles.
+
+Premium UX requirements:
+- Make the setup experience feel like a mission configuration screen, not onboarding.
+- Use strong section labels:
+  “Define Mission Profile”
+  “Set Analytic Posture”
+  “Select Priority Lenses”
+  “Review Workspace Configuration”
+- Use concise helper text.
+- Use card-based layout with excellent spacing.
+- Avoid clutter.
+- Avoid excessive icons.
+- Use clear selected states.
+- Use a professional progress indicator.
+
+Implementation files:
+- Add MissionProfileSetup component.
+- Add missionProfile types/interface.
+- Add profileAdapter utility.
+- Add localStorage persistence.
+- Update dashboard header to show profile.
+- Update chat request payload to include missionProfile.
+- Update chat system prompt construction to use missionProfile.
+- Update lens ordering and default lens behavior.
+- Update quick action prompts based on profile.
+
+Acceptance criteria:
+1. If no mission profile exists, setup screen appears before dashboard.
+2. User can complete setup and enter dashboard.
+3. Profile persists after refresh.
+4. Dashboard displays role, experience level, and mission context.
+5. Lens ordering reflects selected priority lenses.
+6. Chat responses adapt in style and level of detail based on role and experience.
+7. Time window behavior reflects mission profile.
+8. Profile can be edited later.
+9. No duplicate UI text.
+10. No AI-hype language.
+11. UI feels premium, calm, mature, and operational.
+12. System preserves analyst-in-the-loop framing at all times.
+
+Important product principle:
+This is not “personalization” for novelty. It is mission-profile-aware decision support. The system should feel like it understands the user’s job, tempo, and information needs without pretending to replace judgment.

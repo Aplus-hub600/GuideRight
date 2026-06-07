@@ -578,6 +578,8 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, className }: ChatPan
             experienceLevel: persona.experienceLevel,
             missionContext: persona.missionContext,
             temporalHorizon: persona.temporalHorizon,
+            responseDepth: persona.responseDepth,
+            priorityLenses: persona.priorityLenses,
           } : undefined
         }),
         signal: abortController.signal
