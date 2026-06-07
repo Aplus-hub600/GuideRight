@@ -180,6 +180,33 @@ export function getEffectiveLenses(persona: UserPersona): PriorityLens[] {
   return PRIORITY_LENS_DEFAULTS[persona.role] ?? [];
 }
 
+const LENS_TO_ACTION_PRIORITY: Record<string, string[]> = {
+  "Threat Activity":        ["THREAT", "RISK", "SITREP", "BLUF", "DECISION"],
+  "Human Activity":         ["HUMANTERRAIN", "HUMINT", "KEYLEADERS", "IMPACT"],
+  "Infrastructure":         ["INFRA", "FACILITY", "LOGISTIC"],
+  "Logistics":              ["ROUTE", "LOGISTIC", "GATE", "LABOR", "VESSEL"],
+  "Information Environment":["NARRATIVES", "SENTIMENT", "INFLUENCERS", "MESSAGES"],
+  "Political Activity":     ["PMESII", "PARTNER", "ENGAGEMENT", "PROTEST"],
+  "Economic Activity":      ["VESSEL", "YARD", "GATE", "LABOR", "DISRUPT"],
+  "Weather / Environmental":["SITREP", "PMESII"],
+};
+
+export function getOrderedQuickActions(role: Role, priorityLenses?: PriorityLens[]): QuickAction[] {
+  const actions = getQuickActionsForRole(role);
+  if (!priorityLenses || priorityLenses.length === 0) return actions;
+
+  const scores = new Map<string, number>();
+  priorityLenses.forEach((lens, lensIdx) => {
+    const actionIds = LENS_TO_ACTION_PRIORITY[lens] ?? [];
+    actionIds.forEach((actionId, actionRank) => {
+      const weight = (3 - lensIdx) * 10 - actionRank;
+      scores.set(actionId, (scores.get(actionId) ?? 0) + weight);
+    });
+  });
+
+  return [...actions].sort((a, b) => (scores.get(b.id) ?? 0) - (scores.get(a.id) ?? 0));
+}
+
 export interface UserPersona {
   callsign: string;
   role: Role;

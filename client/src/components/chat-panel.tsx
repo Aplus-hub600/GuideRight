@@ -5,7 +5,7 @@ import {
   Sparkles, ChevronRight, Zap, Target, Languages,
   Brain, GitBranch, Info, Settings2, Clock
 } from "lucide-react"
-import { loadPersona, getQuickActionsForRole, getWelcomeMessage, getTemporalHorizonForPersona, TEMPORAL_HORIZON_LABELS, type UserPersona } from "@/lib/persona"
+import { loadPersona, getQuickActionsForRole, getOrderedQuickActions, getWelcomeMessage, getTemporalHorizonForPersona, getEffectiveLenses, TEMPORAL_HORIZON_LABELS, type UserPersona } from "@/lib/persona"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardHeader, CardContent } from "@/components/ui/card"
@@ -508,7 +508,9 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, className }: ChatPan
   }, [])
 
   const quickActions = useMemo(
-    () => persona ? getQuickActionsForRole(persona.role) : getQuickActionsForRole("Intelligence Analyst"),
+    () => persona
+      ? getOrderedQuickActions(persona.role, persona.priorityLenses)
+      : getOrderedQuickActions("Intelligence Analyst"),
     [persona]
   )
 
@@ -746,11 +748,21 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, className }: ChatPan
               {persona ? `${persona.role} · ${persona.missionContext}` : "GuideRight Intelligence Assistant"}
             </p>
             {persona && (
-              <div className="flex items-center gap-2 mt-0.5">
+              <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                 <Badge className="text-[9px] font-mono h-4 px-1.5 gap-1 bg-blue-500/10 text-blue-400/80 border-blue-500/20 no-default-active-elevate">
                   <Clock className="h-2.5 w-2.5" />
                   {TEMPORAL_HORIZON_LABELS[getTemporalHorizonForPersona(persona)]}
                 </Badge>
+                {persona.responseDepth && persona.responseDepth !== "Balanced" && (
+                  <Badge className="text-[9px] font-mono h-4 px-1.5 bg-purple-500/10 text-purple-400/80 border-purple-500/20 no-default-active-elevate">
+                    {persona.responseDepth === "Executive Summary" ? "EXEC BRIEF" : "DEEP ANALYSIS"}
+                  </Badge>
+                )}
+                {getEffectiveLenses(persona).slice(0, 2).map(lens => (
+                  <Badge key={lens} className="text-[9px] font-mono h-4 px-1.5 bg-amber-500/10 text-amber-400/70 border-amber-500/20 no-default-active-elevate">
+                    {lens.split(" ")[0].toUpperCase()}
+                  </Badge>
+                ))}
               </div>
             )}
           </div>
@@ -807,14 +819,27 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, className }: ChatPan
 
                 {persona ? (
                   <>
-                    <h3 className="text-xl font-bold mb-1 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                    <h3 className="text-xl font-bold mb-2 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
                       {welcomeMessage}
                     </h3>
-                    <div className="flex items-center justify-center gap-2 mb-3">
+                    <div className="flex items-center justify-center gap-2 mb-2 flex-wrap">
                       <Badge className="text-[10px] font-mono px-2 bg-primary/10 text-primary border-primary/30">{persona.role.toUpperCase()}</Badge>
                       <Badge className="text-[10px] font-mono px-2 bg-amber-500/10 text-amber-400 border-amber-500/30">{persona.experienceLevel.toUpperCase()}</Badge>
                       <Badge className="text-[10px] font-mono px-2 bg-green-500/10 text-green-400 border-green-500/30">{persona.missionContext.toUpperCase()}</Badge>
                     </div>
+                    {getEffectiveLenses(persona).length > 0 && (
+                      <div className="flex items-center justify-center gap-1.5 mb-3 flex-wrap">
+                        <span className="text-[9px] font-mono text-muted-foreground/50 uppercase tracking-widest">Lenses:</span>
+                        {getEffectiveLenses(persona).map(lens => (
+                          <Badge key={lens} className="text-[9px] font-mono px-1.5 h-4 bg-slate-500/10 text-slate-400/70 border-slate-500/20 no-default-active-elevate">
+                            {lens}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                    <p className="text-[11px] font-mono text-muted-foreground/50 mb-5 tracking-wide">
+                      Response adapted for: {persona.experienceLevel} {persona.role} · {persona.missionContext} · {persona.responseDepth ?? "Balanced"}
+                    </p>
                   </>
                 ) : (
                   <>
@@ -826,14 +851,11 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, className }: ChatPan
                       <Badge className="text-[10px] font-mono px-2 bg-purple-500/10 text-purple-400 border-purple-500/30">PMESII</Badge>
                       <Badge className="text-[10px] font-mono px-2 bg-green-500/10 text-green-400 border-green-500/30">BANGLADESH</Badge>
                     </div>
+                    <p className="text-sm text-muted-foreground mb-6">
+                      Query intelligence sources, analyze threats, or request situational assessments
+                    </p>
                   </>
                 )}
-
-                <p className="text-sm text-muted-foreground mb-6">
-                  {persona
-                    ? `Adapted for ${persona.role} — ${persona.missionContext} context`
-                    : "Query intelligence sources, analyze threats, or request situational assessments"}
-                </p>
                 
                 <div className="space-y-3">
                   <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Quick Actions <span className="text-[10px] opacity-70">(Alt+1-5)</span></p>

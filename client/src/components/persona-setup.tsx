@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { Shield, ChevronRight, CheckCircle2, Layers } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -56,6 +56,8 @@ export function PersonaSetup({ onComplete }: PersonaSetupProps) {
   const [priorityLenses, setPriorityLenses] = useState<PriorityLens[]>([])
   const [initializing, setInitializing] = useState<UserPersona | null>(null)
 
+  const formRef = useRef<HTMLDivElement>(null)
+
   const handleRecommendedProfile = () => {
     setRole(RECOMMENDED.role)
     setExperienceLevel(RECOMMENDED.experienceLevel)
@@ -63,6 +65,8 @@ export function PersonaSetup({ onComplete }: PersonaSetupProps) {
     setResponseDepth(RECOMMENDED.responseDepth)
     setTemporalHorizon(RECOMMENDED.temporalHorizon)
     setPriorityLenses(RECOMMENDED.priorityLenses)
+    // Scroll to top of form so the user sees their selections filled in
+    setTimeout(() => formRef.current?.scrollTo({ top: 0, behavior: "smooth" }), 50)
   }
 
   const toggleLens = (lens: PriorityLens) => {
@@ -107,7 +111,7 @@ export function PersonaSetup({ onComplete }: PersonaSetupProps) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-background overflow-y-auto">
+    <div ref={formRef} className="fixed inset-0 z-50 bg-background overflow-y-auto">
       <div className="min-h-screen max-w-7xl mx-auto px-4 sm:px-6 py-8">
 
         {/* Header */}
@@ -373,17 +377,20 @@ function RoleCard({
     <button
       onClick={onClick}
       className={cn(
-        "w-full text-left px-3 py-2.5 rounded-md border text-sm transition-colors",
+        "w-full text-left px-3 py-2.5 rounded-md border text-sm transition-all duration-150",
         selected
-          ? "border-primary bg-primary/8 text-foreground"
+          ? "border-primary/70 bg-primary/12 text-foreground shadow-[inset_0_0_0_1px_rgba(var(--primary-rgb,59,130,246),0.25)]"
           : "border-border bg-muted/20 text-foreground hover-elevate"
       )}
     >
       <div className="flex items-center justify-between">
-        <span className="font-medium text-sm">{label}</span>
-        {selected && <CheckCircle2 className="h-3.5 w-3.5 text-primary shrink-0" />}
+        <span className={cn("font-semibold text-sm", selected && "text-primary")}>{label}</span>
+        {selected
+          ? <CheckCircle2 className="h-3.5 w-3.5 text-primary shrink-0" />
+          : <div className="h-3.5 w-3.5 rounded-full border border-border/60 shrink-0" />
+        }
       </div>
-      <div className="text-[11px] text-muted-foreground mt-0.5">{description}</div>
+      <div className={cn("text-[11px] mt-0.5", selected ? "text-muted-foreground" : "text-muted-foreground/60")}>{description}</div>
     </button>
   )
 }
@@ -395,17 +402,20 @@ function PostureCard({
     <button
       onClick={onClick}
       className={cn(
-        "w-full text-left px-3 py-2.5 rounded-md border text-sm transition-colors",
+        "w-full text-left px-3 py-2.5 rounded-md border text-sm transition-all duration-150",
         selected
-          ? "border-primary bg-primary/8 text-foreground"
+          ? "border-primary/70 bg-primary/12 text-foreground shadow-[inset_0_0_0_1px_rgba(var(--primary-rgb,59,130,246),0.25)]"
           : "border-border bg-muted/20 text-foreground hover-elevate"
       )}
     >
       <div className="flex items-center justify-between gap-1">
-        <span className="font-medium text-xs">{label}</span>
-        {selected && <CheckCircle2 className="h-3 w-3 text-primary shrink-0" />}
+        <span className={cn("font-semibold text-xs", selected && "text-primary")}>{label}</span>
+        {selected
+          ? <CheckCircle2 className="h-3 w-3 text-primary shrink-0" />
+          : <div className="h-3 w-3 rounded-full border border-border/60 shrink-0" />
+        }
       </div>
-      <div className="text-[10px] text-muted-foreground mt-0.5 leading-snug">{description}</div>
+      <div className={cn("text-[10px] mt-0.5 leading-snug", selected ? "text-muted-foreground" : "text-muted-foreground/60")}>{description}</div>
     </button>
   )
 }
