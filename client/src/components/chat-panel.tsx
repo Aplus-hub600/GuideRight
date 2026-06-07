@@ -862,26 +862,27 @@ export function ChatPanel({ onQuerySubmit, mediaContextIds, className }: ChatPan
                   <div className="flex flex-wrap justify-center gap-2">
                     {quickActions.map((action, idx) => {
                       const Icon = getIconForAction(action.id)
-                      const colors = [
-                        "text-blue-400 bg-blue-500/10 border-blue-500/30 hover:bg-blue-500/20",
-                        "text-red-400 bg-red-500/10 border-red-500/30 hover:bg-red-500/20",
-                        "text-green-400 bg-green-500/10 border-green-500/30 hover:bg-green-500/20",
-                        "text-cyan-400 bg-cyan-500/10 border-cyan-500/30 hover:bg-cyan-500/20",
-                        "text-purple-400 bg-purple-500/10 border-purple-500/30 hover:bg-purple-500/20",
+                      const colorSchemes = [
+                        { text: "text-blue-400", bg: "bg-blue-500/10", border: "border-blue-500/25" },
+                        { text: "text-red-400",  bg: "bg-red-500/10",  border: "border-red-500/25"  },
+                        { text: "text-emerald-400", bg: "bg-emerald-500/10", border: "border-emerald-500/25" },
+                        { text: "text-cyan-400", bg: "bg-cyan-500/10", border: "border-cyan-500/25" },
+                        { text: "text-violet-400", bg: "bg-violet-500/10", border: "border-violet-500/25" },
                       ]
+                      const scheme = colorSchemes[idx % colorSchemes.length]
                       return (
                         <button
                           key={action.id}
                           onClick={() => handleQuickAction(action.prompt)}
                           title={`Alt+${idx + 1}: ${action.prompt}`}
                           className={cn(
-                            "group flex items-center gap-2 px-3 py-2.5 text-sm font-semibold rounded-lg border transition-all duration-200",
-                            colors[idx % colors.length]
+                            "group flex items-center gap-2 px-3 py-2.5 text-sm font-semibold rounded-lg border hover-elevate active-elevate-2 transition-all duration-150",
+                            scheme.text, scheme.bg, scheme.border
                           )}
                         >
                           <Icon className="h-4 w-4" />
                           <span>{action.label}</span>
-                          <kbd className="hidden group-hover:inline-flex items-center justify-center h-4 w-4 text-[9px] font-mono bg-black/20 rounded">{idx + 1}</kbd>
+                          <kbd className="hidden group-hover:inline-flex items-center justify-center h-4 w-4 text-[9px] font-mono bg-black/25 rounded">{idx + 1}</kbd>
                         </button>
                       )
                     })}

@@ -4,62 +4,92 @@
 
 @layer base {
   :root {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --card-border: 217.2 32.6% 17.5%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --popover-border: 217.2 32.6% 17.5%;
+    --background: 224 71% 4%;
+    --foreground: 213 31% 91%;
+    --card: 222 55% 6.5%;
+    --card-foreground: 213 31% 91%;
+    --card-border: 217 34% 13%;
+    --popover: 222 55% 6.5%;
+    --popover-foreground: 213 31% 91%;
+    --popover-border: 217 34% 13%;
     --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary-foreground: 224 71% 4%;
     --primary-border: 217.2 91.2% 59.8%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --secondary-border: 217.2 32.6% 25.5%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --muted-border: 217.2 32.6% 25.5%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --accent-border: 217.2 32.6% 25.5%;
+    --secondary: 217 32% 13%;
+    --secondary-foreground: 213 31% 91%;
+    --secondary-border: 217 32% 22%;
+    --muted: 218 32% 10%;
+    --muted-foreground: 215 20% 52%;
+    --muted-border: 218 32% 16%;
+    --accent: 217 32% 13%;
+    --accent-foreground: 213 31% 91%;
+    --accent-border: 217 32% 22%;
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 213 31% 91%;
     --destructive-border: 0 84.2% 60.2%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
+    --border: 217 34% 13%;
+    --input: 218 32% 10%;
     --ring: 217.2 91.2% 59.8%;
     --radius: 0.5rem;
+    --sidebar: 224 71% 3.5%;
+    --sidebar-foreground: 213 31% 91%;
+    --sidebar-border: 217 34% 11%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-primary: 217.2 91.2% 59.8%;
+    --sidebar-primary-foreground: 224 71% 4%;
+    --sidebar-accent: 217 32% 12%;
+    --sidebar-accent-foreground: 213 31% 91%;
+    --sidebar-accent-border: 217 32% 20%;
+    --sidebar-primary-border: 217.2 91.2% 59.8%;
+    --chart-1: 217.2 91.2% 59.8%;
+    --chart-2: 142 71% 45%;
+    --chart-3: 38 92% 50%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 0 84% 60%;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --card-border: 217.2 32.6% 17.5%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --popover-border: 217.2 32.6% 17.5%;
+    --background: 224 71% 4%;
+    --foreground: 213 31% 91%;
+    --card: 222 55% 6.5%;
+    --card-foreground: 213 31% 91%;
+    --card-border: 217 34% 13%;
+    --popover: 222 55% 6.5%;
+    --popover-foreground: 213 31% 91%;
+    --popover-border: 217 34% 13%;
     --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary-foreground: 224 71% 4%;
     --primary-border: 217.2 91.2% 59.8%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --secondary-border: 217.2 32.6% 25.5%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --muted-border: 217.2 32.6% 25.5%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --accent-border: 217.2 32.6% 25.5%;
+    --secondary: 217 32% 13%;
+    --secondary-foreground: 213 31% 91%;
+    --secondary-border: 217 32% 22%;
+    --muted: 218 32% 10%;
+    --muted-foreground: 215 20% 52%;
+    --muted-border: 218 32% 16%;
+    --accent: 217 32% 13%;
+    --accent-foreground: 213 31% 91%;
+    --accent-border: 217 32% 22%;
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 213 31% 91%;
     --destructive-border: 0 84.2% 60.2%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
+    --border: 217 34% 13%;
+    --input: 218 32% 10%;
     --ring: 217.2 91.2% 59.8%;
+    --sidebar: 224 71% 3.5%;
+    --sidebar-foreground: 213 31% 91%;
+    --sidebar-border: 217 34% 11%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-primary: 217.2 91.2% 59.8%;
+    --sidebar-primary-foreground: 224 71% 4%;
+    --sidebar-accent: 217 32% 12%;
+    --sidebar-accent-foreground: 213 31% 91%;
+    --sidebar-accent-border: 217 32% 20%;
+    --sidebar-primary-border: 217.2 91.2% 59.8%;
+    --chart-1: 217.2 91.2% 59.8%;
+    --chart-2: 142 71% 45%;
+    --chart-3: 38 92% 50%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 0 84% 60%;
   }
 }
 
@@ -72,6 +102,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
   overflow: hidden;
   letter-spacing: -0.01em;
+  background-color: hsl(var(--background));
 }
 
 code {
@@ -79,7 +110,6 @@ code {
     Consolas, 'Courier New', monospace;
 }
 
-/* Professional typography for tactical interface */
 .font-tactical {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
@@ -99,35 +129,95 @@ html, body, #root {
   overflow: hidden;
 }
 
-/* Custom scrollbar styles */
+/* ─── Elevation interaction system ──────────────────────────────────────────
+   These classes compose with any background color. They work by overlaying a
+   translucent white layer on hover/active using a pseudo-element. They require
+   position:relative on the element and will NOT work with overflow:hidden.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+.hover-elevate,
+.active-elevate-2,
+.toggle-elevate {
+  position: relative;
+  isolation: isolate;
+}
+
+.hover-elevate::after,
+.active-elevate-2::after,
+.toggle-elevate::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: transparent;
+  transition: background 0.15s ease;
+}
+
+.hover-elevate:hover:not(:disabled)::after {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.active-elevate-2:active:not(:disabled)::after {
+  background: rgba(255, 255, 255, 0.12) !important;
+}
+
+.toggle-elevate.toggle-elevated::after {
+  background: rgba(255, 255, 255, 0.09) !important;
+}
+
+/* Suppress elevation on elements that should not have it */
+.no-default-hover-elevate:hover::after {
+  background: transparent !important;
+}
+
+.no-default-active-elevate:active::after {
+  background: transparent !important;
+}
+
+/* ─── Scrollbars ─────────────────────────────────────────────────────────── */
+
 .scrollbar-thin {
   scrollbar-width: thin;
+  scrollbar-color: hsl(var(--border)) transparent;
 }
 
 .scrollbar-thin::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
-.scrollbar-thumb-gray-300::-webkit-scrollbar-thumb {
-  background-color: #d1d5db;
-  border-radius: 0.25rem;
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--border));
+  border-radius: 3px;
 }
 
-.scrollbar-track-gray-100::-webkit-scrollbar-track {
-  background-color: #f3f4f6;
-}
-
-.scrollbar-track-transparent::-webkit-scrollbar-track {
+.scrollbar-thin::-webkit-scrollbar-track {
   background-color: transparent;
 }
 
-.scrollbar-thumb-gray-400::-webkit-scrollbar-thumb {
-  background-color: #9ca3af;
-  border-radius: 0.25rem;
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
 }
 
-/* Line clamp utility */
+::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--border));
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Legacy scrollbar classes kept for compatibility */
+.scrollbar-thumb-gray-300::-webkit-scrollbar-thumb { background-color: hsl(var(--border)); }
+.scrollbar-track-gray-100::-webkit-scrollbar-track { background-color: transparent; }
+.scrollbar-track-transparent::-webkit-scrollbar-track { background-color: transparent; }
+.scrollbar-thumb-gray-400::-webkit-scrollbar-thumb { background-color: hsl(var(--muted-foreground) / 0.5); }
+
+/* ─── Line clamp ─────────────────────────────────────────────────────────── */
+
 .line-clamp-3 {
   display: -webkit-box;
   -webkit-line-clamp: 3;
@@ -135,36 +225,26 @@ html, body, #root {
   overflow: hidden;
 }
 
-/* Map container styles - CRITICAL FOR FULL RENDERING */
+/* ─── Map styles ─────────────────────────────────────────────────────────── */
+
 .leaflet-container {
   width: 100% !important;
   height: 100% !important;
   border-radius: 0.5rem;
   z-index: 1;
   position: relative !important;
-  background: #e5e7eb; /* Gray background while loading */
+  background: hsl(var(--muted));
 }
 
-/* Google Maps support (keeping from original) */
 .gm-style {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif !important;
 }
 
-/* Keep Leaflet isolated from global resets where needed */
-.leaflet-tile {
-  max-width: none !important;
-  max-height: none !important;
-}
+.leaflet-tile { max-width: none !important; max-height: none !important; }
+.leaflet-container img { max-width: none !important; height: auto !important; }
 
-/* Ensure Tailwind's img reset doesn't shrink map tiles */
-.leaflet-container img {
-  max-width: none !important;
-  height: auto !important;
-}
-
-/* Map loading states - calm, professional */
 .map-loading {
   background: hsl(var(--muted));
   position: relative;
@@ -186,67 +266,38 @@ html, body, #root {
   z-index: 10;
 }
 
-/* Layout constraints to prevent map overflow */
-.dashboard-container {
-  height: 100vh;
-  max-height: 100vh;
-  overflow: hidden;
-}
+.dashboard-container { height: 100vh; max-height: 100vh; overflow: hidden; }
+.map-container { position: relative; overflow: hidden; transition: height 0.3s ease-in-out; }
+.content-area { overflow: hidden; min-height: 200px; }
 
-.map-container {
-  position: relative;
-  overflow: hidden;
-  transition: height 0.3s ease-in-out;
-}
+/* ─── Map popups ─────────────────────────────────────────────────────────── */
 
-.content-area {
-  overflow: hidden;
-  min-height: 200px;
-}
-
-/* Enhanced popup styles */
 .leaflet-popup-content-wrapper {
   border-radius: 8px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 
-.leaflet-popup-content {
-  margin: 0;
-  line-height: 1.4;
-}
+.leaflet-popup-content { margin: 0; line-height: 1.4; }
 
-/* MapLibre GL popup styles - fix positioning issues */
-.maplibregl-popup {
-  max-width: 320px !important;
-  z-index: 1000;
-}
+.maplibregl-popup { max-width: 320px !important; z-index: 1000; }
 
 .maplibregl-popup-anchor-top .maplibregl-popup-tip,
 .maplibregl-popup-anchor-top-left .maplibregl-popup-tip,
-.maplibregl-popup-anchor-top-right .maplibregl-popup-tip {
-  border-bottom-color: hsl(var(--card));
-}
+.maplibregl-popup-anchor-top-right .maplibregl-popup-tip { border-bottom-color: hsl(var(--card)); }
 
 .maplibregl-popup-anchor-bottom .maplibregl-popup-tip,
 .maplibregl-popup-anchor-bottom-left .maplibregl-popup-tip,
-.maplibregl-popup-anchor-bottom-right .maplibregl-popup-tip {
-  border-top-color: hsl(var(--card));
-}
+.maplibregl-popup-anchor-bottom-right .maplibregl-popup-tip { border-top-color: hsl(var(--card)); }
 
-.maplibregl-popup-anchor-left .maplibregl-popup-tip {
-  border-right-color: hsl(var(--card));
-}
-
-.maplibregl-popup-anchor-right .maplibregl-popup-tip {
-  border-left-color: hsl(var(--card));
-}
+.maplibregl-popup-anchor-left .maplibregl-popup-tip { border-right-color: hsl(var(--card)); }
+.maplibregl-popup-anchor-right .maplibregl-popup-tip { border-left-color: hsl(var(--card)); }
 
 .maplibregl-popup-content {
   background: hsl(var(--card));
   color: hsl(var(--card-foreground));
   border-radius: 8px;
   padding: 0;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
   border: 1px solid hsl(var(--border));
 }
 
@@ -263,101 +314,61 @@ html, body, #root {
   background: transparent;
 }
 
-/* Intel popup specific styles */
-.intel-popup .maplibregl-popup-content {
-  padding: 12px;
-  min-width: 280px;
-}
+.intel-popup .maplibregl-popup-content { padding: 12px; min-width: 280px; }
+.intel-event-marker { position: relative !important; }
+.maplibregl-marker { position: absolute !important; will-change: transform; }
 
-/* Intel marker styles - ensure proper positioning */
-.intel-event-marker {
-  position: relative !important;
-}
+/* ─── Focus styles ───────────────────────────────────────────────────────── */
 
-/* Ensure MapLibre markers don't jump */
-.maplibregl-marker {
-  position: absolute !important;
-  will-change: transform;
-}
-
-/* Responsive adjustments */
-@media (max-width: 1024px) {
-  .grid-cols-2 {
-    grid-template-columns: repeat(1, minmax(0, 1fr));
-  }
-}
-
-/* Focus styles for accessibility */
-button:focus {
-  outline: 2px solid #3b82f6;
+button:focus-visible {
+  outline: 2px solid hsl(var(--primary) / 0.8);
   outline-offset: 2px;
 }
 
-input:focus {
-  outline: 2px solid #3b82f6;
+input:focus-visible {
+  outline: 2px solid hsl(var(--primary) / 0.8);
   outline-offset: 2px;
 }
 
-/* Smooth transitions for interactive elements */
-.transition-colors {
-  transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out;
-}
+/* ─── Transitions ────────────────────────────────────────────────────────── */
 
-.transition-shadow {
-  transition: box-shadow 0.15s ease-in-out;
-}
+.transition-colors { transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out; }
+.transition-shadow { transition: box-shadow 0.15s ease-in-out; }
+.transition-all { transition: all 0.15s ease-in-out; }
 
-.transition-all {
-  transition: all 0.15s ease-in-out;
-}
+textarea { resize: none; }
 
-/* Ensure text areas in reports don't cause layout shifts */
-textarea {
-  resize: none;
-}
+/* ─── Pin button ─────────────────────────────────────────────────────────── */
 
-/* Pin button animation */
-.pin-button {
-  transition: transform 0.1s ease-in-out;
-}
+.pin-button { transition: transform 0.1s ease-in-out; }
+.pin-button:active { transform: scale(0.95); }
 
-.pin-button:active {
-  transform: scale(0.95);
-}
+/* ─── Subtle utility animations ──────────────────────────────────────────── */
 
-/* Subtle utility animations - minimal, professional */
 @keyframes pulse-subtle {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0.85; }
+  50% { opacity: 0.75; }
 }
 
-.animate-pulse-subtle {
-  animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
+.animate-pulse-subtle { animation: pulse-subtle 2.4s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
 
-/* Removed glow-pulse and tactical-glow animations for calmer UI */
-
-/* Minimal panel animations - quick, professional */
 @keyframes fade-in {
   from { opacity: 0; }
   to { opacity: 1; }
 }
 
-.animate-in {
-  animation-fill-mode: both;
+.animate-in { animation-fill-mode: both; }
+.fade-in { animation-name: fade-in; animation-duration: 120ms; }
+.duration-150 { animation-duration: 150ms; }
+
+@keyframes scan-line {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
 }
 
-.fade-in {
-  animation-name: fade-in;
-  animation-duration: 100ms;
-}
-
-.duration-150 {
-  animation-duration: 150ms;
-}
+/* ─── Search cancel button ───────────────────────────────────────────────── */
 
 @layer utilities {
-  /* Hide ugly search cancel button in Chrome until we can style it properly */
   input[type="search"]::-webkit-search-cancel-button {
     @apply hidden;
   }

@@ -465,42 +465,45 @@ export function IntelligencePanel({
       <div className="flex-shrink-0 p-3 border-b bg-card space-y-3">
         {/* Row 1: AOI + Risk Badge + Export */}
         <div className="flex items-center justify-between gap-2">
-          <div className="min-w-0">
-            <h1 className="text-lg font-semibold truncate text-foreground">{currentAOI.name || "Area of Interest"}</h1>
+          <div className="min-w-0 flex items-center gap-2">
+            <MapPin className="h-3.5 w-3.5 text-primary/50 shrink-0" />
+            <h1 className="text-base font-bold truncate text-foreground tracking-tight">
+              {currentAOI.name || "Area of Interest"}
+            </h1>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
               onClick={handleExport}
               className="h-7 text-xs gap-1"
             >
               <Download className="h-3 w-3" />
               Export
             </Button>
-            {/* Enhanced Threat Level Indicator */}
+            {/* Threat Level Indicator */}
             <div className={cn(
-              "flex items-center gap-2 px-3 py-1.5 rounded-md border-2",
-              riskScore >= 70 && "bg-red-500/15 border-red-500/50 animate-pulse",
-              riskScore >= 40 && riskScore < 70 && "bg-amber-500/15 border-amber-500/50",
-              riskScore < 40 && "bg-green-500/15 border-green-500/50"
+              "flex items-center gap-2 px-2.5 py-1.5 rounded-md border",
+              riskScore >= 70 && "bg-red-500/12 border-red-500/40",
+              riskScore >= 40 && riskScore < 70 && "bg-amber-500/12 border-amber-500/40",
+              riskScore < 40 && "bg-green-500/12 border-green-500/30"
             )}>
-              <AlertTriangle className={cn(
-                "h-4 w-4",
-                riskScore >= 70 && "text-red-500",
-                riskScore >= 40 && riskScore < 70 && "text-amber-500",
-                riskScore < 40 && "text-green-500"
+              <div className={cn(
+                "h-1.5 w-1.5 rounded-full shrink-0",
+                riskScore >= 70 && "bg-red-500 animate-pulse-subtle",
+                riskScore >= 40 && riskScore < 70 && "bg-amber-500",
+                riskScore < 40 && "bg-green-500"
               )} />
               <div className="flex flex-col items-end">
                 <span className={cn(
-                  "text-xs font-bold uppercase tracking-wider",
-                  riskScore >= 70 && "text-red-500",
-                  riskScore >= 40 && riskScore < 70 && "text-amber-500",
-                  riskScore < 40 && "text-green-500"
+                  "text-[11px] font-bold uppercase tracking-widest leading-tight",
+                  riskScore >= 70 && "text-red-400",
+                  riskScore >= 40 && riskScore < 70 && "text-amber-400",
+                  riskScore < 40 && "text-green-400"
                 )}>
-                  {riskScore >= 70 ? "HIGH RISK" : riskScore >= 40 ? "ELEVATED" : "LOW"}
+                  {riskScore >= 70 ? "HIGH" : riskScore >= 40 ? "ELEVATED" : "LOW"}
                 </span>
-                <span className="text-[10px] text-muted-foreground font-mono">{riskScore}%</span>
+                <span className="text-[9px] text-muted-foreground/50 font-mono tabular-nums">{riskScore}%</span>
               </div>
             </div>
           </div>
@@ -533,8 +536,8 @@ export function IntelligencePanel({
         
         {/* Row 3: Lens Selector - 2x2 grid */}
         <div>
-          <p className="text-sm font-medium text-foreground/80 uppercase tracking-wide mb-2">Analysis Lens</p>
-          <div className="grid grid-cols-2 gap-2">
+          <p className="text-[10px] font-bold tracking-[0.16em] uppercase text-muted-foreground/50 mb-2">Analysis Lens</p>
+          <div className="grid grid-cols-2 gap-1.5">
             {LENS_OPTIONS.map((lens) => {
               const Icon = lens.icon
               const isActive = activeLens === lens.id
@@ -543,15 +546,15 @@ export function IntelligencePanel({
                   key={lens.id}
                   onClick={() => onLensChange(lens.id)}
                   className={cn(
-                    "flex items-center gap-2 px-3 py-2.5 rounded-md text-left transition-colors",
+                    "flex items-center gap-2 px-3 py-2 rounded-md text-left transition-all duration-150",
                     isActive
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted/60 hover-elevate text-foreground/80 hover:text-foreground"
+                      ? "bg-primary text-primary-foreground shadow-[0_0_12px_hsl(var(--primary)/0.25)]"
+                      : "bg-muted/40 border border-border/40 text-foreground/70 hover-elevate"
                   )}
                   data-testid={`lens-${lens.id}`}
                 >
-                  <Icon className="h-4 w-4 flex-shrink-0" />
-                  <span className="text-sm font-medium truncate">{lens.label}</span>
+                  <Icon className="h-3.5 w-3.5 flex-shrink-0" />
+                  <span className="text-xs font-medium truncate">{lens.shortLabel}</span>
                 </button>
               )
             })}

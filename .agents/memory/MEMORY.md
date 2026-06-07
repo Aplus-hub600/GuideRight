@@ -1,0 +1,2 @@
+- [Hover elevation utilities](hover-elevate-utilities.md) — `hover-elevate`, `active-elevate-2`, `toggle-elevate` etc. were missing from index.css; now defined using `::after` pseudo-element overlay approach.
+- [Theme depth hierarchy](theme-depth.md) — `--card` was same as `--background` (flat); now elevated to give surface depth. Card must always differ from background.
