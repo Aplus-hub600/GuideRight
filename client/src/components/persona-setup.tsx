@@ -1,5 +1,5 @@
 import { useState, useRef } from "react"
-import { Shield, ChevronRight, CheckCircle2, Zap, Layers } from "lucide-react"
+import { Shield, ChevronRight, CheckCircle2, Zap, Layers, Play } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
@@ -66,6 +66,19 @@ export function PersonaSetup({ onComplete }: PersonaSetupProps) {
     setTemporalHorizon(RECOMMENDED.temporalHorizon)
     setPriorityLenses(RECOMMENDED.priorityLenses)
     setTimeout(() => formRef.current?.scrollTo({ top: 0, behavior: "smooth" }), 50)
+  }
+
+  const handleLaunchDemo = () => {
+    const demoPersona: UserPersona = {
+      callsign: "SHERIFF",
+      role: "SOF Operator",
+      experienceLevel: "Senior",
+      missionContext: "Conflict",
+      responseDepth: "Balanced",
+      priorityLenses: ["Threat Activity", "Human Activity", "Infrastructure"],
+    }
+    savePersona(demoPersona)
+    setInitializing(demoPersona)
   }
 
   const toggleLens = (lens: PriorityLens) => {
@@ -151,13 +164,23 @@ export function PersonaSetup({ onComplete }: PersonaSetupProps) {
             </div>
           </div>
 
-          <button
-            onClick={handleRecommendedProfile}
-            className="flex items-center gap-2 px-4 py-2 rounded-md border border-primary/30 bg-primary/8 text-primary text-xs font-semibold tracking-wide hover-elevate active-elevate-2 transition-all"
-          >
-            <Zap className="h-3.5 w-3.5" />
-            Use Recommended Profile
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleRecommendedProfile}
+              className="flex items-center gap-2 px-3 py-2 rounded-md border border-border/50 bg-muted/30 text-muted-foreground text-xs font-semibold tracking-wide hover-elevate active-elevate-2 transition-all"
+            >
+              <Zap className="h-3 w-3" />
+              Recommended Profile
+            </button>
+            <button
+              onClick={handleLaunchDemo}
+              className="flex items-center gap-2 px-4 py-2 rounded-md border border-green-500/50 bg-green-500/10 text-green-400 text-xs font-bold tracking-widest uppercase hover-elevate active-elevate-2 transition-all"
+              style={{ boxShadow: "0 0 16px hsl(142 70% 45% / 0.2)" }}
+            >
+              <Play className="h-3.5 w-3.5 fill-green-400" />
+              Launch Demo
+            </button>
+          </div>
         </div>
 
         <div className="flex gap-10 items-start">
