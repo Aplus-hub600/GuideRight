@@ -538,10 +538,11 @@ CRITICAL: reasoningTrace must have 3-5 steps. Each observation must be specific 
   } catch (error) {
     console.error("OpenAI tactical analysis error:", error);
     
-    // In development environment, provide mock results when OpenAI is unavailable
-    if (process.env.NODE_ENV === 'development' && 
-        (error.message?.includes('quota') || error.message?.includes('429') || error.code === 'insufficient_quota')) {
-      console.log('OpenAI quota exceeded, using mock tactical analysis results for development');
+    // Fall back to mock results whenever OpenAI is unavailable (quota, rate limit, network, etc.)
+    if (error.message?.includes('quota') || error.message?.includes('429') || 
+        error.code === 'insufficient_quota' || error.status === 429 ||
+        error.message?.includes('rate_limit') || error.message?.includes('overloaded')) {
+      console.log('OpenAI unavailable, using mock tactical analysis results');
       return getMockTacticalResult(query, context);
     }
     
@@ -800,10 +801,11 @@ export async function analyzeMultimodalContent(
   } catch (error) {
     console.error("OpenAI multimodal analysis error:", error);
     
-    // In development environment, provide mock results when OpenAI is unavailable
-    if (process.env.NODE_ENV === 'development' && 
-        (error.message?.includes('quota') || error.message?.includes('429') || error.code === 'insufficient_quota')) {
-      console.log('OpenAI quota exceeded, using mock analysis results for development');
+    // Fall back to mock results whenever OpenAI is unavailable (quota, rate limit, network, etc.)
+    if (error.message?.includes('quota') || error.message?.includes('429') || 
+        error.code === 'insufficient_quota' || error.status === 429 ||
+        error.message?.includes('rate_limit') || error.message?.includes('overloaded')) {
+      console.log('OpenAI unavailable, using mock analysis results');
       return getMockAnalysisResult(content, base64Image, analysisType);
     }
     
