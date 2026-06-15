@@ -67,6 +67,7 @@ import { eq, and, or, like, sql, desc, asc, inArray, gte, lte, isNotNull, isNull
 import type { IStorage } from "./storage";
 
 export class DatabaseStorage implements IStorage {
+  private queryHistory: Map<string, Array<{ callsign: string; role: string; query: string; topic?: string; timestamp: Date }>> = new Map();
   async getUser(id: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
     return user || undefined;
@@ -897,5 +898,17 @@ export class DatabaseStorage implements IStorage {
       .from(intelRefreshRuns)
       .orderBy(desc(intelRefreshRuns.startedAt))
       .limit(limit);
+  }
+
+  async saveQueryHistory(entry: { callsign: string; role: string; query: string; topic?: string }): Promise<void> {
+    const existing = this.queryHistory.get(entry.callsign) ?? [];
+    existing.push({ ...entry, timestamp: new Date() });
+    if (existing.length > 50) existing.splice(0, existing.length - 50);
+    this.queryHistory.set(entry.callsign, existing);
+  }
+
+  async getQueryHistoryForCallsign(callsign: string, limit: number = 10): Promise<Array<{ callsign: string; role: string; query: string; topic?: string; timestamp: Date }>> {
+    const entries = this.queryHistory.get(callsign) ?? [];
+    return entries.slice(-limit).reverse();
   }
 }
