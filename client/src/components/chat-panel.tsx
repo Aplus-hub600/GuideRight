@@ -289,7 +289,7 @@ function PulsingIndicator({ active = true }: { active?: boolean }) {
 }
 
 function IntelCard({ message }: { message: ChatMessage }) {
-  const [expanded, setExpanded] = useState(false)
+  const [expanded, setExpanded] = useState(true)
   
   if (!message.analysis) {
     return (

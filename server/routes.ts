@@ -487,18 +487,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Process the tactical query with persona context + individual query history
       const analysis = await processTacticalQuery(query, contextStrings, resolvedPersona, priorQueries);
       
-      // Format assistant response content (consistent with frontend display)
-      let assistantContent = analysis.summary;
-      
-      if (analysis.keyFindings?.length > 0) {
-        assistantContent += `\n\nKey findings:\n${analysis.keyFindings.map((finding: string) => `• ${finding}`).join('\n')}`;
-      }
-      
-      if (analysis.recommendations?.length > 0) {
-        assistantContent += `\n\nRecommendations:\n${analysis.recommendations.map((rec: string, i: number) => `${i + 1}. ${rec}`).join('\n')}`;
-      }
-      
-      assistantContent += `\n\nRisk Level: ${analysis.riskLevel}\nConfidence: ${Math.round(analysis.confidence * 100)}%`;
+      // Main bubble carries the BLUF only. The structured assessment card renders
+      // findings, recommendations, sources, risk and confidence — no duplication.
+      const assistantContent = analysis.summary;
       
       // Save assistant response with formatted content
       const assistantMessage = await storage.createChatMessage({

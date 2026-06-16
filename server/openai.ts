@@ -169,94 +169,88 @@ function getMockTacticalResult(query: string, context?: string[]): TacticalAnaly
   
   const mockResponses = {
     critical: {
-      summary: `CRITICAL THREAT ASSESSMENT for ${locationContext}: Analysis of ${topicContext} during ${timeContext} indicates immediate tactical response required. Multiple high-priority threat indicators detected in the operational area requiring coordinated emergency action protocols.`,
+      summary: `BLUF: Time-sensitive threat to ${topicContext} assessed in ${locationContext}; recommend immediate command review and CCIR confirmation.`,
       keyFindings: [
-        `IMMEDIATE THREAT: Active hostile indicators identified in ${locationContext}`,
-        `CRITICAL TIMELINE: Window for preventive action regarding ${topicContext} rapidly closing`,
-        `HIGH-PRIORITY ASSETS: Critical infrastructure in ${locationContext} at immediate risk`,
-        "COORDINATION REQUIRED: Multi-domain response protocols must be activated NOW"
+        `Convergent hostile indicators reported in ${locationContext} within the reporting window — SIGINT/B/0.82 (CONFIRMED)`,
+        `Decision window for preventive action assessed at under 12 hours — analyst estimate/C/0.60 (INFERENCE)`,
+        `Critical infrastructure sits within the assessed threat envelope — IMINT/B/0.74 (CONFIRMED)`,
+        `Adversary intent beyond current positioning remains uncollected (GAP — priority for collection)`
       ],
       recommendations: [
-        `IMMEDIATE ACTION: Initiate emergency response protocols for ${locationContext}`,
-        `CRITICAL PRIORITY: Deploy rapid response teams to address ${topicContext}`,
-        "URGENT COORDINATION: Contact all relevant security elements immediately",
-        "EMERGENCY MEASURES: Prepare evacuation and containment procedures"
+        `Elevate to command decision authority and confirm CCIR status for ${locationContext}`,
+        `Task ISR to close the intent gap before committing forces`,
+        `Pre-coordinate response and contingency measures with adjacent security elements`
       ]
     },
     threat: {
-      summary: `Threat assessment for ${locationContext} indicates elevated risk profile regarding ${topicContext}. Analysis of ${timeContext} shows multiple convergent factors requiring tactical awareness and coordinated response protocols.`,
+      summary: `Threat to ${topicContext} in ${locationContext} is elevated; convergent indicators warrant an enhanced posture rather than immediate action.`,
       keyFindings: [
-        `Elevated threat indicators detected in ${locationContext}`,
-        `Pattern analysis of ${topicContext} suggests coordinated hostile activities`, 
-        "Intelligence fusion indicates 72-hour operational window",
-        `Resource signatures in ${locationContext} consistent with advanced planning phases`
+        `Pattern-of-life shift consistent with coordinated activity observed in ${locationContext} — OSINT/B/0.71 (CONFIRMED)`,
+        `Reporting suggests a roughly 72-hour planning horizon; timing is inferred, not confirmed — HUMINT/C/0.55 (INFERENCE)`,
+        `Local sentiment trending toward reduced cooperation with security forces — Social OSINT/C/0.58 (CONFIRMED)`,
+        `Adversary command structure and end state remain unconfirmed (GAP)`
       ],
       recommendations: [
-        `Implement enhanced monitoring protocols for ${topicContext} in ${locationContext}`,
-        "Coordinate with regional security elements",
-        "Deploy additional reconnaissance assets",
-        "Prepare rapid response contingency procedures"
+        `Increase monitoring cadence on ${topicContext} and set named-area-of-interest triggers`,
+        `Coordinate with regional security elements to deconflict and share indicators`,
+        `Hold a reconnaissance asset in reserve against indicator escalation`
       ]
     },
     pmesii: {
-      summary: `PMESII-PT Analysis for ${locationContext}: Comprehensive assessment of ${topicContext} during ${timeContext}. This analysis evaluates Political, Military, Economic, Social, Information, and Infrastructure factors affecting the operational environment.`,
+      summary: `PMESII-PT read on ${locationContext}: the environment is stressed but stable, with infrastructure and social factors as the primary watch items.`,
       keyFindings: [
-        `POLITICAL: ${locationContext} experiencing heightened political tensions with ongoing civil discourse`,
-        `MILITARY: Security forces maintaining elevated posture in response to ${topicContext}`,
-        `ECONOMIC: Regional trade and commerce showing moderate disruption patterns`,
-        `SOCIAL: Population sentiment reflecting concern over ${topicContext}`,
-        `INFRASTRUCTURE: Critical systems in ${locationContext} operating at reduced capacity`
+        `Political: governance under measurable stress, no collapse indicators — OSINT/B/0.70 (CONFIRMED)`,
+        `Military: security forces holding an elevated posture, constraining freedom of movement — IMINT/B/0.68 (CONFIRMED)`,
+        `Economic: trade and commerce show moderate disruption — FININT/C/0.57 (INFERENCE)`,
+        `Social: population sentiment reflects concern over ${topicContext} — Social OSINT/C/0.60 (CONFIRMED)`,
+        `Infrastructure: critical systems operating below normal capacity — OSINT/C/0.55 (INFERENCE)`
       ],
       recommendations: [
-        `Monitor political developments in ${locationContext} closely`,
-        `Coordinate with local security elements regarding ${topicContext}`,
-        "Establish redundant communication channels",
-        "Prepare contingency plans for infrastructure degradation"
+        `Prioritize infrastructure and social indicators for continued collection`,
+        `Establish redundant communications against degraded-capacity risk`,
+        `Reassess at the next reporting cycle or on a significant indicator change`
       ]
     },
     operational: {
-      summary: `Operational SITREP for ${locationContext}: Assessment of ${topicContext} reveals complex multi-domain environment requiring coordinated tactical approach. Current conditions during ${timeContext} require emphasis on urban terrain considerations.`,
+      summary: `Operational picture in ${locationContext}: complex urban terrain with manageable risk; movement and communications are the limiting factors.`,
       keyFindings: [
-        `Urban terrain analysis of ${locationContext} indicates mixed threat/opportunity zones`,
-        `${topicContext} creating both tactical challenges and advantages`,
-        `Infrastructure mapping of ${locationContext} reveals critical vulnerability points`, 
-        "Communication networks show moderate resilience patterns"
+        `Urban terrain rated high-complexity with mixed threat/opportunity zones — IMINT/B/0.72 (CONFIRMED)`,
+        `Primary supply routes assessed accessible; sustainment for extended operations is supportable — OSINT/B/0.66 (CONFIRMED)`,
+        `Communications resilience is moderate and may degrade under load — analyst estimate/C/0.54 (INFERENCE)`,
+        `Civilian density patterns for the objective window are not yet confirmed (GAP)`
       ],
       recommendations: [
-        `Conduct detailed terrain analysis of ${locationContext}`,
-        "Establish secure communication protocols",
-        `Coordinate with local forces regarding ${topicContext}`,
-        "Implement graduated response procedures"
+        `Conduct detailed terrain and route analysis before movement`,
+        `Establish primary and alternate communications plans`,
+        `Calibrate ROE to confirmed civilian density, not assumptions`
       ]
     },
     intelligence: {
-      summary: `Intelligence Analysis for ${locationContext}: Assessment of ${topicContext} during ${timeContext} completed. Current operational picture shows moderate complexity with mixed indicators requiring continued monitoring.`,
+      summary: `All-source read on ${topicContext} in ${locationContext}: moderate confidence, mixed indicators, no immediate escalation signal.`,
       keyFindings: [
-        `Multi-source intelligence on ${topicContext} in ${locationContext} successfully correlated`,
-        "Confidence levels vary across intelligence domains (HUMINT: HIGH, SIGINT: MODERATE)",
-        `Pattern recognition for ${locationContext} indicates dynamic baseline conditions`,
-        "Continued collection recommended to refine assessment accuracy"
+        `Multi-source reporting on ${topicContext} correlates without major contradiction — fusion/B/0.69 (CONFIRMED)`,
+        `Confidence varies by domain — HUMINT/B/0.78 vs SIGINT/C/0.52 (note divergence)`,
+        `Baseline conditions in ${locationContext} remain within normal parameters — OSINT/B/0.67 (CONFIRMED)`,
+        `Two collection requirements remain open and bound overall confidence (GAP)`
       ],
       recommendations: [
-        `Continue intelligence collection on ${topicContext} in ${locationContext}`,
-        "Monitor for pattern changes in baseline indicators", 
-        "Maintain coordination with regional intelligence fusion centers",
-        "Update assessment as new information becomes available"
+        `Continue collection against the two open requirements`,
+        `Watch for divergence between HUMINT and SIGINT as a tasking trigger`,
+        `Update the assessment as new reporting arrives`
       ]
     },
     general: {
-      summary: `Tactical Intelligence Assessment: Analysis of your query regarding "${query.substring(0, 80)}${query.length > 80 ? '...' : ''}" has been processed. ${locationContext !== "the area of interest" ? `Focus area: ${locationContext}.` : ""} ${topicContext !== "current situation" ? `Topic: ${topicContext}.` : ""} Assessment indicates manageable risk factors with clear recommended actions.`,
+      summary: `Assessment of "${query.substring(0, 80)}${query.length > 80 ? '…' : ''}" complete: risk is manageable with clear next steps.`,
       keyFindings: [
-        `Query analyzed within tactical intelligence framework for ${locationContext}`,
-        `${topicContext} assessment completed with standard operational parameters`,
-        "Risk factors assessed and categorized appropriately",
-        "Actionable intelligence recommendations prepared"
+        `Query addressed within the all-source framework${locationContext !== "the area of interest" ? ` for ${locationContext}` : ""} — fusion/B/0.66 (CONFIRMED)`,
+        `Indicators reviewed; none meet the threshold for escalation — OSINT/B/0.64 (CONFIRMED)`,
+        `Confidence is bounded by available reporting on ${topicContext} — analyst estimate/C/0.55 (INFERENCE)`,
+        `No critical collection gap identified for this query at this time`
       ],
       recommendations: [
-        `Monitor ${topicContext} in ${locationContext} for developments`,
-        "Implement standard tactical procedures",
-        "Coordinate with relevant operational elements",
-        "Maintain situational awareness protocols"
+        `Monitor ${topicContext}${locationContext !== "the area of interest" ? ` in ${locationContext}` : ""} for change`,
+        `Maintain standard reporting cadence`,
+        `Re-task if indicators shift`
       ]
     }
   }
@@ -462,7 +456,13 @@ UNIVERSAL TRUST RULES (always apply):
 - Never pretend certainty. Never hide uncertainty. Never invent information.
 - Always explain confidence level. Always identify assumptions and gaps.
 - Clearly distinguish: facts | assumptions | inferences | gaps.
-- You support human judgment. You never replace it.`;
+- You support human judgment. You never replace it.
+
+RESPONSE DISCIPLINE (always apply):
+- Answer the specific question asked, first. Do not restate the query or pad with generic background.
+- Attribute every factual claim to a source with a reliability rating (e.g., OSINT/B, SIGINT/C). Any claim without a source must be explicitly marked INFERENCE or ASSUMPTION.
+- Maintain a calm, professional register. No ALL-CAPS theatrics, no hype, no alarmist phrasing — let the assessed risk level convey severity.
+- Be concise and specific. Prefer who/where/when over adjectives. Every line must earn its place.`;
 }
 
 export async function processTacticalQuery(
