@@ -16,7 +16,14 @@ app's navy `--background` (`224 71% 4%`), so the navy reads as intentional insid
 Use `object-cover scale-[1.1+]` + a gold-tinted border + inset shadow to seal the edges.
 
 **Why:** avoids a visible navy box/seam that a naive `<img>` placement would show.
-**How to apply:** any place the mark appears (header tile, faint watermark). Source: `attached_assets/guideright-mark.png` (already cropped+trimmed from `Logo_1_*.png`).
+**How to apply:** header tile uses the opaque navy mark `attached_assets/guideright-mark.png` (centered square crop, `object-cover`, no scale). The mark is a STACKED lockup (compass on top, "GUIDERIGHT" wordmark below) — crop only the compass.
+
+# Watermark (transparent compass)
+
+For a faint compass watermark you need a TRUE transparent PNG (`attached_assets/guideright-watermark.png`), because the opaque navy mark at low opacity reads as a faint *rectangle*, not a compass.
+Luminance→alpha recipe that actually works (two gotchas):
+`magick mark.png -alpha set \( +clone -alpha off -colorspace Gray -level 42%,88% \) -compose CopyOpacity -composite -trim out.png`
+**Why each part:** `-alpha set` on the base gives it an alpha channel to copy into; `-alpha off` on the clone is REQUIRED so CopyOpacity uses the clone's grayscale *intensity* (not its all-opaque alpha) — without it the result stays fully opaque. `-level 42%,88%` clips the dark navy to alpha 0 and keeps bright metal opaque. Verify with `identify -format '%[channels]'` (want `srgba`) and sample a corner pixel (want `srgba(0,0,0,0)`).
 
 # Gold accent token system
 

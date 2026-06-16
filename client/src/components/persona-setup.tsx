@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import guideRightMark from "@assets/guideright-mark.png"
+import guideRightWatermark from "@assets/guideright-watermark.png"
 import {
   ROLES, EXPERIENCE_LEVELS, MISSION_CONTEXTS, PRIORITY_LENSES,
   PRIORITY_LENS_DEFAULTS, ROLE_OPTIMIZATIONS, ROLE_DESCRIPTIONS,
@@ -189,12 +190,15 @@ export function PersonaSetup({ onComplete }: PersonaSetupProps) {
               <div
                 className="relative h-14 w-14 rounded-md overflow-hidden"
                 style={{
-                  border: "1px solid hsl(var(--gold) / 0.35)",
-                  boxShadow: "0 6px 20px hsl(224 71% 1% / 0.7), inset 0 1px 0 hsl(0 0% 100% / 0.07)",
+                  border: "1px solid hsl(var(--gold) / 0.4)",
+                  boxShadow: "0 6px 20px hsl(224 71% 1% / 0.7), inset 0 1px 0 hsl(0 0% 100% / 0.1)",
                 }}
               >
-                <img src={guideRightMark} alt="GuideRight" className="h-full w-full object-cover scale-[1.18]" />
-                <div className="absolute inset-0 pointer-events-none" style={{ boxShadow: "inset 0 0 14px hsl(224 71% 2% / 0.6)" }} />
+                <img src={guideRightMark} alt="GuideRight" className="h-full w-full object-cover" />
+                <div
+                  className="absolute inset-0 rounded-md pointer-events-none"
+                  style={{ boxShadow: "inset 0 0 0 1px hsl(var(--gold) / 0.14)" }}
+                />
               </div>
             </div>
 
@@ -275,8 +279,13 @@ export function PersonaSetup({ onComplete }: PersonaSetupProps) {
                   placeholder="e.g. Sheriff, Archer, Delta-6"
                   maxLength={32}
                   autoFocus
-                  className="w-full max-w-xs px-3.5 py-3 text-sm rounded-md bg-gradient-to-b from-muted/40 to-muted/10 border border-border/70 focus:outline-none focus:border-[hsl(var(--gold)/0.6)] focus:ring-2 focus:ring-[hsl(var(--gold)/0.18)] placeholder:text-muted-foreground/45 text-foreground transition-all duration-200 tracking-wide"
-                  style={{ boxShadow: "inset 0 1px 0 hsl(var(--foreground) / 0.04)" }}
+                  className="w-full max-w-xs px-3.5 py-3 text-sm rounded-md bg-gradient-to-b from-muted/40 to-muted/10 border border-border/70 focus:outline-none focus:border-[hsl(var(--gold)/0.6)] focus:ring-2 focus:ring-[hsl(var(--gold)/0.18)] placeholder:text-muted-foreground/45 transition-all duration-200 tracking-[0.12em] font-mono font-semibold"
+                  style={{
+                    boxShadow: "inset 0 1px 0 hsl(var(--foreground) / 0.04)",
+                    color: "hsl(146 62% 56%)",
+                    caretColor: "hsl(146 66% 56%)",
+                    textShadow: "0 0 8px hsl(146 70% 45% / 0.4)",
+                  }}
                 />
               </div>
 
@@ -631,10 +640,10 @@ function ProfilePreview({
     >
       {/* Faint brand-mark watermark */}
       <img
-        src={guideRightMark}
+        src={guideRightWatermark}
         alt=""
         aria-hidden
-        className="absolute -bottom-6 -right-6 w-40 h-40 object-contain opacity-[0.05] pointer-events-none select-none"
+        className="absolute bottom-3 right-3 w-32 h-32 object-contain opacity-[0.07] pointer-events-none select-none"
       />
       {/* Gold top hairline */}
       <div
