@@ -1,0 +1,15 @@
+MINUTE 1 — The instant persona hook (0:00–0:55)
+Hit LAUNCH DEMO. System comes up as SHERIFF/SOF Operator. No login, no typing, no form. Say: "Most systems make you configure before you can do anything. We assume you're already in the fight." The initialization sequence is your visual while you talk.
+________________________________________
+MINUTE 2 — Live AI that sounds like an S2 (0:55–2:00)
+Type (or say by voice if it's working): "What is the current threat to movement along the Dhaka-Chittagong corridor?"
+The response will come back with BLUF → THREATS → MOVEMENT → GAPS, source attributions with reliability ratings (B-Reliable, OSINT), DTG time references. Say: "Notice it doesn't just answer — it attributes every finding to a source with a freshness stamp and a confidence score. That's traceable, briefable intelligence. Not a chatbot."
+________________________________________
+MINUTE 3 — SIGACT with the escalation story (2:00–3:00)
+Open the Intel panel → SIGACT tab. Point to the timeline: civil unrest → internet throttling → IED on N1 highway → armed assault on BGB checkpoint → state of emergency. Say: "This is pattern recognition. The system surfaces not just events, but the escalation trajectory. An analyst looking at this three days ago would have seen the IED as a precursor."
+________________________________________
+MINUTE 4 — The OSINT social feed (3:00–3:50)
+Switch to the Social tab. Show the Telegram channel with protest coordination and route guidance ("Security forces thin on east side"), the NetBlocks throttling confirmation at 22% capacity, the Reuters live crowd estimate. Say: "This is what Sprinklr-integrated OSINT monitoring looks like operationally. We ingest, geolocate, and sentiment-score in real time. This post is telling us where the security forces aren't."
+________________________________________
+MINUTE 5 — The differentiator close (3:50–5:00)
+Say: "Same system, different operator." Switch persona to Commander. Ask: "What decision do I need to make in the next 4 hours?" The response restructures entirely — SITUATION / DECISION POINTS / CCIR STATUS / COA. Say: "It's not an AI that learned intelligence. It's an AI that learned how different operators think. That's the gap nothing else fills."
