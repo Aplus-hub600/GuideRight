@@ -123,74 +123,17 @@ function TypingText({ text, startDelay }: { text: string; startDelay: number }) 
   )
 }
 
-// Jagged bolt paths drawn over a 1000x1000 viewBox (stretched full-screen)
-const BOLTS_A = [
-  "M520 -20 L470 210 L560 280 L480 520 L575 590 L500 820 L545 1020",
-  "M520 280 L610 360 L545 470",
-  "M480 520 L390 600 L455 700",
-]
-const BOLTS_B = [
-  "M300 -20 L350 180 L275 250 L345 470 L260 560 L320 800 L290 1020",
-  "M720 -20 L675 200 L760 280 L690 500 L775 580 L715 1020",
-  "M345 470 L260 540 L320 660",
-  "M760 280 L850 350 L780 460",
-]
-const BOLTS_C = [
-  "M170 -20 L220 220 L150 300 L230 560 L160 660 L210 1020",
-  "M850 -20 L800 240 L880 320 L810 580 L885 680 L830 1020",
-  "M220 220 L130 290 L195 400",
-]
-const BOLTS_D = [
-  "M500 -20 L450 200 L555 270 L470 480 L580 560 L495 800 L540 1020",
-  "M500 270 L600 200 L540 360",
-  "M470 480 L370 420 L440 590",
-  "M540 1020 L470 880 L560 800",
-]
-
-function LightningStrike({ delay, paths }: { delay: number; paths: string[] }) {
+// A slow, calm horizontal scan line that sweeps top-to-bottom on a loop.
+// Provides quiet continuous motion without drawing attention.
+function ScanSweep() {
   return (
-    <div className="pointer-events-none absolute inset-0 z-30 overflow-hidden">
-      {/* Thunder flash */}
+    <div className="pointer-events-none absolute inset-0 z-10 overflow-hidden">
       <motion.div
-        className="absolute inset-0 bg-blue-50"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: [0, 0.9, 0.05, 0.5, 0] }}
-        transition={{ duration: 0.7, times: [0, 0.04, 0.16, 0.26, 1], delay, ease: "easeOut" }}
+        className="absolute inset-x-0 h-24 bg-[linear-gradient(to_bottom,transparent,rgba(59,130,246,0.06),transparent)]"
+        initial={{ top: "-10%" }}
+        animate={{ top: ["-10%", "100%"] }}
+        transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut" }}
       />
-      {/* Cool blue afterglow wash */}
-      <motion.div
-        className="absolute inset-0 bg-[radial-gradient(ellipse_70%_60%_at_50%_0%,rgba(59,130,246,0.35),transparent_70%)]"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: [0, 0.8, 0, 0.4, 0] }}
-        transition={{ duration: 0.9, times: [0, 0.05, 0.2, 0.3, 1], delay, ease: "easeOut" }}
-      />
-      {/* Bolts */}
-      <svg
-        className="absolute inset-0 h-full w-full"
-        viewBox="0 0 1000 1000"
-        preserveAspectRatio="none"
-      >
-        {paths.map((d, i) => (
-          <motion.path
-            key={i}
-            d={d}
-            fill="none"
-            stroke="#eaf6ff"
-            strokeWidth={i === 0 ? 4 : 2}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            style={{ filter: "drop-shadow(0 0 6px #7cc0ff) drop-shadow(0 0 18px #3b82f6)" }}
-            initial={{ pathLength: 0, opacity: 0 }}
-            animate={{ pathLength: [0, 1, 1], opacity: [0, 1, 1, 0] }}
-            transition={{
-              duration: 0.6,
-              times: [0, 0.18, 0.7, 1],
-              delay: delay + i * 0.03,
-              ease: "easeOut",
-            }}
-          />
-        ))}
-      </svg>
     </div>
   )
 }
@@ -214,12 +157,12 @@ export function InitializationSequence({ persona, onComplete }: InitializationSe
     })
 
     const t1 = setTimeout(() => setShowComplete(true), 4700)
-    const t2 = setTimeout(() => setShowWelcome(true), 5200)
+    const t2 = setTimeout(() => setShowWelcome(true), 5100)
     let t4: ReturnType<typeof setTimeout>
     const t3 = setTimeout(() => {
       setExiting(true)
       t4 = setTimeout(onComplete, 600)
-    }, 7600)
+    }, 6900)
 
     return () => {
       cancelAnimationFrame(rafId)
@@ -376,12 +319,8 @@ export function InitializationSequence({ persona, onComplete }: InitializationSe
             </AnimatePresence>
           </div>
 
-          {/* Lightning strikes — spread across the sequence, building to the WELCOME impact */}
-          <LightningStrike delay={0.4} paths={BOLTS_A} />
-          <LightningStrike delay={2.3} paths={BOLTS_C} />
-          <LightningStrike delay={4.0} paths={BOLTS_B} />
-          <LightningStrike delay={5.2} paths={BOLTS_D} />
-          <LightningStrike delay={6.4} paths={BOLTS_A} />
+          {/* Calm continuous scan sweep — quiet motion, no distraction */}
+          <ScanSweep />
         </motion.div>
       ) : (
         <motion.div
