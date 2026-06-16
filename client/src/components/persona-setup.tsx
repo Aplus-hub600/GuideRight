@@ -1,5 +1,9 @@
 import { useState, useRef } from "react"
-import { Shield, ChevronRight, CheckCircle2, Zap, Layers, Play } from "lucide-react"
+import {
+  Shield, ChevronRight, CheckCircle2, Zap, Layers, Play,
+  Radar, Crosshair, Star, Users, Megaphone, Map, Handshake,
+  ShieldAlert, Briefcase, Ship, type LucideIcon
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
@@ -31,6 +35,19 @@ const RECOMMENDED: {
   responseDepth: "Balanced",
   temporalHorizon: null,
   priorityLenses: ["Threat Activity", "Infrastructure", "Human Activity"],
+}
+
+const ROLE_ICONS: Record<Role, LucideIcon> = {
+  "Intelligence Analyst": Radar,
+  "SOF Operator": Crosshair,
+  "Commander": Star,
+  "Civil Affairs Officer": Users,
+  "Psychological Operations Officer": Megaphone,
+  "Planner": Map,
+  "Security Cooperation Officer": Handshake,
+  "Diplomatic Security Officer": ShieldAlert,
+  "Executive Decision Maker": Briefcase,
+  "Port Operations Analyst": Ship,
 }
 
 const DEPTH_DESCRIPTIONS: Record<ResponseDepth, string> = {
@@ -224,6 +241,7 @@ export function PersonaSetup({ onComplete }: PersonaSetupProps) {
                       description={ROLE_DESCRIPTIONS[r]}
                       selected={role === r}
                       onClick={() => setRole(r)}
+                      Icon={ROLE_ICONS[r]}
                     />
                   ))}
                 </div>
@@ -433,36 +451,45 @@ function SectionLabel({ step, title }: { step: string; title: string }) {
 }
 
 function RoleCard({
-  label, description, selected, onClick
-}: { label: string; description: string; selected: boolean; onClick: () => void }) {
+  label, description, selected, onClick, Icon
+}: { label: string; description: string; selected: boolean; onClick: () => void; Icon: LucideIcon }) {
   return (
     <button
       onClick={onClick}
       className={cn(
-        "w-full text-left px-4 py-3 rounded-md border text-sm transition-all duration-150",
+        "w-full text-left p-3.5 rounded-md border transition-all duration-150 flex items-center gap-3.5",
         selected
-          ? "border-primary/50 bg-gradient-to-br from-primary/18 to-primary/5 text-foreground shadow-[0_0_16px_hsl(var(--primary)/0.12)]"
-          : "border-border/60 bg-muted/15 text-foreground hover-elevate"
+          ? "border-primary/50 bg-gradient-to-br from-primary/15 to-primary/[0.04] shadow-[0_0_20px_hsl(var(--primary)/0.12)]"
+          : "border-border/60 bg-muted/15 hover-elevate"
       )}
     >
-      <div className="flex items-center justify-between gap-2">
-        <span className={cn("font-semibold text-sm leading-tight", selected ? "text-primary" : "text-foreground/90")}>
-          {label}
-        </span>
-        <div className={cn(
-          "shrink-0 flex items-center justify-center w-4 h-4 rounded-full border transition-all",
-          selected
-            ? "bg-primary border-primary"
-            : "border-border/50 bg-transparent"
-        )}>
-          {selected && <CheckCircle2 className="h-3 w-3 text-primary-foreground" />}
-        </div>
-      </div>
       <div className={cn(
-        "text-xs mt-1 leading-snug",
-        selected ? "text-muted-foreground" : "text-muted-foreground/75"
+        "shrink-0 flex items-center justify-center w-10 h-10 rounded-md border transition-all",
+        selected
+          ? "border-primary/40 bg-primary/15 text-primary"
+          : "border-border/50 bg-background/40 text-muted-foreground"
       )}>
-        {description}
+        <Icon className="h-5 w-5" strokeWidth={1.75} />
+      </div>
+
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center justify-between gap-2">
+          <span className={cn("font-semibold text-sm leading-tight", selected ? "text-primary" : "text-foreground/90")}>
+            {label}
+          </span>
+          <div className={cn(
+            "shrink-0 flex items-center justify-center w-4 h-4 rounded-full border transition-all",
+            selected ? "bg-primary border-primary" : "border-border/50 bg-transparent"
+          )}>
+            {selected && <CheckCircle2 className="h-3 w-3 text-primary-foreground" />}
+          </div>
+        </div>
+        <div className={cn(
+          "text-xs mt-1 leading-snug",
+          selected ? "text-muted-foreground" : "text-muted-foreground/75"
+        )}>
+          {description}
+        </div>
       </div>
     </button>
   )
