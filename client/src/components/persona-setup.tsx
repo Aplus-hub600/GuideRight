@@ -7,6 +7,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
+import guideRightMark from "@assets/guideright-mark.png"
 import {
   ROLES, EXPERIENCE_LEVELS, MISSION_CONTEXTS, PRIORITY_LENSES,
   PRIORITY_LENS_DEFAULTS, ROLE_OPTIMIZATIONS, ROLE_DESCRIPTIONS,
@@ -174,44 +175,79 @@ export function PersonaSetup({ onComplete }: PersonaSetupProps) {
       <div className="relative min-h-screen max-w-7xl mx-auto px-4 sm:px-6 py-8">
 
         {/* ── Header ──────────────────────────────────────────────────── */}
-        <div className="flex items-center justify-between mb-10 pb-5 border-b border-border/60">
+        <div className="relative flex flex-wrap items-center justify-between gap-4 mb-10 pb-5">
+          {/* Gold hairline underline */}
+          <div
+            className="absolute bottom-0 left-0 right-0 h-px"
+            style={{ background: "linear-gradient(90deg, hsl(var(--gold) / 0.5), hsl(var(--border) / 0.6) 35%, transparent)" }}
+          />
+
           <div className="flex items-center gap-4">
-            {/* Shield icon with glow */}
-            <div className="relative">
-              <div className="absolute inset-0 bg-primary/20 rounded-lg blur-md" />
-              <div className="relative flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/30">
-                <Shield className="h-5 w-5 text-primary" />
+            {/* Brand mark — app-icon tile */}
+            <div className="relative shrink-0">
+              <div className="absolute -inset-1.5 rounded-lg blur-lg" style={{ background: "hsl(var(--gold) / 0.14)" }} />
+              <div
+                className="relative h-14 w-14 rounded-md overflow-hidden"
+                style={{
+                  border: "1px solid hsl(var(--gold) / 0.35)",
+                  boxShadow: "0 6px 20px hsl(224 71% 1% / 0.7), inset 0 1px 0 hsl(0 0% 100% / 0.07)",
+                }}
+              >
+                <img src={guideRightMark} alt="GuideRight" className="h-full w-full object-cover scale-[1.18]" />
+                <div className="absolute inset-0 pointer-events-none" style={{ boxShadow: "inset 0 0 14px hsl(224 71% 2% / 0.6)" }} />
               </div>
             </div>
+
             <div>
-              <div className="flex items-center gap-2 mb-0.5">
-                <h1 className="text-sm font-bold tracking-[0.2em] uppercase text-foreground">GuideRight</h1>
-                <Badge className="text-[9px] font-mono h-4 px-1.5 bg-primary/10 text-primary/80 border-primary/20 no-default-active-elevate no-default-hover-elevate">
+              <div className="flex items-center gap-2.5 mb-1.5">
+                <h1 className="text-xl font-bold tracking-[0.14em] leading-none">
+                  <span style={{ color: "hsl(0 0% 94%)" }}>GUIDE</span>
+                  <span style={{ color: "hsl(var(--gold-bright))" }}>RIGHT</span>
+                </h1>
+                <Badge
+                  className="text-[9px] font-mono h-4 px-1.5 no-default-active-elevate no-default-hover-elevate"
+                  style={{
+                    background: "hsl(var(--gold) / 0.1)",
+                    color: "hsl(var(--gold-bright))",
+                    borderColor: "hsl(var(--gold) / 0.25)",
+                  }}
+                >
                   v2
                 </Badge>
               </div>
-              <p className="text-[11px] text-muted-foreground tracking-widest uppercase font-medium">
-                Mission Configuration System
+              <p className="text-[10.5px] tracking-[0.22em] uppercase font-medium" style={{ color: "hsl(var(--steel) / 0.85)" }}>
+                Decision Superiority <span style={{ color: "hsl(var(--gold) / 0.85)" }}>·</span> Faster Than the Fight
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <button
+          <div className="flex items-center gap-2.5">
+            <Button
+              variant="outline"
               onClick={handleRecommendedProfile}
-              className="flex items-center gap-2 px-3 py-2 rounded-md border border-border/50 bg-muted/30 text-muted-foreground text-xs font-semibold tracking-wide hover-elevate active-elevate-2 transition-all"
+              className="gap-2 text-xs font-semibold tracking-wide"
+              style={{
+                border: "1px solid hsl(var(--gold) / 0.3)",
+                background: "hsl(var(--gold) / 0.06)",
+                color: "hsl(var(--gold-bright))",
+              }}
             >
-              <Zap className="h-3 w-3" />
+              <Zap className="h-3.5 w-3.5" />
               Recommended Profile
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={handleLaunchDemo}
-              className="flex items-center gap-2 px-4 py-2 rounded-md border border-green-500/50 bg-green-500/10 text-green-400 text-xs font-bold tracking-widest uppercase hover-elevate active-elevate-2 transition-all"
-              style={{ boxShadow: "0 0 16px hsl(142 70% 45% / 0.2)" }}
+              className="gap-2 text-xs font-bold tracking-widest uppercase"
+              style={{
+                color: "hsl(224 71% 6%)",
+                background: "linear-gradient(180deg, hsl(var(--gold-bright)), hsl(var(--gold-deep)))",
+                border: "1px solid hsl(var(--gold-bright))",
+                boxShadow: "0 0 20px hsl(var(--gold) / 0.3), inset 0 1px 0 hsl(0 0% 100% / 0.25)",
+              }}
             >
-              <Play className="h-3.5 w-3.5 fill-green-400" />
+              <Play className="h-3.5 w-3.5" style={{ fill: "hsl(224 71% 6%)" }} />
               Launch Demo
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -239,7 +275,8 @@ export function PersonaSetup({ onComplete }: PersonaSetupProps) {
                   placeholder="e.g. Sheriff, Archer, Delta-6"
                   maxLength={32}
                   autoFocus
-                  className="w-full max-w-xs px-3 py-2.5 text-sm bg-muted/30 border border-border/70 rounded-md focus:outline-none focus:ring-1 focus:ring-primary/50 focus:border-primary/50 placeholder:text-muted-foreground/50 text-foreground transition-colors"
+                  className="w-full max-w-xs px-3.5 py-3 text-sm rounded-md bg-gradient-to-b from-muted/40 to-muted/10 border border-border/70 focus:outline-none focus:border-[hsl(var(--gold)/0.6)] focus:ring-2 focus:ring-[hsl(var(--gold)/0.18)] placeholder:text-muted-foreground/45 text-foreground transition-all duration-200 tracking-wide"
+                  style={{ boxShadow: "inset 0 1px 0 hsl(var(--foreground) / 0.04)" }}
                 />
               </div>
 
@@ -453,14 +490,20 @@ function SectionLabel({ step, title }: { step: string; title: string }) {
       {/* Background oversized step number */}
       <div
         className="absolute -top-3 left-0 font-black font-mono leading-none select-none pointer-events-none"
-        style={{ fontSize: "5rem", color: "hsl(var(--foreground) / 0.04)" }}
+        style={{ fontSize: "5rem", color: "hsl(var(--gold) / 0.055)" }}
       >
         {step}
       </div>
       <div className="relative flex items-center gap-3 pt-1">
-        <span className="text-[11px] font-bold tracking-[0.25em] text-primary/70 font-mono tabular-nums shrink-0">{step}</span>
+        <span
+          className="text-[11px] font-bold tracking-[0.25em] font-mono tabular-nums shrink-0"
+          style={{ color: "hsl(var(--gold-bright))" }}
+        >{step}</span>
         <h2 className="text-[13px] font-bold tracking-[0.18em] uppercase text-foreground shrink-0">{title}</h2>
-        <div className="h-px flex-1 bg-gradient-to-r from-border/50 to-transparent" />
+        <div
+          className="h-px flex-1"
+          style={{ background: "linear-gradient(90deg, hsl(var(--gold) / 0.35), hsl(var(--border) / 0.5) 30%, transparent)" }}
+        />
       </div>
     </div>
   )
@@ -579,11 +622,32 @@ function ProfilePreview({
   const isReady = !!(role && experienceLevel && missionContext)
 
   return (
-    <div className="rounded-md border border-border/60 overflow-hidden bg-[hsl(224_71%_3%)]">
+    <div
+      className="relative rounded-md border overflow-hidden bg-[hsl(224_71%_3%)]"
+      style={{
+        borderColor: "hsl(var(--gold) / 0.18)",
+        boxShadow: "0 10px 30px hsl(224 71% 1% / 0.5), inset 0 1px 0 hsl(var(--foreground) / 0.04)",
+      }}
+    >
+      {/* Faint brand-mark watermark */}
+      <img
+        src={guideRightMark}
+        alt=""
+        aria-hidden
+        className="absolute -bottom-6 -right-6 w-40 h-40 object-contain opacity-[0.05] pointer-events-none select-none"
+      />
+      {/* Gold top hairline */}
+      <div
+        className="absolute top-0 left-0 right-0 h-px"
+        style={{ background: "linear-gradient(90deg, transparent, hsl(var(--gold) / 0.5), transparent)" }}
+      />
       {/* Console-style header */}
-      <div className="flex items-center justify-between px-4 py-2.5 border-b border-border/60 bg-muted/20">
+      <div
+        className="relative flex items-center justify-between px-4 py-2.5 border-b border-border/60"
+        style={{ background: "linear-gradient(180deg, hsl(var(--gold) / 0.05), transparent)" }}
+      >
         <div className="flex items-center gap-2">
-          <Layers className="h-3 w-3 text-primary/50" />
+          <Layers className="h-3 w-3" style={{ color: "hsl(var(--gold-bright))" }} />
           <span className="text-[10px] font-mono font-bold tracking-[0.2em] uppercase text-muted-foreground">
             Workspace Configuration
           </span>
