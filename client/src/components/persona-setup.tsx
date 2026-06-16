@@ -191,13 +191,13 @@ export function PersonaSetup({ onComplete }: PersonaSetupProps) {
             {/* SECTION 1 — Define Mission Profile */}
             <section>
               <SectionLabel step="01" title="Define Mission Profile" />
-              <p className="text-xs text-muted-foreground/70 mb-6 max-w-lg">
+              <p className="text-[13px] text-muted-foreground mb-6 max-w-lg">
                 GuideRight adapts vocabulary, response format, and quick action priorities to your role and operational identity.
               </p>
 
               {/* Callsign */}
               <div className="mb-6">
-                <label className="text-[10px] font-bold tracking-[0.14em] uppercase text-muted-foreground/60 block mb-2">
+                <label className="text-[11px] font-bold tracking-[0.14em] uppercase text-muted-foreground block mb-2">
                   Callsign / Name <span className="font-normal opacity-60">(optional)</span>
                 </label>
                 <input
@@ -207,13 +207,13 @@ export function PersonaSetup({ onComplete }: PersonaSetupProps) {
                   placeholder="e.g. Sheriff, Archer, Delta-6"
                   maxLength={32}
                   autoFocus
-                  className="w-full max-w-xs px-3 py-2 text-sm bg-muted/30 border border-border/70 rounded-md focus:outline-none focus:ring-1 focus:ring-primary/50 focus:border-primary/50 placeholder:text-muted-foreground/30 text-foreground transition-colors"
+                  className="w-full max-w-xs px-3 py-2.5 text-sm bg-muted/30 border border-border/70 rounded-md focus:outline-none focus:ring-1 focus:ring-primary/50 focus:border-primary/50 placeholder:text-muted-foreground/50 text-foreground transition-colors"
                 />
               </div>
 
               {/* Role selector */}
               <div>
-                <label className="text-[10px] font-bold tracking-[0.14em] uppercase text-muted-foreground/60 block mb-2.5">
+                <label className="text-[11px] font-bold tracking-[0.14em] uppercase text-muted-foreground block mb-2.5">
                   Mission Role <span className="text-destructive/70">*</span>
                 </label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -233,13 +233,13 @@ export function PersonaSetup({ onComplete }: PersonaSetupProps) {
             {/* SECTION 2 — Set Analytic Posture */}
             <section>
               <SectionLabel step="02" title="Set Analytic Posture" />
-              <p className="text-xs text-muted-foreground/70 mb-6 max-w-lg">
+              <p className="text-[13px] text-muted-foreground mb-6 max-w-lg">
                 Define how GuideRight calibrates response depth, language complexity, and temporal framing to your context.
               </p>
 
               {/* Experience Level */}
               <div className="mb-6">
-                <label className="text-[10px] font-bold tracking-[0.14em] uppercase text-muted-foreground/60 block mb-2.5">
+                <label className="text-[11px] font-bold tracking-[0.14em] uppercase text-muted-foreground block mb-2.5">
                   Experience Level <span className="text-destructive/70">*</span>
                 </label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -265,7 +265,7 @@ export function PersonaSetup({ onComplete }: PersonaSetupProps) {
 
               {/* Mission Context */}
               <div className="mb-6">
-                <label className="text-[10px] font-bold tracking-[0.14em] uppercase text-muted-foreground/60 block mb-2.5">
+                <label className="text-[11px] font-bold tracking-[0.14em] uppercase text-muted-foreground block mb-2.5">
                   Mission Context <span className="text-destructive/70">*</span>
                 </label>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -283,7 +283,7 @@ export function PersonaSetup({ onComplete }: PersonaSetupProps) {
 
               {/* Response Depth */}
               <div className="mb-6">
-                <label className="text-[10px] font-bold tracking-[0.14em] uppercase text-muted-foreground/60 block mb-2.5">
+                <label className="text-[11px] font-bold tracking-[0.14em] uppercase text-muted-foreground block mb-2.5">
                   Response Depth
                 </label>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -301,7 +301,7 @@ export function PersonaSetup({ onComplete }: PersonaSetupProps) {
 
               {/* Time Horizon */}
               <div>
-                <label className="text-[10px] font-bold tracking-[0.14em] uppercase text-muted-foreground/60 block mb-2.5">
+                <label className="text-[11px] font-bold tracking-[0.14em] uppercase text-muted-foreground block mb-2.5">
                   Default Time Horizon
                 </label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -316,8 +316,8 @@ export function PersonaSetup({ onComplete }: PersonaSetupProps) {
                   ))}
                 </div>
                 {resolvedHorizon && temporalHorizon === null && (
-                  <p className="text-[11px] text-muted-foreground/50 mt-2.5 font-mono">
-                    Role default: <span className="text-muted-foreground/80">{TEMPORAL_HORIZON_LABELS[resolvedHorizon]}</span>
+                  <p className="text-[11px] text-muted-foreground/80 mt-2.5 font-mono">
+                    Role default: <span className="text-foreground/90">{TEMPORAL_HORIZON_LABELS[resolvedHorizon]}</span>
                   </p>
                 )}
               </div>
@@ -326,7 +326,7 @@ export function PersonaSetup({ onComplete }: PersonaSetupProps) {
             {/* SECTION 3 — Select Priority Lenses */}
             <section>
               <SectionLabel step="03" title="Select Priority Lenses" />
-              <p className="text-xs text-muted-foreground/70 mb-6 max-w-lg">
+              <p className="text-[13px] text-muted-foreground mb-6 max-w-lg">
                 Select up to 3 analytic dimensions to emphasize. Quick actions, analysis framing, and source weighting adapt to your selection.
               </p>
               <div className="flex flex-wrap gap-2">
@@ -352,7 +352,7 @@ export function PersonaSetup({ onComplete }: PersonaSetupProps) {
                         {isSelected && <CheckCircle2 className="h-3 w-3 text-primary shrink-0" />}
                         <span className="text-xs">{lens}</span>
                         {isDefault && !isSelected && (
-                          <span className="text-[9px] text-muted-foreground/40 font-normal">(role default)</span>
+                          <span className="text-[10px] text-muted-foreground/70 font-normal">(role default)</span>
                         )}
                       </div>
                     </button>
@@ -360,7 +360,7 @@ export function PersonaSetup({ onComplete }: PersonaSetupProps) {
                 })}
               </div>
               {priorityLenses.length === 3 && (
-                <p className="text-[11px] text-muted-foreground/50 mt-3 font-mono">
+                <p className="text-[11px] text-muted-foreground/80 mt-3 font-mono">
                   Maximum 3 lenses. Deselect one to change.
                 </p>
               )}
@@ -369,7 +369,7 @@ export function PersonaSetup({ onComplete }: PersonaSetupProps) {
             {/* Submit CTA */}
             <div className="pt-2 pb-12">
               {!canSubmit && (
-                <p className="text-[11px] text-muted-foreground/40 mb-3 font-mono">
+                <p className="text-[11px] text-muted-foreground/80 mb-3 font-mono">
                   Complete Mission Role, Experience Level, and Mission Context to continue.
                 </p>
               )}
@@ -424,8 +424,8 @@ function SectionLabel({ step, title }: { step: string; title: string }) {
         {step}
       </div>
       <div className="relative flex items-center gap-3 pt-1">
-        <span className="text-[10px] font-bold tracking-[0.25em] text-primary/40 font-mono tabular-nums shrink-0">{step}</span>
-        <h2 className="text-[11px] font-bold tracking-[0.18em] uppercase text-foreground/80 shrink-0">{title}</h2>
+        <span className="text-[11px] font-bold tracking-[0.25em] text-primary/70 font-mono tabular-nums shrink-0">{step}</span>
+        <h2 className="text-[13px] font-bold tracking-[0.18em] uppercase text-foreground shrink-0">{title}</h2>
         <div className="h-px flex-1 bg-gradient-to-r from-border/50 to-transparent" />
       </div>
     </div>
@@ -459,8 +459,8 @@ function RoleCard({
         </div>
       </div>
       <div className={cn(
-        "text-[11px] mt-1 leading-snug",
-        selected ? "text-muted-foreground/90" : "text-muted-foreground/50"
+        "text-xs mt-1 leading-snug",
+        selected ? "text-muted-foreground" : "text-muted-foreground/75"
       )}>
         {description}
       </div>
@@ -495,8 +495,8 @@ function PostureCard({
         </div>
       </div>
       <div className={cn(
-        "text-[10px] mt-1 leading-snug",
-        selected ? "text-muted-foreground/80" : "text-muted-foreground/45"
+        "text-[11px] mt-1 leading-snug",
+        selected ? "text-muted-foreground" : "text-muted-foreground/70"
       )}>
         {description}
       </div>
@@ -527,7 +527,7 @@ function ProfilePreview({
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-border/60 bg-muted/20">
         <div className="flex items-center gap-2">
           <Layers className="h-3 w-3 text-primary/50" />
-          <span className="text-[10px] font-mono font-bold tracking-[0.2em] uppercase text-muted-foreground/60">
+          <span className="text-[10px] font-mono font-bold tracking-[0.2em] uppercase text-muted-foreground">
             Workspace Configuration
           </span>
         </div>
@@ -537,8 +537,8 @@ function ProfilePreview({
             isReady ? "bg-green-500 shadow-[0_0_6px_hsl(142_71%_45%)]" : "bg-muted-foreground/30"
           )} />
           <span className={cn(
-            "text-[9px] font-mono tracking-widest uppercase",
-            isReady ? "text-green-400/80" : "text-muted-foreground/40"
+            "text-[10px] font-mono font-semibold tracking-widest uppercase",
+            isReady ? "text-green-400" : "text-muted-foreground/70"
           )}>
             {isReady ? "READY" : "INCOMPLETE"}
           </span>
@@ -570,15 +570,15 @@ function ProfilePreview({
           <>
             <div className="h-px bg-border/40" />
             <div>
-              <p className="text-[9px] font-mono font-bold tracking-[0.18em] uppercase text-muted-foreground/40 mb-2">
+              <p className="text-[10px] font-mono font-bold tracking-[0.18em] uppercase text-muted-foreground/80 mb-2">
                 Priority Lenses {!lensesCustomized && <span className="font-normal opacity-70">· role defaults</span>}
               </p>
               <div className="space-y-1">
                 {effectiveLenses.map((lens, i) => (
                   <div key={lens} className="flex items-center gap-2">
-                    <span className="text-[9px] font-mono text-primary/30 w-3 tabular-nums">{i + 1}</span>
-                    <div className="h-px w-2 bg-primary/20" />
-                    <span className="text-[11px] text-foreground/70 font-medium">{lens}</span>
+                    <span className="text-[10px] font-mono text-primary/60 w-3 tabular-nums">{i + 1}</span>
+                    <div className="h-px w-2 bg-primary/30" />
+                    <span className="text-xs text-foreground/90 font-medium">{lens}</span>
                   </div>
                 ))}
               </div>
@@ -591,14 +591,14 @@ function ProfilePreview({
           <>
             <div className="h-px bg-border/40" />
             <div>
-              <p className="text-[9px] font-mono font-bold tracking-[0.18em] uppercase text-muted-foreground/40 mb-2">
+              <p className="text-[10px] font-mono font-bold tracking-[0.18em] uppercase text-muted-foreground/80 mb-2">
                 Optimized For
               </p>
               <div className="space-y-1.5">
                 {optimizations.map(opt => (
                   <div key={opt} className="flex items-start gap-2">
-                    <div className="mt-1.5 h-1 w-1 rounded-full bg-primary/30 shrink-0" />
-                    <span className="text-[11px] text-muted-foreground/60 leading-snug">{opt}</span>
+                    <div className="mt-1.5 h-1 w-1 rounded-full bg-primary/50 shrink-0" />
+                    <span className="text-[11px] text-muted-foreground leading-snug">{opt}</span>
                   </div>
                 ))}
               </div>
@@ -612,7 +612,7 @@ function ProfilePreview({
             <div className="h-px bg-border/40" />
             <div className="flex items-center gap-2 p-2 rounded bg-green-500/5 border border-green-500/15">
               <div className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse-subtle shrink-0" />
-              <span className="text-[10px] font-mono text-green-400/70 leading-tight">
+              <span className="text-[11px] font-mono text-green-400 leading-tight">
                 Profile ready — workspace configured for {role}
               </span>
             </div>
@@ -632,12 +632,12 @@ function ConsoleRow({
 }) {
   return (
     <div className="flex items-baseline justify-between gap-4 py-0.5">
-      <span className="text-[9px] font-mono font-bold tracking-[0.14em] text-muted-foreground/35 shrink-0">
+      <span className="text-[10px] font-mono font-bold tracking-[0.14em] text-muted-foreground/70 shrink-0">
         {label}
       </span>
       <span className={cn(
-        "text-[11px] font-mono text-right truncate max-w-[160px]",
-        value && active ? "text-foreground/90 font-medium" : "text-muted-foreground/35 italic"
+        "text-xs font-mono text-right truncate max-w-[160px]",
+        value && active ? "text-foreground font-medium" : "text-muted-foreground/50 italic"
       )}>
         {value ?? "—"}
       </span>
