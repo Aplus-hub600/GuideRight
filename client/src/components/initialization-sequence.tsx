@@ -6,6 +6,9 @@ import { type UserPersona, getQuickActionsForRole } from "@/lib/persona"
 interface InitializationSequenceProps {
   persona: UserPersona
   onComplete: () => void
+  // When true (e.g. switching persona mid-session), the boot runs ~4x faster so
+  // it doesn't eat demo time. First launch keeps the full cinematic sequence.
+  fast?: boolean
 }
 
 interface BootLine {
@@ -138,17 +141,19 @@ function ScanSweep() {
   )
 }
 
-export function InitializationSequence({ persona, onComplete }: InitializationSequenceProps) {
-  const lines = buildBootLines(persona)
+export function InitializationSequence({ persona, onComplete, fast = false }: InitializationSequenceProps) {
+  // Time scale: full cinematic on first launch, ~4x faster when switching persona.
+  const scale = fast ? 0.26 : 1
+  const lines = buildBootLines(persona).map(line => ({ ...line, delay: line.delay * scale }))
   const [progress, setProgress] = useState(0)
   const [showComplete, setShowComplete] = useState(false)
   const [showWelcome, setShowWelcome] = useState(false)
   const [exiting, setExiting] = useState(false)
 
   useEffect(() => {
-    // Progress bar: 0→100% over 4.8s
+    // Progress bar: 0→100% over the (scaled) load duration
     const start = Date.now()
-    const duration = 4800
+    const duration = 4800 * scale
     let rafId = requestAnimationFrame(function tick() {
       const elapsed = Date.now() - start
       const pct = Math.min(100, (elapsed / duration) * 100)
@@ -156,13 +161,13 @@ export function InitializationSequence({ persona, onComplete }: InitializationSe
       if (pct < 100) rafId = requestAnimationFrame(tick)
     })
 
-    const t1 = setTimeout(() => setShowComplete(true), 4700)
-    const t2 = setTimeout(() => setShowWelcome(true), 5100)
+    const t1 = setTimeout(() => setShowComplete(true), 4700 * scale)
+    const t2 = setTimeout(() => setShowWelcome(true), 5100 * scale)
     let t4: ReturnType<typeof setTimeout>
     const t3 = setTimeout(() => {
       setExiting(true)
-      t4 = setTimeout(onComplete, 600)
-    }, 6900)
+      t4 = setTimeout(onComplete, 600 * scale)
+    }, 6900 * scale)
 
     return () => {
       cancelAnimationFrame(rafId)
@@ -171,7 +176,7 @@ export function InitializationSequence({ persona, onComplete }: InitializationSe
       clearTimeout(t3)
       clearTimeout(t4)
     }
-  }, [onComplete])
+  }, [onComplete, scale])
 
   return (
     <AnimatePresence>

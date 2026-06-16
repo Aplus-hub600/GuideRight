@@ -15,7 +15,7 @@ import {
   CONTEXT_DESCRIPTIONS, TEMPORAL_HORIZON_DEFAULTS, TEMPORAL_HORIZON_LABELS,
   type Role, type ExperienceLevel, type MissionContext,
   type PriorityLens, type TemporalHorizon, type ResponseDepth, type UserPersona,
-  savePersona
+  savePersona, loadPersona
 } from "@/lib/persona"
 import { InitializationSequence } from "./initialization-sequence"
 
@@ -89,6 +89,9 @@ export function PersonaSetup({ onComplete }: PersonaSetupProps) {
   const [temporalHorizon, setTemporalHorizon] = useState<TemporalHorizon | null>(null)
   const [priorityLenses, setPriorityLenses] = useState<PriorityLens[]>([])
   const [initializing, setInitializing] = useState<UserPersona | null>(null)
+  // If a persona already exists when this screen opens, the operator is switching
+  // mid-session — run the fast boot so it doesn't eat demo time.
+  const isReentry = useRef<boolean>(!!loadPersona())
 
   const formRef = useRef<HTMLDivElement>(null)
 
@@ -152,6 +155,7 @@ export function PersonaSetup({ onComplete }: PersonaSetupProps) {
       <InitializationSequence
         persona={initializing}
         onComplete={() => onComplete(initializing)}
+        fast={isReentry.current}
       />
     )
   }

@@ -2,3 +2,4 @@
 - [Theme depth hierarchy](theme-depth.md) — `--card` was same as `--background` (flat); now elevated to give surface depth. Card must always differ from background.
 - [Brand logo & gold accents](brand-logo-treatment.md) — metallic-on-navy mark can't be bg-removed; present as app-icon tile. Gold tokens for brand chrome, blue for interactive state.
 - [UI test timing](ui-test-timing.md) — test agent can't measure sub-10s durations; verify animation length via timestamped console logs, not its stopwatch.
+- [Tactical query fallback](tactical-query-fallback.md) — processTacticalQuery falls back to mock on ANY OpenAI error; has a scenario-specific corridor branch for the demo.
