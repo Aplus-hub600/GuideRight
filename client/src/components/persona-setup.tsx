@@ -279,12 +279,13 @@ export function PersonaSetup({ onComplete }: PersonaSetupProps) {
                   placeholder="e.g. Sheriff, Archer, Delta-6"
                   maxLength={32}
                   autoFocus
-                  className="w-full max-w-xs px-3.5 py-3 text-sm rounded-md bg-gradient-to-b from-muted/40 to-muted/10 border border-border/70 focus:outline-none focus:border-[hsl(var(--gold)/0.6)] focus:ring-2 focus:ring-[hsl(var(--gold)/0.18)] placeholder:text-muted-foreground/45 transition-all duration-200 tracking-[0.12em] font-mono font-semibold"
+                  className="w-full max-w-xs px-3.5 py-3 text-sm rounded-md border border-border/70 focus:outline-none focus:border-[hsl(var(--gold)/0.6)] focus:ring-2 focus:ring-[hsl(var(--gold)/0.18)] placeholder:text-muted-foreground/45 transition-all duration-200 tracking-[0.12em] font-mono font-semibold"
                   style={{
-                    boxShadow: "inset 0 1px 0 hsl(var(--foreground) / 0.04)",
-                    color: "hsl(146 62% 56%)",
-                    caretColor: "hsl(146 66% 56%)",
-                    textShadow: "0 0 8px hsl(146 70% 45% / 0.4)",
+                    backgroundColor: "hsl(224 60% 5%)",
+                    boxShadow: "inset 0 2px 6px hsl(224 71% 1% / 0.6)",
+                    color: "hsl(146 68% 62%)",
+                    caretColor: "hsl(146 70% 62%)",
+                    textShadow: "0 0 10px hsl(146 80% 45% / 0.45)",
                   }}
                 />
               </div>
