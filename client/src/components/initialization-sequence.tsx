@@ -39,56 +39,56 @@ function buildBootLines(persona: UserPersona): BootLine[] {
       value: persona.callsign.toUpperCase(),
       status: "VERIFIED",
       statusColor: "text-green-400",
-      delay: 0.2,
+      delay: 0.5,
     },
     {
       label: "ROLE MODULE",
       value: persona.role.toUpperCase(),
       status: "LOADED",
       statusColor: "text-green-400",
-      delay: 0.4,
+      delay: 1.0,
     },
     {
       label: "EXPERIENCE MODIFIER",
       value: persona.experienceLevel.toUpperCase(),
       status: "CALIBRATED",
       statusColor: "text-green-400",
-      delay: 0.6,
+      delay: 1.5,
     },
     {
       label: "MISSION CONTEXT",
       value: persona.missionContext.toUpperCase(),
       status: "ACTIVE",
       statusColor: "text-amber-400",
-      delay: 0.8,
+      delay: 2.0,
     },
     {
       label: "INTELLIGENCE FILTERS",
       value: filterMap[persona.role] ?? "ADAPTIVE",
       status: "ENABLED",
       statusColor: "text-green-400",
-      delay: 1.0,
+      delay: 2.6,
     },
     {
       label: "QUICK ACTIONS",
       value: actionLabels,
       status: "READY",
       statusColor: "text-green-400",
-      delay: 1.2,
+      delay: 3.2,
     },
     {
       label: "ADAPTIVE PROMPT ENGINE",
       value: "COMPILED",
       status: "OK",
       statusColor: "text-green-400",
-      delay: 1.4,
+      delay: 3.8,
     },
     {
       label: "SYSTEM INTEGRITY",
       value: "ALL CHECKS PASSED",
       status: "PASS",
       statusColor: "text-green-400",
-      delay: 1.6,
+      delay: 4.4,
     },
   ]
 }
@@ -134,6 +134,17 @@ const BOLTS_B = [
   "M720 -20 L675 200 L760 280 L690 500 L775 580 L715 1020",
   "M345 470 L260 540 L320 660",
   "M760 280 L850 350 L780 460",
+]
+const BOLTS_C = [
+  "M170 -20 L220 220 L150 300 L230 560 L160 660 L210 1020",
+  "M850 -20 L800 240 L880 320 L810 580 L885 680 L830 1020",
+  "M220 220 L130 290 L195 400",
+]
+const BOLTS_D = [
+  "M500 -20 L450 200 L555 270 L470 480 L580 560 L495 800 L540 1020",
+  "M500 270 L600 200 L540 360",
+  "M470 480 L370 420 L440 590",
+  "M540 1020 L470 880 L560 800",
 ]
 
 function LightningStrike({ delay, paths }: { delay: number; paths: string[] }) {
@@ -192,26 +203,26 @@ export function InitializationSequence({ persona, onComplete }: InitializationSe
   const [exiting, setExiting] = useState(false)
 
   useEffect(() => {
-    // Progress bar: 0→100% over 2.4s
+    // Progress bar: 0→100% over 4.8s
     const start = Date.now()
-    const duration = 2400
-    const raf = requestAnimationFrame(function tick() {
+    const duration = 4800
+    let rafId = requestAnimationFrame(function tick() {
       const elapsed = Date.now() - start
       const pct = Math.min(100, (elapsed / duration) * 100)
       setProgress(pct)
-      if (pct < 100) requestAnimationFrame(tick)
+      if (pct < 100) rafId = requestAnimationFrame(tick)
     })
 
-    const t1 = setTimeout(() => setShowComplete(true), 2200)
-    const t2 = setTimeout(() => setShowWelcome(true), 2500)
+    const t1 = setTimeout(() => setShowComplete(true), 4700)
+    const t2 = setTimeout(() => setShowWelcome(true), 5200)
     let t4: ReturnType<typeof setTimeout>
     const t3 = setTimeout(() => {
       setExiting(true)
-      t4 = setTimeout(onComplete, 500)
-    }, 3600)
+      t4 = setTimeout(onComplete, 600)
+    }, 7600)
 
     return () => {
-      cancelAnimationFrame(raf)
+      cancelAnimationFrame(rafId)
       clearTimeout(t1)
       clearTimeout(t2)
       clearTimeout(t3)
@@ -308,7 +319,7 @@ export function InitializationSequence({ persona, onComplete }: InitializationSe
             <motion.div
               initial={{ scaleX: 0 }}
               animate={{ scaleX: 1 }}
-              transition={{ duration: 0.4, delay: 1.0 }}
+              transition={{ duration: 0.5, delay: 2.4 }}
               className="h-px bg-blue-500/20 mb-4 origin-left"
             />
 
@@ -365,9 +376,12 @@ export function InitializationSequence({ persona, onComplete }: InitializationSe
             </AnimatePresence>
           </div>
 
-          {/* Lightning strikes — entry crack + impact as WELCOME appears */}
-          <LightningStrike delay={0.35} paths={BOLTS_A} />
-          <LightningStrike delay={2.45} paths={BOLTS_B} />
+          {/* Lightning strikes — spread across the sequence, building to the WELCOME impact */}
+          <LightningStrike delay={0.4} paths={BOLTS_A} />
+          <LightningStrike delay={2.3} paths={BOLTS_C} />
+          <LightningStrike delay={4.0} paths={BOLTS_B} />
+          <LightningStrike delay={5.2} paths={BOLTS_D} />
+          <LightningStrike delay={6.4} paths={BOLTS_A} />
         </motion.div>
       ) : (
         <motion.div
