@@ -50,6 +50,21 @@ const ROLE_ICONS: Record<Role, LucideIcon> = {
   "Port Operations Analyst": Ship,
 }
 
+// Mission-family color encoding: blue=intel/planning, red=kinetic,
+// amber=command/security, green=civil/partner, purple=influence
+const ROLE_TINT: Record<Role, string> = {
+  "Intelligence Analyst": "var(--chart-1)",
+  "SOF Operator": "var(--chart-5)",
+  "Commander": "var(--chart-3)",
+  "Civil Affairs Officer": "var(--chart-2)",
+  "Psychological Operations Officer": "var(--chart-4)",
+  "Planner": "var(--chart-1)",
+  "Security Cooperation Officer": "var(--chart-2)",
+  "Diplomatic Security Officer": "var(--chart-3)",
+  "Executive Decision Maker": "var(--chart-3)",
+  "Port Operations Analyst": "var(--chart-1)",
+}
+
 const DEPTH_DESCRIPTIONS: Record<ResponseDepth, string> = {
   "Executive Summary": "One-paragraph BLUF. Key judgment and top risk only.",
   "Balanced": "Structured summary with evidence, confidence, and key gaps.",
@@ -242,6 +257,7 @@ export function PersonaSetup({ onComplete }: PersonaSetupProps) {
                       selected={role === r}
                       onClick={() => setRole(r)}
                       Icon={ROLE_ICONS[r]}
+                      tint={ROLE_TINT[r]}
                     />
                   ))}
                 </div>
@@ -451,25 +467,39 @@ function SectionLabel({ step, title }: { step: string; title: string }) {
 }
 
 function RoleCard({
-  label, description, selected, onClick, Icon
-}: { label: string; description: string; selected: boolean; onClick: () => void; Icon: LucideIcon }) {
+  label, description, selected, onClick, Icon, tint
+}: { label: string; description: string; selected: boolean; onClick: () => void; Icon: LucideIcon; tint: string }) {
   return (
     <button
       onClick={onClick}
       className={cn(
-        "w-full text-left p-3.5 rounded-md border transition-all duration-150 flex items-center gap-3.5",
+        "group w-full text-left p-3.5 rounded-md border transition-all duration-200 flex items-center gap-3.5",
         selected
           ? "border-primary/50 bg-gradient-to-br from-primary/15 to-primary/[0.04] shadow-[0_0_20px_hsl(var(--primary)/0.12)]"
           : "border-border/60 bg-muted/15 hover-elevate"
       )}
     >
-      <div className={cn(
-        "shrink-0 flex items-center justify-center w-10 h-10 rounded-md border transition-all",
-        selected
-          ? "border-primary/40 bg-primary/15 text-primary"
-          : "border-border/50 bg-background/40 text-muted-foreground"
-      )}>
-        <Icon className="h-5 w-5" strokeWidth={1.75} />
+      <div
+        className={cn(
+          "role-icon-chip shrink-0 flex items-center justify-center w-11 h-11 rounded-md border transition-all duration-200",
+          selected
+            ? "role-icon-selected border-primary/50 bg-gradient-to-b from-primary/30 to-primary/[0.05] text-primary"
+            : "bg-gradient-to-b from-muted/60 to-background/50"
+        )}
+        style={selected ? undefined : {
+          borderColor: `hsl(${tint} / 0.45)`,
+          color: `hsl(${tint})`,
+          boxShadow: `0 0 16px hsl(${tint} / 0.16), inset 0 1px 0 hsl(var(--foreground) / 0.05)`,
+        }}
+      >
+        <Icon
+          className={cn(
+            "relative z-10 h-[22px] w-[22px] transition-all duration-200",
+            selected && "[filter:drop-shadow(0_0_6px_hsl(var(--primary)/0.65))]"
+          )}
+          style={selected ? undefined : { filter: `drop-shadow(0 0 5px hsl(${tint} / 0.55))` }}
+          strokeWidth={1.85}
+        />
       </div>
 
       <div className="min-w-0 flex-1">
