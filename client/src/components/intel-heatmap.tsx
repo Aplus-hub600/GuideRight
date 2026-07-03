@@ -10,16 +10,29 @@ interface IntelHeatmapProps {
   visible: boolean
 }
 
+// Threat-density color by Goldstein severity (green cooperation -> red conflict)
+function severityColor(goldstein: number): string {
+  if (goldstein <= -6) return "#b91c1c"
+  if (goldstein <= -3) return "#ef4444"
+  if (goldstein < 0) return "#f97316"
+  if (goldstein < 2) return "#eab308"
+  return "#22c55e"
+}
+
 export function IntelHeatmapLayer({ events, visible }: IntelHeatmapProps) {
   const map = useMap()
-  const visualizationLib = useMapsLibrary("visualization")
-  const heatmapRef = useRef<any>(null)
+  // Gate on the core maps library so google.maps.Circle is available.
+  const mapsLib = useMapsLibrary("maps")
+  const circlesRef = useRef<any[]>([])
+
+  const clearCircles = () => {
+    circlesRef.current.forEach(c => c.setMap(null))
+    circlesRef.current = []
+  }
 
   useEffect(() => {
-    if (!map || !visualizationLib || !visible) {
-      if (heatmapRef.current) {
-        heatmapRef.current.setMap(null)
-      }
+    if (!map || !mapsLib || !visible) {
+      clearCircles()
       return
     }
 
@@ -27,17 +40,18 @@ export function IntelHeatmapLayer({ events, visible }: IntelHeatmapProps) {
       e => e.actionGeoLat !== null && e.actionGeoLon !== null
     )
 
+    clearCircles()
+
     if (validEvents.length === 0) {
-      if (heatmapRef.current) {
-        heatmapRef.current.setMap(null)
-      }
       return
     }
 
-    const heatmapData = validEvents.map(event => {
+    // Render each event as a translucent weighted circle. Overlapping circles
+    // build up density, mimicking the retired Google HeatmapLayer visual.
+    circlesRef.current = validEvents.map(event => {
       const goldstein = event.goldsteinScale ?? 0
       const mentions = event.numMentions ?? 1
-      
+
       let weight = 1
       if (goldstein <= -6) {
         weight = 10 * Math.log10(mentions + 1) + 15
@@ -50,51 +64,27 @@ export function IntelHeatmapLayer({ events, visible }: IntelHeatmapProps) {
       } else {
         weight = 2 * Math.log10(mentions + 1) + 1
       }
+      weight = Math.max(weight, 1)
 
-      return {
-        location: new google.maps.LatLng(event.actionGeoLat!, event.actionGeoLon!),
-        weight: Math.max(weight, 1)
-      }
+      const color = severityColor(goldstein)
+      const radiusMeters = 1500 + weight * 350
+
+      return new google.maps.Circle({
+        map,
+        center: { lat: event.actionGeoLat!, lng: event.actionGeoLon! },
+        radius: radiusMeters,
+        strokeWeight: 0,
+        fillColor: color,
+        fillOpacity: 0.28,
+        clickable: false,
+        zIndex: 1,
+      })
     })
 
-    if (heatmapRef.current) {
-      heatmapRef.current.setData(heatmapData)
-      heatmapRef.current.setMap(map)
-    } else {
-      heatmapRef.current = new visualizationLib.HeatmapLayer({
-        data: heatmapData,
-        map: map,
-        radius: 45,
-        opacity: 0.45,
-        gradient: [
-          "rgba(0, 0, 0, 0)",
-          "rgba(34, 197, 94, 0.25)",
-          "rgba(132, 204, 22, 0.3)",
-          "rgba(234, 179, 8, 0.35)",
-          "rgba(249, 115, 22, 0.4)",
-          "rgba(239, 68, 68, 0.5)",
-          "rgba(220, 38, 38, 0.6)",
-          "rgba(185, 28, 28, 0.7)"
-        ]
-      })
-    }
-
     return () => {
-      if (heatmapRef.current) {
-        heatmapRef.current.setMap(null)
-      }
+      clearCircles()
     }
-  }, [map, visualizationLib, events, visible])
-
-  useEffect(() => {
-    if (heatmapRef.current) {
-      if (visible) {
-        heatmapRef.current.setMap(map)
-      } else {
-        heatmapRef.current.setMap(null)
-      }
-    }
-  }, [visible, map])
+  }, [map, mapsLib, events, visible])
 
   return null
 }
